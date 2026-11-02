@@ -1,6 +1,8 @@
 package br.com.muxe.lobby.launchpad;
 
 import br.com.muxe.core.bukkit.buildmode.BuildMode;
+import br.com.muxe.core.bukkit.effect.SoundCue;
+import java.util.Optional;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -19,8 +21,10 @@ public final class LaunchPadListener implements Listener {
     private final LaunchVelocity.Launch launch;
     private final LaunchCooldown cooldown;
     private final BuildMode build;
+    private final Optional<SoundCue> sound;
 
-    public LaunchPadListener(Material block, LaunchVelocity.Launch launch, LaunchCooldown cooldown, BuildMode build) {
+    public LaunchPadListener(Material block, LaunchVelocity.Launch launch, LaunchCooldown cooldown, BuildMode build, Optional<SoundCue> sound) {
+        this.sound = sound;
         this.block = block;
         this.launch = launch;
         this.cooldown = cooldown;
@@ -39,6 +43,7 @@ public final class LaunchPadListener implements Listener {
         }
         LaunchVelocity.Push push = launch.towards(to.getYaw());
         player.setVelocity(new Vector(push.x(), push.y(), push.z()));
+        sound.ifPresent(cue -> cue.play(player));
     }
 
     @EventHandler

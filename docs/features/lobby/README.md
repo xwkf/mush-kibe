@@ -94,7 +94,7 @@ Every slime block (`launch-pad.block`) in a lobby is a launch pad, with no setup
 
 - Green sparkles (`HAPPY_VILLAGER`) rise from the top of each pad every `launch-pad.particles.interval`, only while a player is within `launch-pad.particles.view-radius` blocks.
 - Stepping on a pad throws the player towards where they look: 20 blocks forward and 5 blocks up by default. `LaunchVelocity` turns `distance` and `height` into the velocity by replaying the 1.8 client physics (gravity, drag and air friction); each component is capped at 3.9, the most a velocity packet carries.
-- A player is launched once per `launch-pad.cooldown`. Flying players and players in build mode are not launched. Lobby players take no damage, so the landing does not hurt.
+- The launch plays a firework taking off (`launch-pad.sound`). A player is launched once per `launch-pad.cooldown`. Flying players and players in build mode are not launched. Lobby players take no damage, so the landing does not hurt.
 
 ### Build mode
 
@@ -136,6 +136,7 @@ Every slime block (`launch-pad.block`) in a lobby is a launch pad, with no setup
 | `launch-pad.block` | `SLIME_BLOCK` | Block (a 1.8 `Material` name) that works as a launch pad. |
 | `launch-pad.distance`, `launch-pad.height` | `20`, `5` | Blocks forward and up a launch reaches. |
 | `launch-pad.cooldown` | `1s` | Time before the same player can be launched again. |
+| `launch-pad.sound.sound`, `volume`, `pitch` | `FIREWORK_LAUNCH`, `1.0`, `1.0` | Sound played to the player when launched (a firework taking off). |
 | `launch-pad.particles.interval`, `per-block`, `view-radius` | `250ms`, `1`, `32` | How often each pad sparkles, how many sparkles each time, and how close a player must be. |
 | `bossbar.frames`, `bossbar.interval` | `&e&lMUXE`, `&6&lMUXE`, `500ms` | Boss bar texts and how long each one stays. |
 | `scoreboard.title`, `scoreboard.lines` | See above | Scoreboard text. Placeholders: `{tag}`, `{credits}`, `{lobby}`, `{players}`. |

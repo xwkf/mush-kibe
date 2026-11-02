@@ -3,6 +3,7 @@ package br.com.muxe.lobby.launchpad;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
+import br.com.muxe.core.bukkit.effect.SoundCue;
 import br.com.muxe.core.common.testing.MutableClock;
 import br.com.muxe.lobby.config.LobbySettings;
 import java.io.InputStreamReader;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
 
@@ -31,6 +33,7 @@ class LaunchPadTest {
         assertThat(flight.peak()).isCloseTo(5, within(0.05));
         assertThat(launch.horizontal()).isLessThan(LaunchVelocity.MAX_COMPONENT);
         assertThat(LobbySettings.ticks(settings.particleInterval())).isEqualTo(5);
+        assertThat(settings.sound()).contains(new SoundCue(Sound.FIREWORK_LAUNCH, 1f, 1f));
     }
 
     @Test

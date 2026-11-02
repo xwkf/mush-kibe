@@ -15,6 +15,10 @@ launch-pad:
   distance: 20
   height: 5
   cooldown: 1s
+  sound:
+    sound: FIREWORK_LAUNCH
+    volume: 1.0
+    pitch: 1.0
   particles:
     interval: 250ms
     per-block: 1

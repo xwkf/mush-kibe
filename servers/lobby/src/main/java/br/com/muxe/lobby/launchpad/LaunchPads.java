@@ -18,7 +18,7 @@ public final class LaunchPads {
         PadScanner scanner = new PadScanner(index, settings.block(), core.async(), core.mainThread(), plugin.getLogger());
         PluginManager plugins = plugin.getServer().getPluginManager();
         plugins.registerEvents(scanner, plugin);
-        plugins.registerEvents(new LaunchPadListener(settings.block(), settings.launch(), new LaunchCooldown(core.clock(), settings.cooldown()), core.buildMode()), plugin);
+        plugins.registerEvents(new LaunchPadListener(settings.block(), settings.launch(), new LaunchCooldown(core.clock(), settings.cooldown()), core.buildMode(), settings.sound()), plugin);
         scanner.scanLoaded(plugin.getServer().getWorlds());
         long period = LobbySettings.ticks(settings.particleInterval());
         plugin.getServer().getScheduler().runTaskTimer(plugin, new PadParticles(plugin.getServer(), index, settings.particlesPerBlock(), settings.viewRadius()), period, period);

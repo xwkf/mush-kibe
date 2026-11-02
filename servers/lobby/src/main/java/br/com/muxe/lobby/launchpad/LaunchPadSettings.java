@@ -1,8 +1,10 @@
 package br.com.muxe.lobby.launchpad;
 
+import br.com.muxe.core.bukkit.effect.SoundCue;
 import br.com.muxe.core.common.config.source.DurationParser;
 import java.time.Duration;
 import java.util.Locale;
+import java.util.Optional;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 
@@ -14,7 +16,8 @@ public record LaunchPadSettings(
     Duration cooldown,
     Duration particleInterval,
     int particlesPerBlock,
-    double viewRadius
+    double viewRadius,
+    Optional<SoundCue> sound
 ) {
 
     public static final double DEFAULT_DISTANCE = 20;
@@ -22,7 +25,7 @@ public record LaunchPadSettings(
 
     public static LaunchPadSettings from(ConfigurationSection section) {
         if (section == null) {
-            return new LaunchPadSettings(false, Material.SLIME_BLOCK, DEFAULT_DISTANCE, DEFAULT_HEIGHT, Duration.ofSeconds(1), Duration.ofMillis(250), 1, 32);
+            return new LaunchPadSettings(false, Material.SLIME_BLOCK, DEFAULT_DISTANCE, DEFAULT_HEIGHT, Duration.ofSeconds(1), Duration.ofMillis(250), 1, 32, Optional.empty());
         }
         return new LaunchPadSettings(
             section.getBoolean("enabled", true),
@@ -32,7 +35,8 @@ public record LaunchPadSettings(
             DurationParser.parse(section.getString("cooldown", "1s")),
             DurationParser.parse(section.getString("particles.interval", "250ms")),
             section.getInt("particles.per-block", 1),
-            section.getDouble("particles.view-radius", 32)
+            section.getDouble("particles.view-radius", 32),
+            SoundCue.from(section.getConfigurationSection("sound"))
         );
     }
 
