@@ -1,5 +1,6 @@
 package br.com.muxe.core.common.cqrs.bus;
 
+import br.com.muxe.core.common.concurrent.TaskExecutor;
 import br.com.muxe.core.common.cqrs.command.Command;
 import br.com.muxe.core.common.cqrs.command.CommandBus;
 import br.com.muxe.core.common.cqrs.command.CommandHandler;
@@ -14,6 +15,10 @@ public final class SimpleCommandBus implements CommandBus {
     private final MessageDispatcher dispatcher;
 
     public SimpleCommandBus(Executor executor, List<HandlerMiddleware> middlewares) {
+        this(TaskExecutor.of(executor), middlewares);
+    }
+
+    public SimpleCommandBus(TaskExecutor executor, List<HandlerMiddleware> middlewares) {
         this.dispatcher = new MessageDispatcher(MessageKind.COMMAND, executor, middlewares);
     }
 

@@ -1,5 +1,6 @@
 package br.com.muxe.core.common.cqrs.bus;
 
+import br.com.muxe.core.common.concurrent.TaskExecutor;
 import br.com.muxe.core.common.cqrs.middleware.HandlerMiddleware;
 import br.com.muxe.core.common.cqrs.middleware.MessageKind;
 import br.com.muxe.core.common.cqrs.query.Query;
@@ -14,6 +15,10 @@ public final class SimpleQueryBus implements QueryBus {
     private final MessageDispatcher dispatcher;
 
     public SimpleQueryBus(Executor executor, List<HandlerMiddleware> middlewares) {
+        this(TaskExecutor.of(executor), middlewares);
+    }
+
+    public SimpleQueryBus(TaskExecutor executor, List<HandlerMiddleware> middlewares) {
         this.dispatcher = new MessageDispatcher(MessageKind.QUERY, executor, middlewares);
     }
 
