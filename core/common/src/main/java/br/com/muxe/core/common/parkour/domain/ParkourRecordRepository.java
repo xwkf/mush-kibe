@@ -9,5 +9,7 @@ public interface ParkourRecordRepository {
 
     Optional<Duration> best(String group, UUID playerId);
 
+    Optional<Duration> bestForUpdate(String group, UUID playerId);
+
     void save(String group, UUID playerId, Duration best, Instant achievedAt);
 }

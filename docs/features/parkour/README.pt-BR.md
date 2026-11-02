@@ -239,7 +239,7 @@ As corridas e os recordes não enviam pacote.
 | `core.parkour_placements` | `server_group`, `id` (`start`, `end`, `checkpoint-<n>`), posição (`world`, `x`, `y`, `z`, `yaw`, `pitch`). Chave primária `(server_group, id)`. |
 | `core.parkour_records` | `server_group`, `player_id`, `best_millis`, `achieved_at`. Chave primária `(server_group, player_id)`. |
 
-Criadas pela migração do core `V7__create_parkour.sql`. Os pontos são salvos e removidos pelo `SavePlacementCommand` e pelo `RemovePlacementCommand` (`PlacementKind.PARKOUR`) e lidos com a `FindPlacementsQuery`. Os recordes passam pelo `SubmitParkourTimeCommand(group, playerId, time)` (transação `parkour.submit_time`), que só guarda o tempo quando ele bate o salvo e responde um `ParkourOutcome` (tempo, recorde anterior e se é um novo recorde), e pela `FindParkourRecordQuery(group, playerId)` (transação `parkour.find_record`), os dois registrados pelo `ParkourModule`. As corridas em andamento ficam só na memória.
+Criadas pela migração do core `V7__create_parkour.sql`. Os pontos são salvos e removidos pelo `SavePlacementCommand` e pelo `RemovePlacementCommand` (`PlacementKind.PARKOUR`) e lidos com a `FindPlacementsQuery`. Os recordes passam pelo `SubmitParkourTimeCommand(group, playerId, time)` (transação `parkour.submit_time`), que trava o recorde daquele jogador e mapa até o fim da transação (`pg_advisory_xact_lock`, então duas chegadas ao mesmo tempo são aplicadas uma depois da outra), só guarda o tempo quando ele bate o salvo e responde um `ParkourOutcome` (tempo, recorde anterior e se é um novo recorde), e pela `FindParkourRecordQuery(group, playerId)` (transação `parkour.find_record`), os dois registrados pelo `ParkourModule`. As corridas em andamento ficam só na memória.
 
 ## Métricas
 

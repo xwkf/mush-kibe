@@ -18,6 +18,11 @@ public final class InMemoryParkourRecordRepository implements ParkourRecordRepos
     }
 
     @Override
+    public Optional<Duration> bestForUpdate(String group, UUID playerId) {
+        return best(group, playerId);
+    }
+
+    @Override
     public void save(String group, UUID playerId, Duration best, Instant achievedAt) {
         records.merge(key(group, playerId), best, (current, next) -> next.compareTo(current) < 0 ? next : current);
     }

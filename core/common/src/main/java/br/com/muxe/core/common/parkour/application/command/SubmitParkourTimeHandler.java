@@ -24,7 +24,7 @@ public final class SubmitParkourTimeHandler implements CommandHandler<SubmitPark
     @Override
     public Result<ParkourOutcome> handle(SubmitParkourTimeCommand command) {
         return transactions.inTransaction("parkour.submit_time", () -> {
-            Optional<Duration> previous = records.best(command.group(), command.playerId());
+            Optional<Duration> previous = records.bestForUpdate(command.group(), command.playerId());
             boolean newRecord = previous.map(best -> command.time().compareTo(best) < 0).orElse(true);
             if (newRecord) {
                 records.save(command.group(), command.playerId(), command.time(), clock.instant());

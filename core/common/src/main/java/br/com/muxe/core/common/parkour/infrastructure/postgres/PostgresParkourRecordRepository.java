@@ -16,6 +16,8 @@ public final class PostgresParkourRecordRepository implements ParkourRecordRepos
 
     private static final String FIND = "SELECT best_millis FROM core.parkour_records WHERE server_group = ? AND player_id = ?";
 
+    private static final String LOCK = "SELECT pg_advisory_xact_lock(hashtextextended(?, 0))";
+
     private static final String SAVE = """
         INSERT INTO core.parkour_records (server_group, player_id, best_millis, achieved_at)
         VALUES (?, ?, ?, ?)
@@ -35,6 +37,17 @@ public final class PostgresParkourRecordRepository implements ParkourRecordRepos
         } catch (SQLException exception) {
             throw new PersistenceException("parkour.find_record", exception);
         }
+    }
+
+    @Override
+    public Optional<Duration> bestForUpdate(String group, UUID playerId) {
+        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(LOCK)) {
+            statement.setString(1, "core.parkour_records/" + group + "/" + playerId);
+            statement.executeQuery().close();
+        } catch (SQLException exception) {
+            throw new PersistenceException("parkour.lock_record", exception);
+        }
+        return best(group, playerId);
     }
 
     @Override

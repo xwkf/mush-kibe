@@ -239,7 +239,7 @@ Runs and records send no packet.
 | `core.parkour_placements` | `server_group`, `id` (`start`, `end`, `checkpoint-<n>`), position (`world`, `x`, `y`, `z`, `yaw`, `pitch`). Primary key `(server_group, id)`. |
 | `core.parkour_records` | `server_group`, `player_id`, `best_millis`, `achieved_at`. Primary key `(server_group, player_id)`. |
 
-Created by the core migration `V7__create_parkour.sql`. Points are saved and removed through `SavePlacementCommand` and `RemovePlacementCommand` (`PlacementKind.PARKOUR`) and read with `FindPlacementsQuery`. Records go through `SubmitParkourTimeCommand(group, playerId, time)` (transaction `parkour.submit_time`), which keeps the time only when it beats the stored one and answers a `ParkourOutcome` (time, previous record, whether it is a new record), and `FindParkourRecordQuery(group, playerId)` (transaction `parkour.find_record`), both registered by `ParkourModule`. Runs in progress are memory only.
+Created by the core migration `V7__create_parkour.sql`. Points are saved and removed through `SavePlacementCommand` and `RemovePlacementCommand` (`PlacementKind.PARKOUR`) and read with `FindPlacementsQuery`. Records go through `SubmitParkourTimeCommand(group, playerId, time)` (transaction `parkour.submit_time`), which locks the record of that player and map until the transaction ends (`pg_advisory_xact_lock`, so two finishes at the same time are applied one after the other), keeps the time only when it beats the stored one and answers a `ParkourOutcome` (time, previous record, whether it is a new record), and `FindParkourRecordQuery(group, playerId)` (transaction `parkour.find_record`), both registered by `ParkourModule`. Runs in progress are memory only.
 
 ## Metrics
 
