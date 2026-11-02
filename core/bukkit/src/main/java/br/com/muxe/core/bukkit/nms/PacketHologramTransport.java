@@ -71,6 +71,8 @@ public final class PacketHologramTransport implements HologramTransport {
         private final Method entityId;
         private final Constructor<?> spawnPacket;
         private final Constructor<?> destroyPacket;
+        private final Method dataWatcher;
+        private final Constructor<?> metadataPacket;
 
         private Handles(
             Method worldHandle,
@@ -86,7 +88,9 @@ public final class PacketHologramTransport implements HologramTransport {
             Method setGravity,
             Method entityId,
             Constructor<?> spawnPacket,
-            Constructor<?> destroyPacket
+            Constructor<?> destroyPacket,
+            Method dataWatcher,
+            Constructor<?> metadataPacket
         ) {
             this.worldHandle = worldHandle;
             this.playerHandle = playerHandle;
@@ -102,6 +106,8 @@ public final class PacketHologramTransport implements HologramTransport {
             this.entityId = entityId;
             this.spawnPacket = spawnPacket;
             this.destroyPacket = destroyPacket;
+            this.dataWatcher = dataWatcher;
+            this.metadataPacket = metadataPacket;
         }
 
         private static Optional<Handles> resolve() {
@@ -129,7 +135,9 @@ public final class PacketHologramTransport implements HologramTransport {
                     entityArmorStand.getMethod("setGravity", boolean.class),
                     entity.getMethod("getId"),
                     Class.forName(nms + "PacketPlayOutSpawnEntityLiving").getConstructor(entityLiving),
-                    Class.forName(nms + "PacketPlayOutEntityDestroy").getConstructor(int[].class)
+                    Class.forName(nms + "PacketPlayOutEntityDestroy").getConstructor(int[].class),
+                    entity.getMethod("getDataWatcher"),
+                    Class.forName(nms + "PacketPlayOutEntityMetadata").getConstructor(int.class, Class.forName(nms + "DataWatcher"), boolean.class)
                 ));
             } catch (ReflectiveOperationException | RuntimeException | LinkageError exception) {
                 Bukkit.getLogger().log(Level.WARNING, "[Muxe] Packet holograms are unavailable on this server: " + exception);
@@ -147,7 +155,8 @@ public final class PacketHologramTransport implements HologramTransport {
                 for (int index = 0; index < ids.length; index++) {
                     ids[index] = (int) entityId.invoke(stands.get(index));
                 }
-                PacketHologram hologram = new PacketHologram(viewer, stands, ids);
+                List<String> names = pixels.stream().map(HologramPixel::name).toList();
+                PacketHologram hologram = new PacketHologram(viewer, stands, ids, names);
                 hologram.resend();
                 return hologram;
             } catch (ReflectiveOperationException | RuntimeException exception) {
@@ -178,12 +187,40 @@ public final class PacketHologramTransport implements HologramTransport {
             private final Player viewer;
             private final List<Object> stands;
             private final int[] ids;
+            private final List<String> names;
             private boolean removed;
 
-            private PacketHologram(Player viewer, List<Object> stands, int[] ids) {
+            private PacketHologram(Player viewer, List<Object> stands, int[] ids, List<String> names) {
                 this.viewer = viewer;
                 this.stands = stands;
                 this.ids = ids;
+                this.names = new ArrayList<>(names);
+            }
+
+            @Override
+            public boolean rename(List<String> next) {
+                if (removed || next.size() != stands.size()) {
+                    return false;
+                }
+                if (!viewer.isOnline()) {
+                    return true;
+                }
+                try {
+                    for (int index = 0; index < stands.size(); index++) {
+                        String name = next.get(index);
+                        if (name.equals(names.get(index))) {
+                            continue;
+                        }
+                        Object stand = stands.get(index);
+                        setCustomName.invoke(stand, name);
+                        send(viewer, metadataPacket.newInstance(ids[index], dataWatcher.invoke(stand), true));
+                        names.set(index, name);
+                    }
+                    return true;
+                } catch (ReflectiveOperationException | RuntimeException exception) {
+                    Bukkit.getLogger().log(Level.FINE, "[Muxe] Could not rename a hologram of " + viewer.getName(), exception);
+                    return false;
+                }
             }
 
             @Override

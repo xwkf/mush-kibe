@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -43,6 +44,7 @@ public final class NpcService implements Listener {
     private final Optional<PacketInterceptor> interceptor;
     private volatile BiConsumer<Player, Npc> clickHandler = (player, npc) -> {
     };
+    private volatile BiPredicate<Player, Npc> visibility = (player, npc) -> true;
 
     private NpcService(Plugin plugin, PacketNpcTransport transport, HologramTransport holograms, NpcLabelLayout layout, Function<Npc, List<String>> lines) {
         this.plugin = plugin;
@@ -65,6 +67,10 @@ public final class NpcService implements Listener {
 
     public void onClick(BiConsumer<Player, Npc> handler) {
         this.clickHandler = handler;
+    }
+
+    public void visibleTo(BiPredicate<Player, Npc> rule) {
+        this.visibility = rule;
     }
 
     public void put(Npc npc) {
@@ -109,7 +115,8 @@ public final class NpcService implements Listener {
             Map<String, Seen> seen = viewers.computeIfAbsent(viewer.getUniqueId(), ignored -> new ConcurrentHashMap<>());
             for (Placed placed : npcs.values()) {
                 Seen view = seen.get(placed.npc().id());
-                switch (NpcRange.decide(view != null, distanceSquared(viewer, placed.npc().location()))) {
+                double distance = visibility.test(viewer, placed.npc()) ? distanceSquared(viewer, placed.npc().location()) : Double.POSITIVE_INFINITY;
+                switch (NpcRange.decide(view != null, distance)) {
                     case SHOW -> seen.put(placed.npc().id(), show(viewer, placed));
                     case HIDE -> {
                         seen.remove(placed.npc().id());
@@ -130,7 +137,8 @@ public final class NpcService implements Listener {
         placed.body().show(viewer);
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> placed.body().leaveTabList(viewer), TAB_LIST_DELAY_TICKS);
         List<String> text = currentLines(placed.npc());
-        return new Seen(text, showHologram(viewer, placed.npc(), text));
+        List<HologramPixel> pixels = layout.pixels(placed.npc().location(), text);
+        return new Seen(text, pixels, showHologram(viewer, pixels));
     }
 
     private void hide(Player viewer, Placed placed, Seen seen) {
@@ -145,12 +153,17 @@ public final class NpcService implements Listener {
         if (text.equals(view.lines())) {
             return;
         }
+        List<HologramPixel> pixels = layout.pixels(placed.npc().location(), text);
+        Map<String, Seen> seen = viewers.get(viewer.getUniqueId());
+        if (NpcLabels.sameSpots(view.pixels(), pixels) && view.hologram().rename(pixels.stream().map(HologramPixel::name).toList())) {
+            seen.put(placed.npc().id(), new Seen(text, pixels, view.hologram()));
+            return;
+        }
         view.hologram().remove();
-        viewers.get(viewer.getUniqueId()).put(placed.npc().id(), new Seen(text, showHologram(viewer, placed.npc(), text)));
+        seen.put(placed.npc().id(), new Seen(text, pixels, showHologram(viewer, pixels)));
     }
 
-    private SpawnedHologram showHologram(Player viewer, Npc npc, List<String> text) {
-        List<HologramPixel> pixels = layout.pixels(npc.location(), text);
+    private SpawnedHologram showHologram(Player viewer, List<HologramPixel> pixels) {
         if (pixels.isEmpty()) {
             return SpawnedHologram.NONE;
         }
@@ -204,6 +217,6 @@ public final class NpcService implements Listener {
     private record Placed(Npc npc, NpcBody body) {
     }
 
-    private record Seen(List<String> lines, SpawnedHologram hologram) {
+    private record Seen(List<String> lines, List<HologramPixel> pixels, SpawnedHologram hologram) {
     }
 }
