@@ -160,21 +160,21 @@ parkour:
   holograms:
     start:
       - text: "&b&lPARKOUR"
-        height: 2.075
+        height: 2.56875
       - text: "&aInício"
-        height: 1.79375
+        height: 2.2875
       - text: "&eRecorde pessoal: &7{record}"
-        height: 1.2625
+        height: 1.75625
     checkpoint:
       - text: "&b&lPARKOUR"
-        height: 1.54375
+        height: 2.0375
       - text: "&eCheckpoint &a#{number}"
-        height: 1.2625
+        height: 1.75625
     end:
       - text: "&b&lPARKOUR"
-        height: 1.54375
+        height: 2.0375
       - text: "&cFim"
-        height: 1.2625
+        height: 1.75625
   finish-firework:
     type: BALL_LARGE
     colors:
@@ -189,7 +189,7 @@ parkour:
 |---|---|---|
 | `parkour.no-record` | `...` | Shown as `{record}` to a player without a record. |
 | `parkour.items.restart`, `.checkpoint`, `.stop` | Slots 4, 5 and 6 | `slot` (1 to 9) and `item` (as [configured items](../../development/core-api/README.md#items)). The three items need different slots. |
-| `parkour.holograms.start`, `.checkpoint`, `.end` | See above | Lines of each hologram: `text` (with `&` colors) and `height` above the bottom of the plate block. `{number}` is the checkpoint number; `{record}` the viewer's record. |
+| `parkour.holograms.start`, `.checkpoint`, `.end` | See above | Lines of each hologram: `text` (with `&` colors) and `height` above the bottom of the plate block; the defaults put each line where the reference full-size stands showed their names (stand height + 2.38125). `{number}` is the checkpoint number; `{record}` the viewer's record. |
 | `parkour.finish-firework.type` | `BALL_LARGE` | Firework shape: `BALL`, `BALL_LARGE`, `STAR`, `BURST` or `CREEPER`. |
 | `parkour.finish-firework.colors` | `#55FF55`, `#55FFFF`, `#FF5555` | Colors as `#RRGGBB`. At least one. |
 | `parkour.finish-firework.fade-colors` | none | Colors it fades to, as `#RRGGBB`. |

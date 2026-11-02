@@ -21,6 +21,7 @@ public final class PacketHologramTransport implements HologramTransport {
     public static final double NAME_TAG_OFFSET = 0.5;
     public static final double TEXT_TOP_ABOVE_LABEL = 0.09375;
     public static final double LABEL_HEIGHT = CLIENT_STAND_HEIGHT / 2 + NAME_TAG_OFFSET - TEXT_TOP_ABOVE_LABEL;
+    public static final double FULL_STAND_LABEL_HEIGHT = CLIENT_STAND_HEIGHT + NAME_TAG_OFFSET - TEXT_TOP_ABOVE_LABEL;
 
     private static final PacketHologramTransport INSTANCE = new PacketHologramTransport();
 

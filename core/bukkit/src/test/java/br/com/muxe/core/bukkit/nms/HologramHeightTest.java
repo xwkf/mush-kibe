@@ -24,6 +24,16 @@ class HologramHeightTest {
     }
 
     @Test
+    void aLineAtTheFullStandLabelHeightShowsWhereAFullSizeStandShowsItsName() {
+        double stand = 79.78125;
+
+        double ours = PacketHologramTransport.clientTextTop(PacketHologramTransport.standY(stand + PacketHologramTransport.FULL_STAND_LABEL_HEIGHT));
+
+        assertThat(ours).isCloseTo(stand + REFERENCE_NAME_TAG, within(1e-9));
+        assertThat(PacketHologramTransport.FULL_STAND_LABEL_HEIGHT).isEqualTo(2.38125);
+    }
+
+    @Test
     void gameNpcLinesLandWhereTheReferenceStandsShowedTheirNames() {
         NpcLabelLayout layout = NpcLabelLayout.from(ShopFixtures.CONFIG.getConfigurationSection("npcs.labels"));
         List<DisplayLabel> labels = layout.place(List.of("&d&lNOVIDADE!", "&b&lDUELS", "&e177 jogando"));

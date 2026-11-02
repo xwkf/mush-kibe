@@ -160,21 +160,21 @@ parkour:
   holograms:
     start:
       - text: "&b&lPARKOUR"
-        height: 2.075
+        height: 2.56875
       - text: "&aInício"
-        height: 1.79375
+        height: 2.2875
       - text: "&eRecorde pessoal: &7{record}"
-        height: 1.2625
+        height: 1.75625
     checkpoint:
       - text: "&b&lPARKOUR"
-        height: 1.54375
+        height: 2.0375
       - text: "&eCheckpoint &a#{number}"
-        height: 1.2625
+        height: 1.75625
     end:
       - text: "&b&lPARKOUR"
-        height: 1.54375
+        height: 2.0375
       - text: "&cFim"
-        height: 1.2625
+        height: 1.75625
   finish-firework:
     type: BALL_LARGE
     colors:
@@ -189,7 +189,7 @@ parkour:
 |---|---|---|
 | `parkour.no-record` | `...` | Mostrado como `{record}` para um jogador sem recorde. |
 | `parkour.items.restart`, `.checkpoint`, `.stop` | Slots 4, 5 e 6 | `slot` (1 a 9) e `item` (como os [itens configurados](../../development/core-api/README.pt-BR.md#itens)). Os três itens precisam de slots diferentes. |
-| `parkour.holograms.start`, `.checkpoint`, `.end` | Veja acima | Linhas de cada holograma: `text` (com cores `&`) e `height` acima da base do bloco da placa. `{number}` é o número do checkpoint; `{record}` o recorde de quem olha. |
+| `parkour.holograms.start`, `.checkpoint`, `.end` | Veja acima | Linhas de cada holograma: `text` (com cores `&`) e `height` acima da base do bloco da placa; os padrões colocam cada linha onde os suportes em tamanho cheio da referência mostravam o nome (altura do suporte + 2.38125). `{number}` é o número do checkpoint; `{record}` o recorde de quem olha. |
 | `parkour.finish-firework.type` | `BALL_LARGE` | Formato do fogo de artifício: `BALL`, `BALL_LARGE`, `STAR`, `BURST` ou `CREEPER`. |
 | `parkour.finish-firework.colors` | `#55FF55`, `#55FFFF`, `#FF5555` | Cores no formato `#RRGGBB`. Pelo menos uma. |
 | `parkour.finish-firework.fade-colors` | nenhuma | Cores para as quais ele desbota, no formato `#RRGGBB`. |

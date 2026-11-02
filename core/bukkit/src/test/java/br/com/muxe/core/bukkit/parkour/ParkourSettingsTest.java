@@ -2,15 +2,18 @@ package br.com.muxe.core.bukkit.parkour;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
 
 import br.com.muxe.core.bukkit.display.DisplayLabel;
 import br.com.muxe.core.bukkit.effect.FireworkBurst;
 import br.com.muxe.core.bukkit.effect.SoundCue;
 import br.com.muxe.core.bukkit.hotbar.HotbarItem;
 import br.com.muxe.core.bukkit.item.ItemBuilder;
+import br.com.muxe.core.bukkit.nms.PacketHologramTransport;
 import br.com.muxe.core.bukkit.shop.ShopFixtures;
 import br.com.muxe.core.common.placement.domain.ParkourPoint;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Material;
@@ -50,16 +53,31 @@ class ParkourSettingsTest {
     @Test
     void hologramsFollowTheExportedLayout() {
         assertThat(settings.labelsFor(ParkourPoint.start())).containsExactly(
-            new DisplayLabel("&b&lPARKOUR", 2.075),
-            new DisplayLabel("&aInício", 1.79375),
-            new DisplayLabel("&eRecorde pessoal: &7{record}", 1.2625)
+            new DisplayLabel("&b&lPARKOUR", 2.56875),
+            new DisplayLabel("&aInício", 2.2875),
+            new DisplayLabel("&eRecorde pessoal: &7{record}", 1.75625)
         );
         assertThat(settings.labelsFor(ParkourPoint.checkpoint(2))).containsExactly(
-            new DisplayLabel("&b&lPARKOUR", 1.54375),
-            new DisplayLabel("&eCheckpoint &a#2", 1.2625)
+            new DisplayLabel("&b&lPARKOUR", 2.0375),
+            new DisplayLabel("&eCheckpoint &a#2", 1.75625)
         );
         assertThat(settings.labelsFor(ParkourPoint.end())).extracting(DisplayLabel::text).containsExactly("&b&lPARKOUR", "&cFim");
         assertThat(settings.noRecord()).isEqualTo("...");
+    }
+
+    @Test
+    void labelsShowWhereTheReferenceFullSizeStandsShowedTheirNames() {
+        assertReference(settings.labelsFor(ParkourPoint.start()), 81, 81.1875, 80.90625, 80.375);
+        assertReference(settings.labelsFor(ParkourPoint.checkpoint(1)), 101, 100.65625, 100.375);
+        assertReference(settings.labelsFor(ParkourPoint.end()), 138, 137.65625, 137.375);
+    }
+
+    private static void assertReference(List<DisplayLabel> labels, int plate, double... stands) {
+        assertThat(labels).hasSize(stands.length);
+        for (int index = 0; index < stands.length; index++) {
+            assertThat(plate + labels.get(index).height()).as(labels.get(index).text())
+                .isCloseTo(stands[index] + PacketHologramTransport.FULL_STAND_LABEL_HEIGHT, within(1e-9));
+        }
     }
 
     @Test
