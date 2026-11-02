@@ -28,6 +28,8 @@ The plugin loads its nine modes, gives staff the [arena setup](../../architectur
 
 ### Arena setup
 
+Arenas are set up on the BedWars lobby, not on the match servers, and saved in PostgreSQL: every BedWars server loads them on start and reloads one when the lobby saves it (`minigame.arena_saved`). To add a map, upload its world folder to the root of a BedWars lobby server and run `/arena criar <mode>_<map>` there. Editing puts the staff member in build mode (so the lobby lets them fly in creative and break and place blocks) and `/arena sair` takes them out.
+
 An arena is named `<mode>_<map>`, such as `1v1_slip` or `quartetos_air_nation`. `/arena criar 1v1_slip` converts a world folder named `1v1_slip` or opens an empty world.
 
 | Step | Per team | Kind | Required |
@@ -170,7 +172,7 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 
 | Command | Permission | Description |
 |---|---|---|
-| `/arena ...` | `muxe.minigame.setup` | Creates and sets up arenas. See [arena setup](../../architecture/game-engine/README.md#arena-setup). |
+| `/arena ...` | `muxe.minigame.setup` | Creates and sets up arenas, on the BedWars lobby only. See [arena setup](../../architecture/game-engine/README.md#arena-setup). |
 | `/bedwars entrar <modo>` (`/bw`) | none | Moves the player to a room of that mode, while waiting. |
 | `/bedwars iniciar` | `muxe.bedwars.admin` | Starts the countdown at 10 seconds without the minimum players, for tests. |
 | `/cosmeticos` (`/cosmeticosbw`) | none | Opens Cosméticos do Bed Wars. |
@@ -239,13 +241,13 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | `bedwars.rooms` | BedWars servers → `lobby-group` | volatile, 10 s | Rooms (code, mode, arena, open, players, max) and ready arenas of the server, every 2 s. |
 | `bedwars.join_request` | BedWars lobby → one BedWars server | request, 5 s | Reserves a room of a mode, optionally of an arena or a given room. |
 | `bedwars.join_reply` | BedWars server → lobby | reply | Whether a room was reserved, its code, and whether it was created for this request. |
+| `minigame.arena_saved` | BedWars lobby → `bedwars` group | standard | An arena was saved; the BedWars servers reload it from PostgreSQL. |
 
 ## Data
 
 | File | What it holds |
 |---|---|
-| `plugins/Muxe-BedWars/maps/<arena>.mxw` | The map, in the [Muxe map format](../../decisions/0009-own-map-format-and-match-cells.md). Copied to every BedWars server. |
-| `plugins/Muxe-BedWars/arenas/<arena>.yml` | Mode, display name, teams, points and heights, with `ready: true` when nothing is missing. Copied with the map. |
+| `core.arenas` (game `bedwars`) | One row per arena: mode, `ready`, the definition (display name, teams, points and heights, in YAML) and the map in the [Muxe map format](../../decisions/0009-own-map-format-and-match-cells.md). Migration `V16__create_arenas.sql`. Shared by every BedWars server. |
 | `core.owned_cosmetics`, `core.selected_cosmetics` | Owned and selected cosmetics, category `bedwars-cama`. See [Credits and cosmetics](../credits/README.md). |
 | `<server>/previa_quebra_de_cama/` | The preview world. Deployed to the BedWars lobby only, never committed. |
 | `bedwars.player_stats` | One row per player, mode (and `geral`), period (`diario`, `semanal`, `mensal`, `total`) and period start, with every counter and the XP. Migration `V1__create_player_stats_and_favourite_maps.sql`. |

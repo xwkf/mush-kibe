@@ -5,6 +5,7 @@ import br.com.muxe.core.bukkit.command.framework.Commands;
 import br.com.muxe.core.bukkit.mission.config.MissionConfig;
 import br.com.muxe.core.bukkit.mission.menu.MissionMenus;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
+import br.com.muxe.core.common.messaging.channel.PacketTarget;
 import br.com.muxe.core.common.mission.MissionModule;
 import br.com.muxe.core.common.mission.domain.Mission;
 import br.com.muxe.core.common.server.ServerKind;
@@ -25,19 +26,21 @@ import br.com.muxe.minigame.bedwars.stats.domain.BedWarsStatsRepository;
 import br.com.muxe.minigame.bedwars.stats.infrastructure.postgres.PostgresBedWarsStatsRepository;
 import br.com.muxe.minigame.engine.MinigameEngine;
 import br.com.muxe.minigame.engine.arena.ArenaCatalog;
+import br.com.muxe.minigame.engine.arena.ArenaSavedPacket;
+import br.com.muxe.minigame.engine.arena.ArenaStore;
+import br.com.muxe.minigame.engine.arena.DatabaseArenaStore;
 import br.com.muxe.minigame.engine.mode.GameMode;
 import br.com.muxe.minigame.engine.mode.GameModeLoader;
-import br.com.muxe.minigame.engine.setup.ArenaFiles;
 import br.com.muxe.minigame.engine.setup.session.SetupCommand;
 import br.com.muxe.minigame.engine.setup.session.SetupMessages;
 import br.com.muxe.minigame.engine.setup.session.SetupService;
 import br.com.muxe.minigame.engine.world.server.MatchWorld;
 import br.com.muxe.minigame.engine.world.server.MuxeWorlds;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -81,22 +84,40 @@ public final class BedWarsBootstrap {
         MissionMenus missionMenus = new MissionMenus(GAME, missions, core.queries(), core.mainThread(), core.clock(), MissionModule.ZONE, plugin.getLogger());
         cosmetics = CosmeticFeatures.start(plugin, core, config, messages, commands, lobby);
         cosmetics.onMissions(missionMenus);
+        ArenaSavedPacket.register(core.packetRegistry());
+        ArenaStore arenas = new DatabaseArenaStore(GAME, core.commands(), core.queries());
+        MuxeWorlds worlds = new MuxeWorlds(plugin);
+        worlds.deleteLeftovers();
         if (lobby) {
             lobbyFeatures = LobbyFeatures.start(plugin, core, config, messages, schema, missionMenus);
+            setup = new SetupService(plugin, schema, messages, worlds, arenas);
+            setup.onEnter(player -> core.buildMode().enter(player));
+            setup.onLeave(player -> core.buildMode().leave(player));
+            setup.onSaved(name -> core.packets().publish(PacketTarget.group(GAME), new ArenaSavedPacket(GAME, name)).exceptionally(error -> {
+                plugin.getLogger().log(Level.WARNING, "Could not tell the BedWars servers that arena " + name + " was saved", error);
+                return null;
+            }));
+            setup.start();
+            commands.register(new SetupCommand(setup));
             plugin.getLogger().info("BedWars ready in lobby mode");
             return engine;
         }
-        Path data = plugin.getDataFolder().toPath();
 
-        MuxeWorlds worlds = new MuxeWorlds(plugin);
-        worlds.deleteLeftovers();
         MatchWorld matchWorld = new MatchWorld(plugin, worlds, GAME);
-        ArenaCatalog catalog = new ArenaCatalog(new ArenaFiles(data.resolve("arenas")), data.resolve("maps"), matchWorld::fits, plugin.getLogger());
-        try {
-            plugin.getLogger().info("Loaded " + catalog.loadAll() + " ready arenas");
-        } catch (IOException exception) {
-            plugin.getLogger().log(Level.WARNING, "Could not load the arenas", exception);
-        }
+        ArenaCatalog catalog = new ArenaCatalog(arenas, matchWorld::fits, plugin.getLogger());
+        CompletableFuture.runAsync(() -> {
+            try {
+                plugin.getLogger().info("Loaded " + catalog.loadAll() + " ready arenas");
+            } catch (IOException exception) {
+                plugin.getLogger().log(Level.WARNING, "Could not load the arenas", exception);
+            }
+        }, core.async());
+        core.packets().subscribe(ArenaSavedPacket.TYPE, context -> {
+            if (GAME.equals(context.packet().game())) {
+                CompletableFuture.runAsync(() -> catalog.reload(context.packet().name()).ifPresent(loaded ->
+                    plugin.getLogger().info("Arena " + loaded.name() + " updated")), core.async());
+            }
+        });
 
         rooms = new RoomService(plugin, core, settings, messages, schema, catalog, matchWorld);
         rooms.missions(missions, MissionRules.from(config.getConfigurationSection("missions")));
@@ -114,11 +135,7 @@ public final class BedWarsBootstrap {
         bedbugs.start();
         plugin.getServer().getPluginManager().registerEvents(new MatchListener(plugin, core, rooms, settings, messages, cosmetics::openMenu, bedbugs), plugin);
 
-        setup = new SetupService(plugin, schema, messages, worlds, data);
-        setup.onSaved(rooms::arenaSaved);
-        setup.start();
-        rooms.busyWhen(player -> setup.sessionOf(player).isPresent());
-        commands.register(new SetupCommand(setup), new BedWarsCommand(rooms, messages));
+        commands.register(new BedWarsCommand(rooms, messages));
 
         plugin.getLogger().info("BedWars ready with modes " + engine.modes().keySet());
         return engine;

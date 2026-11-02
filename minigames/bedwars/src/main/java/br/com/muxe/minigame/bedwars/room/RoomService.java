@@ -33,7 +33,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
-import java.util.function.Predicate;
 import java.util.logging.Level;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -58,7 +57,6 @@ public final class RoomService {
     private final Map<UUID, Reservation> reservations = new ConcurrentHashMap<>();
     private final Map<String, List<String>> npcLines = new ConcurrentHashMap<>();
     private final List<BukkitTask> tasks = new ArrayList<>();
-    private Predicate<Player> busy = player -> false;
     private BiConsumer<Player, NpcClick> npcClicks = (player, click) -> {
     };
     private BedBreakHandler bedBreaks = (breaker, world, bed, viewers) -> {
@@ -99,10 +97,6 @@ public final class RoomService {
         matchWorld.stop();
     }
 
-    public void busyWhen(Predicate<Player> busy) {
-        this.busy = busy;
-    }
-
     public void onNpcClick(BiConsumer<Player, NpcClick> handler) {
         this.npcClicks = handler;
     }
@@ -116,9 +110,6 @@ public final class RoomService {
     }
 
     public void arrive(Player player) {
-        if (busy.test(player)) {
-            return;
-        }
         Instant now = core.clock().instant();
         for (RoomRuntime runtime : rooms.values()) {
             if (runtime.canReturn(player.getUniqueId(), now)) {
@@ -228,10 +219,6 @@ public final class RoomService {
 
     public boolean isMatchWorld(Location location) {
         return matchWorld.contains(location.getWorld());
-    }
-
-    public void arenaSaved(String name) {
-        catalog.reload(name);
     }
 
     public void missions(MissionConfig config, MissionRules rules) {
