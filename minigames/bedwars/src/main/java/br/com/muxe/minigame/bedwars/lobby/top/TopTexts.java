@@ -38,7 +38,7 @@ public record TopTexts(
         return new TopTexts(
             section.getString("header", "&b&lTOP 100&r &7({page}/{pages})"),
             section.getString("entry", "&e{position}.&r &f{name}&r &7- &e{value}&r"),
-            section.getString("empty", "&e{position}.&r &f&7Ninguém&r &7- &e0&r"),
+            section.getString("empty", "&e{position}.&r &f&7Ninguém&r &7- &e{value}&r"),
             section.getString("click", "&6&lClique para trocar!"),
             section.getString("period-selected", "&a&l{period}&r"),
             section.getString("period-other", "&7{period}&r"),

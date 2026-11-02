@@ -54,6 +54,13 @@ public final class TopView {
         return texts.xpValue().replace("{xp}", CreditFormat.format(entry.value()));
     }
 
+    public static String emptyValue(TopBoardSettings board, TopTexts texts, TopState state) {
+        if (board.category() == TopCategory.LEVEL && period(board, state) != StatsPeriod.TOTAL) {
+            return texts.xpValue().replace("{xp}", "0");
+        }
+        return "0";
+    }
+
     public static List<String> lines(TopBoardSettings board, TopTexts texts, TopState state, List<TopEntry> entries, Function<UUID, String> colors,
                                      LevelBadges badges, Function<String, String> modeTitle) {
         List<String> lines = new ArrayList<>();
@@ -67,7 +74,7 @@ public final class TopView {
                 String value = value(board, texts, state, entry, badges);
                 lines.add(texts.entry().replace("{position}", String.valueOf(position)).replace("{name}", colors.apply(entry.playerId()) + entry.name()).replace("{value}", value));
             } else {
-                lines.add(texts.empty().replace("{position}", String.valueOf(position)));
+                lines.add(texts.empty().replace("{position}", String.valueOf(position)).replace("{value}", emptyValue(board, texts, state)));
             }
         }
         lines.add(texts.click());

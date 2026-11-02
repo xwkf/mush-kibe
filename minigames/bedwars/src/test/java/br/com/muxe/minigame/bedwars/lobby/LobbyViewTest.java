@@ -85,6 +85,12 @@ class LobbyViewTest {
 
         assertThat(lines.subList(2, 12)).allMatch(line -> line.endsWith("&f&7Ninguém&r &7- &e0&r"));
         assertThat(lines.get(2)).isEqualTo("&e1.&r &f&7Ninguém&r &7- &e0&r");
+
+        TopState monthly = new TopState();
+        monthly.nextPeriod(3);
+        List<String> xp = TopView.lines(BOARDS.getLast(), TEXTS, monthly, List.of(), id -> "&b", BADGES, mode -> mode);
+        assertThat(xp.get(2)).isEqualTo("&e1.&r &f&7Ninguém&r &7- &e0 XP&r");
+        assertThat(xp.get(13)).isEqualTo("&7Total&r &a&lMensal&r &7Semanal&r");
         assertThat(TEXTS.clickSound()).contains(Sound.CLICK);
     }
 

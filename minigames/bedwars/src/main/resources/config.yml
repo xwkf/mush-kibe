@@ -2409,7 +2409,7 @@ lobby:
         modes: false
     header: "&b&lTOP 100&r &7({page}/{pages})"
     entry: "&e{position}.&r &f{name}&r &7- &e{value}&r"
-    empty: "&e{position}.&r &f&7Ninguém&r &7- &e0&r"
+    empty: "&e{position}.&r &f&7Ninguém&r &7- &e{value}&r"
     click: "&6&lClique para trocar!"
     period-selected: "&a&l{period}&r"
     period-other: "&7{period}&r"
