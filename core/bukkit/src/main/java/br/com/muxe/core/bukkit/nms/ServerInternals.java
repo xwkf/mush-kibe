@@ -3,6 +3,7 @@ package br.com.muxe.core.bukkit.nms;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Optional;
 import java.util.logging.Level;
 import org.bukkit.Bukkit;
@@ -60,6 +61,16 @@ final class ServerInternals {
 
     void send(Player player, Object packet) throws ReflectiveOperationException {
         sendPacket.invoke(connection(player), packet);
+    }
+
+    static Field fieldOfType(Class<?> owner, Class<?> type) throws NoSuchFieldException {
+        for (Field field : owner.getDeclaredFields()) {
+            if (!Modifier.isStatic(field.getModifiers()) && field.getType().equals(type)) {
+                field.setAccessible(true);
+                return field;
+            }
+        }
+        throw new NoSuchFieldException(owner.getSimpleName() + " has no field of type " + type.getSimpleName());
     }
 
     static Constructor<?> constructor(Class<?> type, Class<?>... parameters) throws NoSuchMethodException {

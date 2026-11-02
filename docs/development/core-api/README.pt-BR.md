@@ -229,6 +229,21 @@ item:
 
 O `BlockUpdates.resend(Block)` (pacote `br.com.muxe.core.bukkit.nms`) envia um bloco de novo para os jogadores que o veem, para mudanças que o cliente não percebe sozinho, como uma textura nova num bloco de cabeça. Ele não faz nada quando os internos do servidor estão ausentes.
 
+### Máscaras de bloco
+
+`BlockMask.start(plugin)` (pacote `br.com.muxe.core.bukkit.nms`) devolve uma máscara que mostra a um jogador um bloco falso no lugar de um real, e o mantém falso mesmo quando o servidor envia o bloco real de novo: o servidor 1.8 reenvia um bloco quando uma quebra é abortada ou um clique é cancelado, sem nenhum evento do Bukkit.
+
+```java
+Optional<BlockMask> mask = BlockMask.start(plugin);
+mask.ifPresent(blocks -> blocks.hide(player, location, Material.AIR, (byte) 0));
+mask.ifPresent(blocks -> blocks.reveal(player, location));
+```
+
+- Um handler Netty de saída troca todo `PacketPlayOutBlockChange` de uma posição mascarada, só para aquele jogador, por um pacote novo com o bloco falso. O pacote original nunca é alterado, porque a mesma instância pode ir para outros jogadores.
+- `reveal` tira a máscara e envia o bloco real. Sair do servidor tira todas as máscaras do jogador.
+- Pacotes de vários blocos e de chunk não são mascarados.
+- A prévia de cosméticos do BedWars usa isso para manter a cama escondida enquanto a animação roda.
+
 ## Menus
 
 Pacote `br.com.muxe.core.bukkit.menu`. O Muxe-Core registra o listener, então qualquer plugin pode abrir menus.

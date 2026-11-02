@@ -5,7 +5,6 @@ import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -116,11 +115,11 @@ public final class PacketInterceptor implements Listener {
             this.internals = internals;
             Class<?> connection = internals.nms("PlayerConnection");
             Class<?> manager = internals.nms("NetworkManager");
-            this.networkManager = fieldOfType(connection, manager);
-            this.channel = fieldOfType(manager, Channel.class);
+            this.networkManager = ServerInternals.fieldOfType(connection, manager);
+            this.channel = ServerInternals.fieldOfType(manager, Channel.class);
             this.useEntity = internals.nms("PacketPlayInUseEntity");
-            this.entityId = fieldOfType(useEntity, int.class);
-            this.action = fieldOfType(useEntity, internals.nms("PacketPlayInUseEntity$EnumEntityUseAction"));
+            this.entityId = ServerInternals.fieldOfType(useEntity, int.class);
+            this.action = ServerInternals.fieldOfType(useEntity, internals.nms("PacketPlayInUseEntity$EnumEntityUseAction"));
         }
 
         private static Optional<Handles> resolve(ServerInternals internals) {
@@ -140,16 +139,6 @@ public final class PacketInterceptor implements Listener {
                 Bukkit.getLogger().log(Level.FINE, "[Muxe] Could not reach the connection of " + player.getName(), exception);
                 return Optional.empty();
             }
-        }
-
-        private static Field fieldOfType(Class<?> owner, Class<?> type) throws NoSuchFieldException {
-            for (Field field : owner.getDeclaredFields()) {
-                if (!Modifier.isStatic(field.getModifiers()) && field.getType().equals(type)) {
-                    field.setAccessible(true);
-                    return field;
-                }
-            }
-            throw new NoSuchFieldException(owner.getSimpleName() + " has no field of type " + type.getSimpleName());
         }
     }
 }

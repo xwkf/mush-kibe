@@ -229,6 +229,21 @@ item:
 
 `BlockUpdates.resend(Block)` (package `br.com.muxe.core.bukkit.nms`) sends a block again to the players who see it, for changes the client does not pick up by itself, such as a new texture on a head block. It does nothing when the server internals are missing.
 
+### Block masks
+
+`BlockMask.start(plugin)` (package `br.com.muxe.core.bukkit.nms`) returns a mask that shows one player a fake block in place of a real one, and keeps it fake even when the server sends the real block again: the 1.8 server resends a block when a dig is aborted or a click is cancelled, without any Bukkit event.
+
+```java
+Optional<BlockMask> mask = BlockMask.start(plugin);
+mask.ifPresent(blocks -> blocks.hide(player, location, Material.AIR, (byte) 0));
+mask.ifPresent(blocks -> blocks.reveal(player, location));
+```
+
+- An outgoing Netty handler replaces every `PacketPlayOutBlockChange` of a masked position, for that player only, with a new packet carrying the fake block. The original packet is never changed, since the same instance can go to other players.
+- `reveal` removes the mask and sends the real block. Quitting removes every mask of the player.
+- Multi-block and chunk packets are not masked.
+- The BedWars cosmetic preview uses it to keep the bed hidden while the animation plays.
+
 ## Menus
 
 Package `br.com.muxe.core.bukkit.menu`. Muxe-Core registers the listener, so any plugin can open menus.
