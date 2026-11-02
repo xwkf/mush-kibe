@@ -1306,6 +1306,7 @@ messages:
   parkour-returned: "&b&lPARKOUR &aVocê voltou para o checkpoint #{number}."
   parkour-finished: "&b&lPARKOUR &aVocê finalizou o &eparkour &aem &7{time}&a!"
   parkour-new-record: "&b&lPARKOUR &eVocê atingiu um novo &brecorde! &a{previous} &7-> &a{time}"
+  parkour-best-time: "&b&lPARKOUR &eO seu melhor tempo foi de &a{best}&e."
   parkour-stopped: "&b&lPARKOUR &cVocê saiu do parkour."
   parkour-usage:
     - "&eUso do /parkour:"

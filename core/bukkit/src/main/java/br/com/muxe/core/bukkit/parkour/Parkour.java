@@ -237,10 +237,7 @@ public final class Parkour implements Listener {
         }
         records.put(player.getUniqueId(), Optional.of(outcome.best()));
         displays.refresh(player);
-        if (outcome.newRecord() && outcome.previous().isPresent()) {
-            player.sendMessage(messages.get("parkour-new-record",
-                "previous", ParkourTime.format(outcome.previous().get()), "time", ParkourTime.format(outcome.time())));
-        }
+        ParkourNotice.after(outcome).ifPresent(notice -> player.sendMessage(messages.get(notice.key(), notice.placeholders())));
     }
 
     private void leave(Player player) {

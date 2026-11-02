@@ -37,7 +37,7 @@ A timed parkour in the lobby: a start, numbered checkpoints and an end, marked o
 - Finishing:
   - shows `&b&lPARKOUR &aVocê finalizou o &eparkour &aem &7{time}&a!`;
   - explodes a firework right at the end plate (green, cyan and red, large ball, by default);
-  - saves the time. When it beats a previous record, the player also sees `&b&lPARKOUR &eVocê atingiu um novo &brecorde! &a{previous} &7-> &a{time}`. The first finish of a player becomes their record without that message;
+  - saves the time. When it beats a previous record, the player also sees `&b&lPARKOUR &eVocê atingiu um novo &brecorde! &a{previous} &7-> &a{time}`. When it does not, they see `&b&lPARKOUR &eO seu melhor tempo foi de &a{best}&e.` with the record they keep. The first finish of a player becomes their record without either message;
   - ends the run, gives back the items and the flight the player had.
 - Quitting the server ends the run. Runs are kept in memory only: switching lobbies starts over.
 
@@ -210,6 +210,7 @@ All in `messages` of `plugins/Muxe-Core/config.yml`:
 | `parkour-returned` | `&b&lPARKOUR &aVocê voltou para o checkpoint #{number}.` |
 | `parkour-finished` | `&b&lPARKOUR &aVocê finalizou o &eparkour &aem &7{time}&a!` |
 | `parkour-new-record` | `&b&lPARKOUR &eVocê atingiu um novo &brecorde! &a{previous} &7-> &a{time}` |
+| `parkour-best-time` | `&b&lPARKOUR &eO seu melhor tempo foi de &a{best}&e.` |
 | `parkour-stopped` | `&b&lPARKOUR &cVocê saiu do parkour.` |
 | `parkour-usage` | List: `&eUso do /parkour:` and one line per subcommand. |
 | `parkour-invalid-point` | `&cUse inicio, fim ou o número do checkpoint (1 ou mais).` |
@@ -257,6 +258,7 @@ None of its own. `muxe_db_transaction_seconds{operation="parkour.submit_time"|"p
 - [x] The end counts only after every checkpoint, and gives the time since the start.
 - [x] Going back to the checkpoint teleports to the last one reached, or restarts at the start before the first.
 - [x] A time is saved only when it beats the stored record, and the outcome tells the previous record.
+- [x] Finishing shows the new record, or the best time when the record stands (`ParkourNoticeTest`).
 - [x] Points can be marked, moved and removed, and points and records survive a round trip through PostgreSQL.
 - [x] Each server group has its own records.
 - [x] Times are formatted as `1m 22,704s`.
