@@ -62,7 +62,7 @@ Quem chega num servidor de BedWars volta para a partida que deixou, se ainda pud
 **Durante a partida:**
 
 - **Times:** o placar segue o anexo 5 (2 ou 4 times) ou o anexo 12 (8 times). Um time mostra `&a✔` enquanto tem cama e alguém conectado, `&e✔` quando todos saíram mas ainda podem voltar, o número de jogadores vivos depois que a cama cai, e `&c✘` quando é eliminado. Times sem ninguém já começam fora.
-- **Name tags e tab:** a letra e a cor do time (`A` em azul), pelo `MuxeCore.nameTags()`, mais a vida no tab.
+- **Name tags e tab:** a letra e a cor do time (`A` em azul), pelo `MuxeCore.nameTags()`. O tab mostra a vida dos jogadores vivos como um número amarelo à direita do nome.
 - **Vida abaixo do nome:** os jogadores vivos mostram a vida embaixo do nome (`20 ❤`, com o coração de `messages.health-below-name`), pela [vida abaixo do nome](../../architecture/game-engine/README.pt-BR.md#vida-abaixo-do-nome) da engine. Espectadores e quem espera renascer não mostram nada.
 - **Chat:** só a sala vê, com o time antes do formato de sempre: `[A] medalha tag nome`. Nos modos solo todos da sala leem. Nos modos com time, durante a partida, o chat chega só ao time do jogador; `/g <mensagem>` fala com a sala toda, com `&6[G]` antes (`messages.global-prefix`). O chat roda fora da thread principal, então lê um retrato de cada sala (quem ouve quem e o prefixo do time) refeito na thread principal a cada segundo e sempre que alguém entra ou sai.
 - **Camas:** quebrar a cama de um inimigo manda `CAMA DESTRUÍDA` para todos e `+100 XP` para quem quebrou. Um integrante do time que estava fora é eliminado, e a kill final vai para quem quebrou a cama. Ninguém quebra a própria cama.

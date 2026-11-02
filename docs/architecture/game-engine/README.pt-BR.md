@@ -35,7 +35,7 @@ A `StartCountdown` segue as mesmas regras em todos os jogos e modos:
 
 ## Vida abaixo do nome
 
-`HealthBelowName` mostra a vida dos jogadores vivos embaixo do nome, como `20 ❤`, em todos os minigames. O jogo chama `show(placar, vivos)` para o placar de cada jogador algumas vezes por segundo (o BedWars a cada 5 ticks), com os nomes dos vivos e a vida arredondada para cima (`points(vida)`). Quem sai da lista perde a linha na hora. O texto (o coração) vem das mensagens do jogo.
+`HealthDisplay` mostra a vida dos jogadores vivos embaixo do nome, como `20 ❤`, e como um número amarelo à direita do nome no tab, em todos os minigames. O jogo chama `show(placar, vivos)` para o placar de cada jogador algumas vezes por segundo (o BedWars a cada 5 ticks), com os nomes dos vivos e a vida arredondada para cima (`points(vida)`). Quem sai da lista perde as duas na hora. O texto (o coração) vem das mensagens do jogo.
 
 ## Setup de arenas
 

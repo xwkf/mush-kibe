@@ -35,7 +35,7 @@ Each game owns the lifecycle of its matches, because games differ too much to sh
 
 ## Health below the name
 
-`HealthBelowName` shows the health of the players alive under their names, as `20 ❤`, in every minigame. The game calls `show(scoreboard, alive)` for each viewer's scoreboard a few times a second (BedWars every 5 ticks), with the names of the players alive and their health rounded up (`points(health)`). A player missing from the list loses the line at once. The label (the heart) comes from the game's messages.
+`HealthDisplay` shows the health of the players alive under their names, as `20 ❤`, and as a yellow number to the right of the name in the tab list, in every minigame. The game calls `show(scoreboard, alive)` for each viewer's scoreboard a few times a second (BedWars every 5 ticks), with the names of the players alive and their health rounded up (`points(health)`). A player missing from the list loses both at once. The label (the heart) comes from the game's messages.
 
 ## Arena setup
 

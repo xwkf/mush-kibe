@@ -23,7 +23,7 @@ import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
 import br.com.muxe.minigame.bedwars.settings.MatchSounds;
 import br.com.muxe.minigame.bedwars.stats.application.command.RecordMatchCommand;
 import br.com.muxe.minigame.bedwars.stats.domain.MatchOutcome;
-import br.com.muxe.minigame.engine.match.HealthBelowName;
+import br.com.muxe.minigame.engine.match.HealthDisplay;
 import br.com.muxe.minigame.engine.match.StartCountdown.Change;
 import br.com.muxe.minigame.engine.match.StartCountdown.Second;
 import br.com.muxe.minigame.engine.setup.Point;
@@ -61,9 +61,6 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scoreboard.DisplaySlot;
-import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.util.Vector;
 
 public final class RoomRuntime {
@@ -71,7 +68,6 @@ public final class RoomRuntime {
     static final GameMode PLAYER_MODE = GameMode.SURVIVAL;
 
     private static final int RESEND_EVERY = 3;
-    private static final String HEALTH_OBJECTIVE = "muxe-vida";
     private static final Map<Material, String> LOOT = new LinkedHashMap<>();
     private static final int BED_SEARCH = 2;
     private static final BlockFace[] SIDES = {BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST};
@@ -199,12 +195,12 @@ public final class RoomRuntime {
         Map<String, Integer> alive = new HashMap<>();
         for (Player player : online) {
             room.player(player.getUniqueId()).filter(RoomPlayer::isAlive)
-                .ifPresent(roomPlayer -> alive.put(player.getName(), HealthBelowName.points(player.getHealth())));
+                .ifPresent(roomPlayer -> alive.put(player.getName(), HealthDisplay.points(player.getHealth())));
         }
         for (Player player : online) {
             Sidebar sidebar = sidebars.get(player.getUniqueId());
             if (sidebar != null) {
-                service.healthTags().show(sidebar.scoreboard(), alive);
+                service.healthDisplay().show(sidebar.scoreboard(), alive);
             }
         }
     }
@@ -245,7 +241,6 @@ public final class RoomRuntime {
         room.arena().extraGold().forEach(point -> forges.island(null, location(point), Material.GOLD_INGOT, settings.forges().gold()));
         for (Player player : online()) {
             room.player(player.getUniqueId()).ifPresent(roomPlayer -> spawn(player, roomPlayer));
-            healthInTab(player);
             core.nameTags().refresh(player);
         }
         room.teams().keySet().forEach(color -> {
@@ -415,7 +410,6 @@ public final class RoomRuntime {
         reset(player, GameMode.SPECTATOR);
         player.teleport(location(room.arena().spectator()));
         sidebars.put(player.getUniqueId(), Sidebar.create(player));
-        healthInTab(player);
         core.nameTags().refresh(player);
         broadcast(messages.get("reconnected", "player", coloredName(roomPlayer)));
         refreshScoreboards();
@@ -888,16 +882,6 @@ public final class RoomRuntime {
             title.send(player);
             MatchSounds.play(settings.sounds().countdown(), player);
         });
-    }
-
-    private void healthInTab(Player player) {
-        Sidebar sidebar = sidebars.get(player.getUniqueId());
-        Scoreboard board = sidebar == null ? player.getScoreboard() : sidebar.scoreboard();
-        Objective health = board.getObjective(HEALTH_OBJECTIVE);
-        if (health == null) {
-            health = board.registerNewObjective(HEALTH_OBJECTIVE, "health");
-            health.setDisplaySlot(DisplaySlot.PLAYER_LIST);
-        }
     }
 
     private static Map<Material, Integer> resources(Player player) {

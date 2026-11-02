@@ -62,7 +62,7 @@ A player who reaches a BedWars server goes back to the match they left if they s
 **During the match:**
 
 - **Teams:** the scoreboard follows annex 5 (2 or 4 teams) or annex 12 (8 teams). A team shows `&a✔` while it has a bed and someone connected, `&e✔` when everyone left but can still return, the number of players alive once the bed is gone, and `&c✘` when eliminated. Teams nobody joined are out from the start.
-- **Name tags and tab list:** the team letter and colour (`A` in blue), through `MuxeCore.nameTags()`, plus health in the tab list.
+- **Name tags and tab list:** the team letter and colour (`A` in blue), through `MuxeCore.nameTags()`. The tab list shows the health of players alive as a yellow number to the right of the name.
 - **Health below the name:** players alive show their health under the name (`20 ❤`, the heart from `messages.health-below-name`), through the engine's [health below the name](../../architecture/game-engine/README.md#health-below-the-name). Spectators and players waiting to respawn show nothing.
 - **Chat:** only the room sees it, with the team before the usual format: `[A] medal tag name`. In solo modes everyone in the room reads it. In team modes, while the match is played, the chat reaches only the player's team; `/g <mensagem>` talks to the whole room with `&6[G]` before it (`messages.global-prefix`). The chat runs off the main thread, so it reads a snapshot of each room (who hears whom and the team prefix) rebuilt on the main thread every second and whenever someone joins or leaves.
 - **Beds:** breaking an enemy bed sends `CAMA DESTRUÍDA` to everyone and `+100 XP` to the breaker. A team member who was away is eliminated, and the final kill goes to whoever broke the bed. Players cannot break their own bed.

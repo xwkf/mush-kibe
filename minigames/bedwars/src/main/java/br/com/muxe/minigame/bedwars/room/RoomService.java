@@ -18,7 +18,7 @@ import br.com.muxe.minigame.bedwars.network.RoomInfo;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
 import br.com.muxe.minigame.engine.arena.ArenaCatalog;
 import br.com.muxe.minigame.engine.arena.LoadedArena;
-import br.com.muxe.minigame.engine.match.HealthBelowName;
+import br.com.muxe.minigame.engine.match.HealthDisplay;
 import br.com.muxe.minigame.engine.match.StartCountdown;
 import br.com.muxe.minigame.engine.room.RoomCodes;
 import br.com.muxe.minigame.engine.team.TeamColor;
@@ -72,7 +72,7 @@ public final class RoomService {
     private MissionRules missionRules = MissionRules.DEFAULT;
     private volatile Map<UUID, ChatView> chat = Map.of();
     private final Set<UUID> shouting = ConcurrentHashMap.newKeySet();
-    private final HealthBelowName healthTags;
+    private final HealthDisplay healthDisplay;
     private volatile int activeMatches;
 
     public RoomService(JavaPlugin plugin, MuxeCore core, BedWarsSettings settings, MessageCatalog messages, BedWarsSchema schema, ArenaCatalog catalog, MatchWorld matchWorld) {
@@ -80,7 +80,7 @@ public final class RoomService {
         this.core = core;
         this.settings = settings;
         this.messages = messages;
-        this.healthTags = new HealthBelowName(messages.get("health-below-name"));
+        this.healthDisplay = new HealthDisplay(messages.get("health-below-name"));
         this.schema = schema;
         this.catalog = catalog;
         this.matchWorld = matchWorld;
@@ -383,8 +383,8 @@ public final class RoomService {
         }
     }
 
-    HealthBelowName healthTags() {
-        return healthTags;
+    HealthDisplay healthDisplay() {
+        return healthDisplay;
     }
 
     private void clicked(Player player, Npc npc) {
