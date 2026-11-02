@@ -102,12 +102,13 @@ O jogador escolhe uma animação que toca quando ele quebra uma cama inimiga. Os
 
 - **Menu do Bed Wars** (esmeralda): na sala de espera dos servidores de BedWars e no slot 3 da hotbar do lobby de BedWars. Cinco linhas, como no export de referência: `Missões` (slot 11), `Cosméticos` (baiacu, slot 13), `Lista de Níveis` (slot 15, com as insígnias de nível na descrição), `Compra rápida` (29), `Editor de hotbar` (31) e `Preferências` (33). Por enquanto só **Cosméticos** funciona; Missões, Compra rápida, Editor de hotbar e Preferências respondem `coming-soon`.
 - **Cosméticos do Bed Wars**: a categoria **Destruição de Cama** mostra `possuídos/total (porcentagem%)` e o cosmético selecionado. As outras categorias, **Cor preferida** e o botão **Loja** respondem "em breve".
-- **Destruição de Cama (página/páginas)**: 28 itens por página. A página 1 começa com **Nenhuma** e **Aleatório** (o padrão). Primeiro vêm os cosméticos possuídos, depois os à venda e por último os indisponíveis, cada grupo na ordem da configuração.
+- **Destruição de Cama (página/páginas)**: 28 itens por página. A página 1 começa com **Nenhuma** e **Aleatório** (o padrão). Primeiro vêm os cosméticos possuídos em ordem alfabética, depois todos os outros em ordem alfabética (`CosmeticOrder`, a regra de todo menu de cosméticos da rede).
   - Possuído: botão esquerdo seleciona, botão direito visualiza. O selecionado brilha e mostra `Já selecionado.`
   - À venda: botão esquerdo compra com créditos (preço por estrelas: 750, 900, 1.300, 1.750, 2.000), botão direito visualiza. Quando faltam créditos, a lore mostra `Faltam <n> créditos!`.
   - Indisponível (cosméticos de evento que o jogador não tem, ou cosméticos ainda sem animação): botão direito visualiza quando existe animação.
   - Os cosméticos `Incluso no ULTRA` são de todos que têm `muxe.cosmetic.ultra`.
   - Quem tem `muxe.cosmetic.all` (ops, por padrão) possui todos os cosméticos. Os que não têm animação continuam `Indisponível`.
+  - Na prévia, a cama some para quem está vendo assim que é atingida e continua escondida até a volta, mesmo depois que a animação restaura os seus próprios blocos.
 - São 30 cosméticos; 13 têm animação (Ajudante de Papai Noel, Avalanche, Coelhos, Passarinhos, Friaca, Fogos de Artifício, Colheita de Abóboras, Apavorante, Deserto, Tinta, Bola de Canhão, Enderman, Sal na Ferida). Os outros 17 mostram `Indisponível.` até a animação deles existir.
 - As animações são feitas só com pacotes (armor stands, falling blocks, itens, fogos, partículas, sons e blocos falsos), então o mundo real nunca muda. São reproduções nossas do comportamento gravado, com sprites originais e cabeças da comunidade.
 

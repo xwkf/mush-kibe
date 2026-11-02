@@ -201,10 +201,13 @@ public final class BedPreview implements PreviewGate, Listener {
         ActionBar.send(viewer, "");
         session.timeout.cancel();
         hideBed(viewer);
+        plugin.getServer().getScheduler().runTask(plugin, () -> hideBed(viewer));
         Location at = viewer.getLocation();
         Vec breaker = new Vec(at.getX(), at.getY(), at.getZ());
-        session.playback = animator.play(session.animation, world, settings.bed(), breaker, () -> List.of(viewer), () ->
-            session.timeout = plugin.getServer().getScheduler().runTaskLater(plugin, () -> finish(viewer), Math.max(1, settings.returnDelay().toMillis() / 50)));
+        session.playback = animator.play(session.animation, world, settings.bed(), breaker, () -> List.of(viewer), () -> {
+            hideBed(viewer);
+            session.timeout = plugin.getServer().getScheduler().runTaskLater(plugin, () -> finish(viewer), Math.max(1, settings.returnDelay().toMillis() / 50));
+        });
     }
 
     @SuppressWarnings("deprecation")
