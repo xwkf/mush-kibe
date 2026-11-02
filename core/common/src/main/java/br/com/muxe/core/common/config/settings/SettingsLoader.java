@@ -1,5 +1,6 @@
 package br.com.muxe.core.common.config.settings;
 
+import br.com.muxe.core.common.concurrent.bounded.ExecutorLimits;
 import br.com.muxe.core.common.config.ConfigException;
 import br.com.muxe.core.common.config.secret.SecretResolver;
 import br.com.muxe.core.common.config.source.ConfigSource;
@@ -28,7 +29,8 @@ public final class SettingsLoader {
             section("database", () -> database(source)),
             section("redis", () -> redis(source)),
             section("messaging", () -> messaging(source)),
-            section("metrics", () -> metrics(source))
+            section("metrics", () -> metrics(source)),
+            section("cqrs", () -> cqrs(source))
         );
     }
 
@@ -79,6 +81,14 @@ public final class SettingsLoader {
             source.bool("metrics.enabled", true),
             source.string("metrics.host", "127.0.0.1"),
             source.integer("metrics.port", 9400)
+        );
+    }
+
+    private ExecutorLimits cqrs(ConfigSource source) {
+        return new ExecutorLimits(
+            source.integer("cqrs.max-concurrent", ExecutorLimits.DEFAULT_MAX_CONCURRENT),
+            source.integer("cqrs.max-queued", ExecutorLimits.DEFAULT_MAX_QUEUED),
+            source.duration("cqrs.queue-timeout", ExecutorLimits.DEFAULT_QUEUE_TIMEOUT)
         );
     }
 

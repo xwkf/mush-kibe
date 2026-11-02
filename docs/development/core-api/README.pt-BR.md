@@ -24,7 +24,7 @@ O Muxe-Core carrega todas as classes de `br.com.muxe.core` quando o servidor o c
 | `metrics()` | O registro de métricas. |
 | `servers()` | O diretório de servidores vivos. |
 | `network()` | `NetworkGateway`: envia um jogador para um servidor ou grupo. |
-| `mainThread()`, `async()` | Executores para a thread do servidor e para trabalho bloqueante. |
+| `mainThread()`, `async()` | Executores para a thread do servidor e para trabalho bloqueante. `async()` não é limitado: envie trabalho de banco como comando ou consulta, cujo bus é limitado (veja [Contrapressão](../../architecture/observability/README.pt-BR.md#contrapressão)). |
 | `clock()` | O relógio para injetar nos seus serviços. |
 | `messages()` | Mensagens compartilhadas do Muxe-Core. |
 | `permissions()` | Cargos, tags e permissões dos jogadores online (veja [Cargos e permissões](#cargos-e-permissões)). |

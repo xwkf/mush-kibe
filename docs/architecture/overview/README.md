@@ -49,6 +49,7 @@ Query   ──► QueryBus   ──► middlewares ──► QueryHandler   ─�
 - **Queries** never change state (`FindAccountQuery`, `HasCredentialQuery`). A query answers a read model with only the fields its callers need (`AccountProfileView`, `AccountIdentityView`), not the domain object the commands change, so the domain can evolve without breaking readers.
 - **Handlers** are registered once, by message class. Registering two handlers for the same message fails at startup.
 - **Buses are asynchronous.** `dispatch` and `ask` return a `CompletableFuture` and run handlers on the core's virtual-thread executor, so platform code never blocks the main thread.
+- **Buses are bounded.** Each bus runs at most `cqrs.max-concurrent` handlers and queues up to `cqrs.max-queued` more; beyond that, or after `cqrs.queue-timeout` in the queue, the future fails with `ExecutorSaturatedException`. See [Backpressure](../observability/README.md#backpressure).
 - **Middlewares** wrap every handler. `MetricsMiddleware` records `muxe_cqrs_handle_seconds` with the message name and outcome (`success`, `failure`, `error`). New cross-cutting concerns (auditing, tracing) are new middlewares.
 - **Read models can diverge from write models** as features grow: a query handler may read from Redis or a denormalized table while commands write to the normalized tables.
 
@@ -61,7 +62,7 @@ Query   ──► QueryBus   ──► middlewares ──► QueryHandler   ─�
 3. PostgreSQL pool, then the `core` schema migrations.
 4. Redis connection and the Redis transport.
 5. Packet registry, idempotency guard, envelope codec and the packet bus.
-6. Server directory, CQRS buses and the account module.
+6. Server directory, CQRS buses (each behind its own `BoundedExecutor`) and the account module.
 7. Heartbeat and the metrics HTTP endpoint.
 
 If any step fails, everything already opened is closed and startup fails with `RuntimeStartupException`. The Spigot core shuts the server down (configurable), and the proxy stops: a node that cannot reach PostgreSQL or Redis must not accept players.

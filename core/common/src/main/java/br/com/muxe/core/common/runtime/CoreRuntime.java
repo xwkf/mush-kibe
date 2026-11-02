@@ -7,6 +7,7 @@ import br.com.muxe.core.common.account.infrastructure.postgres.PostgresAccountRe
 import br.com.muxe.core.common.arena.ArenaModule;
 import br.com.muxe.core.common.arena.infrastructure.postgres.PostgresArenaRepository;
 import br.com.muxe.core.common.concurrent.MuxeExecutors;
+import br.com.muxe.core.common.concurrent.bounded.BoundedExecutor;
 import br.com.muxe.core.common.config.settings.MuxeSettings;
 import br.com.muxe.core.common.cosmetic.CosmeticModule;
 import br.com.muxe.core.common.cosmetic.infrastructure.postgres.PostgresCosmeticRepository;
@@ -247,8 +248,8 @@ public final class CoreRuntime implements AutoCloseable {
             metrics.gauge("muxe_network_players_online", directory::onlinePlayers);
 
             List<HandlerMiddleware> middlewares = List.of(new MetricsMiddleware(metrics));
-            commands = new SimpleCommandBus(executors.io(), middlewares);
-            queries = new SimpleQueryBus(executors.io(), middlewares);
+            commands = new SimpleCommandBus(new BoundedExecutor("commands", executors.io(), settings.cqrs(), clock, metrics), middlewares);
+            queries = new SimpleQueryBus(new BoundedExecutor("queries", executors.io(), settings.cqrs(), clock, metrics), middlewares);
             AccountModule.register(commands, queries, new PostgresAccountRepository(), transactions, clock);
             AccountDetailsModule.register(commands, queries, new PostgresAccountDetailsRepository(), transactions, clock);
             PermissionModule.register(commands, queries, new PostgresPermissionRepository(), transactions, clock);

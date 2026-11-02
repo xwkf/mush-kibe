@@ -77,6 +77,24 @@ Uma parcela crescente de `undecided` ou `unknown` indica que a Mojang está inac
 | Métrica | Tipo | O que mostra |
 |---|---|---|
 | `muxe_cqrs_handle_seconds{kind,message,outcome}` | histogram | Todo comando e consulta. `outcome` é `success`, `failure` (um `Result.Failure`) ou `error` (uma exceção). |
+| `muxe_executor_tasks_active{executor}` | gauge | Handlers rodando agora. `executor` é `commands` ou `queries`. |
+| `muxe_executor_tasks_queued{executor}` | gauge | Handlers esperando uma vaga livre. |
+| `muxe_executor_queue_wait_seconds{executor}` | histogram | Tempo entre o `dispatch`/`ask` e o início do handler. Zero quando havia vaga livre. |
+| `muxe_executor_tasks_rejected_total{executor,reason}` | counter | Comandos e consultas recusados: `queue_full`, `queue_timeout` ou `shutdown`. |
+
+### Contrapressão
+
+Cada bus de CQRS roda no máximo `cqrs.max-concurrent` handlers ao mesmo tempo. Os comandos e consultas excedentes esperam em uma fila de `cqrs.max-queued`; enviar nunca bloqueia quem chama, então a thread principal pode despachar com segurança. Quando a fila está cheia, ou uma tarefa esperou mais que `cqrs.queue-timeout`, o future dela falha na hora com `ExecutorSaturatedException` (uma falha de infraestrutura, e não um `Result.Failure`). Assim, uma rajada de logins ocupa uma quantidade limitada de memória, em vez de milhares de virtual threads paradas nos pools do PostgreSQL e do Redis.
+
+| Chave | Padrão | Descrição |
+|---|---|---|
+| `cqrs.max-concurrent` | `32` | Handlers que cada bus (comandos, consultas) roda ao mesmo tempo. |
+| `cqrs.max-queued` | `1000` | Handlers que cada bus mantém esperando. `0` falha na hora assim que todas as vagas estão ocupadas. |
+| `cqrs.queue-timeout` | `5s` | Espera máxima na fila antes de a tarefa falhar com `queue_timeout`. |
+
+`muxe_executor_tasks_queued` acima de zero por muito tempo, ou qualquer `queue_full`, significa que o banco está lento demais para a carga ou que `cqrs.max-concurrent` está baixo demais: compare com `muxe_db_connections_pending` antes de aumentá-lo.
+
+O executor compartilhado de virtual threads (`MuxeCore.async()`, handlers de pacotes, o endpoint de métricas) não é limitado: trabalho de banco pertence a um comando ou consulta, onde o bus o limita.
 
 ## Persistência
 

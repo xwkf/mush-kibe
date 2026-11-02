@@ -24,7 +24,7 @@ Muxe-Core loads every `br.com.muxe.core` class when the server loads it (`ClassP
 | `metrics()` | The metric registry. |
 | `servers()` | The live server directory. |
 | `network()` | `NetworkGateway`: send a player to a server or group. |
-| `mainThread()`, `async()` | Executors for the server thread and for blocking work. |
+| `mainThread()`, `async()` | Executors for the server thread and for blocking work. `async()` is not limited: send database work as a command or query, whose bus is (see [Backpressure](../../architecture/observability/README.md#backpressure)). |
 | `clock()` | The clock to inject in your services. |
 | `messages()` | Shared messages of Muxe-Core. |
 | `permissions()` | Ranks, tags and permissions of online players (see [Ranks and permissions](#ranks-and-permissions)). |

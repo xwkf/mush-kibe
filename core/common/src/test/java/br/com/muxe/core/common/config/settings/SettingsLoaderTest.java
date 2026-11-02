@@ -3,6 +3,7 @@ package br.com.muxe.core.common.config.settings;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import br.com.muxe.core.common.concurrent.bounded.ExecutorLimits;
 import br.com.muxe.core.common.config.ConfigException;
 import br.com.muxe.core.common.config.secret.SecretResolver;
 import br.com.muxe.core.common.config.source.MapConfigSource;
@@ -35,6 +36,27 @@ class SettingsLoaderTest {
         assertThat(settings.messaging().secret()).isEqualTo(SECRET);
         assertThat(settings.messaging().requestTimeout()).isEqualTo(Duration.ofMillis(1500));
         assertThat(settings.metrics().enabled()).isFalse();
+        assertThat(settings.cqrs()).isEqualTo(new ExecutorLimits(16, 200, Duration.ofSeconds(2)));
+    }
+
+    @Test
+    void usesDefaultLimitsWhenTheCqrsSectionIsMissing() {
+        Map<String, Object> config = config();
+        config.remove("cqrs");
+
+        MuxeSettings settings = loader.load(new MapConfigSource(config));
+
+        assertThat(settings.cqrs()).isEqualTo(ExecutorLimits.defaults());
+    }
+
+    @Test
+    void failsOnInvalidCqrsLimits() {
+        Map<String, Object> config = config();
+        config.put("cqrs", Map.of("max-concurrent", 0));
+
+        assertThatThrownBy(() -> loader.load(new MapConfigSource(config)))
+            .isInstanceOf(ConfigException.class)
+            .hasMessageContaining("cqrs");
     }
 
     @Test
@@ -66,6 +88,7 @@ class SettingsLoaderTest {
         root.put("redis", Map.of("host", "localhost", "port", 6380));
         root.put("messaging", Map.of("secret", "env:MUXE_MESSAGING_SECRET", "request-timeout", "1500ms", "previous-secrets", List.of()));
         root.put("metrics", Map.of("enabled", false));
+        root.put("cqrs", Map.of("max-concurrent", 16, "max-queued", 200, "queue-timeout", "2s"));
         return root;
     }
 }

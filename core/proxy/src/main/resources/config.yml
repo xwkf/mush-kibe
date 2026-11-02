@@ -41,6 +41,11 @@ metrics:
   host: 127.0.0.1
   port: 9410
 
+cqrs:
+  max-concurrent: 32
+  max-queued: 1000
+  queue-timeout: 5s
+
 editor:
   enabled: true
   bind: 0.0.0.0

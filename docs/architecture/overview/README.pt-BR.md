@@ -49,6 +49,7 @@ Query   ──► QueryBus   ──► middlewares ──► QueryHandler   ─�
 - **Consultas** nunca mudam estado (`FindAccountQuery`, `HasCredentialQuery`). Uma consulta responde um modelo de leitura só com os campos que quem a usa precisa (`AccountProfileView`, `AccountIdentityView`), e não o objeto de domínio que os comandos alteram, para o domínio poder mudar sem quebrar quem lê.
 - **Handlers** são registrados uma vez, pela classe da mensagem. Registrar dois handlers para a mesma mensagem falha na inicialização.
 - **Os buses são assíncronos.** `dispatch` e `ask` retornam um `CompletableFuture` e executam os handlers no executor de virtual threads do core, então o código de plataforma nunca bloqueia a thread principal.
+- **Os buses são limitados.** Cada bus roda no máximo `cqrs.max-concurrent` handlers e enfileira até `cqrs.max-queued` a mais; além disso, ou depois de `cqrs.queue-timeout` na fila, o future falha com `ExecutorSaturatedException`. Veja [Contrapressão](../observability/README.pt-BR.md#contrapressão).
 - **Middlewares** envolvem todo handler. `MetricsMiddleware` registra `muxe_cqrs_handle_seconds` com o nome da mensagem e o resultado (`success`, `failure`, `error`). Novas preocupações transversais (auditoria, tracing) são novos middlewares.
 - **Modelos de leitura podem divergir dos modelos de escrita** conforme as features crescem: um handler de consulta pode ler do Redis ou de uma tabela desnormalizada enquanto os comandos escrevem nas tabelas normalizadas.
 
@@ -61,7 +62,7 @@ Query   ──► QueryBus   ──► middlewares ──► QueryHandler   ─�
 3. Pool do PostgreSQL, depois as migrações do schema `core`.
 4. Conexão com o Redis e o transporte Redis.
 5. Registro de pacotes, guarda de idempotência, codec de envelopes e o bus de pacotes.
-6. Diretório de servidores, buses de CQRS e o módulo de contas.
+6. Diretório de servidores, buses de CQRS (cada um atrás do seu próprio `BoundedExecutor`) e o módulo de contas.
 7. Heartbeat e o endpoint HTTP de métricas.
 
 Se qualquer passo falhar, tudo o que já foi aberto é fechado e a inicialização falha com `RuntimeStartupException`. O core do Spigot desliga o servidor (configurável), e o proxy para: um nó que não alcança o PostgreSQL ou o Redis não deve aceitar jogadores.

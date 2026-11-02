@@ -77,6 +77,24 @@ A growing share of `undecided` or `unknown` means Mojang is unreachable or rate-
 | Metric | Type | What it shows |
 |---|---|---|
 | `muxe_cqrs_handle_seconds{kind,message,outcome}` | histogram | Every command and query. `outcome` is `success`, `failure` (a `Result.Failure`) or `error` (an exception). |
+| `muxe_executor_tasks_active{executor}` | gauge | Handlers running now. `executor` is `commands` or `queries`. |
+| `muxe_executor_tasks_queued{executor}` | gauge | Handlers waiting for a free slot. |
+| `muxe_executor_queue_wait_seconds{executor}` | histogram | Time from `dispatch`/`ask` to the handler starting. Zero when a slot was free. |
+| `muxe_executor_tasks_rejected_total{executor,reason}` | counter | Commands and queries refused: `queue_full`, `queue_timeout` or `shutdown`. |
+
+### Backpressure
+
+Each CQRS bus runs at most `cqrs.max-concurrent` handlers at once. Extra commands and queries wait in a queue of `cqrs.max-queued`; submitting never blocks the caller, so the main thread can dispatch safely. When the queue is full, or a task waited longer than `cqrs.queue-timeout`, its future fails right away with `ExecutorSaturatedException` (an infrastructure failure, not a `Result.Failure`). A burst of logins therefore holds a bounded amount of memory instead of thousands of virtual threads parked on the PostgreSQL and Redis pools.
+
+| Key | Default | Description |
+|---|---|---|
+| `cqrs.max-concurrent` | `32` | Handlers each bus (commands, queries) runs at once. |
+| `cqrs.max-queued` | `1000` | Handlers each bus keeps waiting. `0` fails fast as soon as every slot is busy. |
+| `cqrs.queue-timeout` | `5s` | Longest wait in the queue before the task fails with `queue_timeout`. |
+
+`muxe_executor_tasks_queued` above zero for long, or any `queue_full`, means the database is too slow for the load or `cqrs.max-concurrent` is too low: compare with `muxe_db_connections_pending` before raising it.
+
+The shared virtual-thread executor (`MuxeCore.async()`, packet handlers, the metrics endpoint) is not limited: database work belongs in a command or query, where the bus limits it.
 
 ## Persistence
 

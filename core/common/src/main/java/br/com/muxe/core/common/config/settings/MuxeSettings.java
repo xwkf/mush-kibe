@@ -1,5 +1,6 @@
 package br.com.muxe.core.common.config.settings;
 
+import br.com.muxe.core.common.concurrent.bounded.ExecutorLimits;
 import br.com.muxe.core.common.messaging.MessagingConfig;
 import br.com.muxe.core.common.metrics.export.MetricsConfig;
 import br.com.muxe.core.common.persistence.database.DatabaseConfig;
@@ -11,6 +12,7 @@ public record MuxeSettings(
     DatabaseConfig database,
     RedisConfig redis,
     MessagingConfig messaging,
-    MetricsConfig metrics
+    MetricsConfig metrics,
+    ExecutorLimits cqrs
 ) {
 }
