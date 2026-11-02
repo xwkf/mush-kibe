@@ -22,7 +22,8 @@ public record BedWarsSettings(
     XpRewards xp,
     ScoreboardSettings scoreboard,
     Holograms holograms,
-    WaitingHotbar hotbar
+    WaitingHotbar hotbar,
+    MatchSounds sounds
 ) {
 
     private static final String[] ROMAN = {"", "I", "II", "III", "IV", "V"};
@@ -39,7 +40,8 @@ public record BedWarsSettings(
             XpRewards.from(section(config, "xp-rewards")),
             ScoreboardSettings.from(section(config, "scoreboard")),
             Holograms.from(section(config, "holograms")),
-            WaitingHotbar.from(section(config, "hotbar.waiting"))
+            WaitingHotbar.from(section(config, "hotbar.waiting")),
+            MatchSounds.from(config.getConfigurationSection("sounds"))
         );
     }
 

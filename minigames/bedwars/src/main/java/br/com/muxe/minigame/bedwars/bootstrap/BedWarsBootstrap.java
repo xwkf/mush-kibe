@@ -11,6 +11,7 @@ import br.com.muxe.core.common.mission.domain.Mission;
 import br.com.muxe.core.common.server.ServerKind;
 import br.com.muxe.minigame.bedwars.arena.BedWarsSchema;
 import br.com.muxe.minigame.bedwars.command.BedWarsCommand;
+import br.com.muxe.minigame.bedwars.command.GlobalChatCommand;
 import br.com.muxe.minigame.bedwars.listener.Bedbugs;
 import br.com.muxe.minigame.bedwars.listener.MatchListener;
 import br.com.muxe.minigame.bedwars.mission.BedWarsGoal;
@@ -127,7 +128,8 @@ public final class BedWarsBootstrap {
         ShopService shop = new ShopService(
             ShopCatalog.from(Objects.requireNonNull(config.getConfigurationSection("shop"), "Missing configuration section shop")),
             UpgradeCatalog.from(Objects.requireNonNull(config.getConfigurationSection("upgrades"), "Missing configuration section upgrades")),
-            messages
+            messages,
+            settings.sounds()
         );
         rooms.onNpcClick((player, click) -> shop.open(player, click.runtime(), click.upgrades()));
         publisher = new RoomPublisher(plugin, core, rooms, settings.lobbyGroup());
@@ -137,6 +139,7 @@ public final class BedWarsBootstrap {
         plugin.getServer().getPluginManager().registerEvents(new MatchListener(plugin, core, rooms, settings, messages, cosmetics::openMenu, bedbugs), plugin);
 
         commands.register(new BedWarsCommand(rooms, messages));
+        commands.register(new GlobalChatCommand(rooms));
 
         plugin.getLogger().info("BedWars ready with modes " + engine.modes().keySet());
         return engine;

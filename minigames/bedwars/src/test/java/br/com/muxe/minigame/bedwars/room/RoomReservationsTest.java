@@ -74,9 +74,34 @@ class RoomReservationsTest {
         Map<UUID, ChatView> playing = ChatView.of(room, Set.of(red));
 
         assertThat(waiting.get(red).prefix()).isEmpty();
-        assertThat(waiting.get(red).audience()).containsExactlyInAnyOrder(red, blue);
+        assertThat(waiting.get(red).audience(false)).containsExactlyInAnyOrder(red, blue);
         assertThat(playing.get(red).prefix()).isEqualTo(room.player(red).orElseThrow().team().color() + "[" + room.player(red).orElseThrow().team().letter() + "] ");
-        assertThat(playing.get(blue).audience()).containsExactly(red);
+        assertThat(playing.get(blue).audience(false)).containsExactly(red);
+        assertThat(playing.get(blue).teamOnly()).isFalse();
+    }
+
+    @Test
+    void inTeamModesChatGoesToTheTeamAndGlobalChatToEveryone() {
+        Room room = RoomFixtures.room("3x8kqq", RoomFixtures.DOUBLES, RoomFixtures.arena("duplas", "Slip", List.of(TeamColor.VERMELHO, TeamColor.AZUL)));
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        UUID third = UUID.randomUUID();
+        UUID fourth = UUID.randomUUID();
+        room.join(first, "tadeu");
+        room.join(second, "x572");
+        room.join(third, "lia");
+        room.join(fourth, "rui");
+        Set<UUID> online = Set.of(first, second, third, fourth);
+
+        Map<UUID, ChatView> waiting = ChatView.of(room, online);
+        room.start(List.of(List.of(first, second), List.of(third, fourth)), NOW);
+        Map<UUID, ChatView> playing = ChatView.of(room, online);
+
+        assertThat(waiting.get(first).audience(false)).containsExactlyInAnyOrderElementsOf(online);
+        assertThat(playing.get(first).teamOnly()).isTrue();
+        assertThat(playing.get(first).audience(false)).containsExactlyInAnyOrder(first, second);
+        assertThat(playing.get(third).audience(false)).containsExactlyInAnyOrder(third, fourth);
+        assertThat(playing.get(first).audience(true)).containsExactlyInAnyOrderElementsOf(online);
     }
 
     private Optional<RoomInfo> pick(int joined) {

@@ -55,7 +55,7 @@ A player who reaches a BedWars server goes back to the match they left if they s
 | Phase | What happens |
 |---|---|
 | Waiting | Players wait in the waiting area above the map, in survival like the match, without damage or hunger and without breaking or placing blocks. The hotbar has the emerald `&aMenu do Bed Wars` (slot 5, opens the menu) and `&aVoltar ao Lobby` (slot 9). The scoreboard follows annex 2, and annex 3 once the countdown runs. A room nobody is in and nobody is coming to (no pending reservation) closes after `timings.empty-room-seconds` (60) and frees its cell. |
-| Countdown | The [start countdown](../../architecture/game-engine/README.md#start-countdown) of the engine, with the titles `&a30 segundos`, `&610 segundos` and `&c5` to `&c1`. |
+| Countdown | The [start countdown](../../architecture/game-engine/README.md#start-countdown) of the engine, with the titles `&a30 segundos`, `&610 segundos` and `&c5` to `&c1`. Each title plays a button click (`sounds.countdown`). |
 | Playing | Teams are drawn, players spawn at their island with full leather armour in the team colour and a wooden sword. The shop and upgrades NPCs appear with their holograms, and the generators start. A team that got no players has no island: its bed is removed (found within 2 blocks of the marked point) and its generators and NPCs are not created. Right after, the waiting area between Pos 1 and Pos 2 disappears at once, chunk by chunk (`RegionEraser`). |
 | Ending | When one team is left, every player gets the result (annex 11), centred: winner, match time, top final kills and top beds broken, with names in the colour of their tag. After 30 seconds everyone goes to `lobby-group` and the room closes. |
 
@@ -63,7 +63,8 @@ A player who reaches a BedWars server goes back to the match they left if they s
 
 - **Teams:** the scoreboard follows annex 5 (2 or 4 teams) or annex 12 (8 teams). A team shows `&a✔` while it has a bed and someone connected, `&e✔` when everyone left but can still return, the number of players alive once the bed is gone, and `&c✘` when eliminated. Teams nobody joined are out from the start.
 - **Name tags and tab list:** the team letter and colour (`A` in blue), through `MuxeCore.nameTags()`, plus health in the tab list.
-- **Chat:** only the room sees it, with the team before the usual format: `[A] medal tag name`. The chat runs off the main thread, so it reads a snapshot of each room (who hears whom and the team prefix) rebuilt on the main thread every second and whenever someone joins or leaves.
+- **Health below the name:** players alive show their health under the name (`20 ❤`, the heart from `messages.health-below-name`), through the engine's [health below the name](../../architecture/game-engine/README.md#health-below-the-name). Spectators and players waiting to respawn show nothing.
+- **Chat:** only the room sees it, with the team before the usual format: `[A] medal tag name`. In solo modes everyone in the room reads it. In team modes, while the match is played, the chat reaches only the player's team; `/g <mensagem>` talks to the whole room with `&6[G]` before it (`messages.global-prefix`). The chat runs off the main thread, so it reads a snapshot of each room (who hears whom and the team prefix) rebuilt on the main thread every second and whenever someone joins or leaves.
 - **Beds:** breaking an enemy bed sends `CAMA DESTRUÍDA` to everyone and `+100 XP` to the breaker. A team member who was away is eliminated, and the final kill goes to whoever broke the bed. Players cannot break their own bed.
 - **Deaths:**
   - The kill goes to the last enemy hit within 15 seconds. A final death with no hit goes to whoever broke the bed.
@@ -72,10 +73,13 @@ A player who reaches a BedWars server goes back to the match they left if they s
   - With a bed the player watches as a spectator and respawns after 5 seconds, protected for 4 seconds, with the armour bought and the pickaxe and axe one tier lower. Without a bed the player is out (`KILL FINAL!`), and the team's last player out eliminates the team (`TIME ELIMINADO`).
 - **Blocks:** only blocks placed during the match can be broken. Nothing can be placed near spawns (5 blocks), NPCs (1) and generators (1), nor above the arena's build limit (`Você não pode colocar blocos aqui.`). Explosions only break placed blocks, never glass. TNT lights by itself and the fireball is thrown with a right click.
 - **Generators:** island iron drops every 0.9 s, as many ingots as players per team (up to 4), gold every 7 s, each with a limit of items lying within 3 blocks. Diamond and emerald show their tier and countdown in a hologram and get faster at 6, 12, 18 and 24 minutes. Iron and gold picked up are copied to teammates within 2 blocks, who hear the pickup sound.
+- **AFK:** a player who does not move, click or chat for 45 seconds is AFK: they cannot pick up generator items and get nothing from a teammate's pickup, until they act again.
 - **Iron floor:** when the match starts, each island iron generator looks for a slab floor under it (from one block above to two below, with nothing solid on top). A 3x3 floor drops the iron in a plus (front, sides, centre, back); a 2x3 floor, whose generator point is the front centre, cycles through its front row and middle so the back corners stay empty. The front is the side that faces the team spawn; a 2x3 floor facing another way is also accepted. Each ingot lands on the next cell, so 4 ingots in one drop land on 4 cells. Without a 2x3 or 3x3 floor the iron drops on the point and a warning is logged. Gold always drops on the point.
 - **Drops:** items fall 1.3 blocks above the point, without speed and with no pickup delay. With `forges.stack-items: false` each cell's items are marked so they do not merge with another cell's. Picking one up collects every item of the same kind within half a block at once, with the marker removed.
 - **Diamond and emerald:** a diamond or emerald block spins above each generator (6° per tick, a full turn every 3 s, bobbing 0.08 block), with the three hologram lines above it, 0.3 apart.
 - **Events:** after Emerald III, every bed is destroyed (30 min), the sudden death is announced (40 min; the dragons are not in yet) and the match ends (42 min), in a draw if more than one team is left.
+- **Chests:** a chest within the island radius (17 blocks) of a team spawn belongs to the closest team. Only that team opens it while the team is in the match; once the team is eliminated anyone can (`Este baú é do Time ...`). Chests away from the islands are open to everyone. Spectators open no chest.
+- **Ender chest:** every ender chest opens the player's own `Baú do Fim`, the same one from any ender chest of the map, kept between deaths. When the player is eliminated, its items drop on the team's first island iron generator (or the spawn when there is none).
 - **Disconnecting:** a player who leaves with the bed alive can come back within 3 minutes and respawns 5 seconds later (`reconectou`). `/l` warns `Você desconectou de uma partida...` first. Leaving without a bed eliminates the player, crediting the last hit or the bed breaker.
 
 ### Shop
@@ -83,7 +87,7 @@ A player who reaches a BedWars server goes back to the match they left if they s
 The shop NPC opens the menus of the exports: Compra Rápida (the exported layout) and the seven categories, with the tab of the open category marked by a green pane.
 
 - An item costs iron, gold or emeralds from the inventory. Its name is red when unaffordable, with `Você não tem <recurso> o suficiente.`
-- Each purchase says `Você comprou <item>.`
+- Each purchase says `Você comprou <item>.` and plays a button click (`sounds.bought`); buying an upgrade plays `sounds.upgrade`; a purchase without enough resources plays `VILLAGER_NO` (`sounds.cannot-afford`).
 - Wool comes in the team colour. A sword replaces the wooden sword. Armour gives boots and leggings and cannot be bought below what the player owns. The pickaxe and axe go up one tier per purchase. Shears are permanent.
 - Not working yet: shift-click (editing the quick buy), the hotbar editor, and the special items Golem de Ferro, Leite Mágico, Torre Compacta, Ovo das Pontes, Rastreador and Estilingue, which say they are coming soon and charge nothing.
 
@@ -179,6 +183,7 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 |---|---|---|
 | `/arena ...` | `muxe.minigame.setup` | Creates and sets up arenas, on the BedWars lobby only. See [arena setup](../../architecture/game-engine/README.md#arena-setup). |
 | `/bedwars entrar <modo>` (`/bw`) | none | Moves the player to a room of that mode, while waiting. |
+| `/g <mensagem>` | none | Talks to everyone in the room, with `&6[G]` before the message. In team matches the plain chat reaches only the team. |
 | `/bedwars iniciar` | `muxe.bedwars.admin` | Starts the countdown at 10 seconds without the minimum players, for tests. |
 | `/cosmeticos` (`/cosmeticosbw`) | none | Opens Cosméticos do Bed Wars. |
 | `/cosmeticos dar <jogador> <cosmetico>` | `muxe.cosmetics.admin` | Gives a bed destruction cosmetic, for event and award cosmetics. |
@@ -210,6 +215,7 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | `default-mode` | `solo` | The mode of the room a player joins on arrival. |
 | `timings.*` | 5 s respawn, 180 s rejoin, 30 s restart, 4 s protection, island radius 17, protection radii 5/1/1, 60 s empty room | Match timings and protected areas; `empty-room-seconds` closes rooms left empty. |
 | `countdown.titles` | `30`, `10`, `5`...`1` | Titles of the start countdown. |
+| `sounds.*` | `CLICK`, `VILLAGER_NO`, `CHEST_OPEN` | `countdown`, `bought`, `upgrade`, `cannot-afford` and `ender-chest`, each with `sound`, `volume` and `pitch`. A sound left empty plays nothing. |
 | `forges.*` | the spec values | Island iron, gold and emerald, and the three diamond and emerald tiers with their start second. `stack-items: false` keeps items of different cells apart; `split-radius` (2) is how far teammates share iron and gold. |
 | `events.*` | 1800, 2400, 2520 | Seconds of the beds destroyed, sudden death and game end events, and their names on the scoreboard. |
 | `xp-rewards.*` | 10, 5, 250, 100, 12, 60 | XP per minute, per teammate, win, bed, kill and final kill. |

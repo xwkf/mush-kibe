@@ -95,6 +95,28 @@ countdown:
     '2': "&c2"
     '1': "&c1"
 
+sounds:
+  countdown:
+    sound: CLICK
+    volume: 1
+    pitch: 1
+  bought:
+    sound: CLICK
+    volume: 1
+    pitch: 1
+  upgrade:
+    sound: CLICK
+    volume: 1
+    pitch: 1
+  cannot-afford:
+    sound: VILLAGER_NO
+    volume: 1
+    pitch: 1
+  ender-chest:
+    sound: CHEST_OPEN
+    volume: 1
+    pitch: 1
+
 forges:
   stack-items: false
   split-radius: 2
@@ -479,6 +501,11 @@ messages:
   sending-to-room: "&aEnviando para {code}..."
   bought: "&eVocê comprou &a{item}&e."
   upgrade-bought: "{player} &eadquiriu a melhoria &a{upgrade}&e."
+  chest-locked: "&cEste baú é do {team-color}Time {team}&c. Você só pode abri-lo depois que esse time for eliminado."
+  ender-chest-title: "Baú do Fim"
+  global-usage: "&cUse /g <mensagem> para falar com todos."
+  global-prefix: "&6[G] "
+  health-below-name: "&c❤"
   bed-destroyed: "&f&lCAMA DESTRUÍDA &f» &7A {team-color}Cama do {team} &7foi destruída por {player}&7."
   own-bed: "&cVocê não pode quebrar a sua própria cama."
   xp: "&b+{xp} XP"

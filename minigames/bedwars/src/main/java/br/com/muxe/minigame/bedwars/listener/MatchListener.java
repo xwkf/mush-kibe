@@ -3,6 +3,7 @@ package br.com.muxe.minigame.bedwars.listener;
 import br.com.muxe.core.bukkit.api.MuxeCore;
 import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
+import br.com.muxe.minigame.bedwars.game.Activity;
 import br.com.muxe.minigame.bedwars.room.ChatView;
 import br.com.muxe.minigame.bedwars.room.ForgePickup;
 import br.com.muxe.minigame.bedwars.room.Room;
@@ -10,6 +11,8 @@ import br.com.muxe.minigame.bedwars.room.RoomPlayer;
 import br.com.muxe.minigame.bedwars.room.RoomRuntime;
 import br.com.muxe.minigame.bedwars.room.RoomService;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
+import br.com.muxe.minigame.bedwars.settings.MatchSounds;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -18,9 +21,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
+import org.bukkit.block.Chest;
+import org.bukkit.block.DoubleChest;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.Item;
@@ -41,6 +47,7 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.inventory.InventoryType.SlotType;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
@@ -52,6 +59,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
@@ -69,6 +77,7 @@ public final class MatchListener implements Listener {
     private final Consumer<Player> openMenu;
     private final Map<UUID, UUID> explosives = new HashMap<>();
     private final Bedbugs bedbugs;
+    private final Activity activity = new Activity();
 
     public MatchListener(Plugin plugin, MuxeCore core, RoomService rooms, BedWarsSettings settings, MessageCatalog messages, Consumer<Player> openMenu, Bedbugs bedbugs) {
         this.openMenu = openMenu;
@@ -83,6 +92,7 @@ public final class MatchListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
+        activity.active(player.getUniqueId(), core.clock().instant());
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             if (player.isOnline()) {
                 rooms.arrive(player);
@@ -92,7 +102,13 @@ public final class MatchListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
+        activity.forget(event.getPlayer().getUniqueId());
         rooms.leave(event.getPlayer());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onActivity(PlayerMoveEvent event) {
+        activity.active(event.getPlayer().getUniqueId(), core.clock().instant());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -116,12 +132,22 @@ public final class MatchListener implements Listener {
     @EventHandler(ignoreCancelled = false)
     public void onInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
+        activity.active(player.getUniqueId(), core.clock().instant());
         Optional<RoomRuntime> found = rooms.roomOf(player.getUniqueId());
         if (found.isEmpty()) {
             return;
         }
         Room room = found.get().room();
         ItemStack item = event.getItem();
+        if (room.phase() == Room.Phase.PLAYING && event.getAction() == Action.RIGHT_CLICK_BLOCK
+            && event.getClickedBlock().getType() == Material.ENDER_CHEST && !(player.isSneaking() && item != null)) {
+            event.setCancelled(true);
+            if (alive(found.get(), player)) {
+                player.openInventory(found.get().enderChest(player));
+                MatchSounds.play(settings.sounds().enderChest(), player);
+            }
+            return;
+        }
         if (room.phase() == Room.Phase.WAITING || room.phase() == Room.Phase.STARTING) {
             event.setCancelled(true);
             boolean rightClick = event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK;
@@ -343,6 +369,10 @@ public final class MatchListener implements Listener {
                 return;
             }
             event.setCancelled(true);
+            Instant now = core.clock().instant();
+            if (activity.isAfk(player.getUniqueId(), now)) {
+                return;
+            }
             RoomPlayer picker = runtime.room().player(player.getUniqueId()).orElseThrow();
             Material type = item.getItemStack().getType();
             int amount = 0;
@@ -359,7 +389,7 @@ public final class MatchListener implements Listener {
                 if (nearby instanceof Player mate && !mate.equals(player)) {
                     int shared = amount;
                     runtime.room().player(mate.getUniqueId())
-                        .filter(other -> other.team() == picker.team() && other.isAlive())
+                        .filter(other -> other.team() == picker.team() && other.isAlive() && !activity.isAfk(other.id(), now))
                         .ifPresent(other -> give(mate, other, type, shared));
                 }
             }
@@ -386,6 +416,26 @@ public final class MatchListener implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onChestOpen(InventoryOpenEvent event) {
+        if (!(event.getPlayer() instanceof Player player)) {
+            return;
+        }
+        InventoryHolder holder = event.getInventory().getHolder();
+        Location chest;
+        if (holder instanceof Chest single) {
+            chest = single.getLocation().add(0.5, 0, 0.5);
+        } else if (holder instanceof DoubleChest twin) {
+            chest = twin.getLocation();
+        } else {
+            return;
+        }
+        rooms.roomOf(player.getUniqueId())
+            .filter(runtime -> runtime.room().phase() == Room.Phase.PLAYING)
+            .filter(runtime -> !runtime.mayOpenChest(player, chest))
+            .ifPresent(runtime -> event.setCancelled(true));
+    }
+
     @EventHandler(ignoreCancelled = true)
     public void onCraft(CraftItemEvent event) {
         if (rooms.roomOf(event.getWhoClicked().getUniqueId()).isPresent()) {
@@ -403,13 +453,16 @@ public final class MatchListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
+        activity.active(player.getUniqueId(), core.clock().instant());
         Optional<ChatView> view = rooms.chatView(player.getUniqueId());
         if (view.isEmpty()) {
             return;
         }
-        Set<UUID> audience = view.get().audience();
+        boolean global = rooms.isShouting(player.getUniqueId());
+        Set<UUID> audience = view.get().audience(global);
         event.getRecipients().removeIf(recipient -> !audience.contains(recipient.getUniqueId()));
-        String template = Colors.translate(view.get().prefix()) + core.messages().get("chat-format");
+        String shout = global ? messages.get("global-prefix") : "";
+        String template = shout + Colors.translate(view.get().prefix()) + core.messages().get("chat-format");
         event.setFormat(core.permissions().display(player.getUniqueId()).chatFormat(template));
     }
 

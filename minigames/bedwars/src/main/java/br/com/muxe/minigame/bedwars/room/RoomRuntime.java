@@ -12,14 +12,18 @@ import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.core.bukkit.text.Title;
 import br.com.muxe.minigame.bedwars.arena.BedWarsArena.TeamBase;
 import br.com.muxe.minigame.bedwars.bootstrap.BedWarsBootstrap;
+import br.com.muxe.minigame.bedwars.game.ChestAccess;
+import br.com.muxe.minigame.bedwars.game.ForgeHeights;
 import br.com.muxe.minigame.bedwars.game.ForgeLayout;
 import br.com.muxe.minigame.bedwars.game.Ranking;
 import br.com.muxe.minigame.bedwars.game.Timeline.Event;
 import br.com.muxe.minigame.bedwars.mission.MissionRules;
 import br.com.muxe.minigame.bedwars.room.RoomPlayer.State;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
+import br.com.muxe.minigame.bedwars.settings.MatchSounds;
 import br.com.muxe.minigame.bedwars.stats.application.command.RecordMatchCommand;
 import br.com.muxe.minigame.bedwars.stats.domain.MatchOutcome;
+import br.com.muxe.minigame.engine.match.HealthBelowName;
 import br.com.muxe.minigame.engine.match.StartCountdown.Change;
 import br.com.muxe.minigame.engine.match.StartCountdown.Second;
 import br.com.muxe.minigame.engine.setup.Point;
@@ -48,7 +52,10 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -57,6 +64,7 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.util.Vector;
 
 public final class RoomRuntime {
 
@@ -88,6 +96,7 @@ public final class RoomRuntime {
     private final Map<UUID, Sidebar> sidebars = new HashMap<>();
     private final List<String> npcs = new ArrayList<>();
     private final Set<TeamColor> announcedEliminations = new HashSet<>();
+    private final Map<UUID, Inventory> enderChests = new HashMap<>();
     private int seconds;
 
     RoomRuntime(RoomService service, Room room, World world) {
@@ -178,6 +187,24 @@ public final class RoomRuntime {
                 } else if (room.endingFor() >= settings.timings().restartSeconds() + 3) {
                     close();
                 }
+            }
+        }
+    }
+
+    void showHealth() {
+        if (room.phase() != Room.Phase.PLAYING) {
+            return;
+        }
+        List<Player> online = online();
+        Map<String, Integer> alive = new HashMap<>();
+        for (Player player : online) {
+            room.player(player.getUniqueId()).filter(RoomPlayer::isAlive)
+                .ifPresent(roomPlayer -> alive.put(player.getName(), HealthBelowName.points(player.getHealth())));
+        }
+        for (Player player : online) {
+            Sidebar sidebar = sidebars.get(player.getUniqueId());
+            if (sidebar != null) {
+                service.healthTags().show(sidebar.scoreboard(), alive);
             }
         }
     }
@@ -635,7 +662,62 @@ public final class RoomRuntime {
         }
     }
 
+    public Inventory enderChest(Player player) {
+        return enderChests.computeIfAbsent(player.getUniqueId(),
+            id -> Bukkit.createInventory(null, InventoryType.ENDER_CHEST, messages.get("ender-chest-title")));
+    }
+
+    public Optional<TeamColor> chestOwner(Location chest) {
+        Map<TeamColor, Point> spawns = new EnumMap<>(TeamColor.class);
+        room.arena().teams().forEach((color, base) -> {
+            Location spawn = location(base.spawn());
+            spawns.put(color, new Point(spawn.getX(), spawn.getY(), spawn.getZ(), 0, 0));
+        });
+        Point at = new Point(chest.getX(), chest.getY(), chest.getZ(), 0, 0);
+        return ChestAccess.owner(at, spawns, settings.timings().islandRadius());
+    }
+
+    public boolean mayOpenChest(Player player, Location chest) {
+        Optional<RoomPlayer> viewer = room.player(player.getUniqueId()).filter(RoomPlayer::isAlive);
+        if (viewer.isEmpty()) {
+            return false;
+        }
+        Optional<TeamColor> owner = chestOwner(chest);
+        if (ChestAccess.canOpen(owner, viewer.get().team(), owner.map(color -> room.status(color).isEliminated()).orElse(true))) {
+            return true;
+        }
+        player.sendMessage(messages.get("chest-locked", "team-color", Colors.translate(owner.get().color()), "team", owner.get().displayName()));
+        return false;
+    }
+
+    private void dropEnderChests() {
+        for (RoomPlayer player : room.players()) {
+            if (player.state() != State.ELIMINATED || player.team() == null) {
+                continue;
+            }
+            Inventory chest = enderChests.remove(player.id());
+            if (chest == null) {
+                continue;
+            }
+            new ArrayList<>(chest.getViewers()).forEach(HumanEntity::closeInventory);
+            Location at = enderChestDrop(player.team());
+            for (ItemStack item : chest.getContents()) {
+                if (item != null && item.getType() != Material.AIR) {
+                    world.dropItem(at, item).setVelocity(new Vector());
+                }
+            }
+            chest.clear();
+        }
+    }
+
+    private Location enderChestDrop(TeamColor team) {
+        TeamBase base = room.arena().teams().get(team);
+        Point point = base.iron().isEmpty() ? base.spawn() : base.iron().getFirst();
+        return location(point).add(0, ForgeHeights.DROP_ABOVE_POINT, 0);
+    }
+
     private void checkEliminations() {
+        dropEnderChests();
         for (TeamColor color : room.teams().keySet()) {
             if (room.status(color).isEliminated() && announcedEliminations.add(color)) {
                 broadcast(messages.get("team-eliminated", "team-color", Colors.translate(color.color()), "team", color.displayName()));
@@ -802,7 +884,10 @@ public final class RoomRuntime {
 
     private void title(String text) {
         Title title = Title.builder().title(Colors.translate(text)).subtitle("").timings(0, 25, 5).build();
-        online().forEach(title::send);
+        online().forEach(player -> {
+            title.send(player);
+            MatchSounds.play(settings.sounds().countdown(), player);
+        });
     }
 
     private void healthInTab(Player player) {

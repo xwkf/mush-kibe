@@ -55,7 +55,7 @@ Quem chega num servidor de BedWars volta para a partida que deixou, se ainda pud
 | Fase | O que acontece |
 |---|---|
 | Espera | Os jogadores esperam na área de espera acima do mapa, no modo sobrevivência como na partida, sem dano nem fome e sem quebrar ou colocar blocos. A hotbar tem a esmeralda `&aMenu do Bed Wars` (slot 5, abre o menu) e `&aVoltar ao Lobby` (slot 9). O placar segue o anexo 2, e o anexo 3 quando a contagem roda. Uma sala sem ninguém dentro e sem ninguém a caminho (nenhuma reserva pendente) fecha depois de `timings.empty-room-seconds` (60) e libera a célula. |
-| Contagem | A [contagem para iniciar](../../architecture/game-engine/README.pt-BR.md#contagem-para-iniciar) da engine, com os títulos `&a30 segundos`, `&610 segundos` e `&c5` a `&c1`. |
+| Contagem | A [contagem para iniciar](../../architecture/game-engine/README.pt-BR.md#contagem-para-iniciar) da engine, com os títulos `&a30 segundos`, `&610 segundos` e `&c5` a `&c1`. Cada título toca um clique de botão (`sounds.countdown`). |
 | Jogando | Os times são sorteados, os jogadores nascem na ilha com couro completo na cor do time e uma espada de madeira. Os NPCs da loja e das melhorias aparecem com os hologramas, e os geradores começam. Um time que ficou sem jogadores não tem ilha: a cama dele é tirada (procurada a até 2 blocos do ponto marcado) e os geradores e NPCs dele não são criados. Logo depois, a área de espera entre a Pos 1 e a Pos 2 some de uma vez, chunk por chunk (`RegionEraser`). |
 | Fim | Quando sobra um time, todos recebem o resultado (anexo 11), centralizado: vencedor, tempo da partida, top kills finais e top camas quebradas, com os nomes na cor da tag. Depois de 30 segundos todos vão para o `lobby-group` e a sala fecha. |
 
@@ -63,7 +63,8 @@ Quem chega num servidor de BedWars volta para a partida que deixou, se ainda pud
 
 - **Times:** o placar segue o anexo 5 (2 ou 4 times) ou o anexo 12 (8 times). Um time mostra `&a✔` enquanto tem cama e alguém conectado, `&e✔` quando todos saíram mas ainda podem voltar, o número de jogadores vivos depois que a cama cai, e `&c✘` quando é eliminado. Times sem ninguém já começam fora.
 - **Name tags e tab:** a letra e a cor do time (`A` em azul), pelo `MuxeCore.nameTags()`, mais a vida no tab.
-- **Chat:** só a sala vê, com o time antes do formato de sempre: `[A] medalha tag nome`. O chat roda fora da thread principal, então lê um retrato de cada sala (quem ouve quem e o prefixo do time) refeito na thread principal a cada segundo e sempre que alguém entra ou sai.
+- **Vida abaixo do nome:** os jogadores vivos mostram a vida embaixo do nome (`20 ❤`, com o coração de `messages.health-below-name`), pela [vida abaixo do nome](../../architecture/game-engine/README.pt-BR.md#vida-abaixo-do-nome) da engine. Espectadores e quem espera renascer não mostram nada.
+- **Chat:** só a sala vê, com o time antes do formato de sempre: `[A] medalha tag nome`. Nos modos solo todos da sala leem. Nos modos com time, durante a partida, o chat chega só ao time do jogador; `/g <mensagem>` fala com a sala toda, com `&6[G]` antes (`messages.global-prefix`). O chat roda fora da thread principal, então lê um retrato de cada sala (quem ouve quem e o prefixo do time) refeito na thread principal a cada segundo e sempre que alguém entra ou sai.
 - **Camas:** quebrar a cama de um inimigo manda `CAMA DESTRUÍDA` para todos e `+100 XP` para quem quebrou. Um integrante do time que estava fora é eliminado, e a kill final vai para quem quebrou a cama. Ninguém quebra a própria cama.
 - **Mortes:**
   - A kill vai para o último inimigo que bateu nos últimos 15 segundos. Uma morte final sem golpe vai para quem quebrou a cama.
@@ -72,10 +73,13 @@ Quem chega num servidor de BedWars volta para a partida que deixou, se ainda pud
   - Com cama, o jogador assiste como espectador e renasce depois de 5 segundos, protegido por 4 segundos, com a armadura comprada e a picareta e o machado um nível abaixo. Sem cama, o jogador sai (`KILL FINAL!`), e o último jogador do time a sair elimina o time (`TIME ELIMINADO`).
 - **Blocos:** só blocos colocados durante a partida podem ser quebrados. Nada pode ser colocado perto dos spawns (5 blocos), dos NPCs (1) e dos geradores (1), nem acima do limite de construção da arena (`Você não pode colocar blocos aqui.`). Explosões só quebram blocos colocados, nunca vidro. A TNT acende sozinha e a bola de fogo é lançada com o botão direito.
 - **Geradores:** o ferro da ilha cai a cada 0,9 s, tantos lingotes quanto jogadores por time (até 4), o ouro a cada 7 s, cada um com um limite de itens no chão num raio de 3 blocos. Diamante e esmeralda mostram nível e contagem num holograma e aceleram aos 6, 12, 18 e 24 minutos. Ferro e ouro coletados são copiados para os companheiros a até 2 blocos, que ouvem o som de coleta.
+- **AFK:** quem não se mexe, não clica e não fala por 45 segundos está AFK: não pega itens dos geradores e não recebe nada da coleta de um companheiro, até agir de novo.
 - **Chão do ferro:** quando a partida começa, cada gerador de ferro da ilha procura um chão de lajes embaixo dele (de um bloco acima a dois abaixo, sem nada sólido em cima). Um chão 3x3 solta o ferro em cruz (frente, lados, centro, trás); um chão 2x3, cujo ponto do gerador é o centro da frente, passa pela fileira da frente e pelo meio, e os cantos de trás ficam vazios. A frente é o lado virado para o spawn do time; um chão 2x3 virado para outro lado também vale. Cada lingote cai na próxima célula, então 4 lingotes de uma vez caem em 4 células. Sem um chão 2x3 ou 3x3 o ferro cai no ponto e um aviso vai para o log. O ouro sempre cai no ponto.
 - **Itens:** caem 1,3 bloco acima do ponto, sem velocidade e sem espera para pegar. Com `forges.stack-items: false` os itens de cada célula são marcados para não se juntarem com os de outra. Pegar um recolhe de uma vez todos os itens do mesmo tipo a até meio bloco, sem a marca.
 - **Diamante e esmeralda:** um bloco de diamante ou de esmeralda gira acima de cada gerador (6° por tick, uma volta a cada 3 s, subindo e descendo 0,08 bloco), com as três linhas do holograma acima dele, a 0,3 de distância.
 - **Eventos:** depois da Esmeralda III, todas as camas são destruídas (30 min), a morte súbita é anunciada (40 min; os dragões ainda não entraram) e a partida termina (42 min), empatada se sobrar mais de um time.
+- **Baús:** um baú dentro do raio da ilha (17 blocos) do spawn de um time é do time mais próximo. Só esse time abre enquanto está na partida; depois que o time é eliminado, qualquer um abre (`Este baú é do Time ...`). Baús longe das ilhas são de todos. Espectadores não abrem baú.
+- **Baú do fim:** todo baú do fim abre o `Baú do Fim` do próprio jogador, o mesmo em qualquer baú do fim do mapa, mantido entre as mortes. Quando o jogador é eliminado, os itens dele caem no primeiro gerador de ferro da ilha do time (ou no spawn, se não houver).
 - **Desconexão:** quem sai com a cama de pé pode voltar em até 3 minutos e renasce 5 segundos depois (`reconectou`). O `/l` avisa antes `Você desconectou de uma partida...`. Sair sem cama elimina o jogador, dando a kill ao último golpe ou a quem quebrou a cama.
 
 ### Loja
@@ -83,7 +87,7 @@ Quem chega num servidor de BedWars volta para a partida que deixou, se ainda pud
 O NPC da loja abre os menus dos exports: Compra Rápida (o layout do export) e as sete categorias, com a aba da categoria aberta marcada por um vidro verde.
 
 - Um item custa ferro, ouro ou esmeraldas do inventário. O nome fica vermelho quando não dá para comprar, com `Você não tem <recurso> o suficiente.`
-- Cada compra diz `Você comprou <item>.`
+- Cada compra diz `Você comprou <item>.` e toca um clique de botão (`sounds.bought`); comprar uma melhoria toca `sounds.upgrade`; uma compra sem recursos suficientes toca `VILLAGER_NO` (`sounds.cannot-afford`).
 - A lã vem na cor do time. Uma espada substitui a de madeira. A armadura dá bota e calça e não pode ser comprada abaixo da que o jogador tem. A picareta e o machado sobem um nível por compra. A tesoura é permanente.
 - Ainda não funcionam: o shift-click (editar a compra rápida), o editor de hotbar, e os itens especiais Golem de Ferro, Leite Mágico, Torre Compacta, Ovo das Pontes, Rastreador e Estilingue, que avisam que chegam em breve e não cobram nada.
 
@@ -179,6 +183,7 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 |---|---|---|
 | `/arena ...` | `muxe.minigame.setup` | Cria e configura arenas, só no lobby do BedWars. Veja o [setup de arenas](../../architecture/game-engine/README.pt-BR.md#setup-de-arenas). |
 | `/bedwars entrar <modo>` (`/bw`) | nenhuma | Leva o jogador para uma sala desse modo, enquanto espera. |
+| `/g <mensagem>` | nenhuma | Fala com todos da sala, com `&6[G]` antes da mensagem. Nas partidas com time o chat normal chega só ao time. |
 | `/bedwars iniciar` | `muxe.bedwars.admin` | Começa a contagem em 10 segundos sem o mínimo de jogadores, para testes. |
 | `/cosmeticos` (`/cosmeticosbw`) | nenhuma | Abre Cosméticos do Bed Wars. |
 | `/cosmeticos dar <jogador> <cosmetico>` | `muxe.cosmetics.admin` | Dá um cosmético de destruição de cama, para cosméticos de evento e premiações. |
@@ -210,6 +215,7 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 | `default-mode` | `solo` | O modo da sala em que o jogador entra ao chegar. |
 | `timings.*` | 5 s renascer, 180 s voltar, 30 s reiniciar, 4 s proteção, raio da ilha 17, raios de proteção 5/1/1, 60 s sala vazia | Tempos da partida e áreas protegidas; `empty-room-seconds` fecha as salas que ficaram vazias. |
 | `countdown.titles` | `30`, `10`, `5`...`1` | Títulos da contagem para iniciar. |
+| `sounds.*` | `CLICK`, `VILLAGER_NO`, `CHEST_OPEN` | `countdown`, `bought`, `upgrade`, `cannot-afford` e `ender-chest`, cada um com `sound`, `volume` e `pitch`. Um som vazio não toca nada. |
 | `forges.*` | os valores da especificação | Ferro, ouro e esmeralda da ilha, e os três níveis de diamante e esmeralda com o segundo de início. `stack-items: false` mantém separados os itens de células diferentes; `split-radius` (2) é a distância em que os companheiros dividem ferro e ouro. |
 | `events.*` | 1800, 2400, 2520 | Segundos dos eventos de camas destruídas, morte súbita e fim de jogo, e os nomes deles no placar. |
 | `xp-rewards.*` | 10, 5, 250, 100, 12, 60 | XP por minuto, por companheiro, vitória, cama, kill e kill final. |

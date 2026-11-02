@@ -18,6 +18,7 @@ import br.com.muxe.minigame.bedwars.network.RoomInfo;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
 import br.com.muxe.minigame.engine.arena.ArenaCatalog;
 import br.com.muxe.minigame.engine.arena.LoadedArena;
+import br.com.muxe.minigame.engine.match.HealthBelowName;
 import br.com.muxe.minigame.engine.match.StartCountdown;
 import br.com.muxe.minigame.engine.room.RoomCodes;
 import br.com.muxe.minigame.engine.team.TeamColor;
@@ -70,6 +71,8 @@ public final class RoomService {
     private MissionConfig missions = MissionConfig.empty();
     private MissionRules missionRules = MissionRules.DEFAULT;
     private volatile Map<UUID, ChatView> chat = Map.of();
+    private final Set<UUID> shouting = ConcurrentHashMap.newKeySet();
+    private final HealthBelowName healthTags;
     private volatile int activeMatches;
 
     public RoomService(JavaPlugin plugin, MuxeCore core, BedWarsSettings settings, MessageCatalog messages, BedWarsSchema schema, ArenaCatalog catalog, MatchWorld matchWorld) {
@@ -77,6 +80,7 @@ public final class RoomService {
         this.core = core;
         this.settings = settings;
         this.messages = messages;
+        this.healthTags = new HealthBelowName(messages.get("health-below-name"));
         this.schema = schema;
         this.catalog = catalog;
         this.matchWorld = matchWorld;
@@ -202,6 +206,23 @@ public final class RoomService {
 
     public int activeMatches() {
         return activeMatches;
+    }
+
+    public void shout(Player player, String message) {
+        String text = message.strip();
+        if (text.isEmpty()) {
+            return;
+        }
+        shouting.add(player.getUniqueId());
+        try {
+            player.chat(text.startsWith("/") ? " " + text : text);
+        } finally {
+            shouting.remove(player.getUniqueId());
+        }
+    }
+
+    public boolean isShouting(UUID playerId) {
+        return shouting.contains(playerId);
     }
 
     public Optional<ChatView> chatView(UUID playerId) {
@@ -358,7 +379,12 @@ public final class RoomService {
     private void forgeCycle() {
         for (RoomRuntime runtime : rooms.values()) {
             runtime.forgeCycle();
+            runtime.showHealth();
         }
+    }
+
+    HealthBelowName healthTags() {
+        return healthTags;
     }
 
     private void clicked(Player player, Npc npc) {

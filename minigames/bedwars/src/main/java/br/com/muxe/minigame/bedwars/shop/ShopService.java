@@ -10,6 +10,7 @@ import br.com.muxe.minigame.bedwars.room.Kits;
 import br.com.muxe.minigame.bedwars.room.RoomPlayer;
 import br.com.muxe.minigame.bedwars.room.RoomRuntime;
 import br.com.muxe.minigame.bedwars.room.RoomTeam;
+import br.com.muxe.minigame.bedwars.settings.MatchSounds;
 import br.com.muxe.minigame.bedwars.shop.ShopCatalog.Category;
 import br.com.muxe.minigame.bedwars.shop.ShopCatalog.ShopItem;
 import br.com.muxe.minigame.bedwars.shop.ShopCatalog.Tab;
@@ -41,11 +42,13 @@ public final class ShopService {
     private final ShopCatalog shop;
     private final UpgradeCatalog upgrades;
     private final MessageCatalog messages;
+    private final MatchSounds sounds;
 
-    public ShopService(ShopCatalog shop, UpgradeCatalog upgrades, MessageCatalog messages) {
+    public ShopService(ShopCatalog shop, UpgradeCatalog upgrades, MessageCatalog messages, MatchSounds sounds) {
         this.shop = shop;
         this.upgrades = upgrades;
         this.messages = messages;
+        this.sounds = sounds;
     }
 
     public void open(Player player, RoomRuntime runtime, boolean upgradeMenu) {
@@ -125,11 +128,13 @@ public final class ShopService {
         int price = entry.nextPrice(level);
         if (count(player.getInventory(), Material.DIAMOND) < price) {
             player.sendMessage(Colors.translate(upgrades.texts().cannotAfford()));
+            MatchSounds.play(sounds.cannotAfford(), player);
             return;
         }
         player.getInventory().removeItem(new ItemStack(Material.DIAMOND, price));
         team.upgrade(entry.upgrade(), level + 1);
         runtime.upgraded(team, entry.upgrade(), level + 1);
+        MatchSounds.play(sounds.upgrade(), player);
         String message = messages.get("upgrade-bought", "player", runtime.coloredName(runtime.room().player(player.getUniqueId()).orElseThrow()),
             "upgrade", entry.boughtName(level + 1));
         runtime.room().members(team.color()).forEach(member -> {
@@ -176,6 +181,7 @@ public final class ShopService {
         PlayerInventory inventory = player.getInventory();
         if (count(inventory, tier.currency().material()) < tier.price()) {
             player.sendMessage(Colors.translate(shop.texts().cannotAfford().replace("{currency}", tier.currency().many())));
+            MatchSounds.play(sounds.cannotAfford(), player);
             return;
         }
         boolean needsSlot = item.type() != ShopCatalog.Type.ARMOR && item.type() != ShopCatalog.Type.PICKAXE && item.type() != ShopCatalog.Type.AXE;
@@ -189,6 +195,7 @@ public final class ShopService {
             roomPlayer.addClay(item.amount());
         }
         player.sendMessage(messages.get("bought", "item", offer.boughtName()));
+        MatchSounds.play(sounds.bought(), player);
     }
 
     private void give(Player player, RoomPlayer roomPlayer, RoomTeam team, ShopItem item, Offer offer) {
