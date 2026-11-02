@@ -82,17 +82,19 @@ Each game describes what an arena needs in a `SetupSchema`, and the engine gives
 | `StepKind` | `LOCATION` (where the player stands, centred, with the direction snapped to 45°), `CENTER` (the block under the player), `BLOCK` (the block the player looks at), `HEIGHT` (the player's Y) and `REGION` (Pos 1 and Pos 2, two opposite corners stored as `<step>.pos1` and `<step>.pos2`). |
 | `ArenaDraft` | The arena being set up: mode, display name, teams, points and heights. |
 | `SetupChecklist` | What is done and what is missing. An arena is ready when its teams are complete and every required step has its minimum. |
-| `ArenaFiles` | Reads and writes `arenas/<name>.yml` in expanded YAML, with `ready: true` once nothing is missing. |
+| `ArenaFiles` | Renders and parses the arena definition in expanded YAML, with `ready: true` once nothing is missing, and reads and writes `arenas/<name>.yml`. |
+| `ArenaStore` | Where arenas and maps live. `FileArenaStore` keeps `arenas/<name>.yml` and `maps/<name>.mxw` in the plugin folder; `DatabaseArenaStore(game, commands, queries)` keeps both in PostgreSQL (`core.arenas`, through `SaveArenaCommand`, `FindArenaQuery` and `ListArenasQuery`), so every server of the game reads the same arenas. `saveDefinition` saves the points and keeps the stored map. |
+| `ArenaSavedPacket` | `minigame.arena_saved` (game, name): sent after `/arena salvar` so the game servers reload that arena. |
 | `SetupService` | Opens setup worlds, applies the commands, shows the holograms and the action bar, and saves. |
 | `TeamColor` | The nine team colours: Azul `&9`, Amarelo `&e`, Ciano `&b`, Cinza `&8`, Vermelho `&c`, Rosa `&d`, Verde `&a`, Branco `&f`, Laranja `&6`, each with its wool and leather colour. |
 
 `/arena criar <name> [mode]` opens an arena:
 
-1. If `maps/<name>.mxw` exists, the map is loaded from it.
-2. Otherwise, if the server folder has a world folder named `<name>`, it is converted to `.mxw` right away and loaded.
+1. If the store has a map for `<name>`, it is loaded from it.
+2. Otherwise, if the server folder has a world folder named `<name>`, it is converted to the Muxe map format right away, stored and loaded.
 3. Otherwise an empty world is created, and the player arrives at `0 60 0` to build or paste the map.
 
-The setup world is a `muxe_setup_<name>` world, edited in creative and flying. Several staff members may edit it together.
+The setup world is a `muxe_setup_<name>` world, edited in creative and flying. Several staff members may edit it together. `SetupService.onEnter` and `onLeave` run when a player starts and stops editing; a game can use them, for example, to put staff in build mode on a lobby.
 
 | Command | What it does |
 |---|---|
@@ -102,7 +104,7 @@ The setup world is a `muxe_setup_<name>` world, edited in creative and flying. S
 | `/arena remover <step> [team]` | Removes the point nearest to the player, or the whole step when it has a single point. |
 | `/arena time <adicionar\|remover> <colour>` | Chooses the teams in modes whose teams are not fixed. Removing a team removes its points. |
 | `/arena nome <name>` | Changes the display name of the map. |
-| `/arena salvar` | Saves every chunk of the setup world to `maps/<name>.mxw` and the points to `arenas/<name>.yml`. |
+| `/arena salvar` | Saves every chunk of the setup world and the points to the arena store. Points are also saved as they are marked, keeping the stored map. |
 | `/arena sair` | Leaves the setup and goes back to where the player was. The world closes when its last editor leaves; map changes not saved are lost. |
 | `/arena listar` | Lists the arenas, ready or incomplete, with a button to edit each one. |
 

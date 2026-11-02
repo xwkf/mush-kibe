@@ -1,12 +1,8 @@
 package br.com.muxe.minigame.engine.arena;
 
-import br.com.muxe.minigame.engine.setup.ArenaFiles;
 import br.com.muxe.minigame.engine.setup.ArenaFiles.StoredArena;
-import br.com.muxe.minigame.engine.world.map.MapFiles;
 import br.com.muxe.minigame.engine.world.map.MapTemplate;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -19,22 +15,20 @@ import java.util.logging.Logger;
 
 public final class ArenaCatalog {
 
-    private final ArenaFiles files;
-    private final Path maps;
+    private final ArenaStore store;
     private final Predicate<MapTemplate> fits;
     private final Logger logger;
     private final Map<String, LoadedArena> arenas = new ConcurrentHashMap<>();
 
-    public ArenaCatalog(ArenaFiles files, Path maps, Predicate<MapTemplate> fits, Logger logger) {
-        this.files = files;
-        this.maps = maps;
+    public ArenaCatalog(ArenaStore store, Predicate<MapTemplate> fits, Logger logger) {
+        this.store = store;
         this.fits = fits;
         this.logger = logger;
     }
 
     public int loadAll() throws IOException {
         arenas.clear();
-        for (String name : files.names()) {
+        for (String name : store.names()) {
             reload(name);
         }
         return arenas.size();
@@ -43,16 +37,16 @@ public final class ArenaCatalog {
     public Optional<LoadedArena> reload(String name) {
         arenas.remove(name);
         try {
-            Optional<StoredArena> stored = files.read(name);
+            Optional<StoredArena> stored = store.read(name);
             if (stored.isEmpty() || !stored.get().ready()) {
                 return Optional.empty();
             }
-            Path mapFile = maps.resolve(name + MapFiles.EXTENSION);
-            if (!Files.isRegularFile(mapFile)) {
-                logger.warning("Arena " + name + " is ready but has no map file");
+            Optional<MapTemplate> found = store.map(name);
+            if (found.isEmpty()) {
+                logger.warning("Arena " + name + " is ready but has no map");
                 return Optional.empty();
             }
-            MapTemplate map = MapFiles.read(mapFile);
+            MapTemplate map = found.get();
             if (!fits.test(map)) {
                 logger.warning("Arena " + name + " is too wide for a match cell: " + map.bounds());
                 return Optional.empty();

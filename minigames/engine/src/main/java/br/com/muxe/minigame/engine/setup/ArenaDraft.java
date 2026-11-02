@@ -32,6 +32,14 @@ public final class ArenaDraft {
         this.displayName = Objects.requireNonNull(displayName, "displayName");
     }
 
+    public ArenaDraft copy() {
+        ArenaDraft copy = new ArenaDraft(name, mode(), displayName());
+        copy.restoreTeams(teams());
+        allPoints().forEach(copy::restorePoints);
+        allNumbers().forEach(copy::restoreNumber);
+        return copy;
+    }
+
     public static ArenaDraft create(String name, String mode, SetupSchema schema) {
         ArenaDraft draft = new ArenaDraft(name, mode, schema.displayNameFromName(name));
         draft.teams.addAll(schema.teams(mode).fixed());

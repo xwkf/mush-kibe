@@ -6,9 +6,9 @@ import br.com.muxe.core.bukkit.text.ChatButton;
 import br.com.muxe.core.bukkit.text.ClickableText;
 import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
-import br.com.muxe.minigame.engine.setup.ArenaDraft;
+import br.com.muxe.minigame.engine.arena.ArenaStore;
 import br.com.muxe.minigame.engine.setup.ArenaDraft.Change;
-import br.com.muxe.minigame.engine.setup.ArenaFiles;
+import br.com.muxe.minigame.engine.setup.ArenaDraft;
 import br.com.muxe.minigame.engine.setup.ArenaFiles.StoredArena;
 import br.com.muxe.minigame.engine.setup.Point;
 import br.com.muxe.minigame.engine.setup.SetupChecklist;
@@ -21,11 +21,9 @@ import br.com.muxe.minigame.engine.setup.session.SetupSession.Return;
 import br.com.muxe.minigame.engine.team.TeamColor;
 import br.com.muxe.minigame.engine.world.anvil.AnvilImporter;
 import br.com.muxe.minigame.engine.world.map.EditableMap;
-import br.com.muxe.minigame.engine.world.map.MapFiles;
 import br.com.muxe.minigame.engine.world.map.MapTemplate;
 import br.com.muxe.minigame.engine.world.server.MuxeWorlds;
 import br.com.muxe.minigame.engine.world.server.VoidGenerator;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -66,8 +64,7 @@ public final class SetupService implements Listener {
     private final SetupSchema schema;
     private final MessageCatalog messages;
     private final MuxeWorlds worlds;
-    private final ArenaFiles arenas;
-    private final Path maps;
+    private final ArenaStore arenas;
     private final SetupHelp help;
     private final SetupMarkers markers = new SetupMarkers(TextHolograms.standard());
     private final Map<String, SetupSession> sessions = new LinkedHashMap<>();
@@ -78,14 +75,17 @@ public final class SetupService implements Listener {
     private int ticks;
     private Consumer<String> onSaved = name -> {
     };
+    private Consumer<Player> onEnter = player -> {
+    };
+    private Consumer<Player> onLeave = player -> {
+    };
 
-    public SetupService(Plugin plugin, SetupSchema schema, MessageCatalog messages, MuxeWorlds worlds, Path dataFolder) {
+    public SetupService(Plugin plugin, SetupSchema schema, MessageCatalog messages, MuxeWorlds worlds, ArenaStore arenas) {
         this.plugin = plugin;
         this.schema = schema;
         this.messages = messages;
         this.worlds = worlds;
-        this.arenas = new ArenaFiles(dataFolder.resolve("arenas"));
-        this.maps = dataFolder.resolve("maps");
+        this.arenas = arenas;
         this.help = new SetupHelp(messages);
     }
 
@@ -113,16 +113,20 @@ public final class SetupService implements Listener {
         this.onSaved = listener;
     }
 
+    public void onEnter(Consumer<Player> listener) {
+        this.onEnter = listener;
+    }
+
+    public void onLeave(Consumer<Player> listener) {
+        this.onLeave = listener;
+    }
+
     public SetupSchema schema() {
         return schema;
     }
 
-    public ArenaFiles arenas() {
+    public ArenaStore arenas() {
         return arenas;
-    }
-
-    public Path mapFile(String name) {
-        return maps.resolve(name + MapFiles.EXTENSION);
     }
 
     public Optional<SetupSession> sessionOf(Player player) {
@@ -161,22 +165,21 @@ public final class SetupService implements Listener {
                     return;
                 }
                 ArenaDraft draft = stored.map(StoredArena::draft).orElseGet(() -> ArenaDraft.create(name, mode.get(), schema));
-                Path mapFile = mapFile(name);
+                Optional<MapTemplate> saved = arenas.map(name);
                 MapTemplate template;
                 String origin;
-                if (Files.isRegularFile(mapFile)) {
-                    template = MapFiles.read(mapFile);
+                if (saved.isPresent()) {
+                    template = saved.get();
                     origin = "setup-loaded";
                 } else if (AnvilImporter.isWorldFolder(folder)) {
                     template = AnvilImporter.importWorld(folder);
-                    MapFiles.write(mapFile, template);
                     origin = "setup-converted";
                 } else {
                     template = MapTemplate.empty();
                     origin = "setup-created-empty";
                 }
-                if (stored.isEmpty()) {
-                    arenas.write(draft, false);
+                if (stored.isEmpty() || saved.isEmpty()) {
+                    arenas.save(draft, stored.map(StoredArena::ready).orElse(false), template);
                 }
                 main(() -> finishOpening(player, draft, template, origin));
             } catch (Exception exception) {
@@ -295,11 +298,10 @@ public final class SetupService implements Listener {
         session.world().save();
         MapTemplate snapshot = session.map().snapshot();
         SetupChecklist checklist = SetupChecklist.of(schema, draft);
-        String yaml = ArenaFiles.render(draft, checklist.isReady());
+        boolean ready = checklist.isReady();
         disk.execute(() -> {
             try {
-                MapFiles.write(mapFile(draft.name()), snapshot);
-                arenas.writeRendered(draft.name(), yaml);
+                arenas.save(draft, ready, snapshot);
                 main(() -> {
                     onSaved.accept(draft.name());
                     if (checklist.isReady()) {
@@ -398,6 +400,7 @@ public final class SetupService implements Listener {
         if (previous != null) {
             player.setGameMode(previous.gameMode());
             player.setAllowFlight(previous.allowFlight());
+            onLeave.accept(player);
         }
         if (session.isEmpty()) {
             close(session);
@@ -432,6 +435,7 @@ public final class SetupService implements Listener {
         }
         if (!session.editors().contains(player.getUniqueId())) {
             session.enter(player.getUniqueId(), new Return(player.getLocation(), player.getGameMode(), player.getAllowFlight()));
+            onEnter.accept(player);
         }
         editing.put(player.getUniqueId(), session.draft().name());
         player.teleport(start(session));
@@ -461,6 +465,7 @@ public final class SetupService implements Listener {
         player.teleport(back);
         player.setGameMode(previous.gameMode());
         player.setAllowFlight(previous.allowFlight());
+        onLeave.accept(player);
     }
 
     private void close(SetupSession session) {
@@ -474,10 +479,11 @@ public final class SetupService implements Listener {
 
     private void changed(SetupSession session) {
         String name = session.draft().name();
-        String yaml = ArenaFiles.render(session.draft(), SetupChecklist.of(schema, session.draft()).isReady());
+        ArenaDraft draft = session.draft().copy();
+        boolean ready = SetupChecklist.of(schema, session.draft()).isReady();
         disk.execute(() -> {
             try {
-                arenas.writeRendered(name, yaml);
+                arenas.saveDefinition(draft, ready);
             } catch (Exception exception) {
                 plugin.getLogger().log(Level.WARNING, "Could not write arena " + name, exception);
             }

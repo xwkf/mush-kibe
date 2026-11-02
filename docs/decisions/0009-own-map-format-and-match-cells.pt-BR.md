@@ -2,7 +2,7 @@
 
 # 0009. Os mapas usam um formato próprio e as partidas dividem um mundo em células
 
-- **Status:** Aceita
+- **Status:** Aceita; o armazenamento mudou em 2026-11-02: as arenas e os mapas (os mesmos bytes do `.mxw`) agora ficam no PostgreSQL (`core.arenas`) e são configurados no lobby do jogo, então todo servidor de jogo lê os mesmos mapas sem copiar arquivos.
 - **Data:** 2026-10-30
 
 ## Contexto

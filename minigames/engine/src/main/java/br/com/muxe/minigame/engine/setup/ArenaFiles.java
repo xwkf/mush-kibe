@@ -83,9 +83,13 @@ public final class ArenaFiles {
         if (!Files.isRegularFile(file)) {
             return Optional.empty();
         }
+        return Optional.of(parse(name, Files.readString(file), file.toString()));
+    }
+
+    public static StoredArena parse(String name, String text, String file) throws IOException {
         YamlConfiguration yaml = new YamlConfiguration();
         try {
-            yaml.loadFromString(Files.readString(file));
+            yaml.loadFromString(text);
         } catch (InvalidConfigurationException exception) {
             throw new IOException(file + " is not valid YAML: " + exception.getMessage(), exception);
         }
@@ -115,7 +119,7 @@ public final class ArenaFiles {
                 }
             }
         }
-        return Optional.of(new StoredArena(draft, yaml.getBoolean("ready", false)));
+        return new StoredArena(draft, yaml.getBoolean("ready", false));
     }
 
     private static Map<String, Object> point(Point point) {

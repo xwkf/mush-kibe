@@ -82,17 +82,19 @@ Cada jogo descreve o que uma arena precisa num `SetupSchema`, e a engine dá a t
 | `StepKind` | `LOCATION` (onde o jogador está, centralizado, com a direção arredondada para 45°), `CENTER` (o bloco sob o jogador), `BLOCK` (o bloco para onde o jogador olha), `HEIGHT` (o Y do jogador) e `REGION` (Pos 1 e Pos 2, dois cantos opostos guardados como `<passo>.pos1` e `<passo>.pos2`). |
 | `ArenaDraft` | A arena em configuração: modo, nome de exibição, times, pontos e alturas. |
 | `SetupChecklist` | O que está feito e o que falta. Uma arena está pronta quando os times estão completos e todo passo obrigatório tem o seu mínimo. |
-| `ArenaFiles` | Lê e grava `arenas/<nome>.yml` em YAML expandido, com `ready: true` quando não falta nada. |
+| `ArenaFiles` | Gera e lê a definição da arena em YAML expandido, com `ready: true` quando não falta nada, e lê e grava `arenas/<nome>.yml`. |
+| `ArenaStore` | Onde as arenas e os mapas ficam. `FileArenaStore` guarda `arenas/<nome>.yml` e `maps/<nome>.mxw` na pasta do plugin; `DatabaseArenaStore(game, commands, queries)` guarda os dois no PostgreSQL (`core.arenas`, pelo `SaveArenaCommand`, `FindArenaQuery` e `ListArenasQuery`), então todo servidor do jogo lê as mesmas arenas. `saveDefinition` salva os pontos e mantém o mapa guardado. |
+| `ArenaSavedPacket` | `minigame.arena_saved` (jogo, nome): enviado depois do `/arena salvar` para os servidores de jogo recarregarem aquela arena. |
 | `SetupService` | Abre os mundos de setup, aplica os comandos, mostra os hologramas e a action bar, e salva. |
 | `TeamColor` | As nove cores de time: Azul `&9`, Amarelo `&e`, Ciano `&b`, Cinza `&8`, Vermelho `&c`, Rosa `&d`, Verde `&a`, Branco `&f`, Laranja `&6`, cada uma com a cor da lã e do couro. |
 
 `/arena criar <nome> [modo]` abre uma arena:
 
-1. Se `maps/<nome>.mxw` existe, o mapa é carregado dele.
-2. Senão, se a pasta do servidor tem uma pasta de mundo chamada `<nome>`, ela é convertida para `.mxw` na hora e carregada.
+1. Se o armazenamento tem um mapa para `<nome>`, ele é carregado dele.
+2. Senão, se a pasta do servidor tem uma pasta de mundo chamada `<nome>`, ela é convertida para o formato de mapa da Muxe na hora, guardada e carregada.
 3. Senão, um mundo vazio é criado, e o jogador chega em `0 60 0` para construir ou colar o mapa.
 
-O mundo de setup é um mundo `muxe_setup_<nome>`, editado no criativo e voando. Vários membros da staff podem editá-lo juntos.
+O mundo de setup é um mundo `muxe_setup_<nome>`, editado no criativo e voando. Vários membros da staff podem editá-lo juntos. `SetupService.onEnter` e `onLeave` rodam quando um jogador começa e para de editar; um jogo pode usá-los, por exemplo, para colocar a staff no modo construção num lobby.
 
 | Comando | O que faz |
 |---|---|
@@ -102,7 +104,7 @@ O mundo de setup é um mundo `muxe_setup_<nome>`, editado no criativo e voando. 
 | `/arena remover <passo> [time]` | Remove o ponto mais perto do jogador, ou o passo inteiro quando ele tem um ponto só. |
 | `/arena time <adicionar\|remover> <cor>` | Escolhe os times nos modos em que eles não são fixos. Remover um time remove os pontos dele. |
 | `/arena nome <nome>` | Muda o nome de exibição do mapa. |
-| `/arena salvar` | Salva todos os chunks do mundo de setup em `maps/<nome>.mxw` e os pontos em `arenas/<nome>.yml`. |
+| `/arena salvar` | Salva todos os chunks do mundo de setup e os pontos no armazenamento de arenas. Os pontos também são salvos conforme são marcados, mantendo o mapa guardado. |
 | `/arena sair` | Sai do setup e volta para onde o jogador estava. O mundo fecha quando o último editor sai; as mudanças no mapa que não foram salvas se perdem. |
 | `/arena listar` | Lista as arenas, prontas ou incompletas, com um botão para editar cada uma. |
 

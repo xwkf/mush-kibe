@@ -7,4 +7,5 @@ dependencies {
     compileOnly(projects.core.bukkit)
 
     testImplementation(projects.core.bukkit)
+    testImplementation(testFixtures(projects.core.common))
 }

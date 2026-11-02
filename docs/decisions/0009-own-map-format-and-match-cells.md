@@ -2,7 +2,7 @@
 
 # 0009. Maps use our own format and matches share one world in cells
 
-- **Status:** Accepted
+- **Status:** Accepted; storage changed on 2026-11-02: arenas and maps (same `.mxw` bytes) now live in PostgreSQL (`core.arenas`) and are set up on the game's lobby, so every game server reads the same maps without copying files.
 - **Date:** 2026-10-30
 
 ## Context

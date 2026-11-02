@@ -15,6 +15,17 @@ class MapFilesTest {
     Path folder;
 
     @Test
+    void aMapTurnsIntoBytesAndBack() throws IOException {
+        MapTemplate template = MapTemplate.builder().put(MapFixtures.chunk(-2, 5, MapFixtures.section(4, MapFixtures.WOOL, 11))).build();
+
+        MapTemplate read = MapFiles.fromBytes(MapFiles.toBytes(template), "test");
+
+        assertThat(read.chunkCount()).isEqualTo(1);
+        assertThat(read.chunk(-2, 5).orElseThrow().section(4).orElseThrow().data(0, 0, 0)).isEqualTo(11);
+        assertThatThrownBy(() -> MapFiles.fromBytes(new byte[] {1, 2, 3, 4, 5, 6, 7, 8}, "test")).isInstanceOf(IOException.class);
+    }
+
+    @Test
     void aMapIsWrittenAndReadBackChunkByChunk() throws IOException {
         MapTemplate template = MapTemplate.builder()
             .put(MapFixtures.chunk(-2, 5, MapFixtures.section(4, MapFixtures.WOOL, 11)))

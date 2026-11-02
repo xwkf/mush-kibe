@@ -32,7 +32,7 @@ class ArenaCatalogTest {
         arena(files, maps, "solo_tulum", "solo", "Tulum", true, small);
         files.write(new ArenaDraft("1v1_nomap", "1v1", "Sem mapa"), true);
         MatchCells cells = new MatchCells(64, 4, 12);
-        ArenaCatalog catalog = new ArenaCatalog(files, maps, cells::fits, Logger.getLogger("test"));
+        ArenaCatalog catalog = new ArenaCatalog(new FileArenaStore(files, maps), cells::fits, Logger.getLogger("test"));
 
         assertThat(catalog.loadAll()).isEqualTo(3);
         assertThat(catalog.ofMode("1v1")).extracting(LoadedArena::displayName).containsExactly("Alaska", "Slip");
@@ -46,7 +46,7 @@ class ArenaCatalogTest {
         Path maps = folder.resolve("maps");
         MapTemplate map = MapTemplate.builder().put(MapFixtures.chunk(0, 0, MapFixtures.section(4, 1, 0))).build();
         arena(files, maps, "1v1_slip", "1v1", "Slip", false, map);
-        ArenaCatalog catalog = new ArenaCatalog(files, maps, ignored -> true, Logger.getLogger("test"));
+        ArenaCatalog catalog = new ArenaCatalog(new FileArenaStore(files, maps), ignored -> true, Logger.getLogger("test"));
         catalog.loadAll();
 
         files.write(new ArenaDraft("1v1_slip", "1v1", "Slip"), true);
