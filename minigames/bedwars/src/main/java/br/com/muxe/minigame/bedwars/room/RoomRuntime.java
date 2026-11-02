@@ -52,6 +52,8 @@ import org.bukkit.scoreboard.Scoreboard;
 
 public final class RoomRuntime {
 
+    static final GameMode PLAYER_MODE = GameMode.SURVIVAL;
+
     private static final int RESEND_EVERY = 3;
     private static final String HEALTH_OBJECTIVE = "muxe-vida";
     private static final Map<Material, String> LOOT = new LinkedHashMap<>();
@@ -121,7 +123,7 @@ public final class RoomRuntime {
 
     void addWaiting(Player player) {
         Change change = room.join(player.getUniqueId(), player.getName());
-        reset(player, GameMode.ADVENTURE);
+        reset(player, PLAYER_MODE);
         player.teleport(location(room.arena().waitingSpawn()));
         PlayerInventory inventory = player.getInventory();
         inventory.setItem(settings.hotbar().menu().slot(), named(Material.matchMaterial(settings.hotbar().menu().material()), settings.hotbar().menu().name()));
@@ -642,7 +644,7 @@ public final class RoomRuntime {
 
     private void spawn(Player player, RoomPlayer roomPlayer) {
         TeamBase base = room.arena().teams().get(roomPlayer.team());
-        reset(player, GameMode.SURVIVAL);
+        reset(player, PLAYER_MODE);
         player.teleport(location(base.spawn()));
         Kits.spawnKit(player, roomPlayer, room.team(roomPlayer.team()));
     }
