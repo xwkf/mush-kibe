@@ -71,7 +71,10 @@ A player who reaches a BedWars server goes back to the match they left if they s
   - Falling below the arena's void height kills at once (`morreu no void`).
   - With a bed the player watches as a spectator and respawns after 5 seconds, protected for 4 seconds, with the armour bought and the pickaxe and axe one tier lower. Without a bed the player is out (`KILL FINAL!`), and the team's last player out eliminates the team (`TIME ELIMINADO`).
 - **Blocks:** only blocks placed during the match can be broken. Nothing can be placed near spawns (5 blocks), NPCs (1) and generators (1), nor above the arena's build limit (`Você não pode colocar blocos aqui.`). Explosions only break placed blocks, never glass. TNT lights by itself and the fireball is thrown with a right click.
-- **Generators:** island iron drops every 0.9 s, as many ingots as players per team (up to 4), gold every 7 s, each with a limit of items lying within 3 blocks. Diamond and emerald show their tier and countdown in a hologram and get faster at 6, 12, 18 and 24 minutes. Iron and gold picked up are copied to teammates within 2 blocks.
+- **Generators:** island iron drops every 0.9 s, as many ingots as players per team (up to 4), gold every 7 s, each with a limit of items lying within 3 blocks. Diamond and emerald show their tier and countdown in a hologram and get faster at 6, 12, 18 and 24 minutes. Iron and gold picked up are copied to teammates within 2 blocks, who hear the pickup sound.
+- **Iron floor:** when the match starts, each island iron generator looks for a slab floor under it (from one block above to two below, with nothing solid on top). A 3x3 floor drops the iron in a plus (front, sides, centre, back); a 2x3 floor, whose generator point is the front centre, cycles through its front row and middle so the back corners stay empty. The front is the side that faces the team spawn; a 2x3 floor facing another way is also accepted. Each ingot lands on the next cell, so 4 ingots in one drop land on 4 cells. Without a 2x3 or 3x3 floor the iron drops on the point and a warning is logged. Gold always drops on the point.
+- **Drops:** items fall 1.3 blocks above the point, without speed and with no pickup delay. With `forges.stack-items: false` each cell's items are marked so they do not merge with another cell's. Picking one up collects every item of the same kind within half a block at once, with the marker removed.
+- **Diamond and emerald:** a diamond or emerald block spins above each generator (6° per tick, a full turn every 3 s, bobbing 0.08 block), with the three hologram lines above it, 0.3 apart.
 - **Events:** after Emerald III, every bed is destroyed (30 min), the sudden death is announced (40 min; the dragons are not in yet) and the match ends (42 min), in a draw if more than one team is left.
 - **Disconnecting:** a player who leaves with the bed alive can come back within 3 minutes and respawns 5 seconds later (`reconectou`). `/l` warns `Você desconectou de uma partida...` first. Leaving without a bed eliminates the player, crediting the last hit or the bed breaker.
 
@@ -207,7 +210,7 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | `default-mode` | `solo` | The mode of the room a player joins on arrival. |
 | `timings.*` | 5 s respawn, 180 s rejoin, 30 s restart, 4 s protection, island radius 17, protection radii 5/1/1, 60 s empty room | Match timings and protected areas; `empty-room-seconds` closes rooms left empty. |
 | `countdown.titles` | `30`, `10`, `5`...`1` | Titles of the start countdown. |
-| `forges.*` | the spec values | Island iron, gold and emerald, and the three diamond and emerald tiers with their start second. |
+| `forges.*` | the spec values | Island iron, gold and emerald, and the three diamond and emerald tiers with their start second. `stack-items: false` keeps items of different cells apart; `split-radius` (2) is how far teammates share iron and gold. |
 | `events.*` | 1800, 2400, 2520 | Seconds of the beds destroyed, sudden death and game end events, and their names on the scoreboard. |
 | `xp-rewards.*` | 10, 5, 250, 100, 12, 60 | XP per minute, per teammate, win, bed, kill and final kill. |
 | `hotbar.waiting.*` | emerald and bed | Waiting room items. |
@@ -293,7 +296,7 @@ If Muxe-Core is not enabled, the plugin disables itself.
 - MEGA and PILARES are not modes yet, so their NPCs open nothing. `/retornar` and `/l` are not in yet.
 - A player who reaches a BedWars server without a reservation still joins a room of `default-mode`.
 - The lobby only knows the rooms of servers that published in the last 10 seconds; the room list of a server that stops is forgotten after that.
-- The other special shop items, the quick buy editor, the dragons, the spinning blocks above the generators, and the victory and defeat titles are not in yet.
+- The other special shop items, the quick buy editor, the dragons and the victory and defeat titles are not in yet.
 - A restart or crash ends every match on the server without compensation.
 - 17 bed destruction cosmetics have no animation yet. The other cosmetic categories, Cor preferida and the cosmetic shop are not in yet.
 - A purchase updates the menu at once, but another server sees it only when the player joins it again.

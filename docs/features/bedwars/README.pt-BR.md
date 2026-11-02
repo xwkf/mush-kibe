@@ -71,7 +71,10 @@ Quem chega num servidor de BedWars volta para a partida que deixou, se ainda pud
   - Cair abaixo da altura do void da arena mata na hora (`morreu no void`).
   - Com cama, o jogador assiste como espectador e renasce depois de 5 segundos, protegido por 4 segundos, com a armadura comprada e a picareta e o machado um nível abaixo. Sem cama, o jogador sai (`KILL FINAL!`), e o último jogador do time a sair elimina o time (`TIME ELIMINADO`).
 - **Blocos:** só blocos colocados durante a partida podem ser quebrados. Nada pode ser colocado perto dos spawns (5 blocos), dos NPCs (1) e dos geradores (1), nem acima do limite de construção da arena (`Você não pode colocar blocos aqui.`). Explosões só quebram blocos colocados, nunca vidro. A TNT acende sozinha e a bola de fogo é lançada com o botão direito.
-- **Geradores:** o ferro da ilha cai a cada 0,9 s, tantos lingotes quanto jogadores por time (até 4), o ouro a cada 7 s, cada um com um limite de itens no chão num raio de 3 blocos. Diamante e esmeralda mostram nível e contagem num holograma e aceleram aos 6, 12, 18 e 24 minutos. Ferro e ouro coletados são copiados para os companheiros a até 2 blocos.
+- **Geradores:** o ferro da ilha cai a cada 0,9 s, tantos lingotes quanto jogadores por time (até 4), o ouro a cada 7 s, cada um com um limite de itens no chão num raio de 3 blocos. Diamante e esmeralda mostram nível e contagem num holograma e aceleram aos 6, 12, 18 e 24 minutos. Ferro e ouro coletados são copiados para os companheiros a até 2 blocos, que ouvem o som de coleta.
+- **Chão do ferro:** quando a partida começa, cada gerador de ferro da ilha procura um chão de lajes embaixo dele (de um bloco acima a dois abaixo, sem nada sólido em cima). Um chão 3x3 solta o ferro em cruz (frente, lados, centro, trás); um chão 2x3, cujo ponto do gerador é o centro da frente, passa pela fileira da frente e pelo meio, e os cantos de trás ficam vazios. A frente é o lado virado para o spawn do time; um chão 2x3 virado para outro lado também vale. Cada lingote cai na próxima célula, então 4 lingotes de uma vez caem em 4 células. Sem um chão 2x3 ou 3x3 o ferro cai no ponto e um aviso vai para o log. O ouro sempre cai no ponto.
+- **Itens:** caem 1,3 bloco acima do ponto, sem velocidade e sem espera para pegar. Com `forges.stack-items: false` os itens de cada célula são marcados para não se juntarem com os de outra. Pegar um recolhe de uma vez todos os itens do mesmo tipo a até meio bloco, sem a marca.
+- **Diamante e esmeralda:** um bloco de diamante ou de esmeralda gira acima de cada gerador (6° por tick, uma volta a cada 3 s, subindo e descendo 0,08 bloco), com as três linhas do holograma acima dele, a 0,3 de distância.
 - **Eventos:** depois da Esmeralda III, todas as camas são destruídas (30 min), a morte súbita é anunciada (40 min; os dragões ainda não entraram) e a partida termina (42 min), empatada se sobrar mais de um time.
 - **Desconexão:** quem sai com a cama de pé pode voltar em até 3 minutos e renasce 5 segundos depois (`reconectou`). O `/l` avisa antes `Você desconectou de uma partida...`. Sair sem cama elimina o jogador, dando a kill ao último golpe ou a quem quebrou a cama.
 
@@ -207,7 +210,7 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 | `default-mode` | `solo` | O modo da sala em que o jogador entra ao chegar. |
 | `timings.*` | 5 s renascer, 180 s voltar, 30 s reiniciar, 4 s proteção, raio da ilha 17, raios de proteção 5/1/1, 60 s sala vazia | Tempos da partida e áreas protegidas; `empty-room-seconds` fecha as salas que ficaram vazias. |
 | `countdown.titles` | `30`, `10`, `5`...`1` | Títulos da contagem para iniciar. |
-| `forges.*` | os valores da especificação | Ferro, ouro e esmeralda da ilha, e os três níveis de diamante e esmeralda com o segundo de início. |
+| `forges.*` | os valores da especificação | Ferro, ouro e esmeralda da ilha, e os três níveis de diamante e esmeralda com o segundo de início. `stack-items: false` mantém separados os itens de células diferentes; `split-radius` (2) é a distância em que os companheiros dividem ferro e ouro. |
 | `events.*` | 1800, 2400, 2520 | Segundos dos eventos de camas destruídas, morte súbita e fim de jogo, e os nomes deles no placar. |
 | `xp-rewards.*` | 10, 5, 250, 100, 12, 60 | XP por minuto, por companheiro, vitória, cama, kill e kill final. |
 | `hotbar.waiting.*` | esmeralda e cama | Itens da sala de espera. |
@@ -293,7 +296,7 @@ Se o Muxe-Core não estiver habilitado, o plugin se desabilita.
 - MEGA e PILARES ainda não são modos, então os NPCs deles não abrem nada. O `/retornar` e o `/l` ainda não entraram.
 - Quem chega a um servidor de BedWars sem reserva ainda entra numa sala do `default-mode`.
 - O lobby só conhece as salas dos servidores que publicaram nos últimos 10 segundos; a lista de um servidor que para é esquecida depois disso.
-- Os outros itens especiais da loja, o editor da compra rápida, os dragões, os blocos girando sobre os geradores e os títulos de vitória e derrota ainda não entraram.
+- Os outros itens especiais da loja, o editor da compra rápida, os dragões e os títulos de vitória e derrota ainda não entraram.
 - Um reinício ou crash encerra todas as partidas do servidor sem compensação.
 - 17 cosméticos de destruição de cama ainda não têm animação. As outras categorias de cosméticos, Cor preferida e a loja de cosméticos ainda não existem.
 - Uma compra atualiza o menu na hora, mas outro servidor só vê quando o jogador entra nele de novo.

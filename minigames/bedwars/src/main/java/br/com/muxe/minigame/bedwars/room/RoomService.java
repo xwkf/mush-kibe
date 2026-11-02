@@ -4,6 +4,7 @@ import br.com.muxe.core.bukkit.api.MuxeCore;
 import br.com.muxe.core.bukkit.cosmetic.animation.BedFrame;
 import br.com.muxe.core.bukkit.mission.config.MissionConfig;
 import br.com.muxe.core.bukkit.npc.Npc;
+import br.com.muxe.core.bukkit.display.DisplayService;
 import br.com.muxe.core.bukkit.npc.NpcService;
 import br.com.muxe.core.bukkit.permission.display.NameTag;
 import br.com.muxe.core.bukkit.text.Colors;
@@ -64,6 +65,7 @@ public final class RoomService {
     };
     private BedBreakHandler bedBreaks = (breaker, world, bed, viewers) -> {
     };
+    private DisplayService displays;
     private NpcService npcs;
     private MissionConfig missions = MissionConfig.empty();
     private MissionRules missionRules = MissionRules.DEFAULT;
@@ -84,6 +86,7 @@ public final class RoomService {
         matchWorld.start();
         npcs = NpcService.start(plugin, npc -> npcLines.getOrDefault(npc.id(), List.of()));
         npcs.onClick(this::clicked);
+        displays = DisplayService.start(plugin);
         tasks.add(plugin.getServer().getScheduler().runTaskTimer(plugin, this::second, 20L, 20L));
         tasks.add(plugin.getServer().getScheduler().runTaskTimer(plugin, this::forgeCycle, 5L, 5L));
         core.nameTags().override(this::nameTag);
@@ -98,6 +101,9 @@ public final class RoomService {
         core.nameTags().clearOverride();
         if (npcs != null) {
             npcs.stop();
+        }
+        if (displays != null) {
+            displays.stop();
         }
         matchWorld.stop();
     }
@@ -276,6 +282,10 @@ public final class RoomService {
 
     JavaPlugin plugin() {
         return plugin;
+    }
+
+    DisplayService displays() {
+        return displays;
     }
 
     NpcService npcs() {

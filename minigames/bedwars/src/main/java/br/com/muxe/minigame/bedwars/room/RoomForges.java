@@ -1,7 +1,15 @@
 package br.com.muxe.minigame.bedwars.room;
 
+import br.com.muxe.core.bukkit.display.Display;
+import br.com.muxe.core.bukkit.display.DisplayService;
+import br.com.muxe.core.bukkit.display.DisplayStand;
+import br.com.muxe.core.bukkit.display.StandPose;
 import br.com.muxe.core.bukkit.hologram.SpawnedHologram;
 import br.com.muxe.core.bukkit.hologram.TextHolograms;
+import br.com.muxe.core.bukkit.item.ItemBuilder;
+import br.com.muxe.minigame.bedwars.game.ForgeHeights;
+import br.com.muxe.minigame.bedwars.game.ForgeLayout;
+import br.com.muxe.minigame.bedwars.game.ForgeLayout.Cell;
 import br.com.muxe.minigame.bedwars.game.GeneratorTimer;
 import br.com.muxe.minigame.bedwars.game.GeneratorTimer.Rate;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
@@ -11,6 +19,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -18,39 +28,51 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.util.Vector;
 
 final class RoomForges {
 
-    static final String FORGE_ITEM = "muxe-forge";
+    static final String FORGE_ITEM = ForgePickup.FORGE_ITEM;
+
+    static final String CELL_MARKER = "muxe-forge-";
 
     private static final double GROUND_RADIUS = 3;
-    private static final double DROP_HEIGHT = 1.3;
-    private static final double HOLOGRAM_HEIGHT = 3.4;
 
     private final Plugin plugin;
     private final BedWarsSettings settings;
-    private final TextHolograms holograms = TextHolograms.standard();
+    private final DisplayService displays;
+    private final TextHolograms holograms = TextHolograms.standard(ForgeHeights.HOLOGRAM_SPACING);
     private final List<Forge> forges = new ArrayList<>();
     private final Map<UUID, Map<Forge, SpawnedHologram>> shown = new HashMap<>();
     private int diamondTier = 1;
     private int emeraldTier = 1;
 
-    RoomForges(Plugin plugin, BedWarsSettings settings) {
+    RoomForges(Plugin plugin, BedWarsSettings settings, DisplayService displays) {
         this.plugin = plugin;
         this.settings = settings;
+        this.displays = displays;
     }
 
     void island(TeamColor team, Location location, Material material, Rate rate) {
-        forges.add(new Forge(Kind.ISLAND, team, drop(location), material, new GeneratorTimer(rate), rate));
+        island(team, location, material, rate, ForgeLayout.single());
+    }
+
+    void island(TeamColor team, Location location, Material material, Rate rate, ForgeLayout layout) {
+        forges.add(new Forge(Kind.ISLAND, team, drop(location), material, new GeneratorTimer(rate), rate, layout, null));
     }
 
     void shared(Location location, Material material) {
         Forges config = settings.forges();
         Rate rate = (material == Material.DIAMOND ? config.diamond() : config.emerald()).getFirst().rate();
-        forges.add(new Forge(Kind.SHARED, null, drop(location), material, new GeneratorTimer(rate), rate));
+        String displayId = "forge-" + UUID.randomUUID();
+        Location drop = drop(location);
+        Material block = material == Material.DIAMOND ? Material.DIAMOND_BLOCK : Material.EMERALD_BLOCK;
+        displays.put(new Display(displayId, drop, List.of(new DisplayStand(0, ForgeHeights.BLOCK_ABOVE_DROP, 0, 0f, false, false,
+            Optional.of(ItemBuilder.of(block)), Optional.empty(), StandPose.ZERO, StandPose.ZERO, ForgeHeights.BLOCK_MOTION)), List.of()));
+        forges.add(new Forge(Kind.SHARED, null, drop, material, new GeneratorTimer(rate), rate, ForgeLayout.single(), displayId));
     }
 
     void tier(Material material, int tier) {
@@ -105,15 +127,32 @@ final class RoomForges {
                 continue;
             }
             int amount = forge.timer().cycle(grounded(forge));
-            if (amount > 0) {
-                Item item = at.getWorld().dropItem(at, new ItemStack(forge.material(), amount));
-                item.setVelocity(new Vector());
-                item.setPickupDelay(0);
-                if (forge.kind() == Kind.ISLAND && (forge.material() == Material.IRON_INGOT || forge.material() == Material.GOLD_INGOT)) {
-                    item.setMetadata(FORGE_ITEM, new FixedMetadataValue(plugin, Boolean.TRUE));
+            if (amount <= 0) {
+                continue;
+            }
+            if (forge.spreads()) {
+                for (int index = 0; index < amount; index++) {
+                    int drop = forge.nextDrop();
+                    Cell cell = forge.layout().cellAt(drop);
+                    spawn(forge, at.clone().add(cell.dx(), 0, cell.dz()), 1, forge.layout().cellIndexAt(drop));
                 }
+            } else {
+                spawn(forge, at, amount, 0);
             }
         }
+    }
+
+    private void spawn(Forge forge, Location at, int amount, int cell) {
+        ItemStack stack = new ItemStack(forge.material(), amount);
+        if (!settings.forges().stackItems()) {
+            ItemMeta meta = stack.getItemMeta();
+            meta.setDisplayName(CELL_MARKER + cell);
+            stack.setItemMeta(meta);
+        }
+        Item item = at.getWorld().dropItem(at, stack);
+        item.setVelocity(new Vector());
+        item.setPickupDelay(0);
+        item.setMetadata(FORGE_ITEM, new FixedMetadataValue(plugin, Boolean.TRUE));
     }
 
     void holograms(List<Player> viewers, boolean resend) {
@@ -129,7 +168,7 @@ final class RoomForges {
                     if (current != null) {
                         current.remove();
                     }
-                    Location top = forge.location().clone().add(0, HOLOGRAM_HEIGHT - DROP_HEIGHT, 0);
+                    Location top = forge.location().clone().add(0, ForgeHeights.HOLOGRAM_TOP_ABOVE_DROP, 0);
                     mine.put(forge, holograms.show(viewer, top, lines));
                     forge.lastLines(viewer.getUniqueId(), lines);
                 } else if (resend) {
@@ -149,6 +188,7 @@ final class RoomForges {
 
     void clear() {
         List.copyOf(shown.keySet()).forEach(this::hide);
+        forges.stream().map(Forge::displayId).filter(Objects::nonNull).forEach(displays::remove);
         forges.clear();
     }
 
@@ -179,7 +219,7 @@ final class RoomForges {
     }
 
     private static Location drop(Location block) {
-        return block.clone().add(0, DROP_HEIGHT, 0);
+        return block.clone().add(0, ForgeHeights.DROP_ABOVE_POINT, 0);
     }
 
     enum Kind {
@@ -195,15 +235,36 @@ final class RoomForges {
         private final Material material;
         private final GeneratorTimer timer;
         private final Rate base;
+        private final ForgeLayout layout;
+        private final String displayId;
         private final Map<UUID, List<String>> lastLines = new HashMap<>();
+        private int drops;
 
-        Forge(Kind kind, TeamColor team, Location location, Material material, GeneratorTimer timer, Rate base) {
+        Forge(Kind kind, TeamColor team, Location location, Material material, GeneratorTimer timer, Rate base, ForgeLayout layout, String displayId) {
             this.kind = kind;
             this.team = team;
             this.location = location;
             this.material = material;
             this.timer = timer;
             this.base = base;
+            this.layout = layout;
+            this.displayId = displayId;
+        }
+
+        ForgeLayout layout() {
+            return layout;
+        }
+
+        String displayId() {
+            return displayId;
+        }
+
+        boolean spreads() {
+            return material == Material.IRON_INGOT && layout.shape() != ForgeLayout.Shape.SINGLE;
+        }
+
+        int nextDrop() {
+            return drops++;
         }
 
         Kind kind() {

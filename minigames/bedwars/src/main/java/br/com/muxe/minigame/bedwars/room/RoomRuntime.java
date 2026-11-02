@@ -12,6 +12,7 @@ import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.core.bukkit.text.Title;
 import br.com.muxe.minigame.bedwars.arena.BedWarsArena.TeamBase;
 import br.com.muxe.minigame.bedwars.bootstrap.BedWarsBootstrap;
+import br.com.muxe.minigame.bedwars.game.ForgeLayout;
 import br.com.muxe.minigame.bedwars.game.Ranking;
 import br.com.muxe.minigame.bedwars.game.Timeline.Event;
 import br.com.muxe.minigame.bedwars.mission.MissionRules;
@@ -97,7 +98,7 @@ public final class RoomRuntime {
         this.room = room;
         this.world = world;
         this.view = new RoomView(settings.scoreboard(), settings.timeline());
-        this.forges = new RoomForges(service.plugin(), settings);
+        this.forges = new RoomForges(service.plugin(), settings, service.displays());
     }
 
     public Room room() {
@@ -199,7 +200,8 @@ public final class RoomRuntime {
                 removeBed(entry.getKey());
                 continue;
             }
-            base.iron().forEach(point -> forges.island(entry.getKey(), location(point), Material.IRON_INGOT, settings.forges().iron(room.mode().teamSize())));
+            base.iron().forEach(point -> forges.island(entry.getKey(), location(point), Material.IRON_INGOT, settings.forges().iron(room.mode().teamSize()),
+                layout(point, base.spawn())));
             base.gold().forEach(point -> forges.island(entry.getKey(), location(point), Material.GOLD_INGOT, settings.forges().gold()));
             spawnNpc(entry.getKey(), "loja", base.shop(), room.mode().teamSize() > 1 ? settings.holograms().shopTeam() : settings.holograms().shop());
             spawnNpc(entry.getKey(), "melhorias", base.upgrades(), room.mode().teamSize() > 1 ? settings.holograms().upgradesTeam() : settings.holograms().upgrades());
@@ -730,6 +732,26 @@ public final class RoomRuntime {
             return Optional.empty();
         }
         return Optional.of(BedFrame.ofBlock(bed.getX(), bed.getY(), bed.getZ(), bed.getData()));
+    }
+
+    private ForgeLayout layout(Point forge, Point spawn) {
+        Block reference = location(forge).getBlock();
+        ForgeLayout layout = ForgeLayout.detect(new ForgeLayout.Blocks() {
+            @Override
+            public boolean slab(int dx, int dy, int dz) {
+                String name = reference.getRelative(dx, dy, dz).getType().name();
+                return name.contains("SLAB") || name.contains("STEP");
+            }
+
+            @Override
+            public boolean solid(int dx, int dy, int dz) {
+                return reference.getRelative(dx, dy, dz).getType().isSolid();
+            }
+        }, spawn.x() - forge.x(), spawn.z() - forge.z());
+        if (layout.shape() == ForgeLayout.Shape.SINGLE) {
+            service.plugin().getLogger().warning("Room " + room.code() + ": the iron forge at " + forge.describe() + " has no 2x3 or 3x3 slab floor, so it drops on one spot");
+        }
+        return layout;
     }
 
     private void removeBed(TeamColor color) {

@@ -4,6 +4,7 @@ import br.com.muxe.core.bukkit.api.MuxeCore;
 import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.minigame.bedwars.room.ChatView;
+import br.com.muxe.minigame.bedwars.room.ForgePickup;
 import br.com.muxe.minigame.bedwars.room.Room;
 import br.com.muxe.minigame.bedwars.room.RoomPlayer;
 import br.com.muxe.minigame.bedwars.room.RoomRuntime;
@@ -18,6 +19,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Fireball;
@@ -337,28 +339,43 @@ public final class MatchListener implements Listener {
                 return;
             }
             Item item = event.getItem();
-            if (!item.hasMetadata("muxe-forge")) {
+            if (!item.hasMetadata(ForgePickup.FORGE_ITEM)) {
                 return;
             }
+            event.setCancelled(true);
             RoomPlayer picker = runtime.room().player(player.getUniqueId()).orElseThrow();
-            ItemStack stack = item.getItemStack();
-            if (stack.getType() == Material.EMERALD) {
-                picker.addEmeralds(stack.getAmount());
+            Material type = item.getItemStack().getType();
+            int amount = 0;
+            for (Item same : ForgePickup.gather(item)) {
+                amount += same.getItemStack().getAmount();
+                same.remove();
+            }
+            give(player, picker, type, amount);
+            if (!ForgePickup.splits(type)) {
+                return;
             }
             double radius = settings.forges().splitRadius();
-            for (Entity nearby : player.getNearbyEntities(radius, radius, 2.0)) {
+            for (Entity nearby : player.getNearbyEntities(radius, radius, ForgePickup.SPLIT_HEIGHT)) {
                 if (nearby instanceof Player mate && !mate.equals(player)) {
+                    int shared = amount;
                     runtime.room().player(mate.getUniqueId())
                         .filter(other -> other.team() == picker.team() && other.isAlive())
-                        .ifPresent(other -> {
-                            mate.getInventory().addItem(new ItemStack(stack.getType(), stack.getAmount()));
-                            if (stack.getType() == Material.EMERALD) {
-                                other.addEmeralds(stack.getAmount());
-                            }
-                        });
+                        .ifPresent(other -> give(mate, other, type, shared));
                 }
             }
         });
+    }
+
+    private static void give(Player player, RoomPlayer roomPlayer, Material type, int amount) {
+        if (amount <= 0) {
+            return;
+        }
+        player.getInventory().addItem(new ItemStack(type, amount)).values()
+            .forEach(rest -> player.getWorld().dropItem(player.getLocation(), rest));
+        player.playSound(player.getLocation(), Sound.ITEM_PICKUP, ForgePickup.SOUND_VOLUME, ForgePickup.SOUND_PITCH);
+        if (type == Material.EMERALD) {
+            roomPlayer.addEmeralds(amount);
+        }
     }
 
     @EventHandler(ignoreCancelled = true)
