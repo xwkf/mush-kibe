@@ -164,7 +164,7 @@ TextHolograms holograms = TextHolograms.standard();
 SpawnedHologram hologram = holograms.show(player, top, List.of("&b&lSKYWARS", "&e37 jogando"));
 ```
 
-- Lines go down from `top`, 0.28 blocks apart. A blank line keeps its space and shows nothing. `height(lines)` tells how tall the text is.
+- Lines go down from `top`, 0.28 blocks apart (`TextHolograms.standard(spacing)` for another spacing). `show(player, top, lines, gaps)` and `layout(top, lines, gaps)` give each pair of lines its own gap, from the top; lines past the list use the spacing, and `depth(gaps, line)` tells how far a line is below `top`. A blank line keeps its space and shows nothing. `height(lines)` tells how tall the text is.
 - Same transport as the pixel holograms: invisible armor stands sent only to `player`.
 - The height of a line is where its text starts: the top of the text sits 0.09375 blocks above it. The 1.8 client draws the name of a small armor stand as if the stand were full size (1.975 blocks), so `PacketHologramTransport` spawns each stand `LABEL_HEIGHT` (1.39375) blocks below the line.
 - `hologram.rename(lines)` changes the text of a hologram that keeps the same number of lines, without respawning it; it returns `false` when the lines do not match and the hologram must be shown again.
@@ -182,6 +182,34 @@ FireworkBurst.explode(plugin, location, effect);
 - `color(hex)` reads a color written as `#RRGGBB` (the `#` is optional).
 - The burst needs the 1.8 server internals, reached by reflection. When they are missing, a warning is logged once and the firework flies a little before exploding.
 - The [parkour](../../features/parkour/README.md) uses it when a player finishes.
+
+### Sound cues
+
+```java
+Optional<SoundCue> cue = SoundCue.from(config.getConfigurationSection("parkour.sounds.start"));
+cue.ifPresent(sound -> sound.play(player));
+```
+
+- `from(section)` reads `sound` (a 1.8 `Sound` name), `volume` and `pitch` (1.0 by default). A missing section or an empty `sound` gives nothing; an unknown sound is an error.
+- `play(player)` plays it to that player only, at their position. The [parkour](../../features/parkour/README.md) uses it.
+
+## Missions
+
+Packages `br.com.muxe.core.common.mission` and `br.com.muxe.core.bukkit.mission`. See [Missions](../../features/missions/README.md).
+
+```java
+MissionConfig missions = MissionConfig.from(config.getConfigurationSection("missions"), MyGoal::find);
+core.missions().register("mygame", missions.catalog(), (player, completed, at) -> giveGameXp(player, completed));
+MissionMenus menus = new MissionMenus("mygame", missions, core.queries(), core.mainThread(), core.clock(), MissionModule.ZONE, logger);
+
+MissionTracker tracker = new MissionTracker(core, "mygame", missions, "room " + code, logger);
+tracker.begin(players);
+tracker.check(id -> Optional.of(Map.of("FINAL_KILLS", finals(id))));
+tracker.finish(id -> Optional.of(totals(id)));
+```
+
+- A game declares its goals as `MissionGoal(id, best)` and reports, for each player, the match totals by goal id. The tracker announces completions on the spot, saves, and sends the summary at the end.
+- The core pays the credits; the game reward hook runs in the same transaction.
 
 ## Items
 
@@ -361,7 +389,7 @@ MojangSkins.standard().byName("Notch").thenAccept(found -> ...);
 
 - NPCs are players that only exist in packets: they are sent to each player within 48 blocks and removed beyond 64. They stay in the tab list for 2 seconds so the client loads the skin, and their name tag is hidden with a team; the text above them is a text hologram.
 - Clicks are read from the network: `PacketInterceptor` adds a Netty handler to each player's connection and reports `PacketPlayInUseEntity`, because the server ignores clicks on entities it does not know. Every interceptor gets its own handler name, so several services (NPCs, display stands) can read clicks at once. The click handler runs on the main thread.
-- `NpcService.start(plugin, layout, lines)` places the lines with an `NpcLabelLayout(bottom, gaps, spacing)`: the last line `bottom` blocks above the feet and the others going up through `gaps`, then `spacing`, with `LabelStack.upward`. `NpcLabelLayout.from(section)` reads it from config; without one, `NpcLabelLayout.STANDARD` keeps the last line 2.05 blocks up and the others 0.28 apart.
+- `NpcService.start(plugin, npc -> layout, lines)` picks a layout per NPC (the BedWars lobby gives its statistics NPC its own gaps). `NpcService.start(plugin, layout, lines)` places the lines with an `NpcLabelLayout(bottom, gaps, spacing)`: the last line `bottom` blocks above the feet and the others going up through `gaps`, then `spacing`, with `LabelStack.upward`. `NpcLabelLayout.from(section)` reads it from config; without one, `NpcLabelLayout.STANDARD` keeps the last line 2.05 blocks up and the others 0.28 apart.
 - `new Npc(id, location, skin, Optional.of(item))` puts an item in the NPC's hand, sent to each viewer as equipment right after the NPC appears. `PlacedNpcs.hand(HeldItem)` turns a stored material and data into that item.
 - `MojangSkins` finds the signed skin of an original player name (`api.mojang.com` and `sessionserver.mojang.com`). Store the result instead of asking on every start.
 - `npcs.visibleTo((viewer, npc) -> ...)` hides an NPC from the viewers the rule refuses, as if they were out of range. With it an NPC can exist for one player only, such as the BedWars statistics NPC that wears the skin of whoever looks at it.

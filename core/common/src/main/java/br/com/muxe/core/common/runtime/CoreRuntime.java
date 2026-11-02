@@ -34,6 +34,9 @@ import br.com.muxe.core.common.metrics.export.MetricsHttpServer;
 import br.com.muxe.core.common.metrics.export.PrometheusTextFormat;
 import br.com.muxe.core.common.metrics.jvm.JvmMetrics;
 import br.com.muxe.core.common.metrics.simple.SimpleMetricRegistry;
+import br.com.muxe.core.common.mission.MissionModule;
+import br.com.muxe.core.common.mission.domain.MissionGames;
+import br.com.muxe.core.common.mission.infrastructure.postgres.PostgresMissionRepository;
 import br.com.muxe.core.common.network.NetworkPackets;
 import br.com.muxe.core.common.parkour.ParkourModule;
 import br.com.muxe.core.common.parkour.infrastructure.postgres.PostgresParkourRecordRepository;
@@ -83,6 +86,7 @@ public final class CoreRuntime implements AutoCloseable {
     private final CommandBus commands;
     private final QueryBus queries;
     private final ExpiringStore store;
+    private final MissionGames missions;
 
     private CoreRuntime(Wiring wiring) {
         this.settings = wiring.settings;
@@ -99,6 +103,7 @@ public final class CoreRuntime implements AutoCloseable {
         this.commands = wiring.commands;
         this.queries = wiring.queries;
         this.store = wiring.store;
+        this.missions = wiring.missions;
     }
 
     public static CoreRuntime start(MuxeSettings settings, PlatformHooks hooks) {
@@ -164,6 +169,10 @@ public final class CoreRuntime implements AutoCloseable {
         return queries;
     }
 
+    public MissionGames missions() {
+        return missions;
+    }
+
     public ExpiringStore store() {
         return store;
     }
@@ -190,6 +199,7 @@ public final class CoreRuntime implements AutoCloseable {
         private CommandBus commands;
         private QueryBus queries;
         private ExpiringStore store;
+        private final MissionGames missions = new MissionGames();
 
         private Wiring(MuxeSettings settings, PlatformHooks hooks) {
             this.settings = settings;
@@ -247,6 +257,7 @@ public final class CoreRuntime implements AutoCloseable {
             PostgresCreditRepository credits = new PostgresCreditRepository();
             CreditModule.register(commands, queries, credits, transactions, clock);
             CosmeticModule.register(commands, queries, new PostgresCosmeticRepository(), credits, transactions, clock);
+            MissionModule.register(commands, queries, missions, new PostgresMissionRepository(), credits, transactions, clock, MissionModule.ZONE);
 
             ServerHeartbeat heartbeat = closer.register(new ServerHeartbeat(packets, identity, hooks.serverLoad(), directory, executors.scheduler(), clock, logger));
             transport.addConnectionListener(new ConnectionListener() {

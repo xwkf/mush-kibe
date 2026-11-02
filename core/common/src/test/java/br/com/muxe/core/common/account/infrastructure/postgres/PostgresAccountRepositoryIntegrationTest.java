@@ -50,7 +50,7 @@ class PostgresAccountRepositoryIntegrationTest {
 
     @Test
     void migrationsCreateTheCoreSchema() {
-        assertThat(migration.schemaVersion()).isEqualTo("14");
+        assertThat(migration.schemaVersion()).isEqualTo("15");
     }
 
     @Test

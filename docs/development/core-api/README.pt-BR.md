@@ -165,6 +165,7 @@ SpawnedHologram hologram = holograms.show(player, top, List.of("&b&lSKYWARS", "&
 ```
 
 - As linhas descem a partir de `top`, a 0,28 bloco uma da outra. Uma linha vazia mantém o espaço e não mostra nada. `height(lines)` diz a altura do texto.
+- `TextHolograms.standard(spacing)` usa outro espaçamento. `show(player, top, lines, gaps)` e `layout(top, lines, gaps)` dão a cada par de linhas o seu próprio espaço, de cima para baixo; as linhas além da lista usam o espaçamento, e `depth(gaps, line)` diz o quanto uma linha fica abaixo do `top`.
 - Mesmo transporte dos hologramas de pixels: suportes de armadura invisíveis enviados só para o `player`.
 - A altura de uma linha é onde o texto dela começa: o topo do texto fica 0,09375 bloco acima dela. O cliente 1.8 desenha o nome de um suporte de armadura pequeno como se ele tivesse o tamanho normal (1,975 bloco), então o `PacketHologramTransport` cria cada suporte `LABEL_HEIGHT` (1,39375) bloco abaixo da linha.
 - `hologram.rename(lines)` troca o texto de um holograma que mantém o mesmo número de linhas, sem criá-lo de novo; devolve `false` quando as linhas não batem e o holograma precisa ser mostrado de novo.
@@ -182,6 +183,34 @@ FireworkBurst.explode(plugin, location, effect);
 - O `color(hex)` lê uma cor escrita como `#RRGGBB` (o `#` é opcional).
 - A explosão depende das classes internas do servidor 1.8, acessadas por reflexão. Quando elas não existem, um aviso vai para o log uma vez e o fogo de artifício sobe um pouco antes de explodir.
 - O [parkour](../../features/parkour/README.pt-BR.md) o usa quando um jogador termina.
+
+### Sons
+
+```java
+Optional<SoundCue> cue = SoundCue.from(config.getConfigurationSection("parkour.sounds.start"));
+cue.ifPresent(sound -> sound.play(player));
+```
+
+- `from(section)` lê `sound` (nome de `Sound` do 1.8), `volume` e `pitch` (1.0 por padrão). Sem a seção ou com `sound` vazio, não há som; um som desconhecido é um erro.
+- `play(player)` toca só para aquele jogador, na posição dele. O [parkour](../../features/parkour/README.pt-BR.md) usa.
+
+## Missões
+
+Pacotes `br.com.muxe.core.common.mission` e `br.com.muxe.core.bukkit.mission`. Veja [Missões](../../features/missions/README.pt-BR.md).
+
+```java
+MissionConfig missions = MissionConfig.from(config.getConfigurationSection("missions"), MyGoal::find);
+core.missions().register("mygame", missions.catalog(), (player, completed, at) -> giveGameXp(player, completed));
+MissionMenus menus = new MissionMenus("mygame", missions, core.queries(), core.mainThread(), core.clock(), MissionModule.ZONE, logger);
+
+MissionTracker tracker = new MissionTracker(core, "mygame", missions, "room " + code, logger);
+tracker.begin(players);
+tracker.check(id -> Optional.of(Map.of("FINAL_KILLS", finals(id))));
+tracker.finish(id -> Optional.of(totals(id)));
+```
+
+- Um jogo declara os seus objetivos como `MissionGoal(id, best)` e informa, para cada jogador, os totais da partida por id de objetivo. O tracker anuncia as conclusões na hora, salva e manda o resumo no fim.
+- O core paga os créditos; a recompensa do jogo roda na mesma transação.
 
 ## Itens
 
@@ -361,6 +390,7 @@ MojangSkins.standard().byName("Notch").thenAccept(found -> ...);
 
 - Os NPCs são jogadores que só existem em pacotes: são enviados para cada jogador a até 48 blocos e removidos além de 64. Eles ficam no tab por 2 segundos para o cliente carregar a skin, e o nome em cima deles é escondido com um time; o texto acima deles é um holograma de texto.
 - Os cliques são lidos da rede: o `PacketInterceptor` adiciona um handler do Netty na conexão de cada jogador e avisa sobre o `PacketPlayInUseEntity`, porque o servidor ignora cliques em entidades que ele não conhece. Cada interceptador tem um nome de handler próprio, então vários serviços (NPCs, suportes de exibição) podem ler cliques ao mesmo tempo. O tratamento do clique roda na main thread.
+- `NpcService.start(plugin, npc -> layout, lines)` escolhe um layout por NPC (o lobby do BedWars dá ao NPC de estatísticas os seus próprios espaços).
 - `NpcService.start(plugin, layout, lines)` posiciona as linhas com um `NpcLabelLayout(bottom, gaps, spacing)`: a última linha `bottom` blocos acima dos pés e as outras subindo pelos `gaps`, depois pelo `spacing`, com o `LabelStack.upward`. `NpcLabelLayout.from(section)` lê isso da config; sem uma, o `NpcLabelLayout.STANDARD` deixa a última linha 2,05 blocos acima e as outras a 0,28 de distância.
 - `new Npc(id, location, skin, Optional.of(item))` coloca um item na mão do NPC, enviado a cada jogador como equipamento logo depois que o NPC aparece. `PlacedNpcs.hand(HeldItem)` transforma um material e um data guardados nesse item.
 - `MojangSkins` busca a skin assinada de um nome original (`api.mojang.com` e `sessionserver.mojang.com`). Guarde o resultado em vez de buscar a cada inicialização.

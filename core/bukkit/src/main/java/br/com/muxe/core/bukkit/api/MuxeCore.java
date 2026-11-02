@@ -11,6 +11,7 @@ import br.com.muxe.core.common.cqrs.query.QueryBus;
 import br.com.muxe.core.common.messaging.bus.PacketBus;
 import br.com.muxe.core.common.messaging.packet.PacketRegistry;
 import br.com.muxe.core.common.metrics.MetricRegistry;
+import br.com.muxe.core.common.mission.domain.MissionGames;
 import br.com.muxe.core.common.persistence.migration.MigrationRunner;
 import br.com.muxe.core.common.persistence.transaction.Transactions;
 import br.com.muxe.core.common.server.ServerIdentity;
@@ -71,4 +72,6 @@ public interface MuxeCore {
     NameTags nameTags();
 
     SidebarOverrides sidebars();
+
+    MissionGames missions();
 }
