@@ -4,6 +4,7 @@ import br.com.muxe.core.bukkit.api.MuxeCore;
 import br.com.muxe.minigame.bedwars.level.LevelBar;
 import br.com.muxe.minigame.bedwars.stats.application.query.FindPlayerStatsQuery;
 import br.com.muxe.minigame.bedwars.stats.domain.PlayerStats;
+import br.com.muxe.minigame.engine.level.LevelUps;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -22,11 +23,13 @@ public final class StatsCache implements Listener {
 
     private final Plugin plugin;
     private final MuxeCore core;
+    private final LevelUps levelUps;
     private final Map<UUID, PlayerStats> stats = new ConcurrentHashMap<>();
 
-    public StatsCache(Plugin plugin, MuxeCore core) {
+    public StatsCache(Plugin plugin, MuxeCore core, LevelUps levelUps) {
         this.plugin = plugin;
         this.core = core;
+        this.levelUps = levelUps;
     }
 
     public void start() {
@@ -48,7 +51,7 @@ public final class StatsCache implements Listener {
                 core.mainThread().execute(() -> {
                     Player player = plugin.getServer().getPlayer(playerId);
                     if (player != null) {
-                        LevelBar.show(player, loaded.general().xp());
+                        levelUps.announce(player, LevelBar.show(player, loaded.general().xp()).level());
                     }
                 });
             }
@@ -64,5 +67,6 @@ public final class StatsCache implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         stats.remove(player.getUniqueId());
+        levelUps.forget(player.getUniqueId());
     }
 }

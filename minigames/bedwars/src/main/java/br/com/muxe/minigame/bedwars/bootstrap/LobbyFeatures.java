@@ -21,6 +21,7 @@ import br.com.muxe.minigame.bedwars.lobby.top.TopData;
 import br.com.muxe.minigame.bedwars.lobby.top.TopSelectorSettings;
 import br.com.muxe.minigame.bedwars.lobby.top.TopTexts;
 import br.com.muxe.minigame.bedwars.matchmaking.MatchConnector;
+import br.com.muxe.minigame.engine.level.LevelUps;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
@@ -51,7 +52,7 @@ public final class LobbyFeatures {
         TopTexts texts = TopTexts.from(section(lobby, "tops"));
         MatchConnector connector = new MatchConnector(core, messages, mode -> schema.modes().contains(mode) ? schema.mode(mode).displayName() : mode);
         connector.start();
-        StatsCache stats = new StatsCache(plugin, core);
+        StatsCache stats = new StatsCache(plugin, core, new LevelUps(messages.get("level-up"), badges::of));
         stats.start();
         TagColors colors = new TagColors(core);
         TopData tops = new TopData(plugin, core, Duration.ofSeconds(texts.refreshSeconds()));

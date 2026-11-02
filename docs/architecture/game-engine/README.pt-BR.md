@@ -37,6 +37,10 @@ A `StartCountdown` segue as mesmas regras em todos os jogos e modos:
 
 `HealthDisplay` mostra a vida dos jogadores vivos embaixo do nome, como `20 ❤`, e como um número amarelo à direita do nome no tab, em todos os minigames. O jogo chama `show(placar, vivos)` para o placar de cada jogador algumas vezes por segundo (o BedWars a cada 5 ticks), com os nomes dos vivos e a vida arredondada para cima (`points(vida)`). Quem sai da lista perde as duas na hora. O texto (o coração) vem das mensagens do jogo.
 
+## Subida de nível
+
+`LevelUps` parabeniza o jogador que chega a um nível novo, em todos os minigames. O jogo cria a classe com a mensagem dele (com `{level}`) e o emblema de cada nível, e chama `announce(jogador, nível)` sempre que mostra o nível. O primeiro nível visto de um jogador só fica guardado; um nível maior manda a mensagem com o emblema do nível novo, uma vez só mesmo quando pula vários níveis. `forget(jogador)` esquece o jogador quando ele sai.
+
 ## Setup de arenas
 
 Cada jogo descreve o que uma arena precisa num `SetupSchema`, e a engine dá a todos os jogos o mesmo comando `/arena`, os mesmos hologramas e a mesma checklist.

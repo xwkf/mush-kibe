@@ -506,6 +506,7 @@ messages:
   global-usage: "&cUse /g <mensagem> para falar com todos."
   global-prefix: "&6[G] "
   health-below-name: "&c❤"
+  level-up: "&b&lPARABÉNS &7Você subiu para o nível {level}&7!"
   bed-destroyed: "&f&lCAMA DESTRUÍDA &f» &7A {team-color}Cama do {team} &7foi destruída por {player}&7."
   own-bed: "&cVocê não pode quebrar a sua própria cama."
   xp: "&b+{xp} XP"

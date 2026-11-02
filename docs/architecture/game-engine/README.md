@@ -37,6 +37,10 @@ Each game owns the lifecycle of its matches, because games differ too much to sh
 
 `HealthDisplay` shows the health of the players alive under their names, as `20 ❤`, and as a yellow number to the right of the name in the tab list, in every minigame. The game calls `show(scoreboard, alive)` for each viewer's scoreboard a few times a second (BedWars every 5 ticks), with the names of the players alive and their health rounded up (`points(health)`). A player missing from the list loses both at once. The label (the heart) comes from the game's messages.
 
+## Level up
+
+`LevelUps` congratulates a player who reaches a new level, in every minigame. The game creates it with its message (with `{level}`) and the badge of each level, and calls `announce(player, level)` whenever it shows the level. The first level seen for a player is only remembered; a higher one sends the message with the badge of the new level, once even when several levels are skipped. `forget(player)` drops the player when they leave.
+
 ## Arena setup
 
 Each game describes what an arena needs in a `SetupSchema`, and the engine gives every game the same `/arena` command, holograms and checklist.

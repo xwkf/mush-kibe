@@ -11,6 +11,7 @@ import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.minigame.bedwars.arena.BedWarsArena;
 import br.com.muxe.minigame.bedwars.arena.BedWarsSchema;
+import br.com.muxe.minigame.bedwars.lobby.format.LevelBadges;
 import br.com.muxe.minigame.bedwars.matchmaking.RoomChoice;
 import br.com.muxe.minigame.bedwars.mission.MissionRules;
 import br.com.muxe.minigame.bedwars.network.ArenaInfo;
@@ -18,6 +19,7 @@ import br.com.muxe.minigame.bedwars.network.RoomInfo;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
 import br.com.muxe.minigame.engine.arena.ArenaCatalog;
 import br.com.muxe.minigame.engine.arena.LoadedArena;
+import br.com.muxe.minigame.engine.level.LevelUps;
 import br.com.muxe.minigame.engine.match.HealthDisplay;
 import br.com.muxe.minigame.engine.match.StartCountdown;
 import br.com.muxe.minigame.engine.room.RoomCodes;
@@ -73,14 +75,17 @@ public final class RoomService {
     private volatile Map<UUID, ChatView> chat = Map.of();
     private final Set<UUID> shouting = ConcurrentHashMap.newKeySet();
     private final HealthDisplay healthDisplay;
+    private final LevelUps levelUps;
     private volatile int activeMatches;
 
-    public RoomService(JavaPlugin plugin, MuxeCore core, BedWarsSettings settings, MessageCatalog messages, BedWarsSchema schema, ArenaCatalog catalog, MatchWorld matchWorld) {
+    public RoomService(JavaPlugin plugin, MuxeCore core, BedWarsSettings settings, MessageCatalog messages, BedWarsSchema schema, ArenaCatalog catalog, MatchWorld matchWorld,
+                       LevelBadges levelBadges) {
         this.plugin = plugin;
         this.core = core;
         this.settings = settings;
         this.messages = messages;
         this.healthDisplay = new HealthDisplay(messages.get("health-below-name"));
+        this.levelUps = new LevelUps(messages.get("level-up"), levelBadges::of);
         this.schema = schema;
         this.catalog = catalog;
         this.matchWorld = matchWorld;
@@ -239,6 +244,7 @@ public final class RoomService {
     }
 
     public void leave(Player player) {
+        levelUps.forget(player.getUniqueId());
         String code = byPlayer.get(player.getUniqueId());
         RoomRuntime runtime = code == null ? null : rooms.get(code);
         if (runtime == null) {
@@ -385,6 +391,10 @@ public final class RoomService {
 
     HealthDisplay healthDisplay() {
         return healthDisplay;
+    }
+
+    LevelUps levelUps() {
+        return levelUps;
     }
 
     private void clicked(Player player, Npc npc) {

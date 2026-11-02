@@ -228,7 +228,8 @@ public final class RoomRuntime {
         if (stored == null || player == null || !player.getWorld().equals(world)) {
             return;
         }
-        LevelBar.show(player, stored + room.player(id).map(RoomPlayer::xp).orElse(0L));
+        int level = LevelBar.show(player, stored + room.player(id).map(RoomPlayer::xp).orElse(0L)).level();
+        service.levelUps().announce(player, level);
     }
 
     void forgeCycle() {
@@ -782,6 +783,11 @@ public final class RoomRuntime {
 
     private void record(Optional<TeamColor> winner) {
         List<MatchOutcome> outcomes = room.outcomes(winner, settings.xp());
+        for (MatchOutcome outcome : outcomes) {
+            long earnedBefore = room.player(outcome.playerId()).map(RoomPlayer::xp).orElse(0L);
+            storedXp.computeIfPresent(outcome.playerId(), (id, stored) -> stored + Math.max(0, outcome.xp() - earnedBefore));
+            showLevel(outcome.playerId());
+        }
         if (outcomes.isEmpty() || room.matchId().isEmpty()) {
             return;
         }

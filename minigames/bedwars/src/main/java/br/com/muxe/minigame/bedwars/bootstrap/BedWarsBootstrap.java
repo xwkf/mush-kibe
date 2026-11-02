@@ -14,6 +14,7 @@ import br.com.muxe.minigame.bedwars.command.BedWarsCommand;
 import br.com.muxe.minigame.bedwars.command.GlobalChatCommand;
 import br.com.muxe.minigame.bedwars.listener.Bedbugs;
 import br.com.muxe.minigame.bedwars.listener.MatchListener;
+import br.com.muxe.minigame.bedwars.lobby.format.LevelBadges;
 import br.com.muxe.minigame.bedwars.mission.BedWarsGoal;
 import br.com.muxe.minigame.bedwars.mission.MissionRules;
 import br.com.muxe.minigame.bedwars.network.RoomPublisher;
@@ -120,7 +121,7 @@ public final class BedWarsBootstrap {
             }
         });
 
-        rooms = new RoomService(plugin, core, settings, messages, schema, catalog, matchWorld);
+        rooms = new RoomService(plugin, core, settings, messages, schema, catalog, matchWorld, LevelBadges.from(config.getConfigurationSection("levels")));
         rooms.missions(missions, MissionRules.from(config.getConfigurationSection("missions")));
         rooms.start();
         engine.track(rooms::activeMatches, () -> catalog.all().size());
