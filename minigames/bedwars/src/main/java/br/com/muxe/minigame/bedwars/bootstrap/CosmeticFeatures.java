@@ -50,7 +50,7 @@ final class CosmeticFeatures {
         BedPreview preview = null;
         PreviewGate gate = (player, cosmetic) -> player.sendMessage(messages.get("preview-only-lobby"));
         if (lobby) {
-            BedPreview started = new BedPreview(plugin, PreviewSettings.from(section(config, "preview")), animations, messages);
+            BedPreview started = new BedPreview(plugin, core.buildMode(), PreviewSettings.from(section(config, "preview")), animations, messages);
             if (started.start()) {
                 preview = started;
                 gate = started;

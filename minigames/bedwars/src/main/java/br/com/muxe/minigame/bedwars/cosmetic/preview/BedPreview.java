@@ -1,5 +1,6 @@
 package br.com.muxe.minigame.bedwars.cosmetic.preview;
 
+import br.com.muxe.core.bukkit.buildmode.BuildMode;
 import br.com.muxe.core.bukkit.cosmetic.animation.BedAnimation;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import br.com.muxe.core.bukkit.cosmetic.stage.AnimationPlayer;
@@ -48,6 +49,7 @@ public final class BedPreview implements PreviewGate, Listener {
     private static final long TICKS_PER_SECOND = 20;
 
     private final Plugin plugin;
+    private final BuildMode buildMode;
     private final PreviewSettings settings;
     private final BedAnimations animations;
     private final AnimationPlayer animator;
@@ -55,8 +57,9 @@ public final class BedPreview implements PreviewGate, Listener {
     private final Map<UUID, Session> sessions = new HashMap<>();
     private World world;
 
-    public BedPreview(Plugin plugin, PreviewSettings settings, BedAnimations animations, MessageCatalog messages) {
+    public BedPreview(Plugin plugin, BuildMode buildMode, PreviewSettings settings, BedAnimations animations, MessageCatalog messages) {
         this.plugin = plugin;
+        this.buildMode = buildMode;
         this.settings = settings;
         this.animations = animations;
         this.animator = new AnimationPlayer(plugin);
@@ -105,6 +108,7 @@ public final class BedPreview implements PreviewGate, Listener {
         sessions.put(viewer.getUniqueId(), session);
         viewer.getInventory().clear();
         viewer.getInventory().setArmorContents(new ItemStack[4]);
+        buildMode.releaseGameMode(viewer);
         viewer.setGameMode(GameMode.SURVIVAL);
         viewer.setAllowFlight(false);
         viewer.teleport(new Location(world, settings.x(), settings.y(), settings.z(), settings.yaw(), settings.pitch()));
@@ -227,6 +231,7 @@ public final class BedPreview implements PreviewGate, Listener {
         viewer.getInventory().setContents(session.contents);
         viewer.getInventory().setArmorContents(session.armor);
         viewer.setGameMode(session.mode);
+        buildMode.lockGameMode(viewer);
         viewer.setAllowFlight(session.allowFlight);
         viewer.setScoreboard(session.scoreboard);
         viewer.updateInventory();
