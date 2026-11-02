@@ -26,6 +26,10 @@ public final class Matchmaker {
     }
 
     public record Target(String serverId, String roomCode) {
+
+        public boolean createsRoom() {
+            return roomCode.isBlank();
+        }
     }
 
     private record Candidate(String serverId, RoomInfo room) {

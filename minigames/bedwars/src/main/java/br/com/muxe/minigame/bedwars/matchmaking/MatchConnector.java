@@ -51,6 +51,7 @@ public final class MatchConnector {
         if (!pending.add(id)) {
             return;
         }
+        JoinNotices.beforeRequest(target.get()).forEach(key -> player.sendMessage(messages.get(key)));
         JoinRoomRequest request = new JoinRoomRequest(id, mode, arena.orElse(""), target.get().roomCode());
         core.packets().request(PacketTarget.server(target.get().serverId()), request, JoinRoomReply.class, core.requestTimeout())
             .whenCompleteAsync((reply, error) -> {
@@ -62,7 +63,7 @@ public final class MatchConnector {
                     player.sendMessage(messages.get("room-unavailable", "mode", modeNames.apply(mode)));
                     return;
                 }
-                player.sendMessage(messages.get("room-sending", "room", reply.roomCode()));
+                JoinNotices.afterReply(reply).forEach(key -> player.sendMessage(messages.get(key, "room", reply.roomCode())));
                 core.network().connectToServer(id, target.get().serverId()).exceptionally(failure -> {
                     core.mainThread().execute(() -> player.sendMessage(messages.get("room-unavailable", "mode", modeNames.apply(mode))));
                     return null;

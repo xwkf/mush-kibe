@@ -281,7 +281,9 @@ holograms:
     - "&fGera em &c{seconds} &fsegundos."
 
 messages:
+  room-requesting: "&aSolicitando nova sala..."
   room-sending: "&aEnviando para {room}..."
+  room-created: "&aSala criada!"
   room-unavailable: "&cNenhuma sala de &f{mode} &cdisponível no momento."
   map-vip-only: "&cExclusivo para &aVIPs&c."
   map-no-favourites: "&cVocê ainda não tem mapas favoritos."

@@ -131,13 +131,14 @@ public final class RoomService {
         join(player, settings.defaultMode());
     }
 
-    public Optional<String> reserve(UUID playerId, String mode, Optional<String> arena, Optional<String> code) {
+    public Optional<Reserved> reserve(UUID playerId, String mode, Optional<String> arena, Optional<String> code) {
         if (!schema.modes().contains(mode)) {
             return Optional.empty();
         }
-        Optional<RoomRuntime> runtime = pick(mode, arena, code).or(() -> create(mode, arena));
-        runtime.ifPresent(found -> reservations.put(playerId, new Reservation(found.room().code(), mode, arena, core.clock().instant().plus(RESERVATION))));
-        return runtime.map(found -> found.room().code());
+        Optional<Reserved> reserved = pick(mode, arena, code).map(found -> new Reserved(found.room().code(), false))
+            .or(() -> create(mode, arena).map(created -> new Reserved(created.room().code(), true)));
+        reserved.ifPresent(found -> reservations.put(playerId, new Reservation(found.code(), mode, arena, core.clock().instant().plus(RESERVATION))));
+        return reserved;
     }
 
     public List<RoomInfo> summaries() {
@@ -333,6 +334,9 @@ public final class RoomService {
     }
 
     public record NpcClick(RoomRuntime runtime, boolean upgrades) {
+    }
+
+    public record Reserved(String code, boolean created) {
     }
 
     private record Reservation(String code, String mode, Optional<String> arena, Instant expiresAt) {
