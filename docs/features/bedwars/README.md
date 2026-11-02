@@ -30,7 +30,9 @@ The plugin loads its nine modes, gives staff the [arena setup](../../architectur
 
 Arenas are set up on the BedWars lobby, not on the match servers, and saved in PostgreSQL: every BedWars server loads them on start and reloads one when the lobby saves it (`minigame.arena_saved`). To add a map, upload its world folder to the root of a BedWars lobby server and run `/arena criar <mode>_<map>` there. Editing puts the staff member in build mode (so the lobby lets them fly in creative and break and place blocks) and `/arena sair` takes them out.
 
-An arena is named `<mode>_<map>`, such as `1v1_slip` or `quartetos_air_nation`. `/arena criar 1v1_slip` converts a world folder named `1v1_slip` or opens an empty world.
+An arena is named `<mode>_<map>`, such as `1v1_slip` or `quartetos_air_nation`. `/arena criar 1v1_slip` converts a world folder named `1v1_slip` or opens an empty world. The folder name must match the arena name exactly.
+
+Mark each team's `spawn` first: it also marks the nearest bed within 20 blocks that no other team has. After that, the other team steps (bed, shop, upgrades, iron, gold) are one line each in the checklist and go to the team whose spawn is nearest.
 
 | Step | Per team | Kind | Required |
 |---|---|---|---|
@@ -54,7 +56,7 @@ A player who reaches a BedWars server goes back to the match they left if they s
 |---|---|
 | Waiting | Players wait in the waiting area above the map, in survival like the match, without damage or hunger and without breaking or placing blocks. The hotbar has the emerald `&aMenu do Bed Wars` (slot 5, opens the menu) and `&aVoltar ao Lobby` (slot 9). The scoreboard follows annex 2, and annex 3 once the countdown runs. A room nobody is in and nobody is coming to (no pending reservation) closes after `timings.empty-room-seconds` (60) and frees its cell. |
 | Countdown | The [start countdown](../../architecture/game-engine/README.md#start-countdown) of the engine, with the titles `&a30 segundos`, `&610 segundos` and `&c5` to `&c1`. |
-| Playing | Teams are drawn, players spawn at their island with full leather armour in the team colour and a wooden sword. The shop and upgrades NPCs appear with their holograms, and the generators start. Right after, the waiting area between Pos 1 and Pos 2 disappears at once, chunk by chunk (`RegionEraser`). |
+| Playing | Teams are drawn, players spawn at their island with full leather armour in the team colour and a wooden sword. The shop and upgrades NPCs appear with their holograms, and the generators start. A team that got no players has no island: its bed is removed (found within 2 blocks of the marked point) and its generators and NPCs are not created. Right after, the waiting area between Pos 1 and Pos 2 disappears at once, chunk by chunk (`RegionEraser`). |
 | Ending | When one team is left, every player gets the result (annex 11), centred: winner, match time, top final kills and top beds broken, with names in the colour of their tag. After 30 seconds everyone goes to `lobby-group` and the room closes. |
 
 **During the match:**

@@ -11,7 +11,10 @@ import br.com.muxe.minigame.engine.setup.StepKind;
 import br.com.muxe.minigame.engine.team.TeamColor;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public final class SetupHelp {
@@ -36,13 +39,29 @@ public final class SetupHelp {
     }
 
     public List<List<ChatButton>> lines(ArenaDraft draft, SetupChecklist checklist) {
+        return lines(draft, checklist, Optional.empty());
+    }
+
+    public List<List<ChatButton>> lines(ArenaDraft draft, SetupChecklist checklist, Optional<SetupStep> teamAnchor) {
         List<List<ChatButton>> lines = new ArrayList<>();
         for (String header : messages.lines("setup-help-header", "arena", draft.name(), "display", draft.displayName(), "mode", draft.mode())) {
             lines.add(List.of(ChatButton.text(header)));
         }
         lines.add(teams(draft, checklist));
+        Map<SetupStep, List<Item>> grouped = new LinkedHashMap<>();
         for (Item item : checklist.items()) {
+            if (item.team() != null && teamAnchor.isPresent() && !teamAnchor.get().equals(item.step())) {
+                grouped.computeIfAbsent(item.step(), step -> {
+                    lines.add(new ArrayList<>());
+                    return new ArrayList<>();
+                }).add(item);
+                continue;
+            }
             lines.add(item(item));
+        }
+        for (Map.Entry<SetupStep, List<Item>> group : grouped.entrySet()) {
+            int at = lines.indexOf(List.of());
+            lines.set(at, nearestTeam(group.getKey(), group.getValue()));
         }
         lines.add(List.of(ChatButton.text(messages.get("setup-help-footer"))));
         lines.add(List.of(
@@ -93,6 +112,25 @@ public final class SetupHelp {
                         messages.get("setup-help-team-add-hover", "team", colored)));
                 }
             }
+        }
+        return line;
+    }
+
+    private List<ChatButton> nearestTeam(SetupStep step, List<Item> items) {
+        long done = items.stream().filter(Item::done).count();
+        boolean anySet = items.stream().anyMatch(item -> item.count() > 0);
+        String mark = messages.get(done == items.size() ? (anySet ? "setup-help-done" : "setup-help-optional") : "setup-help-missing");
+        String count = messages.get("setup-help-team-count", "done", String.valueOf(done), "total", String.valueOf(items.size()));
+        List<ChatButton> line = new ArrayList<>();
+        line.add(ChatButton.text(mark + messages.get("setup-help-item", "label", step.label(), "count", count)));
+        String hint = messages.get("setup-help-hint-" + step.kind().name().toLowerCase(Locale.ROOT));
+        String nearest = messages.get("setup-help-nearest-hint");
+        if (items.stream().anyMatch(item -> !item.full())) {
+            String key = step.isList() ? "setup-help-add" : "setup-help-define";
+            line.add(ChatButton.run(messages.get(key), command("definir", step, null), messages.get(key + "-hover"), hint, nearest));
+        }
+        if (anySet) {
+            line.add(ChatButton.run(messages.get("setup-help-remove"), command("remover", step, null), messages.get("setup-help-remove-hover"), nearest));
         }
         return line;
     }

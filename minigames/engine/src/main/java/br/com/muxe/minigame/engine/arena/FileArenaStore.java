@@ -51,4 +51,11 @@ public final class FileArenaStore implements ArenaStore {
     public void saveDefinition(ArenaDraft draft, boolean ready) throws IOException {
         arenas.write(draft, ready);
     }
+
+    @Override
+    public boolean delete(String name) throws IOException {
+        boolean definition = Files.deleteIfExists(arenas.file(name));
+        boolean map = Files.deleteIfExists(maps.resolve(name + MapFiles.EXTENSION));
+        return definition || map;
+    }
 }

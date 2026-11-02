@@ -39,7 +39,7 @@ Cada jogo descreve o que uma arena precisa num `SetupSchema`, e a engine dá a t
 
 | Classe | O que é |
 |---|---|
-| `SetupSchema` | Os modos do jogo, a regra de times de cada modo (`TeamRule`: times fixos ou uma quantidade de cores a escolher) e os passos de cada modo. Os métodos padrão leem o modo e o nome de exibição do nome da arena: `1v1_slip` é o modo `1v1`, mapa `Slip`. |
+| `SetupSchema` | Os modos do jogo, a regra de times de cada modo (`TeamRule`: times fixos ou uma quantidade de cores a escolher) e os passos de cada modo. Os métodos padrão leem o modo e o nome de exibição do nome da arena: `1v1_slip` é o modo `1v1`, mapa `Slip`. `teamAnchor(modo)` diz qual passo de time posiciona os outros (BedWars: o spawn), e `linkedBlocks(modo)` os passos de bloco achados sozinhos em volta dele (`LinkedBlock`: passo, materiais, raio; BedWars: a cama a até 20 blocos). |
 | `SetupStep` | Uma coisa a marcar: id, rótulo, tipo, se repete por time, mínimo e máximo, e as linhas do holograma (`{team}`, `{index}`). |
 | `StepKind` | `LOCATION` (onde o jogador está, centralizado, com a direção arredondada para 45°), `CENTER` (o bloco sob o jogador), `BLOCK` (o bloco para onde o jogador olha), `HEIGHT` (o Y do jogador) e `REGION` (Pos 1 e Pos 2, dois cantos opostos guardados como `<passo>.pos1` e `<passo>.pos2`). |
 | `ArenaDraft` | A arena em configuração: modo, nome de exibição, times, pontos e alturas. |
@@ -47,28 +47,30 @@ Cada jogo descreve o que uma arena precisa num `SetupSchema`, e a engine dá a t
 | `ArenaFiles` | Gera e lê a definição da arena em YAML expandido, com `ready: true` quando não falta nada, e lê e grava `arenas/<nome>.yml`. |
 | `ArenaStore` | Onde as arenas e os mapas ficam. `FileArenaStore` guarda `arenas/<nome>.yml` e `maps/<nome>.mxw` na pasta do plugin; `DatabaseArenaStore(game, commands, queries)` guarda os dois no PostgreSQL (`core.arenas`, pelo `SaveArenaCommand`, `FindArenaQuery` e `ListArenasQuery`), então todo servidor do jogo lê as mesmas arenas. `saveDefinition` salva os pontos e mantém o mapa guardado. |
 | `ArenaSavedPacket` | `minigame.arena_saved` (jogo, nome): enviado depois do `/arena salvar` para os servidores de jogo recarregarem aquela arena. |
+| `TeamPicker` | Escolhe o time com o ponto âncora mais perto de uma posição, e o bloco livre mais perto que nenhum outro time usa (as duas metades de uma cama contam como usadas). |
 | `SetupService` | Abre os mundos de setup, aplica os comandos, mostra os hologramas e a action bar, e salva. |
 | `TeamColor` | As nove cores de time: Azul `&9`, Amarelo `&e`, Ciano `&b`, Cinza `&8`, Vermelho `&c`, Rosa `&d`, Verde `&a`, Branco `&f`, Laranja `&6`, cada uma com a cor da lã e do couro. |
 
 `/arena criar <nome> [modo]` abre uma arena:
 
-1. Se o armazenamento tem um mapa para `<nome>`, ele é carregado dele.
-2. Senão, se a pasta do servidor tem uma pasta de mundo chamada `<nome>`, ela é convertida para o formato de mapa da Muxe na hora, guardada e carregada.
+1. Se o armazenamento tem um mapa com blocos para `<nome>`, ele é carregado dele.
+2. Senão (sem mapa, ou com um mapa salvo vazio), se a pasta do servidor tem uma pasta de mundo chamada `<nome>`, ela é convertida para o formato de mapa da Muxe na hora, guardada e carregada.
 3. Senão, um mundo vazio é criado, e o jogador chega em `0 60 0` para construir ou colar o mapa.
 
-O mundo de setup é um mundo `muxe_setup_<nome>`, editado no criativo e voando. Vários membros da staff podem editá-lo juntos. `SetupService.onEnter` e `onLeave` rodam quando um jogador começa e para de editar; um jogo pode usá-los, por exemplo, para colocar a staff no modo construção num lobby.
+O mundo de setup é um mundo `muxe_setup_<nome>`, editado no criativo e voando. Vários membros da staff podem editá-lo juntos. `SetupService.onEnter` e `onLeave` rodam quando um jogador começa e para de editar; um jogo pode usá-los, por exemplo, para colocar a staff no modo construção num lobby. Cair abaixo do Y 0 leva o editor de volta ao início do mundo de setup em vez de tirá-lo dele, e o chat fica dentro de cada setup: os editores só ouvem os editores da mesma arena, e quem está fora de um setup não os ouve.
 
 | Comando | O que faz |
 |---|---|
-| `/arena` ou `/arena ajuda` | A checklist, com uma linha clicável por passo e time: `✔` feito, `✘` faltando, `○` opcional. `[Definir]`, `[+]` e `[-]` executam o comando, e o hover diz como se posicionar. |
-| `/arena definir <passo> [time]` | Marca o passo na posição do jogador. Um ponto único é substituído e uma lista cresce até o máximo. |
+| `/arena` ou `/arena ajuda` | A checklist, com uma linha clicável por passo e time: `✔` feito, `✘` faltando, `○` opcional. `[Definir]`, `[+]` e `[-]` executam o comando, e o hover diz como se posicionar. Quando o schema tem uma âncora de time, cada outro passo de time vira uma linha só, com quantos times estão feitos, e os botões vão para o time mais perto. A checklist é enviada de novo a cada mudança. |
+| `/arena definir <passo> [time]` | Marca o passo na posição do jogador. Um ponto único é substituído e uma lista cresce até o máximo. Sem o time, um passo de time vai para o time com a âncora mais perto. Marcar a âncora de um time também marca os blocos ligados a ela, como a cama mais perto. |
 | `/arena definir <região> <1\|2>` | Marca a Pos 1 ou a Pos 2 de uma região; a ajuda mostra os botões `[Pos 1]` e `[Pos 2]`. Sem o número, marca o primeiro canto que falta. |
-| `/arena remover <passo> [time]` | Remove o ponto mais perto do jogador, ou o passo inteiro quando ele tem um ponto só. |
+| `/arena remover <passo> [time]` | Remove o ponto mais perto do jogador, ou o passo inteiro quando ele tem um ponto só. Sem o time, usa o time mais perto, como o `definir`. |
 | `/arena time <adicionar\|remover> <cor>` | Escolhe os times nos modos em que eles não são fixos. Remover um time remove os pontos dele. |
 | `/arena nome <nome>` | Muda o nome de exibição do mapa. |
 | `/arena salvar` | Salva todos os chunks do mundo de setup e os pontos no armazenamento de arenas. Os pontos também são salvos conforme são marcados, mantendo o mapa guardado. |
 | `/arena sair` | Sai do setup e volta para onde o jogador estava. O mundo fecha quando o último editor sai; as mudanças no mapa que não foram salvas se perdem. |
 | `/arena listar` | Lista as arenas, prontas ou incompletas, com um botão para editar cada uma. |
+| `/arena apagar <nome> [confirmar]` | Apaga uma arena e o mapa dela do armazenamento (`DeleteArenaCommand`). Sem o `confirmar` ele só pergunta, com um botão; uma arena aberta no setup não pode ser apagada. Os servidores de jogo são avisados com o `minigame.arena_saved` e a tiram. |
 
 - Cada ponto mostra um holograma para os editores, como `SPAWN` com o nome do time, ou `FERRO #2`.
 - A action bar mostra o próximo item que falta e quantos ainda faltam, ou que está tudo pronto.

@@ -10,23 +10,23 @@ import br.com.muxe.minigame.engine.arena.ArenaStore;
 import br.com.muxe.minigame.engine.setup.ArenaDraft.Change;
 import br.com.muxe.minigame.engine.setup.ArenaDraft;
 import br.com.muxe.minigame.engine.setup.ArenaFiles.StoredArena;
+import br.com.muxe.minigame.engine.setup.LinkedBlock;
 import br.com.muxe.minigame.engine.setup.Point;
 import br.com.muxe.minigame.engine.setup.SetupChecklist;
 import br.com.muxe.minigame.engine.setup.SetupSchema;
 import br.com.muxe.minigame.engine.setup.SetupStep;
 import br.com.muxe.minigame.engine.setup.StepKind;
+import br.com.muxe.minigame.engine.setup.TeamPicker;
 import br.com.muxe.minigame.engine.setup.TeamRule;
 import br.com.muxe.minigame.engine.setup.session.SetupMarkers.Marker;
 import br.com.muxe.minigame.engine.setup.session.SetupSession.Return;
 import br.com.muxe.minigame.engine.team.TeamColor;
-import br.com.muxe.minigame.engine.world.anvil.AnvilImporter;
 import br.com.muxe.minigame.engine.world.map.EditableMap;
 import br.com.muxe.minigame.engine.world.map.MapTemplate;
 import br.com.muxe.minigame.engine.world.server.MuxeWorlds;
 import br.com.muxe.minigame.engine.world.server.VoidGenerator;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -46,8 +47,11 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -56,6 +60,7 @@ public final class SetupService implements Listener {
 
     public static final String PERMISSION = "muxe.minigame.setup";
     public static final String WORLD_PREFIX = "setup_";
+    public static final String CONFIRM = "confirmar";
 
     private static final int TARGET_RANGE = 6;
     private static final int MARKER_RESEND_SECONDS = 3;
@@ -68,7 +73,7 @@ public final class SetupService implements Listener {
     private final SetupHelp help;
     private final SetupMarkers markers = new SetupMarkers(TextHolograms.standard());
     private final Map<String, SetupSession> sessions = new LinkedHashMap<>();
-    private final Map<UUID, String> editing = new HashMap<>();
+    private final Map<UUID, String> editing = new ConcurrentHashMap<>();
     private final Set<String> loading = new HashSet<>();
     private final ExecutorService disk = Executors.newSingleThreadExecutor(Thread.ofVirtual().name("muxe-setup-disk").factory());
     private BukkitTask ticker;
@@ -165,23 +170,11 @@ public final class SetupService implements Listener {
                     return;
                 }
                 ArenaDraft draft = stored.map(StoredArena::draft).orElseGet(() -> ArenaDraft.create(name, mode.get(), schema));
-                Optional<MapTemplate> saved = arenas.map(name);
-                MapTemplate template;
-                String origin;
-                if (saved.isPresent()) {
-                    template = saved.get();
-                    origin = "setup-loaded";
-                } else if (AnvilImporter.isWorldFolder(folder)) {
-                    template = AnvilImporter.importWorld(folder);
-                    origin = "setup-converted";
-                } else {
-                    template = MapTemplate.empty();
-                    origin = "setup-created-empty";
+                SetupMap map = SetupMap.choose(arenas.map(name), folder);
+                if (stored.isEmpty() || map.needsSaving()) {
+                    arenas.save(draft, stored.map(StoredArena::ready).orElse(false), map.template());
                 }
-                if (stored.isEmpty() || saved.isEmpty()) {
-                    arenas.save(draft, stored.map(StoredArena::ready).orElse(false), template);
-                }
-                main(() -> finishOpening(player, draft, template, origin));
+                main(() -> finishOpening(player, draft, map.template(), map.origin().messageKey()));
             } catch (Exception exception) {
                 plugin.getLogger().log(Level.WARNING, "Could not open arena " + name, exception);
                 main(() -> {
@@ -195,7 +188,7 @@ public final class SetupService implements Listener {
     public void help(Player player) {
         sessionOf(player).ifPresentOrElse(session -> {
             SetupChecklist checklist = SetupChecklist.of(schema, session.draft());
-            for (List<ChatButton> line : help.lines(session.draft(), checklist)) {
+            for (List<ChatButton> line : help.lines(session.draft(), checklist, schema.teamAnchor(session.draft().mode()))) {
                 ClickableText.send(player, line);
             }
         }, () -> messages.lines("setup-usage").forEach(player::sendMessage));
@@ -210,7 +203,7 @@ public final class SetupService implements Listener {
             Point point = Point.block(player.getLocation().getBlockX(), player.getLocation().getBlockY(), player.getLocation().getBlockZ());
             current.get().draft().setCorner(region.get(), null, corner, point);
             player.sendMessage(messages.get("setup-region-corner", "label", help.label(region.get(), null), "index", String.valueOf(corner), "position", point.describe()));
-            changed(current.get());
+            changed(player, current.get());
             return;
         }
         withStep(player, stepId, teamId, (session, step, team) -> {
@@ -234,7 +227,10 @@ public final class SetupService implements Listener {
                     case FULL -> messages.get("setup-point-full", "label", label, "count", String.valueOf(change.count()));
                 });
             }
-            changed(session);
+            if (team != null && schema.teamAnchor(session.draft().mode()).filter(step::equals).isPresent()) {
+                linkBlocks(player, session, team, point.get());
+            }
+            changed(player, session);
         });
     }
 
@@ -243,7 +239,7 @@ public final class SetupService implements Listener {
             String label = help.label(step, team);
             if (session.draft().remove(step, team, Points.of(player.getLocation()))) {
                 player.sendMessage(messages.get("setup-removed", "label", label));
-                changed(session);
+                changed(player, session);
             } else {
                 player.sendMessage(messages.get("setup-nothing-to-remove", "label", label));
             }
@@ -276,14 +272,14 @@ public final class SetupService implements Listener {
         player.sendMessage(add
             ? messages.get("setup-team-added", "team", colored, "count", String.valueOf(draft.teams().size()), "total", String.valueOf(rule.count()))
             : messages.get("setup-team-removed", "team", colored));
-        changed(session);
+        changed(player, session);
     }
 
     public void rename(Player player, String displayName) {
         editingSession(player).ifPresent(session -> {
             session.draft().rename(Colors.strip(Colors.translate(displayName)).trim());
             player.sendMessage(messages.get("setup-renamed", "name", session.draft().displayName()));
-            changed(session);
+            changed(player, session);
         });
     }
 
@@ -334,6 +330,37 @@ public final class SetupService implements Listener {
         }
     }
 
+    public void delete(Player player, String rawName, boolean confirmed) {
+        String name = rawName.toLowerCase(Locale.ROOT);
+        if (sessions.containsKey(name) || loading.contains(name)) {
+            player.sendMessage(messages.get("setup-delete-editing", "arena", name));
+            return;
+        }
+        if (!confirmed) {
+            ClickableText.send(player, List.of(
+                ChatButton.text(messages.get("setup-delete-confirm", "arena", name)),
+                ChatButton.run(messages.get("setup-delete-button"), SetupHelp.COMMAND + " apagar " + name + " " + CONFIRM, messages.get("setup-delete-button-hover", "arena", name))
+            ));
+            return;
+        }
+        disk.execute(() -> {
+            try {
+                boolean deleted = arenas.delete(name);
+                main(() -> {
+                    if (deleted) {
+                        onSaved.accept(name);
+                        player.sendMessage(messages.get("setup-deleted", "arena", name));
+                    } else {
+                        player.sendMessage(messages.get("setup-delete-missing", "arena", name));
+                    }
+                });
+            } catch (Exception exception) {
+                plugin.getLogger().log(Level.WARNING, "Could not delete arena " + name, exception);
+                main(() -> player.sendMessage(messages.get("setup-delete-failed", "error", String.valueOf(exception.getMessage()))));
+            }
+        });
+    }
+
     public void list(Player player) {
         disk.execute(() -> {
             List<List<ChatButton>> lines = new ArrayList<>();
@@ -369,6 +396,29 @@ public final class SetupService implements Listener {
 
     public List<String> teamIds(Player player) {
         return sessionOf(player).map(session -> session.draft().teams().stream().map(TeamColor::id).toList()).orElse(List.of());
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onChat(AsyncPlayerChatEvent event) {
+        String speaker = editing.get(event.getPlayer().getUniqueId());
+        event.getRecipients().removeIf(listener -> !SetupRules.hears(speaker, editing.get(listener.getUniqueId())));
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void onFallIntoVoid(PlayerMoveEvent event) {
+        Location to = event.getTo();
+        String name = editing.get(event.getPlayer().getUniqueId());
+        if (to == null || name == null || !SetupRules.fellIntoVoid(to.getY())) {
+            return;
+        }
+        SetupSession session = sessions.get(name);
+        if (session != null && to.getWorld().equals(session.world())) {
+            Location back = start(session);
+            back.setYaw(to.getYaw());
+            back.setPitch(to.getPitch());
+            event.setTo(back);
+            event.getPlayer().setFallDistance(0);
+        }
     }
 
     @EventHandler
@@ -477,7 +527,7 @@ public final class SetupService implements Listener {
         worlds.destroy(session.world());
     }
 
-    private void changed(SetupSession session) {
+    private void changed(Player actor, SetupSession session) {
         String name = session.draft().name();
         ArenaDraft draft = session.draft().copy();
         boolean ready = SetupChecklist.of(schema, session.draft()).isReady();
@@ -489,6 +539,7 @@ public final class SetupService implements Listener {
             }
         });
         refresh(session);
+        help(actor);
     }
 
     private void refresh(SetupSession session) {
@@ -533,6 +584,43 @@ public final class SetupService implements Listener {
         };
     }
 
+    private void linkBlocks(Player player, SetupSession session, TeamColor team, Point anchor) {
+        ArenaDraft draft = session.draft();
+        for (LinkedBlock linked : schema.linkedBlocks(draft.mode())) {
+            List<Point> taken = new ArrayList<>();
+            for (TeamColor other : draft.teams()) {
+                if (other != team) {
+                    taken.addAll(draft.points(linked.step(), other));
+                }
+            }
+            Optional<Point> found = TeamPicker.nearestFree(anchor, blocksAround(session.world(), anchor, linked), taken);
+            String label = help.label(linked.step(), team);
+            if (found.isEmpty()) {
+                player.sendMessage(messages.get("setup-linked-missing", "label", label, "radius", String.valueOf(linked.radius())));
+                continue;
+            }
+            draft.set(linked.step(), team, found.get());
+            player.sendMessage(messages.get("setup-linked-set", "label", label, "position", found.get().describe()));
+        }
+    }
+
+    private static List<Point> blocksAround(World world, Point center, LinkedBlock linked) {
+        List<Point> found = new ArrayList<>();
+        int radius = linked.radius();
+        int minY = Math.max(0, center.blockY() - radius);
+        int maxY = Math.min(world.getMaxHeight() - 1, center.blockY() + radius);
+        for (int x = center.blockX() - radius; x <= center.blockX() + radius; x++) {
+            for (int z = center.blockZ() - radius; z <= center.blockZ() + radius; z++) {
+                for (int y = minY; y <= maxY; y++) {
+                    if (linked.materials().contains(world.getBlockAt(x, y, z).getType().name())) {
+                        found.add(Point.block(x, y, z));
+                    }
+                }
+            }
+        }
+        return found;
+    }
+
     private void withStep(Player player, String stepId, Optional<String> teamId, StepAction action) {
         Optional<SetupSession> found = editingSession(player);
         if (found.isEmpty()) {
@@ -546,6 +634,16 @@ public final class SetupService implements Listener {
         }
         TeamColor team = null;
         if (step.get().perTeam()) {
+            Optional<SetupStep> anchor = schema.teamAnchor(session.draft().mode()).filter(value -> !value.equals(step.get()));
+            if (teamId.isEmpty() && anchor.isPresent()) {
+                Optional<TeamColor> nearest = TeamPicker.nearest(session.draft(), anchor.get(), Points.of(player.getLocation()));
+                if (nearest.isEmpty()) {
+                    player.sendMessage(messages.get("setup-needs-anchor", "anchor", anchor.get().label()));
+                    return;
+                }
+                action.run(session, step.get(), nearest.get());
+                return;
+            }
             if (teamId.isEmpty()) {
                 player.sendMessage(messages.get("setup-needs-team", "step", step.get().id()));
                 return;

@@ -65,4 +65,25 @@ class DatabaseArenaStoreTest {
         assertThat(bedwars.read("solo_vazio")).isPresent();
         assertThat(bedwars.map("solo_vazio")).isEmpty();
     }
+
+    @Test
+    void aDeletedArenaLeavesTheStoreAndTheCatalog() throws IOException {
+        bedwars.save(new ArenaDraft("majestic_solo", "solo", "Majestic"), true, map);
+        skywars.save(new ArenaDraft("majestic_solo", "solo", "Majestic"), true, map);
+        ArenaCatalog catalog = new ArenaCatalog(bedwars, new MatchCells(64, 4, 12)::fits, Logger.getLogger("test"));
+        catalog.loadAll();
+
+        assertThat(bedwars.delete("majestic_solo")).isTrue();
+
+        assertThat(bedwars.names()).isEmpty();
+        assertThat(bedwars.map("majestic_solo")).isEmpty();
+        assertThat(catalog.reload("majestic_solo")).isEmpty();
+        assertThat(catalog.find("majestic_solo")).isEmpty();
+        assertThat(skywars.names()).containsExactly("majestic_solo");
+    }
+
+    @Test
+    void deletingAnArenaThatDoesNotExistReportsIt() throws IOException {
+        assertThat(bedwars.delete("nada_aqui")).isFalse();
+    }
 }

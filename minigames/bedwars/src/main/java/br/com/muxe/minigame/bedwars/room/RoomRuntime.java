@@ -22,6 +22,7 @@ import br.com.muxe.minigame.bedwars.stats.domain.MatchOutcome;
 import br.com.muxe.minigame.engine.match.StartCountdown.Change;
 import br.com.muxe.minigame.engine.match.StartCountdown.Second;
 import br.com.muxe.minigame.engine.setup.Point;
+import br.com.muxe.minigame.engine.setup.TeamPicker;
 import br.com.muxe.minigame.engine.team.TeamColor;
 import br.com.muxe.minigame.engine.world.cell.BlockBox;
 import br.com.muxe.minigame.engine.world.server.RegionEraser;
@@ -63,6 +64,7 @@ public final class RoomRuntime {
     private static final int RESEND_EVERY = 3;
     private static final String HEALTH_OBJECTIVE = "muxe-vida";
     private static final Map<Material, String> LOOT = new LinkedHashMap<>();
+    private static final int BED_SEARCH = 2;
     private static final BlockFace[] SIDES = {BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST};
 
     static {
@@ -731,10 +733,24 @@ public final class RoomRuntime {
     }
 
     private void removeBed(TeamColor color) {
-        Block bed = location(room.arena().teams().get(color).bed()).getBlock();
-        if (bed.getType() != Material.BED_BLOCK) {
+        Point marked = room.arena().teams().get(color).bed();
+        List<Point> beds = new ArrayList<>();
+        for (int dx = -BED_SEARCH; dx <= BED_SEARCH; dx++) {
+            for (int dy = -BED_SEARCH; dy <= BED_SEARCH; dy++) {
+                for (int dz = -BED_SEARCH; dz <= BED_SEARCH; dz++) {
+                    Point near = Point.block(marked.blockX() + dx, marked.blockY() + dy, marked.blockZ() + dz);
+                    if (location(near).getBlock().getType() == Material.BED_BLOCK) {
+                        beds.add(near);
+                    }
+                }
+            }
+        }
+        Optional<Point> found = TeamPicker.nearestFree(marked, beds, List.of());
+        if (found.isEmpty()) {
+            service.plugin().getLogger().warning("Room " + room.code() + " found no bed of the empty team " + color.id() + " near " + marked.describe());
             return;
         }
+        Block bed = location(found.get()).getBlock();
         for (BlockFace side : SIDES) {
             Block next = bed.getRelative(side);
             if (next.getType() == Material.BED_BLOCK) {

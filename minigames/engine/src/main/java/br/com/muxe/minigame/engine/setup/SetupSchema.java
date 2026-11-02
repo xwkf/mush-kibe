@@ -37,6 +37,14 @@ public interface SetupSchema {
         return name.toString();
     }
 
+    default Optional<SetupStep> teamAnchor(String mode) {
+        return Optional.empty();
+    }
+
+    default List<LinkedBlock> linkedBlocks(String mode) {
+        return List.of();
+    }
+
     default Optional<SetupStep> step(String mode, String id) {
         return steps(mode).stream().filter(step -> step.id().equals(id)).findFirst();
     }

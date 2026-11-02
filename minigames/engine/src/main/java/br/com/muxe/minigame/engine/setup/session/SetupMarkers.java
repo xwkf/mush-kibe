@@ -84,9 +84,9 @@ final class SetupMarkers {
 
     static double height(StepKind kind) {
         return switch (kind) {
-            case BLOCK -> 1.9;
-            case REGION -> 1.4;
-            default -> 2.6;
+            case BLOCK -> 0.9;
+            case REGION -> 0.4;
+            default -> 1.6;
         };
     }
 

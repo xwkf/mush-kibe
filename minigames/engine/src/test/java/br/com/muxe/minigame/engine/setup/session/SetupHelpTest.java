@@ -15,6 +15,7 @@ import br.com.muxe.minigame.engine.setup.TeamRule;
 import br.com.muxe.minigame.engine.setup.session.SetupMarkers.Marker;
 import br.com.muxe.minigame.engine.team.TeamColor;
 import java.util.List;
+import java.util.Optional;
 import org.bukkit.ChatColor;
 import org.junit.jupiter.api.Test;
 
@@ -73,6 +74,24 @@ class SetupHelpTest {
             "/arena sair"
         );
         assertThat(lines.getLast().get(1).action()).isEqualTo(Action.SUGGEST);
+    }
+
+    @Test
+    void withATeamAnchorEachTeamStepIsOneLineForTheNearestTeam() {
+        ArenaDraft draft = ArenaDraft.create("1v1_slip", "1v1", schema);
+        draft.set(BED, TeamColor.AZUL, Point.block(4, 70, 4));
+        draft.set(IRON, TeamColor.AZUL, Point.block(0, 70, 8));
+
+        List<List<ChatButton>> lines = help.lines(draft, SetupChecklist.of(schema, draft), Optional.of(BED));
+
+        assertThat(plainLines(lines)).contains(
+            "✔ Cama do Azul [Definir] [-]",
+            "✘ Cama do Vermelho [Definir]",
+            "✘ Gerador de ferro (1/2 times) [+] [-]"
+        );
+        assertThat(plainLines(lines)).noneMatch(line -> line.contains("Gerador de ferro do"));
+        assertThat(commands(lines)).contains("/arena definir ferro", "/arena remover ferro");
+        assertThat(plainLines(lines).indexOf("✘ Gerador de ferro (1/2 times) [+] [-]")).isGreaterThan(plainLines(lines).indexOf("✘ Cama do Vermelho [Definir]"));
     }
 
     @Test

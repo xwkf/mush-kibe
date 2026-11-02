@@ -83,6 +83,11 @@ public final class SetupCommand {
         setup.list(player);
     }
 
+    @Subcommand("apagar")
+    public void delete(Player player, @Arg("nome") @Suggest(provider = ARENAS) String name, @Arg("confirmar") @Suggest(SetupService.CONFIRM) Optional<String> confirm) {
+        setup.delete(player, name, confirm.filter(SetupService.CONFIRM::equalsIgnoreCase).isPresent());
+    }
+
     @Suggestions(STEPS)
     public List<String> steps(Player player) {
         return setup.stepIds(player);

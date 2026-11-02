@@ -1,6 +1,7 @@
 package br.com.muxe.minigame.bedwars.arena;
 
 import br.com.muxe.minigame.engine.mode.GameMode;
+import br.com.muxe.minigame.engine.setup.LinkedBlock;
 import br.com.muxe.minigame.engine.setup.SetupSchema;
 import br.com.muxe.minigame.engine.setup.SetupStep;
 import br.com.muxe.minigame.engine.setup.StepKind;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -37,6 +39,9 @@ public final class BedWarsSchema implements SetupSchema {
     public static final SetupStep EXTRA_UPGRADES = SetupStep.many("melhorias-extra", "Melhorias extras", StepKind.LOCATION, false, 0, 4, "&b&lMELHORIAS EXTRAS #{index}");
     public static final SetupStep EXTRA_IRON = SetupStep.many("ferro-extra", "Ferro extra", StepKind.CENTER, false, 0, 8, "&f&lFERRO EXTRA #{index}");
     public static final SetupStep EXTRA_GOLD = SetupStep.many("ouro-extra", "Ouro extra", StepKind.CENTER, false, 0, 8, "&6&lOURO EXTRA #{index}");
+
+    private static final String BED_MATERIAL = "BED_BLOCK";
+    private static final int BED_SEARCH_RADIUS = 20;
 
     private static final List<SetupStep> STEPS = List.of(
         WAITING_SPAWN, WAITING_AREA, SPECTATOR, VOID, BUILD_LIMIT, DIAMOND, EMERALD,
@@ -96,6 +101,16 @@ public final class BedWarsSchema implements SetupSchema {
     public TeamRule teams(String mode) {
         List<TeamColor> fixed = fixedTeams.get(mode);
         return fixed == null ? TeamRule.chosen(mode(mode).teams()) : new TeamRule(fixed, fixed.size());
+    }
+
+    @Override
+    public Optional<SetupStep> teamAnchor(String mode) {
+        return Optional.of(SPAWN);
+    }
+
+    @Override
+    public List<LinkedBlock> linkedBlocks(String mode) {
+        return List.of(new LinkedBlock(BED, Set.of(BED_MATERIAL), BED_SEARCH_RADIUS));
     }
 
     @Override

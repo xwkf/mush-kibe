@@ -39,7 +39,7 @@ Each game describes what an arena needs in a `SetupSchema`, and the engine gives
 
 | Class | What it is |
 |---|---|
-| `SetupSchema` | The game's modes, the team rule of each mode (`TeamRule`: fixed teams, or a number of colours to choose) and the steps of each mode. Its default methods read the mode and display name from the arena name: `1v1_slip` is mode `1v1`, map `Slip`. |
+| `SetupSchema` | The game's modes, the team rule of each mode (`TeamRule`: fixed teams, or a number of colours to choose) and the steps of each mode. Its default methods read the mode and display name from the arena name: `1v1_slip` is mode `1v1`, map `Slip`. `teamAnchor(mode)` names the team step that places the others (BedWars: the spawn), and `linkedBlocks(mode)` the block steps found on their own around it (`LinkedBlock`: step, materials, radius; BedWars: the bed within 20 blocks). |
 | `SetupStep` | One thing to mark: id, label, kind, whether it repeats per team, minimum and maximum, and hologram lines (`{team}`, `{index}`). |
 | `StepKind` | `LOCATION` (where the player stands, centred, with the direction snapped to 45°), `CENTER` (the block under the player), `BLOCK` (the block the player looks at), `HEIGHT` (the player's Y) and `REGION` (Pos 1 and Pos 2, two opposite corners stored as `<step>.pos1` and `<step>.pos2`). |
 | `ArenaDraft` | The arena being set up: mode, display name, teams, points and heights. |
@@ -47,28 +47,30 @@ Each game describes what an arena needs in a `SetupSchema`, and the engine gives
 | `ArenaFiles` | Renders and parses the arena definition in expanded YAML, with `ready: true` once nothing is missing, and reads and writes `arenas/<name>.yml`. |
 | `ArenaStore` | Where arenas and maps live. `FileArenaStore` keeps `arenas/<name>.yml` and `maps/<name>.mxw` in the plugin folder; `DatabaseArenaStore(game, commands, queries)` keeps both in PostgreSQL (`core.arenas`, through `SaveArenaCommand`, `FindArenaQuery` and `ListArenasQuery`), so every server of the game reads the same arenas. `saveDefinition` saves the points and keeps the stored map. |
 | `ArenaSavedPacket` | `minigame.arena_saved` (game, name): sent after `/arena salvar` so the game servers reload that arena. |
+| `TeamPicker` | Picks the team whose anchor point is nearest to a position, and the nearest free block that no other team owns (both halves of a bed count as owned). |
 | `SetupService` | Opens setup worlds, applies the commands, shows the holograms and the action bar, and saves. |
 | `TeamColor` | The nine team colours: Azul `&9`, Amarelo `&e`, Ciano `&b`, Cinza `&8`, Vermelho `&c`, Rosa `&d`, Verde `&a`, Branco `&f`, Laranja `&6`, each with its wool and leather colour. |
 
 `/arena criar <name> [mode]` opens an arena:
 
-1. If the store has a map for `<name>`, it is loaded from it.
-2. Otherwise, if the server folder has a world folder named `<name>`, it is converted to the Muxe map format right away, stored and loaded.
+1. If the store has a map with blocks for `<name>`, it is loaded from it.
+2. Otherwise (no map, or one saved empty), if the server folder has a world folder named `<name>`, it is converted to the Muxe map format right away, stored and loaded.
 3. Otherwise an empty world is created, and the player arrives at `0 60 0` to build or paste the map.
 
-The setup world is a `muxe_setup_<name>` world, edited in creative and flying. Several staff members may edit it together. `SetupService.onEnter` and `onLeave` run when a player starts and stops editing; a game can use them, for example, to put staff in build mode on a lobby.
+The setup world is a `muxe_setup_<name>` world, edited in creative and flying. Several staff members may edit it together. `SetupService.onEnter` and `onLeave` run when a player starts and stops editing; a game can use them, for example, to put staff in build mode on a lobby. Falling below Y 0 brings the editor back to the start of the setup world instead of leaving it, and chat stays inside each setup: editors only hear the editors of the same arena, and players outside a setup do not hear them.
 
 | Command | What it does |
 |---|---|
-| `/arena` or `/arena ajuda` | The checklist, with one clickable line per step and team: `✔` done, `✘` missing, `○` optional. `[Definir]`, `[+]` and `[-]` run the command, and the hover says how to stand. |
-| `/arena definir <step> [team]` | Marks the step at the player's position. A single point is replaced and a list grows up to its maximum. |
+| `/arena` or `/arena ajuda` | The checklist, with one clickable line per step and team: `✔` done, `✘` missing, `○` optional. `[Definir]`, `[+]` and `[-]` run the command, and the hover says how to stand. When the schema has a team anchor, every other team step is one line with how many teams are done, and its buttons go to the nearest team. The checklist is sent again after every change. |
+| `/arena definir <step> [team]` | Marks the step at the player's position. A single point is replaced and a list grows up to its maximum. Without the team, a team step goes to the team whose anchor is nearest. Marking a team's anchor also marks its linked blocks, such as the nearest bed. |
 | `/arena definir <region> <1\|2>` | Marks Pos 1 or Pos 2 of a region; the help shows `[Pos 1]` and `[Pos 2]` buttons. Without the number, the first missing corner is marked. |
-| `/arena remover <step> [team]` | Removes the point nearest to the player, or the whole step when it has a single point. |
+| `/arena remover <step> [team]` | Removes the point nearest to the player, or the whole step when it has a single point. Without the team, it uses the nearest team, like `definir`. |
 | `/arena time <adicionar\|remover> <colour>` | Chooses the teams in modes whose teams are not fixed. Removing a team removes its points. |
 | `/arena nome <name>` | Changes the display name of the map. |
 | `/arena salvar` | Saves every chunk of the setup world and the points to the arena store. Points are also saved as they are marked, keeping the stored map. |
 | `/arena sair` | Leaves the setup and goes back to where the player was. The world closes when its last editor leaves; map changes not saved are lost. |
 | `/arena listar` | Lists the arenas, ready or incomplete, with a button to edit each one. |
+| `/arena apagar <name> [confirmar]` | Deletes an arena and its map from the store (`DeleteArenaCommand`). Without `confirmar` it only asks, with a button; an arena open in the setup cannot be deleted. The game servers are told with `minigame.arena_saved` and drop it. |
 
 - Every point shows a hologram to the editors, such as `SPAWN` with the team name, or `FERRO #2`.
 - The action bar shows the next missing item and how many more are left, or that everything is ready.

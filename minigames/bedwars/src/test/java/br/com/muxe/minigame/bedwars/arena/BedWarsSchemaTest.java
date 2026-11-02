@@ -54,4 +54,13 @@ class BedWarsSchemaTest {
         assertThat(schema.modeFromName("quartetos_air_nation")).contains("quartetos");
         assertThat(schema.displayNameFromName("quartetos_air_nation")).isEqualTo("Air Nation");
     }
+
+    @Test
+    void teamStepsGoToTheNearestSpawnAndTheSpawnFindsItsBed() {
+        assertThat(schema.teamAnchor("solo")).contains(BedWarsSchema.SPAWN);
+        assertThat(schema.linkedBlocks("solo")).singleElement().satisfies(linked -> {
+            assertThat(linked.step()).isEqualTo(BedWarsSchema.BED);
+            assertThat(linked.materials()).containsExactly("BED_BLOCK");
+        });
+    }
 }

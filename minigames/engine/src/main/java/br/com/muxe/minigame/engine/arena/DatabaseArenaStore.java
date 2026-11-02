@@ -1,5 +1,7 @@
 package br.com.muxe.minigame.engine.arena;
 
+import br.com.muxe.core.common.arena.application.command.DeleteArenaCommand;
+import br.com.muxe.core.common.arena.application.command.DeleteArenaHandler;
 import br.com.muxe.core.common.arena.application.command.SaveArenaCommand;
 import br.com.muxe.core.common.arena.application.query.FindArenaQuery;
 import br.com.muxe.core.common.arena.application.query.ListArenasQuery;
@@ -60,6 +62,18 @@ public final class DatabaseArenaStore implements ArenaStore {
     @Override
     public void saveDefinition(ArenaDraft draft, boolean ready) throws IOException {
         dispatch(SaveArenaCommand.definitionOnly(game, draft.name(), draft.mode(), ready, ArenaFiles.render(draft, ready)), draft);
+    }
+
+    @Override
+    public boolean delete(String name) throws IOException {
+        Result<Void> result = join(() -> commands.dispatch(new DeleteArenaCommand(game, name)).join());
+        if (result instanceof Result.Failure<Void> failure) {
+            if (failure.problem().code().equals(DeleteArenaHandler.NOT_FOUND)) {
+                return false;
+            }
+            throw new IOException("Could not delete arena " + name + " of " + game + ": " + failure.problem().message());
+        }
+        return true;
     }
 
     private void dispatch(SaveArenaCommand command, ArenaDraft draft) throws IOException {

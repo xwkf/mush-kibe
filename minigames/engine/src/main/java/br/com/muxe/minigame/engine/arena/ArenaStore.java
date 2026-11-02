@@ -18,4 +18,6 @@ public interface ArenaStore {
     void save(ArenaDraft draft, boolean ready, MapTemplate map) throws IOException;
 
     void saveDefinition(ArenaDraft draft, boolean ready) throws IOException;
+
+    boolean delete(String name) throws IOException;
 }
