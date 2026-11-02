@@ -54,7 +54,7 @@ public final class TopData {
             loading.remove(key);
             loadedAt.put(key, core.clock().instant());
             if (error != null) {
-                plugin.getLogger().log(Level.FINE, "Could not load the top " + key, error);
+                plugin.getLogger().log(Level.WARNING, "Could not load the top " + key, error);
                 return;
             }
             tops.put(key, List.copyOf(entries));

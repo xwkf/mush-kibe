@@ -129,7 +129,9 @@ O lobby do BedWars (grupo `bedwars-lobby`) roda o Muxe-Lobby e este plugin no mo
 - **Menu do modo** (`Bed Wars Solo`...): `Bed Wars (Solo)` mostra os jogadores do modo e o top 3 do winstreak diário, e manda o jogador para uma partida; `Selecionar mapa` abre o menu de mapas para quem tem `muxe.bedwars.map-select` (VIPs) e responde `map-vip-only` para os outros; `Treino: Ponte` responde `coming-soon`. Os modos de duelo também têm `Voltar`, para o menu de duelos.
 - **Menu de mapas** (`Bed Wars 1v1 (1/1)`): os mapas do modo encontrados nos servidores de BedWars, favoritos primeiro, cada grupo em ordem alfabética. Botão esquerdo pede uma sala naquele mapa; botão direito adiciona ou remove o favorito. `Mapa favorito aleatório` entra num favorito aleatório, `Pesquisar` filtra pelo nome digitado no chat (sem diferenciar acentos) e as setas trocam de página.
 - **Matchmaking**: cada servidor de BedWars publica as suas salas e arenas prontas a cada 2 s (`bedwars.rooms`). Entrar escolhe a sala mais cheia do modo (e do mapa) que ainda tem vaga em qualquer servidor; se não houver, pede ao servidor mais vazio que tenha uma arena desse modo (e mapa) para criar uma. O lobby manda `bedwars.join_request` para esse servidor, que reserva a sala por 30 s e responde com o código e se criou a sala; o jogador vê `&aEnviando para <código>...` e é movido para lá. Quando o lobby pede uma sala nova, o jogador vê antes `&aSolicitando nova sala...`, e `&aSala criada!` depois da linha da sala quando o servidor de fato a criou. Ao chegar, ele entra na sala reservada, ou em outra sala do modo se ela tiver enchido nesse meio tempo.
-- **Tops**: quatro hologramas (kills finais, vitórias, winstreak atual e nível) com o top 100 em 10 páginas. Cada jogador vê a sua própria página: botão esquerdo na parte de cima (nomes para cima) troca a página, botão esquerdo na parte de baixo (`Clique para trocar!` para baixo) troca o período (Semanal, Mensal, Total; Total primeiro no top de nível) e botão direito abre `Selecionar modo` (Geral ou um modo; o top de nível não tem modos). Os nomes têm a cor da maior tag que o jogador tem. Os tops recarregam a cada 60 s.
+- **Tops**: quatro hologramas (kills finais, vitórias, winstreak atual e nível) com o top 100 em 10 páginas. Cada jogador vê a sua própria página: um clique (esquerdo ou direito) na parte de cima (nomes para cima) troca a página, e na parte de baixo (`Clique para trocar!` para baixo) troca o período (Semanal, Mensal, Total; Total primeiro no top de nível). Todo clique toca `CLICK` (`lobby.tops.click-sound`). Posições vazias mostram `Ninguém` com `0`. Os nomes têm a cor da maior tag que o jogador tem. Os tops recarregam a cada 60 s, e uma falha ao carregar vira um aviso no log.
+- **Seletor de modo**: o holograma `SELECIONAR MODO` do export lista cinco modos (Geral, Solo, Duplas, Trios, Quartetos), o escolhido em verde; um clique abre `Selecionar modo`, e a escolha vale para todos os tops com modos (o top de nível não tem). Quando o modo escolhido fica mais abaixo no menu, a lista anda para ele continuar visível.
+- **Scoreboard** (anexo 1): `&b&lBED WARS` com o nível, a barra de XP, as vitórias e a winstreak atual dos dois modos que o jogador mais jogou (1v1 e Solo enquanto ele não tem partidas), `Jogadores` (jogadores nos servidores e lobbies de BedWars) e o site. Ela substitui a scoreboard do lobby pelo `core.sidebars()`.
 - **NPC de estatísticas**: mostra cada jogador como ele mesmo (com a skin dele), com nível, barra de XP, vitórias, kills, kills finais, camas e winstreak acima. Clicar abre `Suas estatísticas (Bed Wars)`, com Geral (incluindo nível e XP) e cada modo.
 
 ### Estatísticas
@@ -197,7 +199,9 @@ O lobby do BedWars (grupo `bedwars-lobby`) roda o Muxe-Lobby e este plugin no mo
 | `lobby.npcs.<id>` | os exports | `action` (um id de modo, `duelos` ou `nenhuma`), `location`, `skin` assinada, `players` (modos contados em `{players}`) e `lines`; `{blink}` pega a próxima cor de `lobby.blink-colors` a cada 0,5 s. |
 | `lobby.stats-npc` | 22.5 81 -1.5 | Posição, linhas e tamanho da barra de XP do NPC de estatísticas. |
 | `lobby.tops.boards.<id>` | os quatro tops | `category` (`FINAL_KILLS`, `WINS`, `WINSTREAK`, `LEVEL`), `title`, `location` do suporte do topo, `periods` na ordem de exibição e `modes`. |
-| `lobby.tops.*` | os exports | Textos de cabeçalho, posição, vazio, clique e períodos, `label-above-stand` (2.175) e `refresh-seconds` (60). |
+| `lobby.tops.*` | os exports | Textos de cabeçalho, posição, vazio (`Ninguém` - `0`), clique e períodos, `label-above-stand` (2.175), `refresh-seconds` (60) e `click-sound` (`CLICK`, vazio para nenhum). |
+| `lobby.tops.selector.*` | o export | `location` do suporte do `SELECIONAR MODO`, `list-offset` e `footer-offset` (0.375 e 1.90625 abaixo dele), `visible-modes` (5) e os textos de cabeçalho, rodapé, selecionado, outros e `general-name`. |
+| `lobby.scoreboard.*` | anexo 1 | `title`, `lines` (`{level}`, `{bar}`, `{players}`; `{modes}` vira as linhas dos modos), `mode-lines` (`{mode}` e os contadores), `default-modes` (1v1, solo), `shown-modes` (2) e `bar-segments` (10). |
 | `lobby.menus.*` | os exports | Menus de modo, duelos, mapas, modo do top e estatísticas. |
 
 ## Pacotes
@@ -242,7 +246,7 @@ Comandos e consultas em `br.com.muxe.minigame.bedwars.stats`: `RecordMatchComman
 - [x] Estados, preços, ordem e lore dos cosméticos seguem os exports (`CosmeticCatalogTest`).
 - [x] Mortes, assistências, camas perdidas, XP e resultados das partidas são contados (`RoomStatsTest`); períodos, contadores, tops e favoritos são salvos (`StatsHandlersTest`, `StatCountersTest`, `StatsPeriodTest`, `PostgresBedWarsStatsRepositoryIntegrationTest`).
 - [x] O matchmaking escolhe a sala aberta mais cheia ou pede uma ao servidor mais vazio (`MatchmakerTest`).
-- [x] NPCs, menus, tops, insígnias de nível e o NPC de estatísticas do lobby seguem os exports (`LobbyViewTest`, `LobbyFormatTest`).
+- [x] NPCs, menus, tops, o seletor de modo, insígnias de nível, o NPC de estatísticas e a scoreboard do lobby seguem os exports e o anexo 1 (`LobbyViewTest`, `LobbyFormatTest`).
 - [ ] Uma partida completa conferida no jogo.
 - [ ] NPCs, menus, matchmaking, escolha de mapa e tops do lobby conferidos no jogo.
 - [ ] Todas as animações e a prévia conferidas no jogo.
@@ -253,7 +257,7 @@ Se o Muxe-Core não estiver habilitado, o plugin se desabilita.
 
 ## Limitações conhecidas
 
-- MEGA e PILARES ainda não são modos, então os NPCs deles não abrem nada. O `/retornar`, o `/l` e a scoreboard do lobby do BedWars (anexo 1) ainda não entraram.
+- MEGA e PILARES ainda não são modos, então os NPCs deles não abrem nada. O `/retornar` e o `/l` ainda não entraram.
 - Quem chega a um servidor de BedWars sem reserva ainda entra numa sala do `default-mode`.
 - O lobby só conhece as salas dos servidores que publicaram nos últimos 10 segundos; a lista de um servidor que para é esquecida depois disso.
 - Os itens especiais da loja, o editor da compra rápida, os dragões, os blocos girando sobre os geradores e os títulos de vitória e derrota ainda não entraram.

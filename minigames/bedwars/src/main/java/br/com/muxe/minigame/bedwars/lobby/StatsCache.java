@@ -41,7 +41,7 @@ public final class StatsCache implements Listener {
     public CompletableFuture<PlayerStats> load(UUID playerId) {
         return core.queries().ask(new FindPlayerStatsQuery(playerId)).whenComplete((loaded, error) -> {
             if (error != null) {
-                plugin.getLogger().log(Level.FINE, "Could not load the BedWars stats of " + playerId, error);
+                plugin.getLogger().log(Level.WARNING, "Could not load the BedWars stats of " + playerId, error);
             } else if (plugin.getServer().getPlayer(playerId) != null) {
                 stats.put(playerId, loaded);
             }

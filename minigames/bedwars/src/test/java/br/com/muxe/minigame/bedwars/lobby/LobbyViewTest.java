@@ -2,27 +2,35 @@ package br.com.muxe.minigame.bedwars.lobby;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import br.com.muxe.core.bukkit.scoreboard.SidebarContent;
 import br.com.muxe.minigame.bedwars.lobby.format.LevelBadges;
 import br.com.muxe.minigame.bedwars.lobby.menu.LobbyMenuSettings;
 import br.com.muxe.minigame.bedwars.lobby.menu.MapList;
 import br.com.muxe.minigame.bedwars.lobby.settings.LobbyNpc;
+import br.com.muxe.minigame.bedwars.lobby.settings.LobbyScoreboardSettings;
 import br.com.muxe.minigame.bedwars.lobby.settings.StatsNpcSettings;
 import br.com.muxe.minigame.bedwars.lobby.top.TopBoardSettings;
+import br.com.muxe.minigame.bedwars.lobby.top.TopSelectorSettings;
+import br.com.muxe.minigame.bedwars.lobby.top.TopSelectorView;
 import br.com.muxe.minigame.bedwars.lobby.top.TopState;
 import br.com.muxe.minigame.bedwars.lobby.top.TopTexts;
 import br.com.muxe.minigame.bedwars.lobby.top.TopView;
 import br.com.muxe.minigame.bedwars.network.ArenaInfo;
 import br.com.muxe.minigame.bedwars.room.RoomFixtures;
+import br.com.muxe.minigame.bedwars.stats.domain.PlayerStats;
 import br.com.muxe.minigame.bedwars.stats.domain.StatCounters;
 import br.com.muxe.minigame.bedwars.stats.domain.StatsPeriod;
 import br.com.muxe.minigame.bedwars.stats.domain.TopCategory;
 import br.com.muxe.minigame.bedwars.stats.domain.TopEntry;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.junit.jupiter.api.Test;
 
 class LobbyViewTest {
@@ -68,7 +76,76 @@ class LobbyViewTest {
         List<String> third = TopView.lines(BOARDS.getFirst(), TEXTS, state, entries, id -> "&d", BADGES, mode -> mode.toUpperCase());
 
         assertThat(third.get(0)).isEqualTo("&b&lTOP 100&r &7(3/10)");
-        assertThat(third.get(2)).isEqualTo("&e21.&r &7-");
+        assertThat(third.get(2)).isEqualTo("&e21.&r &f&7Ninguém&r &7- &e0&r");
+    }
+
+    @Test
+    void anEmptyTopListsNobodyWithZero() {
+        List<String> lines = TopView.lines(BOARDS.getLast(), TEXTS, new TopState(), List.of(), id -> "&b", BADGES, mode -> mode);
+
+        assertThat(lines.subList(2, 12)).allMatch(line -> line.endsWith("&f&7Ninguém&r &7- &e0&r"));
+        assertThat(lines.get(2)).isEqualTo("&e1.&r &f&7Ninguém&r &7- &e0&r");
+        assertThat(TEXTS.clickSound()).contains(Sound.CLICK);
+    }
+
+    @Test
+    void theModeSelectorFollowsTheExportAndKeepsTheChosenModeVisible() {
+        TopSelectorSettings selector = TopSelectorSettings.from(RoomFixtures.CONFIG.getConfigurationSection("lobby.tops.selector")).orElseThrow();
+        List<String> order = List.of("geral", "solo", "duplas", "trios", "quartetos", "1v1", "2v2");
+        Function<String, String> names = mode -> mode.substring(0, 1).toUpperCase() + mode.substring(1);
+
+        assertThat(selector.header()).isEqualTo("&b&lSELECIONAR MODO");
+        assertThat(selector.footer()).isEqualTo("&eClique para alterar.");
+        assertThat(TopSelectorView.modes(selector, order, "geral", names)).containsExactly("&aGeral", "&7Solo", "&7Duplas", "&7Trios", "&7Quartetos");
+        assertThat(TopSelectorView.modes(selector, order, "trios", names)).containsExactly("&7Geral", "&7Solo", "&7Duplas", "&aTrios", "&7Quartetos");
+        assertThat(TopSelectorView.modes(selector, order, "2v2", names)).containsExactly("&7Duplas", "&7Trios", "&7Quartetos", "&71v1", "&a2v2");
+    }
+
+    @Test
+    void theLobbyScoreboardFollowsTheReference() {
+        LobbyScoreboardSettings settings = LobbyScoreboardSettings.from(RoomFixtures.CONFIG.getConfigurationSection("lobby.scoreboard"));
+        List<String> modes = List.of("solo", "duplas", "trios", "quartetos", "1v1", "2v2", "3v3", "4v4", "4s");
+        Function<String, String> names = mode -> mode.equals("solo") ? "Solo" : mode;
+
+        SidebarContent fresh = LobbySidebar.content(settings, PlayerStats.EMPTY, BADGES, modes, names, 652);
+
+        assertThat(fresh.title()).isEqualTo("&b&lBED WARS");
+        assertThat(fresh.lines()).containsExactly(
+            "",
+            "Seu nível: &7[0&l✫&7]",
+            "&f[&a&7▮▮▮▮▮▮▮▮▮▮&f] &7(0/5k)",
+            "",
+            "&e1v1:",
+            " Vitórias: &a0",
+            " Winstreak: &a0",
+            "&eSolo:",
+            " Vitórias: &a0",
+            " Winstreak: &a0",
+            "",
+            "Jogadores: &b652",
+            "",
+            "&amuxe.com.br"
+        );
+    }
+
+    @Test
+    void theScoreboardShowsTheTwoMostPlayedModes() {
+        LobbyScoreboardSettings settings = LobbyScoreboardSettings.from(RoomFixtures.CONFIG.getConfigurationSection("lobby.scoreboard"));
+        List<String> modes = List.of("solo", "duplas", "trios", "1v1");
+        PlayerStats stats = new PlayerStats(Map.of(
+            "geral", counters(30, 9, 5_000),
+            "trios", counters(12, 4, 0),
+            "duplas", counters(15, 3, 0),
+            "solo", counters(3, 2, 0)
+        ));
+
+        assertThat(LobbySidebar.mostPlayed(settings, stats, modes)).containsExactly("duplas", "trios");
+        assertThat(LobbySidebar.mostPlayed(settings, new PlayerStats(Map.of("trios", counters(1, 0, 0))), modes)).containsExactly("trios", "1v1");
+        assertThat(LobbySidebar.content(settings, stats, BADGES, modes, mode -> mode, 1).lines()).contains("&eduplas:", " Vitórias: &a3", "Seu nível: &7[1&l✫&7]");
+    }
+
+    private static StatCounters counters(long games, long wins, long xp) {
+        return new StatCounters(games, 0, 0, 0, 0, 0, 0, 0, 0, wins, 0, 0, 0, xp);
     }
 
     @Test

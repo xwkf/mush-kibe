@@ -2094,6 +2094,27 @@ lobby:
   blink-colors:
     - "&f"
     - "&d"
+  scoreboard:
+    title: "&b&lBED WARS"
+    lines:
+      - ""
+      - "Seu nível: {level}"
+      - "{bar}"
+      - ""
+      - "{modes}"
+      - ""
+      - "Jogadores: &b{players}"
+      - ""
+      - "&amuxe.com.br"
+    mode-lines:
+      - "&e{mode}:"
+      - " Vitórias: &a{wins}"
+      - " Winstreak: &a{winstreak}"
+    default-modes:
+      - "1v1"
+      - "solo"
+    shown-modes: 2
+    bar-segments: 10
   stats-npc:
     location:
       world: lobby
@@ -2169,7 +2190,7 @@ lobby:
         modes: false
     header: "&b&lTOP 100&r &7({page}/{pages})"
     entry: "&e{position}.&r &f{name}&r &7- &e{value}&r"
-    empty: "&e{position}.&r &7-"
+    empty: "&e{position}.&r &f&7Ninguém&r &7- &e0&r"
     click: "&6&lClique para trocar!"
     period-selected: "&a&l{period}&r"
     period-other: "&7{period}&r"
@@ -2180,3 +2201,18 @@ lobby:
       MONTHLY: "Mensal"
       TOTAL: "Total"
     refresh-seconds: 60
+    click-sound: CLICK
+    selector:
+      location:
+        world: lobby
+        x: -18.5
+        y: 77.78125
+        z: 12.5
+      list-offset: 0.375
+      footer-offset: 1.90625
+      visible-modes: 5
+      header: "&b&lSELECIONAR MODO"
+      footer: "&eClique para alterar."
+      selected: "&a{mode}"
+      other: "&7{mode}"
+      general-name: "Geral"

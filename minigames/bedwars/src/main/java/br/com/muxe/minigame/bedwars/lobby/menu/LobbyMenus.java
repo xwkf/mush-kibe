@@ -65,6 +65,17 @@ public final class LobbyMenus {
         return schema.modes().contains(mode) ? schema.mode(mode).displayName() : mode;
     }
 
+    public List<String> topModeOrder() {
+        return List.copyOf(settings.topModes().entries().keySet());
+    }
+
+    public String modeLabel(String mode) {
+        if (schema.modes().contains(mode)) {
+            return schema.mode(mode).displayName();
+        }
+        return mode.isEmpty() ? mode : Character.toUpperCase(mode.charAt(0)) + mode.substring(1);
+    }
+
     public String modeTitle(String mode) {
         LobbyMenuSettings.TopModeEntry entry = settings.topModes().entries().get(mode);
         return entry == null ? modeName(mode) : entry.title();
