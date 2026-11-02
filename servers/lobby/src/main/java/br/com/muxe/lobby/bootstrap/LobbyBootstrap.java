@@ -13,6 +13,7 @@ import br.com.muxe.lobby.command.FlyCommand;
 import br.com.muxe.lobby.command.PlayCommand;
 import br.com.muxe.lobby.command.SetSpawnCommand;
 import br.com.muxe.lobby.config.LobbySettings;
+import br.com.muxe.lobby.launchpad.LaunchPads;
 import br.com.muxe.lobby.listener.LobbyJoinListener;
 import br.com.muxe.lobby.listener.LobbyProtectionListener;
 import br.com.muxe.lobby.listener.StaticWorld;
@@ -61,6 +62,7 @@ public final class LobbyBootstrap {
         PluginManager plugins = plugin.getServer().getPluginManager();
         plugins.registerEvents(new LobbyJoinListener(arrival, scoreboard, bossBar), plugin);
         plugins.registerEvents(new LobbyProtectionListener(arrival, build, settings.voidLevel()), plugin);
+        LaunchPads.start(plugin, core, settings.launchPad());
 
         BukkitScheduler scheduler = plugin.getServer().getScheduler();
         long scoreboardPeriod = LobbySettings.ticks(settings.scoreboardInterval());

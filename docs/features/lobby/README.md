@@ -87,6 +87,14 @@ Players cannot take damage, lose hunger, break, place, drop or pick up items, or
 
 Players are always in Adventure mode: any change to another game mode is cancelled, except Creative for a player in build mode.
 
+### Launch pads
+
+Every slime block (`launch-pad.block`) in a lobby is a launch pad, with no setup: the lobby finds them by scanning each loaded chunk off the main thread (`PadScanner`, `ChunkScan`) and follows blocks placed or broken in build mode.
+
+- Green sparkles (`HAPPY_VILLAGER`) rise from the top of each pad every `launch-pad.particles.interval`, only while a player is within `launch-pad.particles.view-radius` blocks.
+- Stepping on a pad throws the player towards where they look: 20 blocks forward and 5 blocks up by default. `LaunchVelocity` turns `distance` and `height` into the velocity by replaying the 1.8 client physics (gravity, drag and air friction); each component is capped at 3.9, the most a velocity packet carries.
+- A player is launched once per `launch-pad.cooldown`. Flying players and players in build mode are not launched. Lobby players take no damage, so the landing does not hurt.
+
 ### Build mode
 
 `/build` comes from Muxe-Core and works on every server, as described in the [Core API](../../development/core-api/README.md#build-mode). In the lobby:
@@ -123,6 +131,11 @@ Players are always in Adventure mode: any change to another game mode is cancell
 | `play.games` | `skywars`, `bedwars` | Groups allowed in `/jogar`. |
 | `protection.void-level` | `0` | Y below which players are sent back to spawn. |
 | `arrival.fly-height` | `5` | Blocks above the spawn for players with `muxe.lobby.fly`. |
+| `launch-pad.enabled` | `true` | Turns the launch pads on. |
+| `launch-pad.block` | `SLIME_BLOCK` | Block (a 1.8 `Material` name) that works as a launch pad. |
+| `launch-pad.distance`, `launch-pad.height` | `20`, `5` | Blocks forward and up a launch reaches. |
+| `launch-pad.cooldown` | `1s` | Time before the same player can be launched again. |
+| `launch-pad.particles.interval`, `per-block`, `view-radius` | `250ms`, `1`, `32` | How often each pad sparkles, how many sparkles each time, and how close a player must be. |
 | `bossbar.frames`, `bossbar.interval` | `&e&lMUXE`, `&6&lMUXE`, `500ms` | Boss bar texts and how long each one stays. |
 | `scoreboard.title`, `scoreboard.lines` | See above | Scoreboard text. Placeholders: `{tag}`, `{credits}`, `{lobby}`, `{players}`. |
 | `scoreboard.update-interval` | `1s` | How often the scoreboard refreshes. |
@@ -174,6 +187,8 @@ The Spigot server metrics of Muxe-Core. The visibility metrics moved with it and
 - [x] The game NPC file has the twelve NPCs at the exported spots and turns, with their group, item in hand and lines.
 - [x] The boss bar alternates `&e&lMUXE` and `&6&lMUXE` every 10 ticks, and the scoreboard fills the reference lines.
 - [ ] Boss bar, scoreboard and flight after build mode work in game (checked in game).
+- [x] The default launch reaches 20 blocks forward and 5 blocks up in the 1.8 client physics, towards where the player looks.
+- [ ] Slime blocks sparkle green and launch the player in game (checked in game).
 - [ ] The twelve game NPCs show on both lobbies with their lines at the reference heights, the count follows the game servers and a click sends the player (checked in game).
 
 ## Failures and recovery

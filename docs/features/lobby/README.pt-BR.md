@@ -87,6 +87,14 @@ Os jogadores não levam dano, não perdem fome, não quebram, não colocam, não
 
 Os jogadores ficam sempre no modo Aventura: qualquer troca para outro modo de jogo é cancelada, exceto o Criativo para quem está no modo construção.
 
+### Plataformas de lançamento
+
+Todo bloco de slime (`launch-pad.block`) de um lobby é uma plataforma de lançamento, sem nenhuma configuração: o lobby as encontra varrendo cada chunk carregado fora da thread principal (`PadScanner`, `ChunkScan`) e acompanha os blocos colocados ou quebrados no modo construção.
+
+- Brilhos verdes (`HAPPY_VILLAGER`) sobem do topo de cada plataforma a cada `launch-pad.particles.interval`, só enquanto houver um jogador a até `launch-pad.particles.view-radius` blocos.
+- Pisar numa plataforma joga o jogador para onde ele está olhando: 20 blocos para a frente e 5 blocos para cima por padrão. `LaunchVelocity` transforma `distance` e `height` na velocidade repetindo a física do cliente 1.8 (gravidade, arrasto e atrito do ar); cada componente é limitado a 3,9, o máximo que um pacote de velocidade carrega.
+- Um jogador é lançado uma vez a cada `launch-pad.cooldown`. Quem está voando ou no modo construção não é lançado. Jogadores do lobby não tomam dano, então a queda não machuca.
+
 ### Modo construção
 
 O `/build` vem do Muxe-Core e funciona em todos os servidores, como descrito na [API do core](../../development/core-api/README.pt-BR.md#modo-construção). No lobby:
@@ -123,6 +131,11 @@ O `/jogar` completa os jogos configurados com tab.
 | `play.games` | `skywars`, `bedwars` | Grupos permitidos no `/jogar`. |
 | `protection.void-level` | `0` | Altura abaixo da qual o jogador volta ao spawn. |
 | `arrival.fly-height` | `5` | Blocos acima do spawn para quem tem `muxe.lobby.fly`. |
+| `launch-pad.enabled` | `true` | Liga as plataformas de lançamento. |
+| `launch-pad.block` | `SLIME_BLOCK` | Bloco (nome de `Material` do 1.8) que funciona como plataforma de lançamento. |
+| `launch-pad.distance`, `launch-pad.height` | `20`, `5` | Blocos para a frente e para cima que um lançamento alcança. |
+| `launch-pad.cooldown` | `1s` | Tempo até o mesmo jogador poder ser lançado de novo. |
+| `launch-pad.particles.interval`, `per-block`, `view-radius` | `250ms`, `1`, `32` | De quanto em quanto tempo cada plataforma brilha, quantos brilhos por vez e a que distância um jogador precisa estar. |
 | `bossbar.frames`, `bossbar.interval` | `&e&lMUXE`, `&6&lMUXE`, `500ms` | Textos da boss bar e quanto tempo cada um fica. |
 | `scoreboard.title`, `scoreboard.lines` | Veja acima | Texto da scoreboard. Placeholders: `{tag}`, `{credits}`, `{lobby}`, `{players}`. |
 | `scoreboard.update-interval` | `1s` | De quanto em quanto tempo a scoreboard é atualizada. |
@@ -174,6 +187,8 @@ As métricas de servidor Spigot do Muxe-Core. As métricas de visibilidade foram
 - [x] O arquivo dos NPCs de jogo tem os doze NPCs nos lugares e direções exportados, com o grupo, o item na mão e as linhas.
 - [x] A boss bar alterna `&e&lMUXE` e `&6&lMUXE` a cada 10 ticks, e a scoreboard preenche as linhas de referência.
 - [ ] Boss bar, scoreboard e o voo depois do modo construção funcionam no jogo (conferido no jogo).
+- [x] O lançamento padrão alcança 20 blocos para a frente e 5 para cima na física do cliente 1.8, na direção para onde o jogador olha.
+- [ ] Os blocos de slime brilham em verde e lançam o jogador no jogo (conferido no jogo).
 - [ ] Os doze NPCs de jogo aparecem nos dois lobbys com as linhas nas alturas de referência, a contagem acompanha os servidores de jogo e o clique manda o jogador (conferido no jogo).
 
 ## Falhas e recuperação

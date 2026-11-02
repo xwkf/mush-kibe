@@ -9,6 +9,17 @@ protection:
 arrival:
   fly-height: 5
 
+launch-pad:
+  enabled: true
+  block: SLIME_BLOCK
+  distance: 20
+  height: 5
+  cooldown: 1s
+  particles:
+    interval: 250ms
+    per-block: 1
+    view-radius: 32
+
 bossbar:
   interval: 500ms
   frames:

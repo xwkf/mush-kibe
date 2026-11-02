@@ -2,6 +2,7 @@ package br.com.muxe.lobby.config;
 
 import br.com.muxe.core.bukkit.bossbar.BossBarFrames;
 import br.com.muxe.core.common.config.source.DurationParser;
+import br.com.muxe.lobby.launchpad.LaunchPadSettings;
 import br.com.muxe.lobby.profile.PlayerInfo;
 import br.com.muxe.lobby.scoreboard.ScoreboardTemplate;
 import java.time.Duration;
@@ -15,7 +16,8 @@ public record LobbySettings(
     BossBarFrames bossBar,
     ScoreboardTemplate scoreboard,
     Duration scoreboardInterval,
-    PlayerInfo defaultInfo
+    PlayerInfo defaultInfo,
+    LaunchPadSettings launchPad
 ) {
 
     private static final long MILLIS_PER_TICK = 50;
@@ -28,7 +30,8 @@ public record LobbySettings(
             new BossBarFrames(config.getStringList("bossbar.frames"), ticks(duration(config, "bossbar.interval", "500ms"))),
             new ScoreboardTemplate(config.getString("scoreboard.title", "&b&lMUXE"), config.getStringList("scoreboard.lines")),
             duration(config, "scoreboard.update-interval", "1s"),
-            new PlayerInfo(config.getString("scoreboard.default-tag", "&7Membro"), config.getLong("scoreboard.default-credits", 0))
+            new PlayerInfo(config.getString("scoreboard.default-tag", "&7Membro"), config.getLong("scoreboard.default-credits", 0)),
+            LaunchPadSettings.from(config.getConfigurationSection("launch-pad"))
         );
     }
 
