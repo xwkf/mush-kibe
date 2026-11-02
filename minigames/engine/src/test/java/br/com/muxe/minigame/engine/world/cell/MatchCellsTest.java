@@ -7,6 +7,8 @@ import br.com.muxe.minigame.engine.world.map.ChunkData;
 import br.com.muxe.minigame.engine.world.map.MapFixtures;
 import br.com.muxe.minigame.engine.world.map.MapTemplate;
 import br.com.muxe.minigame.engine.world.nbt.NbtIo;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class MatchCellsTest {
@@ -18,6 +20,40 @@ class MatchCellsTest {
         .put(MapFixtures.withSign(MapFixtures.chunk(-1, 2, MapFixtures.section(4, MapFixtures.WOOL, 11)), "&9Azul"))
         .put(MapFixtures.chunk(3, -5, MapFixtures.section(3, 1, 0)))
         .build();
+
+    @Test
+    void changedChunksAreCompressedOffTheCallerAndStayReadableMeanwhile() {
+        List<Runnable> queued = new ArrayList<>();
+        MatchCells deferred = new MatchCells(SIZE, 4, 12, queued::add);
+        Cell cell = deferred.allocate(map);
+        ChunkData edited = MapFixtures.chunk(cell.offsetChunkX() + 1, cell.offsetChunkZ() + 1, MapFixtures.section(5, MapFixtures.WOOL, 3));
+
+        deferred.save(edited);
+
+        assertThat(deferred.pendingChunks(cell)).isEqualTo(1);
+        assertThat(deferred.load(edited.x(), edited.z()).orElseThrow()).isSameAs(edited);
+
+        queued.forEach(Runnable::run);
+
+        assertThat(deferred.pendingChunks(cell)).isZero();
+        assertThat(deferred.changedChunks(cell)).isEqualTo(1);
+        assertThat(deferred.load(edited.x(), edited.z()).orElseThrow().sections().getFirst().data(0, 0, 0)).isEqualTo(3);
+    }
+
+    @Test
+    void aCompressionThatFinishesAfterTheCellWasReusedIsDropped() {
+        List<Runnable> queued = new ArrayList<>();
+        MatchCells deferred = new MatchCells(SIZE, 4, 12, queued::add);
+        Cell cell = deferred.allocate(map);
+        deferred.save(MapFixtures.chunk(cell.offsetChunkX() + 1, cell.offsetChunkZ() + 1, MapFixtures.section(5, MapFixtures.WOOL, 3)));
+        deferred.release(cell);
+        Cell reused = deferred.allocate(map);
+
+        queued.forEach(Runnable::run);
+
+        assertThat(reused.index()).isEqualTo(cell.index());
+        assertThat(deferred.changedChunks(reused)).isZero();
+    }
 
     @Test
     void eachMatchGetsItsOwnCellInAGrid() {

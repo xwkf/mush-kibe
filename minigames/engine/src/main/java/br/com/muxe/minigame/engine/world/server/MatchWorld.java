@@ -4,6 +4,8 @@ import br.com.muxe.minigame.engine.world.cell.Cell;
 import br.com.muxe.minigame.engine.world.cell.MatchCells;
 import br.com.muxe.minigame.engine.world.map.MapTemplate;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.plugin.Plugin;
@@ -21,7 +23,8 @@ public final class MatchWorld {
     private final Plugin plugin;
     private final MuxeWorlds worlds;
     private final String name;
-    private final MatchCells cells = new MatchCells(CELL_CHUNKS, COLUMNS, MARGIN_CHUNKS);
+    private final ExecutorService compressor = Executors.newSingleThreadExecutor(Thread.ofPlatform().daemon().name("muxe-chunk-compressor").factory());
+    private final MatchCells cells = new MatchCells(CELL_CHUNKS, COLUMNS, MARGIN_CHUNKS, compressor);
     private World world;
     private BukkitTask sweeper;
 
@@ -45,6 +48,7 @@ public final class MatchWorld {
             worlds.destroy(world);
             world = null;
         }
+        compressor.shutdownNow();
     }
 
     public World world() {

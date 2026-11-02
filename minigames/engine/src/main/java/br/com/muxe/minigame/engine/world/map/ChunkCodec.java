@@ -18,8 +18,16 @@ public final class ChunkCodec {
     }
 
     public static byte[] compress(ChunkData chunk) {
+        return compress(chunk, Deflater.BEST_COMPRESSION);
+    }
+
+    public static byte[] compressFast(ChunkData chunk) {
+        return compress(chunk, Deflater.BEST_SPEED);
+    }
+
+    private static byte[] compress(ChunkData chunk, int level) {
         byte[] raw = encode(chunk);
-        Deflater deflater = new Deflater(Deflater.BEST_COMPRESSION);
+        Deflater deflater = new Deflater(level);
         try {
             deflater.setInput(raw);
             deflater.finish();

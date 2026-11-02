@@ -9,17 +9,23 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeSet;
+import java.util.concurrent.Executor;
 
 public final class MatchCells implements ChunkSource {
 
     private final int sizeChunks;
     private final int columns;
     private final int marginChunks;
+    private final Executor compressor;
     private final Map<Integer, Occupant> occupied = new HashMap<>();
     private final TreeSet<Integer> freed = new TreeSet<>();
     private int nextIndex;
 
     public MatchCells(int sizeChunks, int columns, int marginChunks) {
+        this(sizeChunks, columns, marginChunks, Runnable::run);
+    }
+
+    public MatchCells(int sizeChunks, int columns, int marginChunks, Executor compressor) {
         if (sizeChunks < 4 || sizeChunks % 2 != 0) {
             throw new IllegalArgumentException("Cell size must be an even number of at least 4 chunks, got " + sizeChunks);
         }
@@ -32,6 +38,7 @@ public final class MatchCells implements ChunkSource {
         this.sizeChunks = sizeChunks;
         this.columns = columns;
         this.marginChunks = marginChunks;
+        this.compressor = compressor;
     }
 
     public boolean fits(MapTemplate template) {
@@ -82,9 +89,9 @@ public final class MatchCells implements ChunkSource {
             return Optional.empty();
         }
         Occupant current = occupant.get();
-        byte[] changed = current.changes().get(ChunkData.key(x, z));
+        Change changed = current.changes().get(ChunkData.key(x, z));
         if (changed != null) {
-            return Optional.of(ChunkCodec.decompress(changed));
+            return Optional.of(changed.chunk());
         }
         int dx = current.cell().offsetChunkX();
         int dz = current.cell().offsetChunkZ();
@@ -103,9 +110,32 @@ public final class MatchCells implements ChunkSource {
             occupant.changes().remove(chunk.key());
             return;
         }
-        occupant.changes().put(chunk.key(), ChunkCodec.compress(chunk));
+        Change pending = new Change(chunk, null);
+        occupant.changes().put(chunk.key(), pending);
+        compressor.execute(() -> {
+            byte[] compressed = ChunkCodec.compressFast(chunk);
+            compressed(occupant, chunk.key(), pending, compressed);
+        });
     }
 
-    private record Occupant(Cell cell, MapTemplate template, Map<Long, byte[]> changes) {
+    public synchronized int pendingChunks(Cell cell) {
+        Occupant occupant = occupied.get(cell.index());
+        return occupant == null ? 0 : (int) occupant.changes().values().stream().filter(change -> change.compressed() == null).count();
+    }
+
+    private synchronized void compressed(Occupant occupant, long key, Change pending, byte[] compressed) {
+        if (occupied.get(occupant.cell().index()) == occupant && occupant.changes().get(key) == pending) {
+            occupant.changes().put(key, new Change(null, compressed));
+        }
+    }
+
+    private record Occupant(Cell cell, MapTemplate template, Map<Long, Change> changes) {
+    }
+
+    private record Change(ChunkData raw, byte[] compressed) {
+
+        ChunkData chunk() {
+            return raw != null ? raw : ChunkCodec.decompress(compressed);
+        }
     }
 }
