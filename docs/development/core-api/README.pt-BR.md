@@ -77,7 +77,7 @@ player.sendMessage(messages.get("wrong-password", "remaining", "3"));
 messages.lines("challenge").forEach(player::sendMessage);
 ```
 
-Os placeholders são escritos como `{name}` na configuração. `merge` combina catálogos (as mensagens do próprio plugin têm prioridade).
+Os placeholders são escritos como `{name}` na configuração. `merge` combina catálogos (as mensagens do próprio plugin têm prioridade). Chaves que faltam no arquivo do servidor vêm dos padrões do jar, então uma mensagem adicionada numa versão nova funciona num servidor cujo `config.yml` foi criado por uma versão antiga.
 
 Uma mensagem pode ser uma lista YAML. `lines(key)` devolve uma entrada por linha, com os itens vazios (`""`) convertidos em uma linha que o chat mostra em branco, e `get(key)` junta as linhas com quebras de linha, o que serve para telas de expulsão. O `ProxyMessages` do proxy aceita listas do mesmo jeito.
 

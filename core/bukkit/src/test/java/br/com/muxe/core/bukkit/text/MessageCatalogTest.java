@@ -11,6 +11,27 @@ import org.junit.jupiter.api.Test;
 class MessageCatalogTest {
 
     @Test
+    void messagesMissingFromAnOlderFileComeFromTheDefaultsOfTheJar() throws InvalidConfigurationException {
+        YamlConfiguration jar = new YamlConfiguration();
+        jar.loadFromString(String.join("\n",
+            "messages:",
+            "  kept: \"&adefault\"",
+            "  added-later: \"&enew\""
+        ));
+        YamlConfiguration onDisk = new YamlConfiguration();
+        onDisk.loadFromString(String.join("\n",
+            "messages:",
+            "  kept: \"&cedited\""
+        ));
+        onDisk.setDefaults(jar);
+
+        MessageCatalog messages = MessageCatalog.from(onDisk.getConfigurationSection("messages"));
+
+        assertThat(messages.get("kept")).isEqualTo("§cedited");
+        assertThat(messages.get("added-later")).isEqualTo("§enew");
+    }
+
+    @Test
     void listsAreReadLineByLineWithColorsAndBlankLines() throws InvalidConfigurationException {
         YamlConfiguration config = new YamlConfiguration();
         config.loadFromString(String.join("\n",

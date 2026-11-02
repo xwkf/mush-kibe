@@ -77,7 +77,7 @@ player.sendMessage(messages.get("wrong-password", "remaining", "3"));
 messages.lines("challenge").forEach(player::sendMessage);
 ```
 
-Placeholders are written `{name}` in the configuration. `merge` combines catalogs (the plugin's own messages win).
+Placeholders are written `{name}` in the configuration. `merge` combines catalogs (the plugin's own messages win). Keys missing from the file on the server come from the defaults of the jar, so a message added in a new version works on a server whose `config.yml` was created by an older one.
 
 A message can be a YAML list. `lines(key)` returns one entry per line, with blank items (`""`) turned into a line the chat shows empty, and `get(key)` joins the lines with line breaks, which suits kick screens. The proxy's `ProxyMessages` accepts lists the same way.
 

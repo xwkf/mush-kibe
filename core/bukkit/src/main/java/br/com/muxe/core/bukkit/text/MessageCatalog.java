@@ -2,8 +2,10 @@ package br.com.muxe.core.bukkit.text;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
 
@@ -20,7 +22,12 @@ public final class MessageCatalog {
     public static MessageCatalog from(ConfigurationSection section) {
         Map<String, Object> raw = new HashMap<>();
         if (section != null) {
-            for (String key : section.getKeys(true)) {
+            Set<String> keys = new LinkedHashSet<>(section.getKeys(true));
+            ConfigurationSection defaults = section.getDefaultSection();
+            if (defaults != null) {
+                keys.addAll(defaults.getKeys(true));
+            }
+            for (String key : keys) {
                 Object value = section.get(key);
                 if (value instanceof String || value instanceof List<?>) {
                     raw.put(key, value);
