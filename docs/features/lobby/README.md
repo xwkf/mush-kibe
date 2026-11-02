@@ -18,7 +18,7 @@ The same plugin runs on every lobby, the main ones and each game's (such as `bed
 
 - After logging in, the proxy sends the player to the least loaded lobby (see [Network routing](../network-routing/README.md)).
 - On join: Adventure mode, full health and hunger, experience reset, then teleported to the configured spawn (or the main world's spawn). Muxe-Core clears the inventory and the armor and gives the [hotbar](../hotbar/README.md).
-- Players with `muxe.lobby.fly` arrive `arrival.fly-height` blocks (5) above the spawn, already flying. Everyone else arrives on the spawn. Falling below `protection.void-level` sends the player back the same way.
+- Players with `muxe.lobby.fly` arrive `arrival.fly-height` blocks (5) above the spawn, already flying. Everyone else arrives on the spawn. Falling below `protection.void-level` in one of the lobby's own worlds (those loaded when it starts) sends the player back the same way; worlds created later, such as arena setup worlds, handle their own void.
 - `/fly` (`/voar`) turns flight on (`&eVocê ativou o &bmodo voar&e!`) or off (`&cVocê desativou o modo voar!`). Turning it off lands a player who is flying. Joining or falling into the void gives flight back to everyone with `muxe.lobby.fly`.
 - The [parkour](../parkour/README.md) turns flight off while a player runs it and gives it back when the run ends. Nobody can take off during a run, even after `/fly`.
 - Join and quit messages are hidden.
@@ -130,7 +130,7 @@ Every slime block (`launch-pad.block`) in a lobby is a launch pad, with no setup
 | Key | Default | Description |
 |---|---|---|
 | `play.games` | `skywars`, `bedwars` | Groups allowed in `/jogar`. |
-| `protection.void-level` | `0` | Y below which players are sent back to spawn. |
+| `protection.void-level` | `0` | Y below which players in the lobby's own worlds are sent back to spawn. |
 | `arrival.fly-height` | `5` | Blocks above the spawn for players with `muxe.lobby.fly`. |
 | `launch-pad.enabled` | `true` | Turns the launch pads on. |
 | `launch-pad.block` | `SLIME_BLOCK` | Block (a 1.8 `Material` name) that works as a launch pad. |

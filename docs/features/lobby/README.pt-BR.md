@@ -18,7 +18,7 @@ O mesmo plugin roda em todo lobby, nos principais e nos de cada jogo (como `bedw
 
 - Depois do login, o proxy manda o jogador para o lobby com menos jogadores (veja [Roteamento da rede](../network-routing/README.pt-BR.md)).
 - Ao entrar: modo Aventura, vida e fome cheias, experiência zerada, e teleporte para o spawn configurado (ou o spawn do mundo principal). O Muxe-Core limpa o inventário e a armadura e dá a [hotbar](../hotbar/README.pt-BR.md).
-- Quem tem `muxe.lobby.fly` chega `arrival.fly-height` blocos (5) acima do spawn, já voando. Os outros chegam no spawn. Cair abaixo de `protection.void-level` manda o jogador de volta do mesmo jeito.
+- Quem tem `muxe.lobby.fly` chega `arrival.fly-height` blocos (5) acima do spawn, já voando. Os outros chegam no spawn. Cair abaixo de `protection.void-level` num dos mundos do próprio lobby (os carregados quando ele liga) manda o jogador de volta do mesmo jeito; mundos criados depois, como os de setup de arena, cuidam do próprio void.
 - O `/fly` (`/voar`) liga o voo (`&eVocê ativou o &bmodo voar&e!`) ou desliga (`&cVocê desativou o modo voar!`). Desligar faz quem está voando descer. Entrar no lobby ou cair no void devolve o voo a todos que têm `muxe.lobby.fly`.
 - O [parkour](../parkour/README.pt-BR.md) desliga o voo enquanto o jogador faz a corrida e o devolve quando ela acaba. Ninguém consegue levantar voo durante a corrida, nem depois do `/fly`.
 - As mensagens de entrada e saída ficam escondidas.
@@ -130,7 +130,7 @@ O `/jogar` completa os jogos configurados com tab.
 | Chave | Padrão | Descrição |
 |---|---|---|
 | `play.games` | `skywars`, `bedwars` | Grupos permitidos no `/jogar`. |
-| `protection.void-level` | `0` | Altura abaixo da qual o jogador volta ao spawn. |
+| `protection.void-level` | `0` | Altura abaixo da qual o jogador num dos mundos do lobby volta ao spawn. |
 | `arrival.fly-height` | `5` | Blocos acima do spawn para quem tem `muxe.lobby.fly`. |
 | `launch-pad.enabled` | `true` | Liga as plataformas de lançamento. |
 | `launch-pad.block` | `SLIME_BLOCK` | Bloco (nome de `Material` do 1.8) que funciona como plataforma de lançamento. |

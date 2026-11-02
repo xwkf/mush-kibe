@@ -32,12 +32,12 @@ public final class LobbyProtectionListener implements Listener {
 
     private final ArrivalService arrival;
     private final BuildMode build;
-    private final int voidLevel;
+    private final VoidRule voidRule;
 
-    public LobbyProtectionListener(ArrivalService arrival, BuildMode build, int voidLevel) {
+    public LobbyProtectionListener(ArrivalService arrival, BuildMode build, VoidRule voidRule) {
         this.arrival = arrival;
         this.build = build;
-        this.voidLevel = voidLevel;
+        this.voidRule = voidRule;
     }
 
     @EventHandler(priority = EventPriority.LOW)
@@ -135,7 +135,7 @@ public final class LobbyProtectionListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onFallIntoVoid(PlayerMoveEvent event) {
-        if (event.getTo() != null && event.getTo().getY() < voidLevel) {
+        if (event.getTo() != null && voidRule.sendsBack(event.getTo().getWorld().getName(), event.getTo().getY())) {
             Player player = event.getPlayer();
             arrival.send(player);
             if (build.isBuilding(player)) {

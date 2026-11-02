@@ -17,12 +17,16 @@ import br.com.muxe.lobby.launchpad.LaunchPads;
 import br.com.muxe.lobby.listener.LobbyJoinListener;
 import br.com.muxe.lobby.listener.LobbyProtectionListener;
 import br.com.muxe.lobby.listener.StaticWorld;
+import br.com.muxe.lobby.listener.VoidRule;
 import br.com.muxe.lobby.profile.RankInfoSource;
 import br.com.muxe.lobby.scoreboard.LobbyScoreboard;
 import br.com.muxe.lobby.spawn.ArrivalService;
 import br.com.muxe.lobby.spawn.FlightBuildHook;
 import br.com.muxe.lobby.spawn.SpawnService;
 import java.time.Duration;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -61,7 +65,7 @@ public final class LobbyBootstrap {
 
         PluginManager plugins = plugin.getServer().getPluginManager();
         plugins.registerEvents(new LobbyJoinListener(arrival, scoreboard, bossBar), plugin);
-        plugins.registerEvents(new LobbyProtectionListener(arrival, build, settings.voidLevel()), plugin);
+        plugins.registerEvents(new LobbyProtectionListener(arrival, build, new VoidRule(lobbyWorlds(), settings.voidLevel())), plugin);
         LaunchPads.start(plugin, core, settings.launchPad());
 
         BukkitScheduler scheduler = plugin.getServer().getScheduler();
@@ -74,5 +78,9 @@ public final class LobbyBootstrap {
             new SetSpawnCommand(spawn, messages),
             new FlyCommand(messages)
         );
+    }
+
+    private Set<String> lobbyWorlds() {
+        return plugin.getServer().getWorlds().stream().map(World::getName).collect(Collectors.toUnmodifiableSet());
     }
 }

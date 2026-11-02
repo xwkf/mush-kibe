@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -18,7 +19,7 @@ import org.junit.jupiter.api.Test;
 
 class LobbyWorldProtectionTest {
 
-    private final LobbyProtectionListener listener = new LobbyProtectionListener(null, null, 0);
+    private final LobbyProtectionListener listener = new LobbyProtectionListener(null, null, new VoidRule(Set.of("lobby"), 0));
 
     @Test
     void blocksNeverBreakOrDropBecauseOfPhysics() {
