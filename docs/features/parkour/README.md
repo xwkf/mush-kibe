@@ -30,7 +30,7 @@ A timed parkour in the lobby: a start, numbered checkpoints and an end, marked o
 
 ### A run
 
-- Stepping on the start begins the run: `&b&lPARKOUR &aIniciado!`. The player gets the parkour items and loses flight (see below).
+- Stepping on the start begins the run: `&b&lPARKOUR &aIniciado!`, with the `note.pling` sound (also played on a restart and on each checkpoint). The player gets the parkour items and loses flight (see below).
 - Stepping on the start again during a run restarts the timer where the player stands: `&b&lPARKOUR &aTemporizador reiniciado!`.
 - Stepping on the next checkpoint shows the time since the start: `&b&lPARKOUR &aVocê completou o &echeckpoint #2 &aem &71m 22,704s&a!`. Stepping on a later checkpoint before the previous one, or on one already reached, does nothing at all, with no message.
 - The end only counts after every checkpoint. Stepping on it earlier does nothing.
@@ -194,6 +194,7 @@ parkour:
 | `parkour.finish-firework.colors` | `#55FF55`, `#55FFFF`, `#FF5555` | Colors as `#RRGGBB`. At least one. |
 | `parkour.finish-firework.fade-colors` | none | Colors it fades to, as `#RRGGBB`. |
 | `parkour.finish-firework.flicker`, `.trail` | `false`, `false` | Firework flicker and trail. |
+| `parkour.sounds.start`, `.restart`, `.checkpoint` | `NOTE_PLING`, volume 1, pitch 1 | Sound played to the player when a run starts, restarts and reaches a checkpoint: `sound` (a 1.8 `Sound` name), `volume` and `pitch`. Without a section, no sound. |
 | `spam.max-clicks`, `spam.window`, `spam.cooldown` | `3`, `1s`, `3s` | Anti-spam shared with the hotbar, NPCs, cash registers and social media heads. |
 
 Without a `parkour` section, the parkour is off on that server: the core logs `The parkour is off: config.yml has no 'parkour' section`, shows no hologram and ignores the plates. `/parkour` still saves points, which the other servers of the group show. A missing item or hologram list, two items in the same slot, a hologram line without `text` or `height`, or a firework without colors is an error on startup.

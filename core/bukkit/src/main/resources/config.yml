@@ -164,6 +164,19 @@ parkour:
         height: 1.54375
       - text: "&cFim"
         height: 1.2625
+  sounds:
+    start:
+      sound: NOTE_PLING
+      volume: 1.0
+      pitch: 1.0
+    restart:
+      sound: NOTE_PLING
+      volume: 1.0
+      pitch: 1.0
+    checkpoint:
+      sound: NOTE_PLING
+      volume: 1.0
+      pitch: 1.0
   finish-firework:
     type: BALL_LARGE
     colors:

@@ -30,7 +30,7 @@ Um parkour cronometrado no lobby: um início, checkpoints numerados e um fim, ma
 
 ### Uma corrida
 
-- Pisar no início começa a corrida: `&b&lPARKOUR &aIniciado!`. O jogador recebe os itens do parkour e perde o voo (veja abaixo).
+- Pisar no início começa a corrida: `&b&lPARKOUR &aIniciado!`, com o som `note.pling` (que também toca ao reiniciar e em cada checkpoint). O jogador recebe os itens do parkour e perde o voo (veja abaixo).
 - Pisar no início de novo durante a corrida reinicia o temporizador onde o jogador está: `&b&lPARKOUR &aTemporizador reiniciado!`.
 - Pisar no próximo checkpoint mostra o tempo desde o início: `&b&lPARKOUR &aVocê completou o &echeckpoint #2 &aem &71m 22,704s&a!`. Pisar num checkpoint posterior antes do anterior, ou num que já foi alcançado, não faz nada, sem nenhuma mensagem.
 - O fim só conta depois de todos os checkpoints. Pisar nele antes não faz nada.
@@ -194,6 +194,7 @@ parkour:
 | `parkour.finish-firework.colors` | `#55FF55`, `#55FFFF`, `#FF5555` | Cores no formato `#RRGGBB`. Pelo menos uma. |
 | `parkour.finish-firework.fade-colors` | nenhuma | Cores para as quais ele desbota, no formato `#RRGGBB`. |
 | `parkour.finish-firework.flicker`, `.trail` | `false`, `false` | Cintilar e rastro do fogo de artifício. |
+| `parkour.sounds.start`, `.restart`, `.checkpoint` | `NOTE_PLING`, volume 1, tom 1 | Som tocado para o jogador quando a corrida começa, reinicia e passa por um checkpoint: `sound` (nome de `Sound` do 1.8), `volume` e `pitch`. Sem a seção, nenhum som. |
 | `spam.max-clicks`, `spam.window`, `spam.cooldown` | `3`, `1s`, `3s` | Anti-spam compartilhado com a hotbar, os NPCs, as caixas registradoras e as cabeças de redes sociais. |
 
 Sem a seção `parkour`, o parkour fica desligado naquele servidor: o core registra `The parkour is off: config.yml has no 'parkour' section`, não mostra nenhum holograma e ignora as placas. O `/parkour` continua salvando os pontos, que os outros servidores do grupo mostram. Um item ou uma lista de holograma faltando, dois itens no mesmo slot, uma linha de holograma sem `text` ou `height`, ou um fogo de artifício sem cores é um erro ao ligar.

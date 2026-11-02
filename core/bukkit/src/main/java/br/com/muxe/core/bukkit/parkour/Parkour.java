@@ -200,13 +200,17 @@ public final class Parkour implements Listener {
             case ParkourStep.Started _ -> {
                 gear.put(player.getUniqueId(), ParkourGear.equip(player, settings.buildItems()));
                 player.sendMessage(messages.get("parkour-started"));
+                settings.sound(ParkourSound.START).ifPresent(cue -> cue.play(player));
             }
             case ParkourStep.Restarted restarted -> {
                 restarted.teleport().ifPresent(position -> teleport(player, position));
                 player.sendMessage(messages.get("parkour-restarted"));
+                settings.sound(ParkourSound.RESTART).ifPresent(cue -> cue.play(player));
             }
-            case ParkourStep.CheckpointReached reached -> player.sendMessage(messages.get("parkour-checkpoint",
-                "number", Integer.toString(reached.number()), "time", ParkourTime.format(reached.elapsed())));
+            case ParkourStep.CheckpointReached reached -> {
+                player.sendMessage(messages.get("parkour-checkpoint", "number", Integer.toString(reached.number()), "time", ParkourTime.format(reached.elapsed())));
+                settings.sound(ParkourSound.CHECKPOINT).ifPresent(cue -> cue.play(player));
+            }
             case ParkourStep.ReturnedToCheckpoint returned -> {
                 teleport(player, returned.position());
                 player.sendMessage(messages.get("parkour-returned", "number", Integer.toString(returned.number())));

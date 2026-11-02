@@ -2,6 +2,7 @@ package br.com.muxe.core.bukkit.parkour;
 
 import br.com.muxe.core.bukkit.display.DisplayLabel;
 import br.com.muxe.core.bukkit.effect.FireworkBurst;
+import br.com.muxe.core.bukkit.effect.SoundCue;
 import br.com.muxe.core.bukkit.hotbar.HotbarItem;
 import br.com.muxe.core.common.placement.domain.ParkourPoint;
 import java.util.ArrayList;
@@ -22,7 +23,8 @@ public record ParkourSettings(
     Map<ParkourItem, HotbarItem> items,
     Map<ParkourPoint.Type, List<DisplayLabel>> labels,
     String noRecord,
-    FireworkEffect finishFirework
+    FireworkEffect finishFirework,
+    Map<ParkourSound, SoundCue> sounds
 ) {
 
     public static final String NUMBER = "{number}";
@@ -31,6 +33,7 @@ public record ParkourSettings(
     public ParkourSettings {
         items = Map.copyOf(items);
         labels = Map.copyOf(labels);
+        sounds = Map.copyOf(sounds);
         Objects.requireNonNull(noRecord, "noRecord");
         Objects.requireNonNull(finishFirework, "finishFirework");
         Set<Integer> slots = new HashSet<>();
@@ -60,8 +63,23 @@ public record ParkourSettings(
             items,
             labels,
             parkour.getString("no-record", "..."),
-            FireworkBurst.effect(section(parkour, "finish-firework"))
+            FireworkBurst.effect(section(parkour, "finish-firework")),
+            sounds(parkour.getConfigurationSection("sounds"))
         );
+    }
+
+    public Optional<SoundCue> sound(ParkourSound moment) {
+        return Optional.ofNullable(sounds.get(moment));
+    }
+
+    private static Map<ParkourSound, SoundCue> sounds(ConfigurationSection section) {
+        Map<ParkourSound, SoundCue> sounds = new EnumMap<>(ParkourSound.class);
+        if (section != null) {
+            for (ParkourSound moment : ParkourSound.values()) {
+                SoundCue.from(section.getConfigurationSection(moment.name().toLowerCase(Locale.ROOT))).ifPresent(cue -> sounds.put(moment, cue));
+            }
+        }
+        return sounds;
     }
 
     public List<DisplayLabel> labelsFor(ParkourPoint point) {

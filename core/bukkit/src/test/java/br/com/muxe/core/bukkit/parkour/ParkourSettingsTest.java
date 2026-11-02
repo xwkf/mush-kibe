@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import br.com.muxe.core.bukkit.display.DisplayLabel;
 import br.com.muxe.core.bukkit.effect.FireworkBurst;
+import br.com.muxe.core.bukkit.effect.SoundCue;
 import br.com.muxe.core.bukkit.hotbar.HotbarItem;
 import br.com.muxe.core.bukkit.item.ItemBuilder;
 import br.com.muxe.core.bukkit.shop.ShopFixtures;
@@ -13,6 +14,7 @@ import java.util.EnumMap;
 import java.util.Map;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.inventory.ItemStack;
 import org.junit.jupiter.api.Test;
 
@@ -28,6 +30,13 @@ class ParkourSettingsTest {
         assertThat(settings.items().get(ParkourItem.CHECKPOINT).item().material()).isEqualTo(Material.GOLD_PLATE);
         assertThat(settings.items().get(ParkourItem.STOP).slot()).isEqualTo(5);
         assertThat(settings.items().get(ParkourItem.STOP).item().material()).isEqualTo(Material.REDSTONE);
+    }
+
+    @Test
+    void startRestartAndCheckpointsPlayTheReferencePling() {
+        for (ParkourSound moment : ParkourSound.values()) {
+            assertThat(settings.sound(moment)).contains(new SoundCue(Sound.NOTE_PLING, 1f, 1f));
+        }
     }
 
     @Test
@@ -68,7 +77,7 @@ class ParkourSettingsTest {
         items.put(ParkourItem.CHECKPOINT, new HotbarItem(3, ItemBuilder.of(Material.GOLD_PLATE)));
         items.put(ParkourItem.STOP, new HotbarItem(5, ItemBuilder.of(Material.REDSTONE)));
 
-        assertThatThrownBy(() -> new ParkourSettings(items, settings.labels(), "...", settings.finishFirework()))
+        assertThatThrownBy(() -> new ParkourSettings(items, settings.labels(), "...", settings.finishFirework(), settings.sounds()))
             .isInstanceOf(IllegalArgumentException.class);
     }
 }
