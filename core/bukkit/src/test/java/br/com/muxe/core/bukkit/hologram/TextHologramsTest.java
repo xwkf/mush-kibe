@@ -29,6 +29,16 @@ class TextHologramsTest {
     }
 
     @Test
+    void eachLineCanHaveItsOwnGapAndMissingGapsUseTheSpacing() {
+        List<Double> gaps = List.of(0.28125, 0.375);
+
+        List<HologramPixel> labels = holograms.layout(new Location(null, 0, 80, 0), List.of("top", "title", "first", "second"), gaps);
+
+        assertThat(labels).extracting(label -> label.location().getY()).containsExactly(80.0, 79.71875, 79.34375, 79.34375 - 0.3);
+        assertThat(holograms.depth(gaps, 3)).isCloseTo(0.95625, within(1e-9));
+    }
+
+    @Test
     void theHeightCoversEveryLine() {
         assertThat(holograms.height(3)).isCloseTo(0.6, within(1e-9));
         assertThat(holograms.height(0)).isZero();

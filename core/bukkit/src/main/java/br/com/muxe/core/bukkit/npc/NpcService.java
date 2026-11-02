@@ -37,7 +37,7 @@ public final class NpcService implements Listener {
     private final Plugin plugin;
     private final PacketNpcTransport transport;
     private final HologramTransport holograms;
-    private final NpcLabelLayout layout;
+    private final Function<Npc, NpcLabelLayout> layouts;
     private final Function<Npc, List<String>> lines;
     private final Map<String, Placed> npcs = new ConcurrentHashMap<>();
     private final Map<UUID, Map<String, Seen>> viewers = new ConcurrentHashMap<>();
@@ -46,11 +46,11 @@ public final class NpcService implements Listener {
     };
     private volatile BiPredicate<Player, Npc> visibility = (player, npc) -> true;
 
-    private NpcService(Plugin plugin, PacketNpcTransport transport, HologramTransport holograms, NpcLabelLayout layout, Function<Npc, List<String>> lines) {
+    private NpcService(Plugin plugin, PacketNpcTransport transport, HologramTransport holograms, Function<Npc, NpcLabelLayout> layouts, Function<Npc, List<String>> lines) {
         this.plugin = plugin;
         this.transport = transport;
         this.holograms = holograms;
-        this.layout = layout;
+        this.layouts = layouts;
         this.lines = lines;
         this.interceptor = PacketInterceptor.start(plugin, this::onUse);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
@@ -62,7 +62,11 @@ public final class NpcService implements Listener {
     }
 
     public static NpcService start(Plugin plugin, NpcLabelLayout layout, Function<Npc, List<String>> lines) {
-        return new NpcService(plugin, PacketNpcTransport.instance(), PacketHologramTransport.instance(), layout, lines);
+        return start(plugin, npc -> layout, lines);
+    }
+
+    public static NpcService start(Plugin plugin, Function<Npc, NpcLabelLayout> layouts, Function<Npc, List<String>> lines) {
+        return new NpcService(plugin, PacketNpcTransport.instance(), PacketHologramTransport.instance(), layouts, lines);
     }
 
     public void onClick(BiConsumer<Player, Npc> handler) {
@@ -137,7 +141,7 @@ public final class NpcService implements Listener {
         placed.body().show(viewer);
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> placed.body().leaveTabList(viewer), TAB_LIST_DELAY_TICKS);
         List<String> text = currentLines(placed.npc());
-        List<HologramPixel> pixels = layout.pixels(placed.npc().location(), text);
+        List<HologramPixel> pixels = layouts.apply(placed.npc()).pixels(placed.npc().location(), text);
         return new Seen(text, pixels, showHologram(viewer, pixels));
     }
 
@@ -153,7 +157,7 @@ public final class NpcService implements Listener {
         if (text.equals(view.lines())) {
             return;
         }
-        List<HologramPixel> pixels = layout.pixels(placed.npc().location(), text);
+        List<HologramPixel> pixels = layouts.apply(placed.npc()).pixels(placed.npc().location(), text);
         Map<String, Seen> seen = viewers.get(viewer.getUniqueId());
         if (NpcLabels.sameSpots(view.pixels(), pixels) && view.hologram().rename(pixels.stream().map(HologramPixel::name).toList())) {
             seen.put(placed.npc().id(), new Seen(text, pixels, view.hologram()));
