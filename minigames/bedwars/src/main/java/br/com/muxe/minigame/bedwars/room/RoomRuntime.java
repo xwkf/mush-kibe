@@ -17,11 +17,13 @@ import br.com.muxe.minigame.bedwars.game.ForgeHeights;
 import br.com.muxe.minigame.bedwars.game.ForgeLayout;
 import br.com.muxe.minigame.bedwars.game.Ranking;
 import br.com.muxe.minigame.bedwars.game.Timeline.Event;
+import br.com.muxe.minigame.bedwars.level.LevelBar;
 import br.com.muxe.minigame.bedwars.mission.MissionRules;
 import br.com.muxe.minigame.bedwars.room.RoomPlayer.State;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
 import br.com.muxe.minigame.bedwars.settings.MatchSounds;
 import br.com.muxe.minigame.bedwars.stats.application.command.RecordMatchCommand;
+import br.com.muxe.minigame.bedwars.stats.application.query.FindPlayerStatsQuery;
 import br.com.muxe.minigame.bedwars.stats.domain.MatchOutcome;
 import br.com.muxe.minigame.engine.match.HealthDisplay;
 import br.com.muxe.minigame.engine.match.StartCountdown.Change;
@@ -93,6 +95,7 @@ public final class RoomRuntime {
     private final List<String> npcs = new ArrayList<>();
     private final Set<TeamColor> announcedEliminations = new HashSet<>();
     private final Map<UUID, Inventory> enderChests = new HashMap<>();
+    private final Map<UUID, Long> storedXp = new HashMap<>();
     private int seconds;
 
     RoomRuntime(RoomService service, Room room, World world) {
@@ -145,6 +148,7 @@ public final class RoomRuntime {
         inventory.setItem(settings.hotbar().menu().slot(), named(Material.matchMaterial(settings.hotbar().menu().material()), settings.hotbar().menu().name()));
         inventory.setItem(settings.hotbar().leave().slot(), named(Material.matchMaterial(settings.hotbar().leave().material()), settings.hotbar().leave().name()));
         sidebars.put(player.getUniqueId(), Sidebar.create(player));
+        loadLevel(player);
         countdownChanged(change);
         refreshScoreboards();
     }
@@ -164,6 +168,7 @@ public final class RoomRuntime {
 
     void second() {
         seconds++;
+        room.players().forEach(player -> showLevel(player.id()));
         switch (room.phase()) {
             case WAITING -> refreshScoreboards();
             case STARTING -> {
@@ -203,6 +208,27 @@ public final class RoomRuntime {
                 service.healthDisplay().show(sidebar.scoreboard(), alive);
             }
         }
+    }
+
+    private void loadLevel(Player player) {
+        UUID id = player.getUniqueId();
+        core.queries().ask(new FindPlayerStatsQuery(id)).whenComplete((stats, error) -> core.mainThread().execute(() -> {
+            if (error != null) {
+                service.plugin().getLogger().log(Level.WARNING, "Could not load the BedWars level of " + id, error);
+                return;
+            }
+            storedXp.put(id, Math.max(0, stats.general().xp()));
+            showLevel(id);
+        }));
+    }
+
+    private void showLevel(UUID id) {
+        Long stored = storedXp.get(id);
+        Player player = Bukkit.getPlayer(id);
+        if (stored == null || player == null || !player.getWorld().equals(world)) {
+            return;
+        }
+        LevelBar.show(player, stored + room.player(id).map(RoomPlayer::xp).orElse(0L));
     }
 
     void forgeCycle() {
@@ -410,6 +436,7 @@ public final class RoomRuntime {
         reset(player, GameMode.SPECTATOR);
         player.teleport(location(room.arena().spectator()));
         sidebars.put(player.getUniqueId(), Sidebar.create(player));
+        loadLevel(player);
         core.nameTags().refresh(player);
         broadcast(messages.get("reconnected", "player", coloredName(roomPlayer)));
         refreshScoreboards();

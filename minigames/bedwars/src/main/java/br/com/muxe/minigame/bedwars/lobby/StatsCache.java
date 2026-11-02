@@ -1,6 +1,7 @@
 package br.com.muxe.minigame.bedwars.lobby;
 
 import br.com.muxe.core.bukkit.api.MuxeCore;
+import br.com.muxe.minigame.bedwars.level.LevelBar;
 import br.com.muxe.minigame.bedwars.stats.application.query.FindPlayerStatsQuery;
 import br.com.muxe.minigame.bedwars.stats.domain.PlayerStats;
 import java.util.Map;
@@ -44,6 +45,12 @@ public final class StatsCache implements Listener {
                 plugin.getLogger().log(Level.WARNING, "Could not load the BedWars stats of " + playerId, error);
             } else if (plugin.getServer().getPlayer(playerId) != null) {
                 stats.put(playerId, loaded);
+                core.mainThread().execute(() -> {
+                    Player player = plugin.getServer().getPlayer(playerId);
+                    if (player != null) {
+                        LevelBar.show(player, loaded.general().xp());
+                    }
+                });
             }
         });
     }

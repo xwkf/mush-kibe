@@ -30,6 +30,15 @@ public final class Levels {
 
     public record Progress(int level, long xp, long needed) {
 
+        public static final float FULLEST_BAR = 0.99f;
+
+        public float fill() {
+            if (needed <= 0) {
+                return 0f;
+            }
+            return Math.min(FULLEST_BAR, Math.max(0f, (float) xp / needed));
+        }
+
         public String compactNeeded() {
             return needed % 1000 == 0 ? needed / 1000 + "k" : String.valueOf(needed);
         }
