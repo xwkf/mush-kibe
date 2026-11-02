@@ -109,9 +109,8 @@ Uma parcela crescente de `undecided` ou `unknown` indica que a Mojang está inac
 
 | Métrica | Tipo | O que mostra |
 |---|---|---|
-| `muxe_matches_active{game}` | gauge | Partidas abertas no momento. |
-| `muxe_arenas_available{game}` | gauge | Instâncias de arena prontas para uso. |
-| `muxe_arenas_disabled{game}` | gauge | Instâncias de arena desativadas após resets que falharam. Acima de zero precisa da equipe. |
+| `muxe_matches_active{game}` | gauge | Partidas em andamento (BedWars: salas jogando ou terminando). |
+| `muxe_arenas_available{game}` | gauge | Arenas prontas que o servidor pode jogar. Zero num servidor de jogo significa que ninguém consegue jogar. |
 
 ## JVM
 

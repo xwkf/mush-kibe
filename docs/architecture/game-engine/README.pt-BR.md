@@ -12,49 +12,11 @@ Código: `minigames/engine/src/main/java/br/com/muxe/minigame/engine`.
 |---|---|---|
 | Modo de jogo | `GameMode` | As regras de uma variante de um jogo, como BedWars solo: id, nome de exibição, mínimo e máximo de jogadores e jogadores por time (`team-size`, `1` por padrão). Carregado do `config.yml` do jogo pelo `GameModeLoader`. |
 | Contagem para iniciar | `StartCountdown` | A contagem antes de uma partida, igual em todos os jogos e modos. Veja abaixo. |
-| Instância de arena | `ArenaInstance` | Uma cópia jogável de um modelo de mapa, usada por uma partida de cada vez. |
-| Pool de arenas | `ArenaPool` | As instâncias de um servidor e quais estão disponíveis. |
-| Partida | `Match` | Um jogo em andamento: seu modo, arena, participantes e estado. |
-| Serviço de partidas | `MatchService` | Cria partidas, adiciona e remove jogadores e move as partidas pelo ciclo de vida. |
-| Escopo de tarefas | `MatchTaskScope` | Tarefas do Bukkit que pertencem a uma partida e são todas canceladas quando ela fecha. |
-| Motor | `MinigameEngine` | Guarda os modos, partidas e arenas de um jogo e registra suas métricas. |
+| Motor | `MinigameEngine` | Guarda os modos de um jogo e registra as métricas dele, que leem o que o jogo informa pelo `track(activeMatches, readyArenas)`. |
 
 ## Ciclo de vida da partida
 
-```text
-WAITING → STARTING → RUNNING → ENDING → CLOSED
-   ↑          │
-   └──────────┘   (jogadores saíram durante a contagem)
-
-WAITING, STARTING, RUNNING, ENDING → CANCELLED → CLOSED
-```
-
-| Estado | O que acontece |
-|---|---|
-| `WAITING` | Aceita jogadores. Atingir o mínimo do modo leva a `STARTING`. |
-| `STARTING` | Contagem regressiva. Ainda aceita jogadores até lotar. Cair abaixo do mínimo volta para `WAITING`. |
-| `RUNNING` | O jogo está sendo jogado. Nenhum jogador novo entra. |
-| `ENDING` | O vencedor é decidido, os resultados são salvos, os jogadores veem o resultado. |
-| `CANCELLED` | Interrompida por uma falha ou um desligamento. |
-| `CLOSED` | Os jogadores são liberados, as tarefas canceladas, a arena liberada. A partida é esquecida. |
-
-- Os estados só mudam pelas transições acima; qualquer outra lança `IllegalTransitionException`.
-- **Uma partida por jogador.** `MatchService.join` recusa um jogador que já está em uma partida (`match.already_in_match`). Outras recusas: `match.not_found`, `match.not_joinable`, `match.full`.
-- O `MatchService` é usado só a partir da thread principal.
-
-## Ciclo de vida da arena
-
-```text
-AVAILABLE → RESERVED → IN_USE → RESETTING → AVAILABLE
-                                    │
-                                    └─→ DISABLED → (enable) → RESETTING
-```
-
-- Uma partida reserva uma instância disponível quando é criada e a libera quando fecha.
-- Depois de uma partida, a instância é resetada a partir do seu modelo antes de ser usada de novo.
-- Um reset que falha é tentado de novo com um atraso crescente (`nextRetryDelay`: o atraso base dobra a cada falha consecutiva, limitado a 5 minutos).
-- A instância é **desativada** quando a falha é permanente (um erro de configuração ou um modelo corrompido) ou depois de `maxFailures` falhas consecutivas (5 por padrão). Ela fica fora de uso até a equipe corrigir e reativá-la.
-- Um reset bem-sucedido zera a contagem de falhas.
+Cada jogo cuida do ciclo de vida das suas partidas, porque os jogos são diferentes demais para dividir um só. O motor dá as peças que todo jogo precisa (modos, a contagem para iniciar, o setup e o armazenamento das arenas, as células das partidas, a divisão dos times, os códigos de sala) e fica fora do resto. O BedWars roda as partidas como salas (`WAITING → STARTING → PLAYING → ENDING`); veja [BedWars](../../features/bedwars/README.pt-BR.md#partidas).
 
 ## Contagem para iniciar
 
@@ -125,7 +87,7 @@ Peças que um jogo usa para rodar as suas salas:
 | `PartyGroups` | O gancho do sistema de parties. `PartyGroups.NONE` até as parties existirem. |
 | `CountdownTitles` | Os títulos da contagem para iniciar, por segundo, lidos de `countdown.titles`. |
 | `MatchWorld` | O mundo das partidas de um jogo: um mundo `muxe_<jogo>` com as células, mais uma tarefa que descarrega a cada 5 segundos os chunks que ninguém está vendo (64 no máximo), guardando o que as partidas mudaram. |
-| `ArenaCatalog` | As arenas que um servidor pode jogar: cada `arenas/<nome>.yml` marcada como pronta, com o seu `maps/<nome>.mxw`, que cabe numa célula. `reload(nome)` traz uma arena salva no setup. |
+| `ArenaCatalog` | As arenas que um servidor pode jogar: toda arena do seu `ArenaStore` marcada como pronta, com um mapa que cabe numa célula. `reload(name)` pega uma arena salva no setup. |
 
 ## Mundos e mapas
 
@@ -137,7 +99,7 @@ As partidas nunca usam pastas de mundo. Veja a [ADR 0009](../../decisions/0009-o
 | `MapFiles` | `world.map` | Lê e grava arquivos `.mxw`. |
 | `AnvilImporter` | `world.anvil` | Transforma uma pasta de mundo (`region/*.mca`) num `MapTemplate`, sem servidor. As entidades ficam de fora. |
 | `EditableMap` | `world.map` | Um mapa em edição no setup. Recebe cada chunk salvo, e o `snapshot()` devolve o mapa a gravar. |
-| `MatchCells` | `world.cell` | Divide o mundo das partidas em células e serve a cada partida o mapa dela em volta do centro da célula. Os chunks que a partida altera ficam guardados até o `release`. |
+| `MatchCells` | `world.cell` | Divide o mundo das partidas em células e serve a cada partida o mapa dela em volta do centro da célula. Os chunks que a partida altera ficam guardados até o `release`: o servidor entrega uma cópia, que já é servida como está e é comprimida (nível rápido) numa thread de fundo, então descarregar chunks nunca comprime na thread principal. |
 | `Cell` | `world.cell` | A célula de uma partida. Converte coordenadas do mapa para o mundo e de volta. |
 | `BlockBox`, `RegionEraser` | `world.cell`, `world.server` | Esvazia uma caixa de blocos de uma vez: zera os arrays de blocos das seções de chunk que ela cobre, tira as tile entities de dentro, recalcula a luz de cada chunk uma vez e reenvia cada chunk alterado como um pacote só aos jogadores que o veem. Usado para remover as áreas de espera. |
 | `MuxeWorlds` | `world.server` | Cria um mundo vazio chamado `muxe_<nome>` cujos chunks vêm de uma `ChunkSource`. Também limpa uma célula, destrói um mundo e apaga pastas `muxe_` que sobraram. |
@@ -153,18 +115,19 @@ As partidas nunca usam pastas de mundo. Veja a [ADR 0009](../../decisions/0009-o
 
 - Todo evento envolvendo um jogador, entidade, bloco ou mundo precisa ser roteado para a partida dona dele; interações entre partidas são canceladas.
 - Chat, tab list e visibilidade ficam restritos à partida.
-- Toda tarefa agendada passa pelo `MatchTaskScope` da partida, então nada continua rodando depois que uma partida fecha.
+- O jogo cancela o trabalho agendado de uma partida quando ela fecha; as salas do BedWars rodam pelas tarefas compartilhadas do serviço de salas, então nada sobrevive a uma sala.
+- Eventos assíncronos, como o chat, leem retratos imutáveis montados na thread principal, nunca o estado vivo da partida.
 - Um erro na lógica de uma partida cancela só aquela partida.
 
 Todas as partidas de um servidor compartilham o mesmo processo e a mesma thread principal, então problemas fatais (falta de memória, laço infinito, chamada bloqueante) afetam todas as partidas dele. Por isso cada jogo roda em seus próprios servidores. Veja [Rede](../network/README.pt-BR.md).
 
 ## Resultados
 
-O fim de uma partida será salvo em **uma única transação do PostgreSQL** que registra o resultado com o id único da partida, concede as recompensas críticas e marca a partida como finalizada. Salvar o mesmo id de partida duas vezes não tem efeito, e as recompensas só são mostradas depois do commit. Isso faz parte do trabalho de gameplay que ainda não foi implementado.
+Um jogo salva o fim de uma partida em **uma única transação do PostgreSQL** que primeiro reivindica o id único da partida: salvar o mesmo id duas vezes não tem efeito. O BedWars dá a cada partida um id aleatório quando ela começa e guarda os ids reivindicados em `bedwars.recorded_matches`.
 
 ## Métricas
 
-`muxe_matches_active{game}`, `muxe_arenas_available{game}` e `muxe_arenas_disabled{game}`. Veja [Observabilidade](../observability/README.pt-BR.md#minigames).
+`muxe_matches_active{game}` e `muxe_arenas_available{game}`, lidas do que o jogo informa com o `MinigameEngine.track`. Veja [Observabilidade](../observability/README.pt-BR.md#minigames).
 
 ## Estado atual
 

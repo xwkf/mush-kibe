@@ -109,9 +109,8 @@ A growing share of `undecided` or `unknown` means Mojang is unreachable or rate-
 
 | Metric | Type | What it shows |
 |---|---|---|
-| `muxe_matches_active{game}` | gauge | Matches currently open. |
-| `muxe_arenas_available{game}` | gauge | Arena instances ready to be used. |
-| `muxe_arenas_disabled{game}` | gauge | Arena instances disabled after failed resets. Above zero needs staff. |
+| `muxe_matches_active{game}` | gauge | Matches being played (BedWars: rooms playing or ending). |
+| `muxe_arenas_available{game}` | gauge | Ready arenas the server can play. Zero on a game server means nobody can play. |
 
 ## JVM
 

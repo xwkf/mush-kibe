@@ -12,49 +12,11 @@ Code: `minigames/engine/src/main/java/br/com/muxe/minigame/engine`.
 |---|---|---|
 | Game mode | `GameMode` | The rules of one variant of a game, such as BedWars solo: id, display name, minimum and maximum players, and players per team (`team-size`, `1` by default). Loaded from the game's `config.yml` by `GameModeLoader`. |
 | Start countdown | `StartCountdown` | The countdown before a match, the same in every game and mode. See below. |
-| Arena instance | `ArenaInstance` | A playable copy of a map template, used by one match at a time. |
-| Arena pool | `ArenaPool` | The instances of a server and which ones are available. |
-| Match | `Match` | One game being played: its mode, arena, participants and state. |
-| Match service | `MatchService` | Creates matches, adds and removes players, and moves matches through their lifecycle. |
-| Task scope | `MatchTaskScope` | Bukkit tasks that belong to one match and are all cancelled when it closes. |
-| Engine | `MinigameEngine` | Holds the modes, matches and arenas of one game and registers their metrics. |
+| Engine | `MinigameEngine` | Holds the modes of one game and registers its metrics, which read what the game reports through `track(activeMatches, readyArenas)`. |
 
 ## Match lifecycle
 
-```text
-WAITING → STARTING → RUNNING → ENDING → CLOSED
-   ↑          │
-   └──────────┘   (players left during the countdown)
-
-WAITING, STARTING, RUNNING, ENDING → CANCELLED → CLOSED
-```
-
-| State | What happens |
-|---|---|
-| `WAITING` | Accepts players. Reaching the mode's minimum moves to `STARTING`. |
-| `STARTING` | Countdown. Still accepts players until full. Dropping below the minimum goes back to `WAITING`. |
-| `RUNNING` | The game is being played. No new players. |
-| `ENDING` | The winner is decided, results are saved, players see the outcome. |
-| `CANCELLED` | Stopped by a failure or a shutdown. |
-| `CLOSED` | Players are released, tasks cancelled, the arena released. The match is forgotten. |
-
-- States only change through the transitions above; anything else throws `IllegalTransitionException`.
-- **One match per player.** `MatchService.join` refuses a player who is already in a match (`match.already_in_match`). Other refusals: `match.not_found`, `match.not_joinable`, `match.full`.
-- `MatchService` is used from the main thread only.
-
-## Arena lifecycle
-
-```text
-AVAILABLE → RESERVED → IN_USE → RESETTING → AVAILABLE
-                                    │
-                                    └─→ DISABLED → (enable) → RESETTING
-```
-
-- A match reserves an available instance when it is created and releases it when it closes.
-- After a match the instance is reset from its template before being used again.
-- A failed reset is retried with an increasing delay (`nextRetryDelay`: the base delay doubled after each consecutive failure, capped at 5 minutes).
-- The instance is **disabled** when the failure is permanent (a configuration error or a corrupted template) or after `maxFailures` consecutive failures (5 by default). It stays out of use until staff fix it and enable it again.
-- A successful reset clears the failure count.
+Each game owns the lifecycle of its matches, because games differ too much to share one. The engine gives the pieces every game needs (modes, the start countdown, arena setup and storage, match cells, team assignment, room codes) and stays out of the rest. BedWars runs its matches as rooms (`WAITING → STARTING → PLAYING → ENDING`); see [BedWars](../../features/bedwars/README.md#matches).
 
 ## Start countdown
 
@@ -125,7 +87,7 @@ Pieces a game uses to run its rooms:
 | `PartyGroups` | The hook for the party system. `PartyGroups.NONE` until parties exist. |
 | `CountdownTitles` | The titles of the start countdown, by second, read from `countdown.titles`. |
 | `MatchWorld` | The match world of a game: one `muxe_<game>` world with its cells, plus a task that unloads chunks nobody is watching every 5 seconds (64 at most), keeping what matches changed. |
-| `ArenaCatalog` | The arenas a server can play: every `arenas/<name>.yml` marked ready, with its `maps/<name>.mxw`, that fits a cell. `reload(name)` picks up an arena saved in the setup. |
+| `ArenaCatalog` | The arenas a server can play: every arena of its `ArenaStore` marked ready, with a map that fits a cell. `reload(name)` picks up an arena saved in the setup. |
 
 ## Worlds and maps
 
@@ -137,7 +99,7 @@ Matches never use world folders. See [ADR 0009](../../decisions/0009-own-map-for
 | `MapFiles` | `world.map` | Reads and writes `.mxw` files. |
 | `AnvilImporter` | `world.anvil` | Turns a world folder (`region/*.mca`) into a `MapTemplate`, with no server. Entities are left out. |
 | `EditableMap` | `world.map` | A map being edited in the setup. It takes every saved chunk, and `snapshot()` gives the map to write. |
-| `MatchCells` | `world.cell` | Splits the match world into cells and serves each match its map around the cell centre. Chunks a match changes are kept until `release`. |
+| `MatchCells` | `world.cell` | Splits the match world into cells and serves each match its map around the cell centre. Chunks a match changes are kept until `release`: the server hands over a copy, which is served as is right away and compressed (fast level) on a background thread, so unloading never compresses on the main thread. |
 | `Cell` | `world.cell` | A match's cell. Converts map coordinates to world coordinates and back. |
 | `BlockBox`, `RegionEraser` | `world.cell`, `world.server` | Empties a box of blocks in one pass: zeroes the block arrays of the chunk sections it covers, removes the tile entities inside, relights each chunk once and resends each changed chunk as one packet to the players watching it. Used to remove waiting areas. |
 | `MuxeWorlds` | `world.server` | Creates a void world named `muxe_<name>` whose chunks come from a `ChunkSource`. It also clears a cell, destroys a world and deletes leftover `muxe_` folders. |
@@ -153,18 +115,19 @@ Matches never use world folders. See [ADR 0009](../../decisions/0009-own-map-for
 
 - Every event involving a player, entity, block or world must be routed to the match that owns it; interactions between matches are cancelled.
 - Chat, tab list and visibility are scoped to the match.
-- Every scheduled task goes through the match's `MatchTaskScope`, so nothing keeps running after a match closes.
+- The game cancels a match's scheduled work when it closes; BedWars rooms run from the room service's shared tasks, so nothing outlives a room.
+- Async events such as chat read immutable snapshots built on the main thread, never the live match state.
 - An error in one match's logic cancels that match only.
 
 All matches of a server share the same process and main thread, so fatal problems (out of memory, infinite loop, blocking call) affect every match on it. That is why each game runs in its own servers. See [Network](../network/README.md).
 
 ## Results
 
-The end of a match will be saved in **one PostgreSQL transaction** that records the result under the match's unique id, grants critical rewards and marks the match as finished. Saving the same match id twice has no effect, and rewards are shown only after commit. This is part of the gameplay work that is not implemented yet.
+A game saves the end of a match in **one PostgreSQL transaction** that first claims the match's unique id: saving the same id twice has no effect. BedWars gives each match a random id when it starts and keeps the claimed ids in `bedwars.recorded_matches`.
 
 ## Metrics
 
-`muxe_matches_active{game}`, `muxe_arenas_available{game}` and `muxe_arenas_disabled{game}`. See [Observability](../observability/README.md#minigames).
+`muxe_matches_active{game}` and `muxe_arenas_available{game}`, read from what the game reports with `MinigameEngine.track`. See [Observability](../observability/README.md#minigames).
 
 ## Status
 
