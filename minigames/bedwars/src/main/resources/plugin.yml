@@ -15,6 +15,9 @@ permissions:
   muxe.cosmetics.admin:
     description: Allows /cosmeticos dar to grant BedWars cosmetics.
     default: op
+  muxe.bedwars.map-select:
+    description: Lets the player choose the map of a BedWars match.
+    default: op
   muxe.cosmetic.all:
     description: Owns every BedWars cosmetic.
     default: op

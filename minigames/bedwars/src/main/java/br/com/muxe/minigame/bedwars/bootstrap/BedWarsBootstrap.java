@@ -7,11 +7,13 @@ import br.com.muxe.core.common.server.ServerKind;
 import br.com.muxe.minigame.bedwars.arena.BedWarsSchema;
 import br.com.muxe.minigame.bedwars.command.BedWarsCommand;
 import br.com.muxe.minigame.bedwars.listener.MatchListener;
+import br.com.muxe.minigame.bedwars.network.RoomPublisher;
 import br.com.muxe.minigame.bedwars.room.RoomService;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
 import br.com.muxe.minigame.bedwars.shop.ShopCatalog;
 import br.com.muxe.minigame.bedwars.shop.ShopService;
 import br.com.muxe.minigame.bedwars.shop.UpgradeCatalog;
+import br.com.muxe.minigame.bedwars.stats.StatsModule;
 import br.com.muxe.minigame.engine.MinigameEngine;
 import br.com.muxe.minigame.engine.arena.ArenaCatalog;
 import br.com.muxe.minigame.engine.mode.GameMode;
@@ -24,6 +26,7 @@ import br.com.muxe.minigame.engine.world.server.MatchWorld;
 import br.com.muxe.minigame.engine.world.server.MuxeWorlds;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -34,11 +37,14 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class BedWarsBootstrap {
 
     public static final String GAME = "bedwars";
+    public static final ZoneId STATS_ZONE = ZoneId.of("America/Sao_Paulo");
 
     private final JavaPlugin plugin;
     private SetupService setup;
     private RoomService rooms;
     private CosmeticFeatures cosmetics;
+    private LobbyFeatures lobbyFeatures;
+    private RoomPublisher publisher;
 
     public BedWarsBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -56,8 +62,11 @@ public final class BedWarsBootstrap {
         MinigameEngine engine = new MinigameEngine(GAME, modes, core.metrics());
         Commands commands = Commands.of(plugin, messages);
         boolean lobby = core.identity().kind() == ServerKind.LOBBY;
+        plugin.getLogger().info("Schema '" + GAME + "' at version " + core.migrations().migrate(GAME, plugin.getClass().getClassLoader()).schemaVersion());
+        StatsModule.register(core.commands(), core.queries(), core.transactions(), core.clock(), STATS_ZONE);
         cosmetics = CosmeticFeatures.start(plugin, core, config, messages, commands, lobby);
         if (lobby) {
+            lobbyFeatures = LobbyFeatures.start(plugin, core, config, messages, schema);
             plugin.getLogger().info("BedWars ready in lobby mode");
             return engine;
         }
@@ -82,6 +91,8 @@ public final class BedWarsBootstrap {
             messages
         );
         rooms.onNpcClick((player, click) -> shop.open(player, click.runtime(), click.upgrades()));
+        publisher = new RoomPublisher(plugin, core, rooms, settings.lobbyGroup());
+        publisher.start();
         plugin.getServer().getPluginManager().registerEvents(new MatchListener(plugin, core, rooms, settings, messages, cosmetics::openMenu), plugin);
 
         setup = new SetupService(plugin, schema, messages, worlds, data);
@@ -95,6 +106,12 @@ public final class BedWarsBootstrap {
     }
 
     public void disable() {
+        if (lobbyFeatures != null) {
+            lobbyFeatures.stop();
+        }
+        if (publisher != null) {
+            publisher.stop();
+        }
         if (cosmetics != null) {
             cosmetics.stop();
         }

@@ -71,7 +71,7 @@ modes:
       - azul
       - vermelho
 
-lobby-group: lobby
+lobby-group: bedwars-lobby
 default-mode: solo
 
 timings:
@@ -152,6 +152,37 @@ events:
     beds-destroyed: "Camas destruídas"
     dragons: "Morte súbita"
     game-end: "Fim de jogo"
+
+levels:
+  badges:
+    "0": "&7[{level}&l✫&7]"
+    "10": "&a[{level}&l✶&a]"
+    "20": "&b[{level}&l✽&b]"
+    "30": "&d[{level}&l✿&d]"
+    "40": "&e[{level}&l✸&e]"
+    "50": "&6[{level}&l✹&6]"
+    "60": "&5[{level}&l✣&5]"
+    "70": "&2[{level}&l✦&2]"
+    "80": "&9[{level}&l✵&9]"
+    "90": "&c[{level}&l❊&c]"
+    "100": "&4[{level}&l❤&4]"
+    "200": "&e[&6{level}✪&e]"
+    "300": "&b[&3{level}❂&b]"
+    "400": "&d[&5{level}❁&d]"
+    "500": "&7[&f{level}❋&7]"
+    "600": "&1[&9{level}✟&1]"
+    "700": "&2[&a{level}&l۞&2]"
+    "800": "&6[&e{level}&l✌&6]"
+    "900": "&4[&c{level}&l⚝&4]"
+  rainbow:
+    from: 1000
+    open: "&c["
+    digits:
+      - "&6"
+      - "&e"
+      - "&a"
+      - "&b"
+    close: "&dΩ&5]"
 
 xp-rewards:
   per-minute: 10
@@ -250,6 +281,12 @@ holograms:
     - "&fGera em &c{seconds} &fsegundos."
 
 messages:
+  room-sending: "&aEnviando para {room}..."
+  room-unavailable: "&cNenhuma sala de &f{mode} &cdisponível no momento."
+  map-vip-only: "&cExclusivo para &aVIPs&c."
+  map-no-favourites: "&cVocê ainda não tem mapas favoritos."
+  map-search: "&eDigite no chat o nome do mapa. Para cancelar, digite &ccancelar&e."
+  map-search-none: "&cNenhum mapa com &f{search}&c."
   no-arena: "&cNenhuma arena de Bed Wars {mode} está pronta neste servidor."
   sending-to-room: "&aEnviando para {code}..."
   bought: "&eVocê comprou &a{item}&e."
@@ -1575,3 +1612,569 @@ lobby:
     item:
       material: EMERALD
       name: "&aMenu do Bed Wars"
+  menus:
+    mode:
+      title: "Bed Wars {mode}"
+      rows: 3
+      play:
+        slot: 11
+        item:
+          material: EYE_OF_ENDER
+          name: "&aBed Wars ({mode})"
+          lore:
+            - "&7{players} jogando agora!"
+            - " "
+            - "&6&lTOP WINSTREAK DIÁRIO:"
+            - "{top}"
+            - " "
+            - "&eClique para jogar."
+      top-lines:
+        - "&a 1º &7{name}: &e{value}"
+        - "&e 2º &7{name}: &e{value}"
+        - "&c 3º &7{name}: &e{value}"
+      top-empty: "&7 Ninguém ainda."
+      map:
+        slot: 15
+        item:
+          material: PAPER
+          name: "&aSelecionar mapa"
+          lore:
+            - "&7Escolha o mapa que você"
+            - "&7quer jogar."
+            - " "
+            - "&cExclusivo para &aVIPs"
+      training:
+        slot: 26
+        item:
+          material: EXP_BOTTLE
+          name: "&aTreino: Ponte"
+          glow: true
+          lore:
+            - " "
+            - "&eClique para ver mais."
+      back:
+        slot: 21
+        item:
+          material: ARROW
+          name: "&aVoltar"
+          lore:
+            - "&7Para Bed Wars 1v1/2v2/3v3/4v4/4S"
+      back-modes:
+        - "1v1"
+        - "2v2"
+        - "3v3"
+        - "4v4"
+        - "4s"
+    duels:
+      title: "Bed Wars 1v1/2v2/3v3/4v4/4S"
+      rows: 3
+      item:
+        material: BED
+        name: "&a{mode}"
+        lore:
+          - "&7{players} jogando agora!"
+      entries:
+        "1v1":
+          slot: 9
+          amount: 1
+        "2v2":
+          slot: 11
+          amount: 2
+        "3v3":
+          slot: 13
+          amount: 3
+        "4v4":
+          slot: 15
+          amount: 4
+        "4s":
+          slot: 17
+          amount: 4
+    maps:
+      title: "Bed Wars {mode} ({page}/{pages})"
+      rows: 6
+      slots:
+        - 10
+        - 11
+        - 12
+        - 13
+        - 14
+        - 15
+        - 16
+        - 19
+        - 20
+        - 21
+        - 22
+        - 23
+        - 24
+        - 25
+        - 28
+        - 29
+        - 30
+        - 31
+        - 32
+        - 33
+        - 34
+      favourite:
+        material: MAP
+        name: "&6✰ &b{map}"
+        glow: true
+        lore:
+          - " "
+          - "&7Salas:"
+          - " &7Disponíveis: &e{available}"
+          - " &7Total: &e{total}"
+          - " "
+          - "&bClique com o direito"
+          - "&bpara remover dos favoritos."
+          - " "
+          - "&eClique para solicitar uma sala!"
+      other:
+        material: EMPTY_MAP
+        name: "&a{map}"
+        lore:
+          - " "
+          - "&7Salas:"
+          - " &7Disponíveis: &e{available}"
+          - " &7Total: &e{total}"
+          - " "
+          - "&bClique com o direito"
+          - "&bpara adicionar aos favoritos."
+          - " "
+          - "&eClique para solicitar uma sala!"
+      back:
+        slot: 48
+        item:
+          material: ARROW
+          name: "&aVoltar"
+          lore:
+            - "&7Para Bed Wars {mode}"
+      random:
+        slot: 49
+        item:
+          material: NAME_TAG
+          name: "&aMapa favorito aleatório"
+          lore:
+            - "&7Entre um mapa aleatório"
+            - "&7de seus favoritos."
+            - " "
+            - "&eClique para entrar!"
+      search:
+        slot: 53
+        item:
+          material: HOPPER
+          name: "&aPesquisar"
+          lore:
+            - "&7Filtre os mapas por"
+            - "&7nome."
+            - " "
+            - "&eClique para ver mais."
+      previous:
+        slot: 45
+        item:
+          material: ARROW
+          name: "&aPágina anterior"
+      next:
+        slot: 50
+        item:
+          material: ARROW
+          name: "&aPróxima página"
+    top-modes:
+      title: "Selecionar modo"
+      rows: 4
+      selected-lore:
+        - " "
+        - "&aSelecionado."
+      other-lore:
+        - " "
+        - "&eClique para selecionar."
+      entries:
+        "geral":
+          slot: 10
+          title: "GERAL"
+          item:
+            material: PAPER
+            name: "&aGeral"
+        "solo":
+          slot: 11
+          title: "SOLO"
+          item:
+            material: BED
+            name: "&aSolo"
+        "duplas":
+          slot: 12
+          title: "DUPLAS"
+          item:
+            material: BED
+            amount: 2
+            name: "&aDuplas"
+        "trios":
+          slot: 13
+          title: "TRIOS"
+          item:
+            material: BED
+            amount: 3
+            name: "&aTrios"
+        "quartetos":
+          slot: 14
+          title: "QUARTETOS"
+          item:
+            material: BED
+            amount: 4
+            name: "&aQuartetos"
+        "1v1":
+          slot: 15
+          title: "1V1"
+          item:
+            material: BED
+            name: "&a1v1"
+        "2v2":
+          slot: 16
+          title: "2V2"
+          item:
+            material: BED
+            amount: 2
+            name: "&a2v2"
+        "3v3":
+          slot: 19
+          title: "3V3"
+          item:
+            material: BED
+            amount: 3
+            name: "&a3v3"
+        "4v4":
+          slot: 20
+          title: "4V4"
+          item:
+            material: BED
+            amount: 4
+            name: "&a4v4"
+        "4s":
+          slot: 21
+          title: "4S"
+          item:
+            material: BED
+            amount: 4
+            name: "&a4s"
+        "mega":
+          slot: 22
+          title: "MEGA"
+          item:
+            material: BED
+            amount: 10
+            name: "&aMega"
+        "pilares":
+          slot: 23
+          title: "PILARES"
+          item:
+            material: BEDROCK
+            name: "&aPilares"
+    stats:
+      title: "Suas estatísticas (Bed Wars)"
+      rows: 6
+      general:
+        slot: 4
+        item:
+          material: PAPER
+          name: "&aGeral"
+          lore:
+            - "&7Nível: {level}"
+            - "&7XP: &a{xp}"
+            - " "
+            - "&7Partidas: &a{games}"
+            - " "
+            - "&7Camas quebradas: &a{beds-broken}"
+            - "&7Camas perdidas: &a{beds-lost}"
+            - " "
+            - "&7Kills: &a{kills}"
+            - "&7Mortes: &a{deaths}"
+            - "&7Assistências: &a{assists}"
+            - "&7Kills finais: &a{final-kills}"
+            - "&7Mortes finais: &a{final-deaths}"
+            - "&7Assistências finais: &a{final-assists}"
+            - " "
+            - "&7Vitórias: &a{wins}"
+            - "&7Derrotas: &a{losses}"
+            - " "
+            - "&7Winstreak: &a{winstreak}"
+            - "&7Maior Winstreak: &a{best-winstreak}"
+      lore:
+        - "&7Partidas: &a{games}"
+        - " "
+        - "&7Camas quebradas: &a{beds-broken}"
+        - "&7Camas perdidas: &a{beds-lost}"
+        - " "
+        - "&7Kills: &a{kills}"
+        - "&7Mortes: &a{deaths}"
+        - "&7Assistências: &a{assists}"
+        - "&7Kills finais: &a{final-kills}"
+        - "&7Mortes finais: &a{final-deaths}"
+        - "&7Assistências finais: &a{final-assists}"
+        - " "
+        - "&7Vitórias: &a{wins}"
+        - "&7Derrotas: &a{losses}"
+        - " "
+        - "&7Winstreak: &a{winstreak}"
+        - "&7Maior Winstreak: &a{best-winstreak}"
+      entries:
+        "solo":
+          slot: 10
+          item:
+            material: BED
+            name: "&aSolo"
+        "duplas":
+          slot: 12
+          item:
+            material: BED
+            amount: 2
+            name: "&aDuplas"
+        "trios":
+          slot: 14
+          item:
+            material: BED
+            amount: 3
+            name: "&aTrios"
+        "quartetos":
+          slot: 16
+          item:
+            material: BED
+            amount: 4
+            name: "&aQuartetos"
+        "1v1":
+          slot: 28
+          item:
+            material: BED
+            name: "&a1v1"
+        "2v2":
+          slot: 30
+          item:
+            material: BED
+            amount: 2
+            name: "&a2v2"
+        "3v3":
+          slot: 32
+          item:
+            material: BED
+            amount: 3
+            name: "&a3v3"
+        "4v4":
+          slot: 34
+          item:
+            material: BED
+            amount: 4
+            name: "&a4v4"
+        "mega":
+          slot: 40
+          item:
+            material: BED
+            amount: 64
+            name: "&aMega"
+  npcs:
+    solo:
+      action: solo
+      location:
+        world: lobby
+        x: -4.5
+        y: 77.375
+        z: 3.5
+        yaw: -104.0625
+      skin:
+        value: "ewogICJ0aW1lc3RhbXAiIDogMTY0NTAyNDAxMTI2MCwKICAicHJvZmlsZUlkIiA6ICI3ZDAwNjBjNmQxMWQ0NWM2ODMxNmRlZDViNzRjYTU0NyIsCiAgInByb2ZpbGVOYW1lIiA6ICJnYWJyaWVsbGFhaCIsCiAgInNpZ25hdHVyZVJlcXVpcmVkIiA6IHRydWUsCiAgInRleHR1cmVzIiA6IHsKICAgICJTS0lOIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS84OWY2Njc3Y2E1ZDY1ZTQyOTczMjI4Zjg0YWEyZmNlYjg1ZjRiZDIxMmIzMzVkNjlmOTQyODNiOWQxZmVhNzgiLAogICAgICAibWV0YWRhdGEiIDogewogICAgICAgICJtb2RlbCIgOiAic2xpbSIKICAgICAgfQogICAgfQogIH0KfQ=="
+        signature: "FPU59uTKfrxwJhk2I4gXhIFUUNkaH8jDjFMKngS8pWSe2ALvjYtHmqycWqhEdnF9/5TcF6HoSnIt5N6MDWc7/Cfov0uhCQxTkSrsVCUCGiPnYM5JWdbNzZpWeThCeNOej/q9E3v08rjzyiEQBcEfAU2igbOKjRuHw7gSJPhgM/3aAG+K49iapGOvv3m04so01fL51b9W1WGUteZwJIVG0Iw0DK20orWziOVnwvu/gjPTLHHHsvnQXHJMqVObRAp+jE3/ge2wwrxlODSXLod7VoWVFye7Sy2vyPVCOMzD99TtZIbGFnJH9STd7/iUdKrTPGbMXpABwrgdIrDwp2pb63aHwE/YA7QgwbsarDunURl/XCce9ZiocMaAMRko1RNMWsqUK4pf/lUlqwNt+/WmfGbdmX2Umt28HN7Ikpdi5VsJnGfVX2p26/pKzFSKOONizBQoKhby2d0b4dGkhNaRnOG7RW/N0t+9nmS8BmODBln0nEqC+tNGVqH2qoqeTOfHLEWO+7uBBq7rHEugf089ud/t2bcBTf3Zi4O6tNgZYN/4pxQziR5Rh8Me/X3tTZLCsMrXmKYUXzJriNadHbsbZB+NmdS0EsAqOmQj87S4nt6lQApvbTQQ0M8+MTDdCs59r1Wcf+WNLg6cYyDN2tFoQrP6BSsRO9elBE4nVTxZAwI="
+      players:
+        - "solo"
+      lines:
+        - "&b&lSOLO"
+        - "&e{players} jogando"
+    duplas:
+      action: duplas
+      location:
+        world: lobby
+        x: -5.5
+        y: 77.375
+        z: -0.5
+        yaw: -97.03125
+      skin:
+        value: "ewogICJ0aW1lc3RhbXAiIDogMTY0NTAyNDQ3NTc5MiwKICAicHJvZmlsZUlkIiA6ICI3ZDAwNjBjNmQxMWQ0NWM2ODMxNmRlZDViNzRjYTU0NyIsCiAgInByb2ZpbGVOYW1lIiA6ICJnYWJyaWVsbGFhaCIsCiAgInNpZ25hdHVyZVJlcXVpcmVkIiA6IHRydWUsCiAgInRleHR1cmVzIiA6IHsKICAgICJTS0lOIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS9kNTBiZDYwMWRmMzdhNmM4MzZlNTk0ZTJjMTBiNmMyZjg0M2E3MTgxN2NhODU1OTAxMjllNzc3ZDkwMWVmYjdiIiwKICAgICAgIm1ldGFkYXRhIiA6IHsKICAgICAgICAibW9kZWwiIDogInNsaW0iCiAgICAgIH0KICAgIH0KICB9Cn0="
+        signature: "FNelLFLqt5Y/kHdMO/XZTWhTUYunYy5ViIE2e64iSmPDvRTIiF/bm8riK2qMEFIO15pKAt/QAxRnAkVEj4cycJUru5z3gmPAvQAofITcAu3e/QL1O1ZcNLjIWrulCR9jqyfzLouEdoFJsEweo527UGCihPrs0q82c/NI636JGy6ZQn20NRrJdBnzub7nwwO01mPSy/Qm2BmsJmgMV6FL7rvAKGKknxmXUKY8IZNm8N0heQ381qPr3easmUaSn6jr4OxuIZoTi52jXs6K42aG3oL2bYOoHBr5/ENa1yIJ5N5jKcUFj4oLX09rrH/9Mt1og5zP2aogZhuUSSMZyHHYn1zCuQRLFJ6X67rQHn+dmDuhaZ+SVxruI2oe3jJvy+dwtwc5HAUiL5cVlow8VVDLKtX0PyT0AuvBfzszlEoOFJ0AF28A5WyQKBzZ0KxHZaoGFc/Vn0jhe3VQCcf9jt0wNIP5qqJNCaLqOAxBeNg/eiSDA0rty3gimOLl3EK98tgNLYjUAuGYlyBC0r5VQbve8NZXiZdHv18u+fKilbVlZRGNvUSZfzm1sIxySNbfHddtIgeLJXWdU+b+fd3iIyTY3zHpdHf7fgX9OSFcbl2h2lObjoZ5H9LqBHoAG3VvQPzKU4ULsC61qFZjL/NrkInrf3bo+WX8vIpYuYFLhKRMiyc="
+      players:
+        - "duplas"
+      lines:
+        - "&b&lDUPLAS"
+        - "&e{players} jogando"
+    trios:
+      action: trios
+      location:
+        world: lobby
+        x: -6.5
+        y: 77.375
+        z: -4.5
+        yaw: -90.0
+      skin:
+        value: "ewogICJ0aW1lc3RhbXAiIDogMTY0NTAyNDkwMDIzMSwKICAicHJvZmlsZUlkIiA6ICI3ZDAwNjBjNmQxMWQ0NWM2ODMxNmRlZDViNzRjYTU0NyIsCiAgInByb2ZpbGVOYW1lIiA6ICJnYWJyaWVsbGFhaCIsCiAgInNpZ25hdHVyZVJlcXVpcmVkIiA6IHRydWUsCiAgInRleHR1cmVzIiA6IHsKICAgICJTS0lOIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS9mZGQ0MzU0MmQ0NDBmZWU2MmFlMWQ5ZmFjOTQ5ZWVlMzI3MDI0ODRlZmYyNDJhYzExYTQ0YWMyYTk5MzBhZTQ4IiwKICAgICAgIm1ldGFkYXRhIiA6IHsKICAgICAgICAibW9kZWwiIDogInNsaW0iCiAgICAgIH0KICAgIH0KICB9Cn0="
+        signature: "Y2aaazG/BkmcG5xKNmumJiN9+grRmpuyKZTJCJnmbwJ10FPEXs+ZKEAJvmiGn1nTy1f8XvHqMwanxTKf9TiAgjUR1UCBz3PUeA2bL6WzJ7xAhz3nYJfUlhufLFl7w7+Br4kgduT6jlXx733BtuWMKF9vpuA9tgDNT9Lfxx3NSSKqTq7H5OEp4gZLw2bF6zgmftDTWcFnkqRRrQm61NQMLgn0JK5l0/yYkLda2wTfzI0ouLreahNip2N21FmJ7l1u8M0Axg+GSNiP3Xti4sEuapreYZSVA/cHZPSNxyUsGDtHgkzZ+WqSbgynRGRPmfboOFKMeuG2Tc7h4gbRFddRJgyLf0ArfjmQzScNGze3WoDiJg9OgGzV3c8pZz58oKhYdUs9VYAJPAfIU3la3mng8c3mvI7D6ULra7qYiwqeNv7ZoXqeq21+3XcTHQBtN0UuQ/5/p+0UF+QOGWsNCzBYqNG7QUHWPzN6gt95Pv7isZaZN/4nmZ6ClQKst5k0Y/8rT67KxjbchFINXg49HkobBjXTR60tHyagHUmTQyFsJ2poPN1vSwok/oO3KBwyHOpiN73Y+Dgj6IHn+NcVpmP0eMtyLfDoN14JTbFxg2N/sHTr3WkuNqO5hxqGuQIpLXX6Rp8rJnhRKO9SMBbanpixm/yGcSFkpSE/XKwVwaiBPZI="
+      players:
+        - "trios"
+      lines:
+        - "&b&lTRIOS"
+        - "&e{players} jogando"
+    quartetos:
+      action: quartetos
+      location:
+        world: lobby
+        x: -5.5
+        y: 77.375
+        z: -8.5
+        yaw: -82.96875
+      skin:
+        value: "ewogICJ0aW1lc3RhbXAiIDogMTY0NTAyNTE0MDM4NSwKICAicHJvZmlsZUlkIiA6ICI3ZDAwNjBjNmQxMWQ0NWM2ODMxNmRlZDViNzRjYTU0NyIsCiAgInByb2ZpbGVOYW1lIiA6ICJnYWJyaWVsbGFhaCIsCiAgInNpZ25hdHVyZVJlcXVpcmVkIiA6IHRydWUsCiAgInRleHR1cmVzIiA6IHsKICAgICJTS0lOIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS80N2FiMTA3ZjQ4MjQ3ZWM1ZGVhYWEyZjBkYzM4ZTZlM2FhMjlkOTA5MjJiN2JkMDE3Yzg1NDg2MTFlOGUwY2Y4IiwKICAgICAgIm1ldGFkYXRhIiA6IHsKICAgICAgICAibW9kZWwiIDogInNsaW0iCiAgICAgIH0KICAgIH0KICB9Cn0="
+        signature: "VDaFjVesO8R8PZpPsrK3rAZWCcSgHeb3wdxlr1fdFz/auSYr6ICEHhChpyJFtbPhjOifB0NxvOV4a3bc4DtmKS7MOBQduOfJlNW4VbYfxclk8BAIMSzzWrQhpbzQ7KZHNh9bnOVmqRUUERUFG57Adjdj5euivYAZbZpuCJJmc96bKs5qxd0bbMP5kxNbxtytVKRTlNKnoUHGMreXwwWxkADST/lj2EGXOXoeuYGrPaw9jKxBDs1x1+4ZljmLPabe4wDYLWGQZf3H0OEJKm26H9aZ+6Bp23NAWYuTpCd2XiqegKbymHMy59XbSU7gicPB0ccZA28fp1ojpsOeQL9QN6bCSyP5ybDDhnCZgr+fqQm+/d1pCo2WKuaoqeb3WVAfHDi71gOLs2j4/tsZFtWS4bdqdnPN5qGone+CkdRG4C/2QkrOgkybv7/7SL3OqVY+Oery3ucTDm/KgIZ2tVs6WDTeqepsXLYIzk3POAHzPlVNRemp+Cqi1CaZw6XPVXZJJr+U2+mGyk0mh/ecEOgt+zX1ht3DoTprwZmjvGdAEwnw9uTh7DqYbqRbyM6WLjPc79948qqCyAxxaABeX/Z49K938mwxjH6r8JLvLXbrt0ePtYnDCFjc5CRcC2N7upFV+yagsWAehOvaP55jr/aEO9618s1oG/0b2oNQQnfyQIw="
+      players:
+        - "quartetos"
+      lines:
+        - "&b&lQUARTETOS"
+        - "&e{players} jogando"
+    duelos:
+      action: duelos
+      location:
+        world: lobby
+        x: -4.5
+        y: 77.375
+        z: -12.5
+        yaw: -74.53125
+      skin:
+        value: "ewogICJ0aW1lc3RhbXAiIDogMTY0NTAyNTMyNzQ5NywKICAicHJvZmlsZUlkIiA6ICI3ZDAwNjBjNmQxMWQ0NWM2ODMxNmRlZDViNzRjYTU0NyIsCiAgInByb2ZpbGVOYW1lIiA6ICJnYWJyaWVsbGFhaCIsCiAgInNpZ25hdHVyZVJlcXVpcmVkIiA6IHRydWUsCiAgInRleHR1cmVzIiA6IHsKICAgICJTS0lOIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS83ODAxMmM4YWIwNDk4YTIwNmEzZDRiNmRkYmU2ODBjODhhZjExZjRhYzRiMmU1MmRhNWI0Yjc2YmYyN2NmM2RmIiwKICAgICAgIm1ldGFkYXRhIiA6IHsKICAgICAgICAibW9kZWwiIDogInNsaW0iCiAgICAgIH0KICAgIH0KICB9Cn0="
+        signature: "b0ziNx6SzeSazGQbsbNhxFDjIxU4O/ytKIwmqsXhv8vZaERKFjcxf4hQKEM5OKmfxxHvxGwcntDioogK5haLtPvHrG6XOa1ki0MWUU82uC/SU3oBRlgiYXDtrHGC7za383wAf7m5zCOR+AcAloPUrkpr4Tm1EyEFhDgWNtgYA/zs2XC/Wyjruh+9Dhb5XE5/r/ViCnhzvzwiSRqguIidPxFnbdHlh5efzGrv12DXNZ2pp4rymSjtqpsbhidsmozhTvtli2ADjWAdukUhcwZCYheBXGbHUbLKVPdWsrL8DEZsixvWCr/UAgTzC3o3B4xY+w5gdZ8kkovErEQoA1CPFrlFCwZ2XEORHYffdET1ScGrNMisLqmaZitQp1B9mhkJx9TPCsixk728C21KQ3O6xnzhRP0W6vyyDyVbEz/Xi9y4AYecn7PIFPBknLR97aCjcvrxsAnNrOLbqPxr9S+Xj0KAB2lIjUUH70JcZPvQXOCAUHU87peBnF9O/r/fwNyPXoTZOhFeErNUC4mN66L6MTxlmY2q+3omH6fC1jfkwWSNEi8Ft3YF2bGA/sIXRPV5yNZotBdOQbC47YLp5tzvCcU7A6rRRTO0sLPVd7ChrcePO+UcwgtgM2xxxILrcCDSgW21N9qn9wXW9V0VuzD68AwhnX93xxyioeGyzvLnuWI="
+      players:
+        - "1v1"
+        - "2v2"
+        - "3v3"
+        - "4v4"
+        - "4s"
+      lines:
+        - "&6&lUTILIZE"
+        - "&a/duel <nome>"
+        - "&b&l1V1/2V2/3V3/4V4/4S"
+        - "&e{players} jogando"
+    mega:
+      action: nenhuma
+      location:
+        world: lobby
+        x: 0.5
+        y: 77.375
+        z: -14.5
+        yaw: -68.90625
+      skin:
+        value: "ewogICJ0aW1lc3RhbXAiIDogMTcwOTA1Nzg0MDAyOCwKICAicHJvZmlsZUlkIiA6ICI1ODAxMTliZDA5OGU0ODgyODM1YjE4YjQ0MTk4NGVlOCIsCiAgInByb2ZpbGVOYW1lIiA6ICJWaXRpbWlzbW8iLAogICJzaWduYXR1cmVSZXF1aXJlZCIgOiB0cnVlLAogICJ0ZXh0dXJlcyIgOiB7CiAgICAiU0tJTiIgOiB7CiAgICAgICJ1cmwiIDogImh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZDc2OTA4MWQ0MjUzZDI2ZTA4NjVkYzI3NGE1NDU2YTNhZWZhM2FmZmQ2ZTExOWU3MTI1ZGYwOThlYjFiM2FiMSIsCiAgICAgICJtZXRhZGF0YSIgOiB7CiAgICAgICAgIm1vZGVsIiA6ICJzbGltIgogICAgICB9CiAgICB9CiAgfQp9"
+        signature: "n6zumOMkpBa54YRBiPydDJhZKyjlUPwx59rhV+9ryHI++B8qZx++ilmQmybk1qRJyt/a3Kyl4g5SUi9k06o0aFhO4kQMWQqpLWSgNY5lTZEPfXYw+i8K8hLyTBzp1ChpJG7O9U6cyHqYORI5MkGeSS1rmhB0HdKJCD8rfYMHFaKd1kJlE57l3BxoO10d/DnmxwAdFmcAgiOiPPYYbZUz/TTOgZvU3yEf6x6pfWEkcdyE2bDwTwPptbg5i1Gw4FqOg9kewWmvLvGsJlotkIUE/oCiyU72eTnq5iCGqUzxRb8zBrG7xKCjMJaOh9lxdFjohkp6EOK9KLlAzVJongXQ9sZas2W0Q0M4pROxZYWqIU8Km7pOa6IsbdyXOAZDeM3BLNuAoJLKQnL5PwN9JrQDMlaM8EVTzARJ7PCQBYMJj+4Hm5UuqEPRCEGf1NK3y8cQr9eOGQU1lr+ZycopY+RUTXkg/uVIOyMlvfpE+hBrecEqDiiOxMSYg3DzyRXrngeoqcnHCOh8BjDYz96vm6LZUKuLDmTD+BHS6l3CHDZWCfjSmrDfNF+7Lwue7JJY+17W3S+P+l5RmuoHvtmnjX9PQlX5H6IN6GFQ4SQN/qWvyKhoSWS9Ve9xHlwr2vOmpBz1Ao1vfBVhoPGQY2g+HAJdLt8mG4VbyCOuUb+aM4XShsg="
+      lines:
+        - "&eSegunda a Sexta:"
+        - "&a19h"
+        - "&eFinal de semana:"
+        - "&a15h 17h 19h"
+        - "&b&lMEGA"
+        - "&e... jogando"
+    pilares:
+      action: nenhuma
+      location:
+        world: lobby
+        x: 0.5
+        y: 77.375
+        z: 5.5
+        yaw: -111.09375
+      skin:
+        value: "ewogICJ0aW1lc3RhbXAiIDogMTc4NTAyMjMwOTQyOSwKICAicHJvZmlsZUlkIiA6ICJhNWM5MmJlODg5MGY0NDU0OTdkNGEwOTM2Yjg1NDc5OSIsCiAgInByb2ZpbGVOYW1lIiA6ICJDbG93ZGVyVGVjaCIsCiAgInNpZ25hdHVyZVJlcXVpcmVkIiA6IHRydWUsCiAgInRleHR1cmVzIiA6IHsKICAgICJTS0lOIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS9jMWViMjVkNTdkMWUwNjExZjE2OGZlMjIwYmE2ZjBiMTE4M2ZkMWQ0ZGZhYzQ5ZTYwY2Y4OTAwNGFhMzUwZTk4IiwKICAgICAgIm1ldGFkYXRhIiA6IHsKICAgICAgICAibW9kZWwiIDogInNsaW0iCiAgICAgIH0KICAgIH0KICB9Cn0="
+        signature: "FoyCuXYBgHoAdCdbZaDMFMmWARIxiL0f4L4vG3Jyj4om3o8rhKRS2KlUw11vAH/PqJfs1QAlcOlqfvbapiAyD9uBDJL0hM9p+PhjMQOWzonY5af/Nh49fhozjCEu+LCNOvjIN/kNGN+Oomyuae2x08Ak3LKfIdjbbGvuM4nOQzrrf//KxNOc5rH1xX0cM/YpqhQuC/hNIc6MsFc5KaJ5jxDpHcqsG7og7ncc4dL6slwjQtMbYuGOpcBoF+iXaQw3pdSDdFbItg77oV3V9fqDwfMacrQaYCUCHC1Q8OmFmsub3cs2svlWR2JJoneBoOZkNUfEGdfmTyXtbvvuIwcGMzxJYtI/Nm77cNXXz3lJm8CBRaVFxO2XGghr0z/rr6rfK3JowoExkd0Sc3ZMjSzhxrV0yZTm4jdfUwZ9h6pnGe8rgKn75QA/5r8lJtRqtS7xxwHO6z9iAuxslPPDA5lfWwsDute4EOrEesx0UT/mCMWOt+snozaxSJ5sfx+j5HlIcD3l+SdS73CHcivxjlfrKQ5hMi/c/NqJZEwF5IKKpE7kJ+48iThu+zdPc5M5UgDmQ453jwob2E7biXoqtRt4CYCV2up0Q6LutnI975oMsbuNXCcV5Rl1edqgVsDEO0Wgbh/GFm5LwxhtIevDLrv/sYSnQkYOhOh1svc3GM3PAr4="
+      lines:
+        - "{blink}&lNOVO MODO"
+        - "{blink}&lTEMPORARIO!"
+        - "&b&lPILARES"
+        - "&e{players} jogando"
+  blink-colors:
+    - "&f"
+    - "&d"
+  stats-npc:
+    location:
+      world: lobby
+      x: 22.5
+      y: 81.0
+      z: -1.5
+      yaw: -135.0
+    lines:
+      - "Seu nível: {level}"
+      - "{bar}"
+      - "Vitórias: &a{wins}"
+      - "Kills: &a{kills}"
+      - "Kills finais: &a{final-kills}"
+      - "Camas quebradas: &a{beds}"
+      - "Winstreak: &a{winstreak}"
+      - "&b&lSUAS ESTATÍSTICAS"
+      - "&eClique para ver!"
+    bar-segments: 12
+  tops:
+    label-above-stand: 2.175
+    boards:
+      kills-finais:
+        category: FINAL_KILLS
+        title: "&e&lKILLS FINAIS {mode}"
+        location:
+          world: lobby
+          x: -5.5
+          y: 79.781
+          z: 19.5
+        periods:
+          - WEEKLY
+          - MONTHLY
+          - TOTAL
+        modes: true
+      vitorias:
+        category: WINS
+        title: "&e&lVITÓRIAS {mode}"
+        location:
+          world: lobby
+          x: -18.5
+          y: 79.781
+          z: 17.5
+        periods:
+          - WEEKLY
+          - MONTHLY
+          - TOTAL
+        modes: true
+      winstreak:
+        category: WINSTREAK
+        title: "&e&lWINSTREAK {mode}"
+        location:
+          world: lobby
+          x: -12.5
+          y: 79.781
+          z: 19.5
+        periods:
+          - WEEKLY
+          - MONTHLY
+          - TOTAL
+        modes: true
+      nivel:
+        category: LEVEL
+        title: "&e&lNÍVEL"
+        location:
+          world: lobby
+          x: 0.5
+          y: 79.781
+          z: 17.5
+        periods:
+          - TOTAL
+          - MONTHLY
+          - WEEKLY
+        modes: false
+    header: "&b&lTOP 100&r &7({page}/{pages})"
+    entry: "&e{position}.&r &f{name}&r &7- &e{value}&r"
+    empty: "&e{position}.&r &7-"
+    click: "&6&lClique para trocar!"
+    period-selected: "&a&l{period}&r"
+    period-other: "&7{period}&r"
+    general: "GERAL"
+    period-names:
+      DAILY: "Diário"
+      WEEKLY: "Semanal"
+      MONTHLY: "Mensal"
+      TOTAL: "Total"
+    refresh-seconds: 60
