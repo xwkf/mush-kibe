@@ -5,8 +5,8 @@ import br.com.muxe.core.bukkit.menu.Menu;
 import br.com.muxe.core.bukkit.menu.button.ButtonActions;
 import br.com.muxe.core.bukkit.menu.button.ConfiguredButton;
 import br.com.muxe.core.bukkit.permission.PlayerRanks;
+import br.com.muxe.core.common.account.application.query.AccountProfileView;
 import br.com.muxe.core.common.account.application.query.FindAccountQuery;
-import br.com.muxe.core.common.account.domain.Account;
 import br.com.muxe.core.common.cqrs.query.QueryBus;
 import java.time.Instant;
 import java.util.Optional;
@@ -39,7 +39,7 @@ public final class ProfileMenu {
             if (error != null) {
                 logger.log(Level.WARNING, "Could not load the account of " + player.getName() + ": " + error.getMessage());
             } else {
-                firstSeenAt = account.map(Account::firstSeenAt);
+                firstSeenAt = account.map(AccountProfileView::firstSeenAt);
             }
             if (player.isOnline()) {
                 menu(ProfileHead.of(ranks, player.getUniqueId(), player.getName(), firstSeenAt)).open(player);

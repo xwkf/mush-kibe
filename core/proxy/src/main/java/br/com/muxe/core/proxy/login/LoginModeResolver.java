@@ -1,7 +1,7 @@
 package br.com.muxe.core.proxy.login;
 
+import br.com.muxe.core.common.account.application.query.AccountIdentityView;
 import br.com.muxe.core.common.account.application.query.FindAccountByUsernameQuery;
-import br.com.muxe.core.common.account.domain.Account;
 import br.com.muxe.core.common.cqrs.query.QueryBus;
 import br.com.muxe.core.proxy.premium.PremiumLookup;
 import br.com.muxe.core.proxy.premium.PremiumStatus;
@@ -20,7 +20,7 @@ public final class LoginModeResolver {
     }
 
     public LoginMode resolve(String username) {
-        Optional<Account> account = queries.ask(new FindAccountByUsernameQuery(username)).join();
+        Optional<AccountIdentityView> account = queries.ask(new FindAccountByUsernameQuery(username)).join();
         if (account.isPresent() && account.get().premium()) {
             return LoginMode.PREMIUM;
         }

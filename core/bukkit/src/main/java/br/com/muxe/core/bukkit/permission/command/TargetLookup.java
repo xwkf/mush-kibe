@@ -25,7 +25,7 @@ public final class TargetLookup {
             return CompletableFuture.completedFuture(Optional.of(new Target(player.get().getUniqueId(), player.get().getName())));
         }
         return queries.ask(new FindAccountByUsernameQuery(name))
-            .thenApply(account -> account.map(found -> new Target(found.id(), found.currentUsername().orElse(name))));
+            .thenApply(account -> account.map(found -> new Target(found.id(), found.username())));
     }
 
     public record Target(UUID id, String name) {

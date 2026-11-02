@@ -46,7 +46,7 @@ Query   ──► QueryBus   ──► middlewares ──► QueryHandler   ─�
 ```
 
 - **Comandos** expressam intenção (`RecordLoginCommand`, `RegisterCredentialCommand`) e retornam um `Result<T>`: sucesso com um valor, ou falha com um código de `Problem`.
-- **Consultas** nunca mudam estado (`FindAccountQuery`, `HasCredentialQuery`).
+- **Consultas** nunca mudam estado (`FindAccountQuery`, `HasCredentialQuery`). Uma consulta responde um modelo de leitura só com os campos que quem a usa precisa (`AccountProfileView`, `AccountIdentityView`), e não o objeto de domínio que os comandos alteram, para o domínio poder mudar sem quebrar quem lê.
 - **Handlers** são registrados uma vez, pela classe da mensagem. Registrar dois handlers para a mesma mensagem falha na inicialização.
 - **Os buses são assíncronos.** `dispatch` e `ask` retornam um `CompletableFuture` e executam os handlers no executor de virtual threads do core, então o código de plataforma nunca bloqueia a thread principal.
 - **Middlewares** envolvem todo handler. `MetricsMiddleware` registra `muxe_cqrs_handle_seconds` com o nome da mensagem e o resultado (`success`, `failure`, `error`). Novas preocupações transversais (auditoria, tracing) são novos middlewares.

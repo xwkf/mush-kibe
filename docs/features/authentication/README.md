@@ -160,7 +160,7 @@ Required:
 | `RegisterCredentialCommand` | Command | `Result<Void>`; failures `auth.already_registered`, `auth.passwords_do_not_match`, `auth.password_too_short`, `auth.password_too_long`, `auth.password_equals_username`. |
 | `VerifyCredentialCommand` | Command | `Result<Void>`; failures `auth.not_registered`, `auth.wrong_password`. Records the login and rehashes weak hashes. |
 | `HasCredentialQuery` | Query | `Boolean`. |
-| `FindAccountByUsernameQuery` | Query | `Optional<Account>`, used by the proxy to decide the login mode. |
+| `FindAccountByUsernameQuery` | Query | `Optional<AccountIdentityView>`, used by the proxy to decide the login mode. |
 
 ## Metrics
 

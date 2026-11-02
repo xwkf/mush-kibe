@@ -160,7 +160,7 @@ Obrigatório:
 | `RegisterCredentialCommand` | Command | `Result<Void>`; falhas `auth.already_registered`, `auth.passwords_do_not_match`, `auth.password_too_short`, `auth.password_too_long`, `auth.password_equals_username`. |
 | `VerifyCredentialCommand` | Command | `Result<Void>`; falhas `auth.not_registered`, `auth.wrong_password`. Registra o login e refaz hashes fracos. |
 | `HasCredentialQuery` | Query | `Boolean`. |
-| `FindAccountByUsernameQuery` | Query | `Optional<Account>`, usada pelo proxy para decidir o modo de login. |
+| `FindAccountByUsernameQuery` | Query | `Optional<AccountIdentityView>`, usada pelo proxy para decidir o modo de login. |
 
 ## Métricas
 

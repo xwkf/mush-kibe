@@ -66,8 +66,8 @@ Schema `core`, que pertence ao `core:common`:
 | Mensagem | Tipo | Resultado |
 |---|---|---|
 | `RecordLoginCommand` | Comando | `Result<RecordedLogin>`: a conta e, quando um login premium tomou o nome, o id da conta que o perdeu. Falhas `account.invalid_username`, `account.name_case_conflict`. |
-| `FindAccountQuery` | Query | `Optional<Account>` pelo id. |
-| `FindAccountByUsernameQuery` | Query | `Optional<Account>` pelo nome, ignorando maiúsculas e minúsculas. |
+| `FindAccountQuery` | Query | `Optional<AccountProfileView>` pelo id: id, nome atual e primeiro login. |
+| `FindAccountByUsernameQuery` | Query | `Optional<AccountIdentityView>` pelo nome, ignorando maiúsculas e minúsculas: id, nome atual e se a conta é premium. |
 
 ## Métricas
 
