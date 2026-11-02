@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.within;
 import br.com.muxe.core.bukkit.display.DisplayLabel;
 import br.com.muxe.core.bukkit.mission.announce.MissionTexts;
 import br.com.muxe.core.bukkit.mission.config.MissionConfig;
+import br.com.muxe.core.bukkit.nms.PacketHologramTransport;
 import br.com.muxe.core.bukkit.npc.NpcLabelLayout;
 import br.com.muxe.core.common.mission.domain.Mission;
 import br.com.muxe.core.common.mission.domain.MissionBoard;
@@ -111,6 +112,7 @@ class BedWarsMissionsTest {
             depth[index + 1] = depth[index] + gaps.get(index);
         }
 
+        assertThat(texts.labelAboveStand()).isEqualTo(PacketHologramTransport.FULL_STAND_LABEL_HEIGHT);
         assertThat(depth[1]).isEqualTo(79.78125 - 79.5);
         assertThat(depth[2]).isEqualTo(79.78125 - 79.125);
         assertThat(depth[11]).isEqualTo(79.78125 - 76.59375);

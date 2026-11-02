@@ -2353,7 +2353,7 @@ lobby:
         - 0.28125
       spacing: 0.28125
   tops:
-    label-above-stand: 2.175
+    label-above-stand: 2.38125
     boards:
       kills-finais:
         category: FINAL_KILLS

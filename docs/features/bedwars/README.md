@@ -227,7 +227,7 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | `lobby.tops.spacing.*` | the exports | `title`, `list`, `entries`, `click` and `periods` gaps of the tops. |
 | `missions.*` | the exports | The [missions](../missions/README.md#configuration) catalog and texts, plus `fast-win-seconds` (210), `end-stone-radius` (3), `end-stone-blocks` (10) and `bedbug-assist-seconds` (10). |
 | `lobby.tops.boards.<id>` | the four tops | `category` (`FINAL_KILLS`, `WINS`, `WINSTREAK`, `LEVEL`), `title`, `location` of the top stand, `periods` in display order and `modes`. |
-| `lobby.tops.*` | the exports | Header, entry, empty (`Ninguém` - `0`), click and period texts, `label-above-stand` (2.175), `refresh-seconds` (60), `click-sound` (`CLICK`, empty for none) and `xp-value` (`{xp} XP`, the level top outside Total). |
+| `lobby.tops.*` | the exports | Header, entry, empty (`Ninguém` - `0`), click and period texts, `label-above-stand` (2.38125, where the 1.8 client draws the name of a full-size stand), `refresh-seconds` (60), `click-sound` (`CLICK`, empty for none) and `xp-value` (`{xp} XP`, the level top outside Total). |
 | `lobby.tops.selector.*` | the export | `location` of the `SELECIONAR MODO` stand, `list-offset` and `footer-offset` (0.375 and 1.90625 below it), `list-spacing` (0.28125), `visible-modes` (5) and the header, footer, selected, other and `general-name` texts. |
 | `lobby.scoreboard.*` | annex 1 | `title`, `lines` (`{level}`, `{bar}`, `{players}`; `{modes}` becomes the mode lines), `mode-lines` (`{mode}` and the counters), `default-modes` (1v1, solo), `shown-modes` (2) and `bar-segments` (10). |
 | `lobby.menus.*` | the exports | Mode, duels, maps, top mode and statistics menus. |

@@ -1,5 +1,6 @@
 package br.com.muxe.minigame.bedwars.lobby.top;
 
+import br.com.muxe.core.bukkit.nms.PacketHologramTransport;
 import br.com.muxe.minigame.bedwars.stats.domain.StatsPeriod;
 import java.util.EnumMap;
 import java.util.Locale;
@@ -43,7 +44,7 @@ public record TopTexts(
             section.getString("period-other", "&7{period}&r"),
             section.getString("general", "GERAL"),
             names,
-            section.getDouble("label-above-stand", 2.175),
+            section.getDouble("label-above-stand", PacketHologramTransport.FULL_STAND_LABEL_HEIGHT),
             Math.max(10, section.getInt("refresh-seconds", 60)),
             sound(section.getString("click-sound", "CLICK")),
             section.getString("xp-value", "{xp} XP"),
