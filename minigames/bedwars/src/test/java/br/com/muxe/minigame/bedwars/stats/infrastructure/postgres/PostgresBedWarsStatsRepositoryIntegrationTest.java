@@ -65,7 +65,7 @@ class PostgresBedWarsStatsRepositoryIntegrationTest {
 
     @Test
     void migrationsCreateTheBedWarsSchema() {
-        assertThat(migration.schemaVersion()).isEqualTo("1");
+        assertThat(migration.schemaVersion()).isEqualTo("2");
     }
 
     @Test
@@ -121,6 +121,15 @@ class PostgresBedWarsStatsRepositoryIntegrationTest {
             .containsExactly(named);
         assertThat(transactions.readOnly("test.top", () -> repository.top(TopCategory.WINS, mode, StatsPeriod.DAILY, start.plusDays(1), 10)))
             .isEmpty();
+    }
+
+    @Test
+    void aMatchCanBeClaimedOnlyOnce() {
+        UUID match = UUID.randomUUID();
+
+        assertThat(transactions.inTransaction("test.claim", () -> repository.claimMatch(match, WEDNESDAY))).isTrue();
+        assertThat(transactions.inTransaction("test.claim", () -> repository.claimMatch(match, WEDNESDAY))).isFalse();
+        assertThat(transactions.inTransaction("test.claim", () -> repository.claimMatch(UUID.randomUUID(), WEDNESDAY))).isTrue();
     }
 
     @Test

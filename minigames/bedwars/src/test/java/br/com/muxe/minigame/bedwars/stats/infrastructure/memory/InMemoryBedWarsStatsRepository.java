@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,6 +29,7 @@ public final class InMemoryBedWarsStatsRepository implements BedWarsStatsReposit
     private final Map<UUID, Map<StatsSlot, StatCounters>> rows = new HashMap<>();
     private final Map<UUID, Set<String>> favourites = new HashMap<>();
     private final Map<UUID, String> names = new HashMap<>();
+    private final Set<UUID> recordedMatches = new HashSet<>();
 
     public void name(UUID playerId, String name) {
         names.put(playerId, name);
@@ -47,6 +49,11 @@ public final class InMemoryBedWarsStatsRepository implements BedWarsStatsReposit
         for (StatsSlot slot : StatsSlot.touchedBy(outcome, at, zone)) {
             slots.put(slot, slots.getOrDefault(slot, StatCounters.ZERO).plus(outcome));
         }
+    }
+
+    @Override
+    public boolean claimMatch(UUID matchId, Instant at) {
+        return recordedMatches.add(matchId);
     }
 
     @Override

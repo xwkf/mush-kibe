@@ -83,6 +83,7 @@ timings:
   spawn-protection-radius: 5
   npc-protection-radius: 1
   generator-protection-radius: 1
+  empty-room-seconds: 60
 
 countdown:
   titles:

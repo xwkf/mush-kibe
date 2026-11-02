@@ -54,6 +54,8 @@ public final class PostgresBedWarsStatsRepository implements BedWarsStatsReposit
             updated_at = EXCLUDED.updated_at
         """.formatted(STREAK);
 
+    private static final String CLAIM = "INSERT INTO bedwars.recorded_matches (match_id, recorded_at) VALUES (?, ?) ON CONFLICT (match_id) DO NOTHING";
+
     private static final String ADD_XP = """
         INSERT INTO bedwars.player_stats AS s (player_id, mode, period, period_start, xp, updated_at) VALUES (?, ?, ?, ?, ?, ?)
         ON CONFLICT (player_id, mode, period, period_start) DO UPDATE SET xp = s.xp + EXCLUDED.xp, updated_at = EXCLUDED.updated_at
@@ -117,6 +119,17 @@ public final class PostgresBedWarsStatsRepository implements BedWarsStatsReposit
             statement.executeBatch();
         } catch (SQLException exception) {
             throw new PersistenceException("bedwars.stats.record", exception);
+        }
+    }
+
+    @Override
+    public boolean claimMatch(UUID matchId, Instant at) {
+        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(CLAIM)) {
+            statement.setObject(1, matchId);
+            statement.setTimestamp(2, Timestamp.from(at));
+            return statement.executeUpdate() == 1;
+        } catch (SQLException exception) {
+            throw new PersistenceException("bedwars.stats.claim_match", exception);
         }
     }
 

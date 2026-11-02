@@ -27,6 +27,9 @@ public final class RecordMatchHandler implements CommandHandler<RecordMatchComma
     public Result<Void> handle(RecordMatchCommand command) {
         Instant at = clock.instant();
         return transactions.inTransaction("bedwars.stats.record", () -> {
+            if (!stats.claimMatch(command.matchId(), at)) {
+                return Result.success();
+            }
             for (MatchOutcome outcome : command.outcomes()) {
                 stats.record(outcome, at, zone);
             }

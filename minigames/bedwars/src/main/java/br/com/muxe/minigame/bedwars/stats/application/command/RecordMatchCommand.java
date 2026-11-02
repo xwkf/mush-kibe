@@ -9,9 +9,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
-public record RecordMatchCommand(List<MatchOutcome> outcomes) implements Command<Result<Void>> {
+public record RecordMatchCommand(UUID matchId, List<MatchOutcome> outcomes) implements Command<Result<Void>> {
 
     public RecordMatchCommand {
+        Objects.requireNonNull(matchId, "matchId");
         outcomes = List.copyOf(Objects.requireNonNull(outcomes, "outcomes"));
         Set<UUID> players = new HashSet<>();
         for (MatchOutcome outcome : outcomes) {

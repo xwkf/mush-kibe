@@ -47,6 +47,8 @@ public final class Room {
     private Phase phase = Phase.WAITING;
     private boolean forced;
     private int elapsed;
+    private int idleSeconds;
+    private UUID matchId;
     private int ending;
     private Instant startedAt;
 
@@ -127,6 +129,19 @@ public final class Room {
         return updateCountdown();
     }
 
+    public Optional<UUID> matchId() {
+        return Optional.ofNullable(matchId);
+    }
+
+    public boolean idle(boolean reserved, int limitSeconds) {
+        if (phase != Phase.WAITING || !players.isEmpty() || reserved) {
+            idleSeconds = 0;
+            return false;
+        }
+        idleSeconds++;
+        return idleSeconds >= limitSeconds;
+    }
+
     public Change leaveBeforeStart(UUID id) {
         if (phase != Phase.WAITING && phase != Phase.STARTING) {
             throw new IllegalStateException("Room " + code + " already started");
@@ -153,6 +168,7 @@ public final class Room {
         if (phase == Phase.PLAYING || phase == Phase.ENDING) {
             throw new IllegalStateException("Room " + code + " already started");
         }
+        matchId = UUID.randomUUID();
         Map<TeamColor, List<UUID>> assigned = TeamAssigner.assign(List.copyOf(teams.keySet()), mode.teamSize(), joinOrder(), parties);
         assigned.forEach((color, members) -> members.forEach(member -> {
             teams.get(color).add(member);

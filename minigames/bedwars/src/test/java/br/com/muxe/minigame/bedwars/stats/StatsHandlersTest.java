@@ -50,8 +50,20 @@ class StatsHandlersTest {
     private final UUID diego = new UUID(0, 4);
 
     @Test
+    void theSameMatchIsCountedOnlyOnce() {
+        UUID match = UUID.randomUUID();
+        RecordMatchCommand command = new RecordMatchCommand(match, List.of(outcome(alice, "solo", 2, MatchResult.WIN, 120)));
+
+        assertThat(record.handle(command).isSuccess()).isTrue();
+        assertThat(record.handle(command).isSuccess()).isTrue();
+
+        assertThat(stats.handle(new FindPlayerStatsQuery(alice)).general().wins()).isEqualTo(1);
+        assertThat(stats.handle(new FindPlayerStatsQuery(alice)).general().finalKills()).isEqualTo(2);
+    }
+
+    @Test
     void recordingAMatchUpdatesTheModeAndTheGeneralRowsOfEveryPeriodInOneTransaction() {
-        Result<Void> result = record.handle(new RecordMatchCommand(List.of(
+        Result<Void> result = record.handle(new RecordMatchCommand(UUID.randomUUID(), List.of(
             outcome(alice, "solo", 2, MatchResult.WIN, 120),
             outcome(bruno, "solo", 0, MatchResult.LOSS, 40)
         )));
@@ -71,11 +83,11 @@ class StatsHandlersTest {
 
     @Test
     void theGeneralRowAddsUpEveryModeAndTheDailyRowResetsTheNextDay() {
-        record.handle(new RecordMatchCommand(List.of(outcome(alice, "solo", 1, MatchResult.WIN, 10))));
-        record.handle(new RecordMatchCommand(List.of(outcome(alice, "dupla", 3, MatchResult.WIN, 20))));
+        record.handle(new RecordMatchCommand(UUID.randomUUID(), List.of(outcome(alice, "solo", 1, MatchResult.WIN, 10))));
+        record.handle(new RecordMatchCommand(UUID.randomUUID(), List.of(outcome(alice, "dupla", 3, MatchResult.WIN, 20))));
 
         clock.advance(Duration.ofDays(1));
-        record.handle(new RecordMatchCommand(List.of(outcome(alice, "solo", 1, MatchResult.LOSS, 5))));
+        record.handle(new RecordMatchCommand(UUID.randomUUID(), List.of(outcome(alice, "solo", 1, MatchResult.LOSS, 5))));
 
         PlayerStats total = stats.handle(new FindPlayerStatsQuery(alice));
         assertThat(total.general().games()).isEqualTo(3);
@@ -94,7 +106,7 @@ class StatsHandlersTest {
     void topsAreOrderedByValueThenPlayerSkipZerosAndRespectTheLimit() {
         repository.name(alice, "Alice");
         repository.name(bruno, "Bruno");
-        record.handle(new RecordMatchCommand(List.of(
+        record.handle(new RecordMatchCommand(UUID.randomUUID(), List.of(
             outcome(alice, "solo", 2, MatchResult.LOSS, 30),
             outcome(bruno, "solo", 5, MatchResult.WIN, 70),
             outcome(carla, "solo", 2, MatchResult.LOSS, 10),
@@ -122,9 +134,9 @@ class StatsHandlersTest {
 
     @Test
     void levelTopsUseThePeriodXpAndReportTheTotalXp() {
-        record.handle(new RecordMatchCommand(List.of(outcome(alice, "solo", 0, MatchResult.WIN, 500))));
+        record.handle(new RecordMatchCommand(UUID.randomUUID(), List.of(outcome(alice, "solo", 0, MatchResult.WIN, 500))));
         clock.advance(Duration.ofDays(1));
-        record.handle(new RecordMatchCommand(List.of(
+        record.handle(new RecordMatchCommand(UUID.randomUUID(), List.of(
             outcome(alice, "solo", 0, MatchResult.WIN, 10),
             outcome(bruno, "solo", 0, MatchResult.WIN, 50)
         )));
@@ -154,7 +166,7 @@ class StatsHandlersTest {
     void invalidRequestsAreRejected() {
         MatchOutcome twice = outcome(alice, "solo", 0, MatchResult.WIN, 0);
 
-        assertThatThrownBy(() -> new RecordMatchCommand(List.of(twice, twice))).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new RecordMatchCommand(UUID.randomUUID(), List.of(twice, twice))).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new ToggleFavouriteMapCommand(alice, " ")).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new FindTopQuery(TopCategory.WINS, "solo", StatsPeriod.TOTAL, 0)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new FindTopQuery(TopCategory.WINS, "solo", StatsPeriod.TOTAL, FindTopQuery.MAX_LIMIT + 1))
@@ -167,7 +179,7 @@ class StatsHandlersTest {
         SimpleQueryBus queries = new SimpleQueryBus(Runnable::run, List.of());
         StatsModule.register(commands, queries, repository, transactions, clock, SAO_PAULO);
 
-        commands.dispatch(new RecordMatchCommand(List.of(outcome(alice, "solo", 1, MatchResult.WIN, 10)))).join();
+        commands.dispatch(new RecordMatchCommand(UUID.randomUUID(), List.of(outcome(alice, "solo", 1, MatchResult.WIN, 10)))).join();
         commands.dispatch(new ToggleFavouriteMapCommand(alice, "Lighthouse")).join();
 
         assertThat(queries.ask(new FindPlayerStatsQuery(alice)).join().general().finalKills()).isEqualTo(1);

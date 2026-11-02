@@ -9,6 +9,8 @@ import java.util.UUID;
 
 public interface BedWarsStatsRepository {
 
+    boolean claimMatch(UUID matchId, Instant at);
+
     void record(MatchOutcome outcome, Instant at, ZoneId zone);
 
     void addXp(UUID playerId, long xp, Instant at, ZoneId zone);

@@ -675,10 +675,10 @@ public final class RoomRuntime {
 
     private void record(Optional<TeamColor> winner) {
         List<MatchOutcome> outcomes = room.outcomes(winner, settings.xp());
-        if (outcomes.isEmpty()) {
+        if (outcomes.isEmpty() || room.matchId().isEmpty()) {
             return;
         }
-        core.commands().dispatch(new RecordMatchCommand(outcomes)).whenComplete((result, error) -> {
+        core.commands().dispatch(new RecordMatchCommand(room.matchId().get(), outcomes)).whenComplete((result, error) -> {
             if (error != null || !result.isSuccess()) {
                 service.plugin().getLogger().log(Level.WARNING, "Could not save the stats of room " + room.code(), error);
             }

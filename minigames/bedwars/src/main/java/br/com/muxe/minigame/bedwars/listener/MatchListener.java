@@ -3,6 +3,7 @@ package br.com.muxe.minigame.bedwars.listener;
 import br.com.muxe.core.bukkit.api.MuxeCore;
 import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
+import br.com.muxe.minigame.bedwars.room.ChatView;
 import br.com.muxe.minigame.bedwars.room.Room;
 import br.com.muxe.minigame.bedwars.room.RoomPlayer;
 import br.com.muxe.minigame.bedwars.room.RoomRuntime;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import org.bukkit.Material;
@@ -30,8 +32,8 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
@@ -384,20 +386,13 @@ public final class MatchListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
-        Optional<RoomRuntime> found = rooms.roomOf(player.getUniqueId());
-        if (found.isEmpty()) {
+        Optional<ChatView> view = rooms.chatView(player.getUniqueId());
+        if (view.isEmpty()) {
             return;
         }
-        RoomRuntime runtime = found.get();
-        List<Player> audience = runtime.online();
-        event.getRecipients().clear();
-        event.getRecipients().addAll(audience);
-        Optional<RoomPlayer> roomPlayer = runtime.room().player(player.getUniqueId());
-        String team = roomPlayer.map(RoomPlayer::team)
-            .filter(color -> runtime.room().phase() == Room.Phase.PLAYING || runtime.room().phase() == Room.Phase.ENDING)
-            .map(color -> color.color() + "[" + color.letter() + "] ")
-            .orElse("");
-        String template = Colors.translate(team) + core.messages().get("chat-format");
+        Set<UUID> audience = view.get().audience();
+        event.getRecipients().removeIf(recipient -> !audience.contains(recipient.getUniqueId()));
+        String template = Colors.translate(view.get().prefix()) + core.messages().get("chat-format");
         event.setFormat(core.permissions().display(player.getUniqueId()).chatFormat(template));
     }
 

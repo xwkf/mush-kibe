@@ -67,7 +67,7 @@ public record BedWarsSettings(
     }
 
     public record Timings(int respawnSeconds, int rejoinSeconds, int restartSeconds, int respawnProtectionSeconds,
-                          int islandRadius, int spawnRadius, int npcRadius, int generatorRadius) {
+                          int islandRadius, int spawnRadius, int npcRadius, int generatorRadius, int emptyRoomSeconds) {
 
         static Timings from(ConfigurationSection section) {
             return new Timings(
@@ -78,7 +78,8 @@ public record BedWarsSettings(
                 section.getInt("island-radius", 17),
                 section.getInt("spawn-protection-radius", 5),
                 section.getInt("npc-protection-radius", 1),
-                section.getInt("generator-protection-radius", 1)
+                section.getInt("generator-protection-radius", 1),
+                section.getInt("empty-room-seconds", 60)
             );
         }
     }

@@ -122,6 +122,7 @@ public final class BedWarsBootstrap {
         rooms = new RoomService(plugin, core, settings, messages, schema, catalog, matchWorld);
         rooms.missions(missions, MissionRules.from(config.getConfigurationSection("missions")));
         rooms.start();
+        engine.track(rooms::activeMatches, () -> catalog.all().size());
         rooms.onBedBreak(cosmetics.bedBreaks());
         ShopService shop = new ShopService(
             ShopCatalog.from(Objects.requireNonNull(config.getConfigurationSection("shop"), "Missing configuration section shop")),

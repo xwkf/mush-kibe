@@ -25,15 +25,18 @@ import br.com.muxe.minigame.engine.world.server.MatchWorld;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -54,7 +57,7 @@ public final class RoomService {
     private final RoomCodes codes = new RoomCodes(ThreadLocalRandom.current());
     private final Map<String, RoomRuntime> rooms = new LinkedHashMap<>();
     private final Map<UUID, String> byPlayer = new ConcurrentHashMap<>();
-    private final Map<UUID, Reservation> reservations = new ConcurrentHashMap<>();
+    private final RoomReservations reservations = new RoomReservations(RESERVATION);
     private final Map<String, List<String>> npcLines = new ConcurrentHashMap<>();
     private final List<BukkitTask> tasks = new ArrayList<>();
     private BiConsumer<Player, NpcClick> npcClicks = (player, click) -> {
@@ -64,6 +67,8 @@ public final class RoomService {
     private NpcService npcs;
     private MissionConfig missions = MissionConfig.empty();
     private MissionRules missionRules = MissionRules.DEFAULT;
+    private volatile Map<UUID, ChatView> chat = Map.of();
+    private volatile int activeMatches;
 
     public RoomService(JavaPlugin plugin, MuxeCore core, BedWarsSettings settings, MessageCatalog messages, BedWarsSchema schema, ArenaCatalog catalog, MatchWorld matchWorld) {
         this.plugin = plugin;
@@ -115,12 +120,13 @@ public final class RoomService {
             if (runtime.canReturn(player.getUniqueId(), now)) {
                 byPlayer.put(player.getUniqueId(), runtime.room().code());
                 runtime.rejoin(player);
+                refreshChat();
                 return;
             }
         }
-        Reservation reserved = reservations.remove(player.getUniqueId());
-        if (reserved != null && !reserved.expiresAt().isBefore(now)) {
-            join(player, reserved.mode(), reserved.arena(), Optional.of(reserved.code()));
+        Optional<RoomReservations.Reservation> reserved = reservations.take(player.getUniqueId(), now);
+        if (reserved.isPresent()) {
+            join(player, reserved.get().mode(), reserved.get().arena(), Optional.of(reserved.get().code()));
             return;
         }
         join(player, settings.defaultMode());
@@ -130,19 +136,22 @@ public final class RoomService {
         if (!schema.modes().contains(mode)) {
             return Optional.empty();
         }
+        Instant now = core.clock().instant();
+        reservations.take(playerId, now);
         Optional<Reserved> reserved = pick(mode, arena, code).map(found -> new Reserved(found.room().code(), false))
             .or(() -> create(mode, arena).map(created -> new Reserved(created.room().code(), true)));
-        reserved.ifPresent(found -> reservations.put(playerId, new Reservation(found.code(), mode, arena, core.clock().instant().plus(RESERVATION))));
+        reserved.ifPresent(found -> reservations.hold(playerId, found.code(), mode, arena, now));
         return reserved;
     }
 
     public List<RoomInfo> summaries() {
+        Instant now = core.clock().instant();
         return rooms.values().stream().map(runtime -> new RoomInfo(
             runtime.room().code(),
             runtime.room().mode().id(),
             runtime.room().arena().name(),
             runtime.room().acceptsPlayers(),
-            runtime.room().players().size(),
+            runtime.room().players().size() + reservations.pending(runtime.room().code(), now),
             runtime.room().mode().maxPlayers()
         )).toList();
     }
@@ -163,6 +172,7 @@ public final class RoomService {
         }
         byPlayer.put(player.getUniqueId(), runtime.room().code());
         runtime.addWaiting(player);
+        refreshChat();
     }
 
     public boolean forceStart(Player player) {
@@ -184,6 +194,23 @@ public final class RoomService {
         }
     }
 
+    public int activeMatches() {
+        return activeMatches;
+    }
+
+    public Optional<ChatView> chatView(UUID playerId) {
+        return Optional.ofNullable(chat.get(playerId));
+    }
+
+    void refreshChat() {
+        Map<UUID, ChatView> views = new HashMap<>();
+        for (RoomRuntime runtime : rooms.values()) {
+            Set<UUID> online = runtime.online().stream().map(Player::getUniqueId).collect(Collectors.toSet());
+            views.putAll(ChatView.of(runtime.room(), online));
+        }
+        chat = Map.copyOf(views);
+    }
+
     public void leave(Player player) {
         String code = byPlayer.get(player.getUniqueId());
         RoomRuntime runtime = code == null ? null : rooms.get(code);
@@ -196,6 +223,7 @@ public final class RoomService {
         if (!keep) {
             byPlayer.remove(player.getUniqueId());
         }
+        refreshChat();
         core.nameTags().refresh(player);
     }
 
@@ -297,14 +325,24 @@ public final class RoomService {
     }
 
     private void second() {
+        Instant now = core.clock().instant();
+        reservations.purge(now);
         for (RoomRuntime runtime : List.copyOf(rooms.values())) {
             try {
+                if (runtime.room().idle(reservations.pending(runtime.room().code(), now) > 0, settings.timings().emptyRoomSeconds())) {
+                    runtime.close();
+                    continue;
+                }
                 runtime.second();
             } catch (RuntimeException exception) {
                 plugin.getLogger().log(Level.SEVERE, "Room " + runtime.room().code() + " failed and is being closed", exception);
                 runtime.close();
             }
         }
+        refreshChat();
+        activeMatches = (int) rooms.values().stream()
+            .filter(runtime -> runtime.room().phase() == Room.Phase.PLAYING || runtime.room().phase() == Room.Phase.ENDING)
+            .count();
     }
 
     private void forgeCycle() {
@@ -343,8 +381,6 @@ public final class RoomService {
     public record Reserved(String code, boolean created) {
     }
 
-    private record Reservation(String code, String mode, Optional<String> arena, Instant expiresAt) {
-    }
 
     @FunctionalInterface
     public interface BedBreakHandler {
