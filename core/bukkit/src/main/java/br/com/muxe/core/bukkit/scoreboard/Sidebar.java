@@ -32,9 +32,13 @@ public final class Sidebar {
     }
 
     public static Sidebar create(Player player) {
-        Sidebar sidebar = new Sidebar(Bukkit.getScoreboardManager().getNewScoreboard());
+        Sidebar sidebar = on(Bukkit.getScoreboardManager().getNewScoreboard());
         player.setScoreboard(sidebar.scoreboard);
         return sidebar;
+    }
+
+    static Sidebar on(Scoreboard scoreboard) {
+        return new Sidebar(scoreboard);
     }
 
     public Scoreboard scoreboard() {
@@ -52,16 +56,20 @@ public final class Sidebar {
 
     public void lines(List<String> values) {
         List<String> lines = values.stream().limit(MAX_LINES).map(Colors::translate).toList();
+        boolean resized = lines.size() != shown.size();
         for (int index = 0; index < lines.size(); index++) {
             String line = lines.get(index);
-            Team team = team(index);
+            boolean newEntry = false;
             if (index >= shown.size() || !shown.get(index).equals(line)) {
+                Team team = team(index);
                 SidebarText.SidebarLine laid = SidebarText.layout(line, hidden(index));
                 team.setPrefix(laid.prefix());
                 team.setSuffix(laid.suffix());
-                entry(index, team, laid.entry());
+                newEntry = entry(index, team, laid.entry());
             }
-            objective.getScore(entries.get(index)).setScore(lines.size() - index);
+            if (resized || newEntry) {
+                objective.getScore(entries.get(index)).setScore(lines.size() - index);
+            }
         }
         for (int index = lines.size(); index < shown.size(); index++) {
             scoreboard.resetScores(entries.get(index));
@@ -85,11 +93,11 @@ public final class Sidebar {
         return team;
     }
 
-    private void entry(int index, Team team, String entry) {
+    private boolean entry(int index, Team team, String entry) {
         if (index < entries.size()) {
             String old = entries.get(index);
             if (old.equals(entry)) {
-                return;
+                return false;
             }
             team.removeEntry(old);
             scoreboard.resetScores(old);
@@ -98,6 +106,7 @@ public final class Sidebar {
             entries.add(entry);
         }
         team.addEntry(entry);
+        return true;
     }
 
     private static String hidden(int index) {

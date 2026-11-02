@@ -356,7 +356,7 @@ sidebar.title("&b&lMUXE");
 sidebar.lines(List.of("", "&fJogadores: &b2211", "", "&amuxe.com.br"));
 ```
 
-- Uma scoreboard por jogador, com até 15 linhas. Cada linha fica em um time, então atualizar uma linha nunca faz a sidebar piscar; só as linhas que mudaram são enviadas.
+- Uma scoreboard por jogador, com até 15 linhas. Cada linha fica em um time, então atualizar uma linha nunca faz a sidebar piscar; só as linhas que mudaram são enviadas, e os scores só são reescritos quando uma linha troca de entrada ou o número de linhas muda.
 - Linhas de até uns 30 caracteres visíveis são divididas entre o prefixo e o sufixo do time (16 caracteres cada na 1.8), levando a cor junto (`SidebarText.split`). Linhas maiores usam também o nome da entrada da linha no meio (até 40 caracteres, começando com um código de cor escondido que mantém as linhas únicas), então uma linha chega a uns 70 caracteres (`SidebarText.layout`); só essas linhas trocam de entrada quando mudam. Linhas em branco funcionam.
 - `core.sidebars()` (`SidebarOverrides`) deixa um plugin trocar a sidebar que outro plugin desenha: `provide(player -> Optional.of(new SidebarContent(title, lines)))`. A scoreboard do lobby pergunta a ele a cada atualização; o lobby do BedWars usa isso para o anexo 1. `clear()` devolve a sidebar.
 - `scoreboard()` expõe a scoreboard do Bukkit para outros times, como o que esconde o nome dos NPCs.

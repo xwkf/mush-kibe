@@ -355,7 +355,7 @@ sidebar.title("&b&lMUXE");
 sidebar.lines(List.of("", "&fJogadores: &b2211", "", "&amuxe.com.br"));
 ```
 
-- One scoreboard per player, with up to 15 lines. Each line lives in a team, so updating a line never makes the sidebar flicker; only lines that changed are sent.
+- One scoreboard per player, with up to 15 lines. Each line lives in a team, so updating a line never makes the sidebar flicker; only lines that changed are sent, and scores are only rewritten when a line changes its entry or the number of lines changes.
 - Lines up to about 30 visible characters are split between the team prefix and suffix (16 characters each in 1.8), carrying the color over (`SidebarText.split`). Longer lines also use the line's entry name in the middle (up to 40 characters, starting with a hidden color code that keeps lines unique), so a line can reach about 70 characters (`SidebarText.layout`); only those lines change their entry when they change. Blank lines are fine.
 - `core.sidebars()` (`SidebarOverrides`) lets a plugin replace the sidebar another plugin draws: `provide(player -> Optional.of(new SidebarContent(title, lines)))`. The lobby scoreboard asks it on every refresh; the BedWars lobby uses it for annex 1. `clear()` gives the sidebar back.
 - `scoreboard()` exposes the Bukkit scoreboard for other teams, such as the one that hides NPC names.
