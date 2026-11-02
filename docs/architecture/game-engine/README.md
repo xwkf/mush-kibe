@@ -33,6 +33,10 @@ Each game owns the lifecycle of its matches, because games differ too much to sh
 - `players(count)` reports `STARTED`, `SHORTENED`, `CANCELLED` or `NONE`.
 - `tick()`, called once a second, reports the remaining seconds and when the countdown finishes.
 
+## Health below the name
+
+`HealthBelowName` shows the health of the players alive under their names, as `20 ❤`, in every minigame. The game calls `show(scoreboard, alive)` for each viewer's scoreboard a few times a second (BedWars every 5 ticks), with the names of the players alive and their health rounded up (`points(health)`). A player missing from the list loses the line at once. The label (the heart) comes from the game's messages.
+
 ## Arena setup
 
 Each game describes what an arena needs in a `SetupSchema`, and the engine gives every game the same `/arena` command, holograms and checklist.

@@ -33,6 +33,10 @@ A `StartCountdown` segue as mesmas regras em todos os jogos e modos:
 - `players(quantidade)` informa `STARTED`, `SHORTENED`, `CANCELLED` ou `NONE`.
 - `tick()`, chamado uma vez por segundo, informa os segundos restantes e quando a contagem termina.
 
+## Vida abaixo do nome
+
+`HealthBelowName` mostra a vida dos jogadores vivos embaixo do nome, como `20 ❤`, em todos os minigames. O jogo chama `show(placar, vivos)` para o placar de cada jogador algumas vezes por segundo (o BedWars a cada 5 ticks), com os nomes dos vivos e a vida arredondada para cima (`points(vida)`). Quem sai da lista perde a linha na hora. O texto (o coração) vem das mensagens do jogo.
+
 ## Setup de arenas
 
 Cada jogo descreve o que uma arena precisa num `SetupSchema`, e a engine dá a todos os jogos o mesmo comando `/arena`, os mesmos hologramas e a mesma checklist.
