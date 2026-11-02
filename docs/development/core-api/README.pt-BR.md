@@ -167,6 +167,8 @@ SpawnedHologram hologram = holograms.show(player, top, List.of("&b&lSKYWARS", "&
 - As linhas descem a partir de `top`, a 0,28 bloco uma da outra. Uma linha vazia mantém o espaço e não mostra nada. `height(lines)` diz a altura do texto.
 - Mesmo transporte dos hologramas de pixels: suportes de armadura invisíveis enviados só para o `player`.
 - A altura de uma linha é onde o texto dela começa: o topo do texto fica 0,09375 bloco acima dela. O cliente 1.8 desenha o nome de um suporte de armadura pequeno como se ele tivesse o tamanho normal (1,975 bloco), então o `PacketHologramTransport` cria cada suporte `LABEL_HEIGHT` (1,39375) bloco abaixo da linha.
+- `hologram.rename(lines)` troca o texto de um holograma que mantém o mesmo número de linhas, sem criá-lo de novo; devolve `false` quando as linhas não batem e o holograma precisa ser mostrado de novo.
+- Um clique num holograma chega a um `PacketInterceptor` com o id de um suporte de armadura (`hologram.owns(id)`), mas o suporte fica bem abaixo do texto. Para saber em que parte do texto o jogador mirou, `LineAim.heightAt(player.getEyeLocation(), x, z)` dá a altura em que a visão do jogador passa mais perto da coluna do holograma.
 
 ### Explosão de fogo de artifício
 
@@ -361,6 +363,9 @@ MojangSkins.standard().byName("Notch").thenAccept(found -> ...);
 - `NpcService.start(plugin, layout, lines)` posiciona as linhas com um `NpcLabelLayout(bottom, gaps, spacing)`: a última linha `bottom` blocos acima dos pés e as outras subindo pelos `gaps`, depois pelo `spacing`, com o `LabelStack.upward`. `NpcLabelLayout.from(section)` lê isso da config; sem uma, o `NpcLabelLayout.STANDARD` deixa a última linha 2,05 blocos acima e as outras a 0,28 de distância.
 - `new Npc(id, location, skin, Optional.of(item))` coloca um item na mão do NPC, enviado a cada jogador como equipamento logo depois que o NPC aparece. `PlacedNpcs.hand(HeldItem)` transforma um material e um data guardados nesse item.
 - `MojangSkins` busca a skin assinada de um nome original (`api.mojang.com` e `sessionserver.mojang.com`). Guarde o resultado em vez de buscar a cada inicialização.
+- `npcs.visibleTo((viewer, npc) -> ...)` esconde um NPC dos jogadores que a regra recusa, como se estivessem fora de alcance. Com isso um NPC pode existir para um jogador só, como o NPC de estatísticas do BedWars, que veste a skin de quem olha para ele.
+- Quando só o texto das linhas muda e elas continuam nos mesmos lugares, o holograma do NPC renomeia os suportes de armadura com um pacote de metadata em vez de ser removido e criado de novo, então um texto que pisca não treme.
+- `PlayerSkins.of(player)` (pacote `br.com.muxe.core.bukkit.nms`) lê a skin assinada de um jogador online pelo perfil dele, para vestir um NPC como aquele jogador.
 - Veja a [ADR 0008](../../decisions/0008-packet-npcs-and-click-interception.pt-BR.md).
 
 ## Suportes de exibição

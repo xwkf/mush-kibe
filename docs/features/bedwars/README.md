@@ -121,6 +121,24 @@ Players pick an animation that plays when they break an enemy bed. The menus fol
 3. Left-clicking the bed hides it for that player only and plays the animation for that player only.
 4. `preview.return-delay` after the animation ends (2 s), or after `preview.timeout` without breaking the bed (2 min), the player goes back to where they were, with their lobby items.
 
+### BedWars lobby
+
+The BedWars lobby (`bedwars-lobby` group) runs Muxe-Lobby plus this plugin in lobby mode. The main game selector, game NPCs and `/jogar bedwars` lead there.
+
+- **Mode NPCs**: SOLO, DUPLAS, TRIOS and QUARTETOS open their mode menu; 1V1/2V2/3V3/4V4/4S opens the duels menu; MEGA and PILARES open nothing yet. `{players} jogando` counts the players in the rooms of their modes on every BedWars server. The two top lines of PILARES change between white and pink every 0.5 s.
+- **Mode menu** (`Bed Wars Solo`...): `Bed Wars (Solo)` shows the players of the mode and the top 3 of the daily winstreak, and sends the player to a match; `Selecionar mapa` opens the map menu for players with `muxe.bedwars.map-select` (VIPs) and answers `map-vip-only` to the others; `Treino: Ponte` answers `coming-soon`. The duel modes also have `Voltar`, back to the duels menu.
+- **Map menu** (`Bed Wars 1v1 (1/1)`): the maps of the mode found on the BedWars servers, favourites first, each group in alphabetical order. Left click asks for a room on that map; right click adds or removes the favourite. `Mapa favorito aleatório` joins a random favourite, `Pesquisar` filters by name typed in the chat (accents ignored), and the arrows change page.
+- **Matchmaking**: every BedWars server publishes its rooms and ready arenas every 2 s (`bedwars.rooms`). Joining picks the fullest room of the mode (and map) that still has space on any server; if there is none, it asks the emptiest server that has an arena of that mode (and map) to create one. The lobby sends `bedwars.join_request` to that server, which reserves the room for 30 s and replies with its code; the player sees `&aEnviando para <code>...` and is moved there. When they arrive, they enter the reserved room, or another room of the mode if it filled up meanwhile.
+- **Tops**: four holograms (final kills, wins, current winstreak and level) with the top 100 in 10 pages. Each player sees their own page: left click on the upper part (names and above) turns the page, left click on the lower part (`Clique para trocar!` and below) changes the period (Semanal, Mensal, Total; Total first on the level top), and right click opens `Selecionar modo` (Geral or a mode; the level top has no modes). Names are coloured with the highest tag the player has. The tops reload every 60 s.
+- **Statistics NPC**: shows each player as themselves (their own skin), with their level, XP bar, wins, kills, final kills, beds and winstreak above it. Clicking it opens `Suas estatísticas (Bed Wars)`, with Geral (level and XP included) and every mode.
+
+### Statistics
+
+- Every match end saves, for each player who played, the games, beds broken and lost, kills, deaths, assists, final kills, final deaths, final assists, wins, losses, winstreak and XP, per mode and in `geral`, for the day, week (Monday to Sunday), month and total, in the São Paulo time zone.
+- An assist goes to every other enemy who hit the victim in the last 15 seconds. Kill, final kill and bed XP come from `xp-rewards`; at the end each player also gets the per minute, per teammate and win XP.
+- The winstreak grows with each win and goes back to 0 on a loss; a draw keeps it. The best winstreak never goes down.
+- The level comes from the total XP: 5000 per level up to 9, 10000 from 10 to 19, and 5000 more every 10 levels. The badge follows the level list (`&7[0✫]`, `&a[10✶]`... `&4[100❤]`... rainbow from 1000).
+
 ## Commands
 
 | Command | Permission | Description |
@@ -138,6 +156,7 @@ Players pick an animation that plays when they break an enemy bed. The menus fol
 | `muxe.minigame.setup` | op | Allows `/arena`. |
 | `muxe.bedwars.admin` | op | Allows `/bedwars iniciar`. |
 | `muxe.cosmetics.admin` | op | Allows `/cosmeticos dar`. |
+| `muxe.bedwars.map-select` | op | Choosing the map in the mode menus (VIPs). Give it to the VIP groups. |
 | `muxe.cosmetic.all` | op | Owns every BedWars cosmetic. |
 | `muxe.cosmetic.ultra` | false | Owns the `Incluso no ULTRA` cosmetics. The `ultra` group has it (migration V14). |
 
@@ -153,7 +172,7 @@ Players pick an animation that plays when they break an enemy bed. The menus fol
 | `modes.<id>.team-size` | see the table above | Players per team. |
 | `modes.<id>.fixed-teams` | none (Solo, Duplas) | Team colours of modes whose teams are fixed. Without it, the setup chooses `max-players / team-size` colours. |
 | `modes.<id>.extra-islands` | `true` on 4s | Adds the extra shop, upgrades and generator steps to the setup. |
-| `lobby-group` | `lobby` | Where players go when a match ends or they leave the waiting room. |
+| `lobby-group` | `bedwars-lobby` | Where players go when a match ends or they leave the waiting room, and the group that receives the room lists. |
 | `default-mode` | `solo` | The mode of the room a player joins on arrival. |
 | `timings.*` | 5 s respawn, 180 s rejoin, 30 s restart, 4 s protection, island radius 17, protection radii 5/1/1 | Match timings and protected areas. |
 | `countdown.titles` | `30`, `10`, `5`...`1` | Titles of the start countdown. |
@@ -174,10 +193,20 @@ Players pick an animation that plays when they break an enemy bed. The menus fol
 | `preview.timeout`, `preview.return-delay` | `120s`, `2s` | Time to break the bed and wait after the animation. |
 | `preview.action-bar`, `preview.scoreboard` | `&eQuebre a cama!`, MUXE / Visualizando | Preview texts; `{name}` is the cosmetic. |
 | `lobby.menu-item` | slot 3, emerald | Menu do Bed Wars item on the BedWars lobby. |
+| `levels.badges`, `levels.rainbow` | the level list | Badge of each level range; from `rainbow.from` (1000) the digits take the rainbow colours. |
+| `lobby.npcs.<id>` | the exports | `action` (a mode id, `duelos` or `nenhuma`), `location`, signed `skin`, `players` (modes counted in `{players}`) and `lines`; `{blink}` takes the next colour of `lobby.blink-colors` every 0.5 s. |
+| `lobby.stats-npc` | 22.5 81 -1.5 | Position, lines and XP bar size of the statistics NPC. |
+| `lobby.tops.boards.<id>` | the four tops | `category` (`FINAL_KILLS`, `WINS`, `WINSTREAK`, `LEVEL`), `title`, `location` of the top stand, `periods` in display order and `modes`. |
+| `lobby.tops.*` | the exports | Header, entry, empty, click and period texts, `label-above-stand` (2.175) and `refresh-seconds` (60). |
+| `lobby.menus.*` | the exports | Mode, duels, maps, top mode and statistics menus. |
 
 ## Packets
 
-None yet.
+| Type | From → to | Delivery | Purpose |
+|---|---|---|---|
+| `bedwars.rooms` | BedWars servers → `lobby-group` | volatile, 10 s | Rooms (code, mode, arena, open, players, max) and ready arenas of the server, every 2 s. |
+| `bedwars.join_request` | BedWars lobby → one BedWars server | request, 5 s | Reserves a room of a mode, optionally of an arena or a given room. |
+| `bedwars.join_reply` | BedWars server → lobby | reply | Whether a room was reserved, and its code. |
 
 ## Data
 
@@ -187,6 +216,10 @@ None yet.
 | `plugins/Muxe-BedWars/arenas/<arena>.yml` | Mode, display name, teams, points and heights, with `ready: true` when nothing is missing. Copied with the map. |
 | `core.owned_cosmetics`, `core.selected_cosmetics` | Owned and selected cosmetics, category `bedwars-cama`. See [Credits and cosmetics](../credits/README.md). |
 | `<server>/previa_quebra_de_cama/` | The preview world. Deployed to the BedWars lobby only, never committed. |
+| `bedwars.player_stats` | One row per player, mode (and `geral`), period (`diario`, `semanal`, `mensal`, `total`) and period start, with every counter and the XP. Migration `V1__create_player_stats_and_favourite_maps.sql`. |
+| `bedwars.favourite_maps` | Favourite arenas of each player. |
+
+Commands and queries in `br.com.muxe.minigame.bedwars.stats`: `RecordMatchCommand`, `ToggleFavouriteMapCommand`, `FindPlayerStatsQuery`, `FindTopQuery`, `FindFavouriteMapsQuery`.
 
 ## Metrics
 
@@ -207,7 +240,11 @@ None yet.
 - [x] Shop and upgrade names and lore follow the exports (`ShopCatalogTest`, `UpgradeCatalogTest`).
 - [x] The 13 animations end without leftovers and follow the recorded timings (`BedAnimationsTest`).
 - [x] Cosmetic states, prices, sorting and lore follow the exports (`CosmeticCatalogTest`).
+- [x] Deaths, assists, beds lost, XP and match outcomes are counted (`RoomStatsTest`); periods, counters, tops and favourites are saved (`StatsHandlersTest`, `StatCountersTest`, `StatsPeriodTest`, `PostgresBedWarsStatsRepositoryIntegrationTest`).
+- [x] Matchmaking picks the fullest open room or asks the emptiest server for one (`MatchmakerTest`).
+- [x] Lobby NPCs, menus, tops, level badges and the statistics NPC follow the exports (`LobbyViewTest`, `LobbyFormatTest`).
 - [ ] A full match checked in game.
+- [ ] Lobby NPCs, menus, matchmaking, map choice and tops checked in game.
 - [ ] Every animation and the preview checked in game.
 
 ## Failures and recovery
@@ -216,8 +253,9 @@ If Muxe-Core is not enabled, the plugin disables itself.
 
 ## Known limitations
 
-- The game selector, game NPCs and `/jogar bedwars` lead to the BedWars lobby (`bedwars-lobby` group), but nothing there sends players to a match yet: mode NPCs, map choice and `/retornar` are not in, so a player on a BedWars server picks a mode with `/bedwars entrar`.
-- Statistics, levels and XP are shown but not saved.
+- MEGA and PILARES are not modes yet, so their NPCs open nothing. `/retornar`, `/l` and the BedWars lobby scoreboard (annex 1) are not in yet.
+- A player who reaches a BedWars server without a reservation still joins a room of `default-mode`.
+- The lobby only knows the rooms of servers that published in the last 10 seconds; the room list of a server that stops is forgotten after that.
 - The special shop items, the quick buy editor, the dragons, the spinning blocks above the generators, and the victory and defeat titles are not in yet.
 - A restart or crash ends every match on the server without compensation.
 - 17 bed destruction cosmetics have no animation yet. The other cosmetic categories, Cor preferida and the cosmetic shop are not in yet.

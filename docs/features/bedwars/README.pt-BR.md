@@ -121,6 +121,24 @@ O jogador escolhe uma animação que toca quando ele quebra uma cama inimiga. Os
 3. Ao bater na cama, ela some só para esse jogador e a animação toca só para ele.
 4. `preview.return-delay` depois do fim da animação (2 s), ou depois de `preview.timeout` sem quebrar a cama (2 min), o jogador volta para onde estava, com os itens do lobby.
 
+### Lobby do BedWars
+
+O lobby do BedWars (grupo `bedwars-lobby`) roda o Muxe-Lobby e este plugin no modo lobby. O seletor de jogo principal, os NPCs de jogo e o `/jogar bedwars` levam para lá.
+
+- **NPCs de modo**: SOLO, DUPLAS, TRIOS e QUARTETOS abrem o menu do modo; 1V1/2V2/3V3/4V4/4S abre o menu de duelos; MEGA e PILARES ainda não abrem nada. `{players} jogando` conta os jogadores nas salas dos seus modos em todos os servidores de BedWars. As duas linhas de cima do PILARES trocam entre branco e rosa a cada 0,5 s.
+- **Menu do modo** (`Bed Wars Solo`...): `Bed Wars (Solo)` mostra os jogadores do modo e o top 3 do winstreak diário, e manda o jogador para uma partida; `Selecionar mapa` abre o menu de mapas para quem tem `muxe.bedwars.map-select` (VIPs) e responde `map-vip-only` para os outros; `Treino: Ponte` responde `coming-soon`. Os modos de duelo também têm `Voltar`, para o menu de duelos.
+- **Menu de mapas** (`Bed Wars 1v1 (1/1)`): os mapas do modo encontrados nos servidores de BedWars, favoritos primeiro, cada grupo em ordem alfabética. Botão esquerdo pede uma sala naquele mapa; botão direito adiciona ou remove o favorito. `Mapa favorito aleatório` entra num favorito aleatório, `Pesquisar` filtra pelo nome digitado no chat (sem diferenciar acentos) e as setas trocam de página.
+- **Matchmaking**: cada servidor de BedWars publica as suas salas e arenas prontas a cada 2 s (`bedwars.rooms`). Entrar escolhe a sala mais cheia do modo (e do mapa) que ainda tem vaga em qualquer servidor; se não houver, pede ao servidor mais vazio que tenha uma arena desse modo (e mapa) para criar uma. O lobby manda `bedwars.join_request` para esse servidor, que reserva a sala por 30 s e responde com o código; o jogador vê `&aEnviando para <código>...` e é movido para lá. Ao chegar, ele entra na sala reservada, ou em outra sala do modo se ela tiver enchido nesse meio tempo.
+- **Tops**: quatro hologramas (kills finais, vitórias, winstreak atual e nível) com o top 100 em 10 páginas. Cada jogador vê a sua própria página: botão esquerdo na parte de cima (nomes para cima) troca a página, botão esquerdo na parte de baixo (`Clique para trocar!` para baixo) troca o período (Semanal, Mensal, Total; Total primeiro no top de nível) e botão direito abre `Selecionar modo` (Geral ou um modo; o top de nível não tem modos). Os nomes têm a cor da maior tag que o jogador tem. Os tops recarregam a cada 60 s.
+- **NPC de estatísticas**: mostra cada jogador como ele mesmo (com a skin dele), com nível, barra de XP, vitórias, kills, kills finais, camas e winstreak acima. Clicar abre `Suas estatísticas (Bed Wars)`, com Geral (incluindo nível e XP) e cada modo.
+
+### Estatísticas
+
+- Todo fim de partida salva, para cada jogador que jogou, partidas, camas quebradas e perdidas, kills, mortes, assistências, kills finais, mortes finais, assistências finais, vitórias, derrotas, winstreak e XP, por modo e em `geral`, no dia, na semana (segunda a domingo), no mês e no total, no fuso de São Paulo.
+- Uma assistência vai para cada outro inimigo que bateu na vítima nos últimos 15 segundos. O XP de kill, kill final e cama vem de `xp-rewards`; no fim cada jogador também ganha o XP por minuto, por companheiro e por vitória.
+- O winstreak cresce a cada vitória e volta a 0 numa derrota; um empate o mantém. O maior winstreak nunca diminui.
+- O nível vem do XP total: 5000 por nível até o 9, 10000 do 10 ao 19 e mais 5000 a cada 10 níveis. A insígnia segue a lista de níveis (`&7[0✫]`, `&a[10✶]`... `&4[100❤]`... arco-íris a partir do 1000).
+
 ## Comandos
 
 | Comando | Permissão | Descrição |
@@ -138,6 +156,7 @@ O jogador escolhe uma animação que toca quando ele quebra uma cama inimiga. Os
 | `muxe.minigame.setup` | op | Permite o `/arena`. |
 | `muxe.bedwars.admin` | op | Permite o `/bedwars iniciar`. |
 | `muxe.cosmetics.admin` | op | Permite o `/cosmeticos dar`. |
+| `muxe.bedwars.map-select` | op | Escolher o mapa nos menus dos modos (VIPs). Dê aos grupos VIP. |
 | `muxe.cosmetic.all` | op | Possui todos os cosméticos do BedWars. |
 | `muxe.cosmetic.ultra` | false | Possui os cosméticos `Incluso no ULTRA`. O grupo `ultra` tem essa permissão (migração V14). |
 
@@ -153,7 +172,7 @@ O jogador escolhe uma animação que toca quando ele quebra uma cama inimiga. Os
 | `modes.<id>.team-size` | veja a tabela acima | Jogadores por time. |
 | `modes.<id>.fixed-teams` | nenhum (Solo, Duplas) | Cores dos times nos modos em que eles são fixos. Sem ela, o setup escolhe `max-players / team-size` cores. |
 | `modes.<id>.extra-islands` | `true` no 4s | Adiciona ao setup os passos de loja, melhorias e geradores extras. |
-| `lobby-group` | `lobby` | Para onde os jogadores vão quando a partida acaba ou quando saem da espera. |
+| `lobby-group` | `bedwars-lobby` | Para onde os jogadores vão quando a partida acaba ou quando saem da espera, e o grupo que recebe as listas de salas. |
 | `default-mode` | `solo` | O modo da sala em que o jogador entra ao chegar. |
 | `timings.*` | 5 s renascer, 180 s voltar, 30 s reiniciar, 4 s proteção, raio da ilha 17, raios de proteção 5/1/1 | Tempos da partida e áreas protegidas. |
 | `countdown.titles` | `30`, `10`, `5`...`1` | Títulos da contagem para iniciar. |
@@ -174,10 +193,20 @@ O jogador escolhe uma animação que toca quando ele quebra uma cama inimiga. Os
 | `preview.timeout`, `preview.return-delay` | `120s`, `2s` | Tempo para quebrar a cama e espera depois da animação. |
 | `preview.action-bar`, `preview.scoreboard` | `&eQuebre a cama!`, MUXE / Visualizando | Textos da prévia; `{name}` é o cosmético. |
 | `lobby.menu-item` | slot 3, esmeralda | Item Menu do Bed Wars no lobby de BedWars. |
+| `levels.badges`, `levels.rainbow` | a lista de níveis | Insígnia de cada faixa de nível; a partir de `rainbow.from` (1000) os dígitos ganham as cores do arco-íris. |
+| `lobby.npcs.<id>` | os exports | `action` (um id de modo, `duelos` ou `nenhuma`), `location`, `skin` assinada, `players` (modos contados em `{players}`) e `lines`; `{blink}` pega a próxima cor de `lobby.blink-colors` a cada 0,5 s. |
+| `lobby.stats-npc` | 22.5 81 -1.5 | Posição, linhas e tamanho da barra de XP do NPC de estatísticas. |
+| `lobby.tops.boards.<id>` | os quatro tops | `category` (`FINAL_KILLS`, `WINS`, `WINSTREAK`, `LEVEL`), `title`, `location` do suporte do topo, `periods` na ordem de exibição e `modes`. |
+| `lobby.tops.*` | os exports | Textos de cabeçalho, posição, vazio, clique e períodos, `label-above-stand` (2.175) e `refresh-seconds` (60). |
+| `lobby.menus.*` | os exports | Menus de modo, duelos, mapas, modo do top e estatísticas. |
 
 ## Pacotes
 
-Nenhum ainda.
+| Tipo | De → para | Entrega | Para quê |
+|---|---|---|---|
+| `bedwars.rooms` | servidores de BedWars → `lobby-group` | volátil, 10 s | Salas (código, modo, arena, aberta, jogadores, máximo) e arenas prontas do servidor, a cada 2 s. |
+| `bedwars.join_request` | lobby do BedWars → um servidor de BedWars | pedido, 5 s | Reserva uma sala de um modo, opcionalmente de uma arena ou uma sala específica. |
+| `bedwars.join_reply` | servidor de BedWars → lobby | resposta | Se uma sala foi reservada, e o código dela. |
 
 ## Dados
 
@@ -186,7 +215,11 @@ Nenhum ainda.
 | `plugins/Muxe-BedWars/maps/<arena>.mxw` | O mapa, no [formato de mapa da Muxe](../../decisions/0009-own-map-format-and-match-cells.pt-BR.md). Copiado para cada servidor de BedWars. |
 | `plugins/Muxe-BedWars/arenas/<arena>.yml` | Modo, nome de exibição, times, pontos e alturas, com `ready: true` quando não falta nada. Copiado junto com o mapa. |
 | `core.owned_cosmetics`, `core.selected_cosmetics` | Cosméticos possuídos e selecionados, categoria `bedwars-cama`. Veja [Créditos e cosméticos](../credits/README.pt-BR.md). |
-| `<servidor>/previa_quebra_de_cama/` | O mundo da prévia. Vai só para o lobby de BedWars, nunca para o repositório. |
+| `bedwars.player_stats` | Uma linha por jogador, modo (e `geral`), período (`diario`, `semanal`, `mensal`, `total`) e início do período, com todos os contadores e o XP. Migração `V1__create_player_stats_and_favourite_maps.sql`. |
+| `bedwars.favourite_maps` | Arenas favoritas de cada jogador. |
+| `<server>/previa_quebra_de_cama/` | O mundo da prévia. Vai só para o lobby de BedWars, nunca para o repositório. |
+
+Comandos e consultas em `br.com.muxe.minigame.bedwars.stats`: `RecordMatchCommand`, `ToggleFavouriteMapCommand`, `FindPlayerStatsQuery`, `FindTopQuery`, `FindFavouriteMapsQuery`.
 
 ## Métricas
 
@@ -207,7 +240,11 @@ Nenhum ainda.
 - [x] Nomes e lores da loja e das melhorias seguem os exports (`ShopCatalogTest`, `UpgradeCatalogTest`).
 - [x] As 13 animações terminam sem deixar nada e seguem os tempos gravados (`BedAnimationsTest`).
 - [x] Estados, preços, ordem e lore dos cosméticos seguem os exports (`CosmeticCatalogTest`).
+- [x] Mortes, assistências, camas perdidas, XP e resultados das partidas são contados (`RoomStatsTest`); períodos, contadores, tops e favoritos são salvos (`StatsHandlersTest`, `StatCountersTest`, `StatsPeriodTest`, `PostgresBedWarsStatsRepositoryIntegrationTest`).
+- [x] O matchmaking escolhe a sala aberta mais cheia ou pede uma ao servidor mais vazio (`MatchmakerTest`).
+- [x] NPCs, menus, tops, insígnias de nível e o NPC de estatísticas do lobby seguem os exports (`LobbyViewTest`, `LobbyFormatTest`).
 - [ ] Uma partida completa conferida no jogo.
+- [ ] NPCs, menus, matchmaking, escolha de mapa e tops do lobby conferidos no jogo.
 - [ ] Todas as animações e a prévia conferidas no jogo.
 
 ## Falhas e recuperação
@@ -216,8 +253,9 @@ Se o Muxe-Core não estiver habilitado, o plugin se desabilita.
 
 ## Limitações conhecidas
 
-- O seletor de jogo, os NPCs de jogo e o `/jogar bedwars` levam ao lobby do BedWars (grupo `bedwars-lobby`), mas nada lá manda o jogador para uma partida ainda: os NPCs dos modos, a escolha de mapa e o `/retornar` ainda não entraram, então quem está num servidor de BedWars escolhe o modo com `/bedwars entrar`.
-- Estatísticas, níveis e XP aparecem mas não são salvos.
+- MEGA e PILARES ainda não são modos, então os NPCs deles não abrem nada. O `/retornar`, o `/l` e a scoreboard do lobby do BedWars (anexo 1) ainda não entraram.
+- Quem chega a um servidor de BedWars sem reserva ainda entra numa sala do `default-mode`.
+- O lobby só conhece as salas dos servidores que publicaram nos últimos 10 segundos; a lista de um servidor que para é esquecida depois disso.
 - Os itens especiais da loja, o editor da compra rápida, os dragões, os blocos girando sobre os geradores e os títulos de vitória e derrota ainda não entraram.
 - Um reinício ou crash encerra todas as partidas do servidor sem compensação.
 - 17 cosméticos de destruição de cama ainda não têm animação. As outras categorias de cosméticos, Cor preferida e a loja de cosméticos ainda não existem.

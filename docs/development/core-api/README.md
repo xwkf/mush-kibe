@@ -167,6 +167,8 @@ SpawnedHologram hologram = holograms.show(player, top, List.of("&b&lSKYWARS", "&
 - Lines go down from `top`, 0.28 blocks apart. A blank line keeps its space and shows nothing. `height(lines)` tells how tall the text is.
 - Same transport as the pixel holograms: invisible armor stands sent only to `player`.
 - The height of a line is where its text starts: the top of the text sits 0.09375 blocks above it. The 1.8 client draws the name of a small armor stand as if the stand were full size (1.975 blocks), so `PacketHologramTransport` spawns each stand `LABEL_HEIGHT` (1.39375) blocks below the line.
+- `hologram.rename(lines)` changes the text of a hologram that keeps the same number of lines, without respawning it; it returns `false` when the lines do not match and the hologram must be shown again.
+- A click on a hologram reaches a `PacketInterceptor` with the id of an armor stand (`hologram.owns(id)`), but the stand sits well below its text. To know which part of the text the player aimed at, `LineAim.heightAt(player.getEyeLocation(), x, z)` gives the height where the player's sight passes closest to the hologram column.
 
 ### Firework burst
 
@@ -361,6 +363,9 @@ MojangSkins.standard().byName("Notch").thenAccept(found -> ...);
 - `NpcService.start(plugin, layout, lines)` places the lines with an `NpcLabelLayout(bottom, gaps, spacing)`: the last line `bottom` blocks above the feet and the others going up through `gaps`, then `spacing`, with `LabelStack.upward`. `NpcLabelLayout.from(section)` reads it from config; without one, `NpcLabelLayout.STANDARD` keeps the last line 2.05 blocks up and the others 0.28 apart.
 - `new Npc(id, location, skin, Optional.of(item))` puts an item in the NPC's hand, sent to each viewer as equipment right after the NPC appears. `PlacedNpcs.hand(HeldItem)` turns a stored material and data into that item.
 - `MojangSkins` finds the signed skin of an original player name (`api.mojang.com` and `sessionserver.mojang.com`). Store the result instead of asking on every start.
+- `npcs.visibleTo((viewer, npc) -> ...)` hides an NPC from the viewers the rule refuses, as if they were out of range. With it an NPC can exist for one player only, such as the BedWars statistics NPC that wears the skin of whoever looks at it.
+- When only the text of the lines changes and they keep their places, the NPC's hologram renames its armor stands with a metadata packet instead of being removed and spawned again, so blinking text does not flicker.
+- `PlayerSkins.of(player)` (package `br.com.muxe.core.bukkit.nms`) reads the signed skin of an online player from their profile, to dress an NPC as that player.
 - See [ADR 0008](../../decisions/0008-packet-npcs-and-click-interception.md).
 
 ## Display stands
