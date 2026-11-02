@@ -5,6 +5,7 @@ import br.com.muxe.core.bukkit.cosmetic.animation.BedAnimation;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import br.com.muxe.core.bukkit.cosmetic.stage.AnimationPlayer;
 import br.com.muxe.core.bukkit.cosmetic.stage.AnimationPlayer.Playback;
+import br.com.muxe.core.bukkit.nms.BlockMask;
 import br.com.muxe.core.bukkit.scoreboard.Sidebar;
 import br.com.muxe.core.bukkit.text.ActionBar;
 import br.com.muxe.core.bukkit.text.Colors;
@@ -50,6 +51,7 @@ public final class BedPreview implements PreviewGate, Listener {
 
     private final Plugin plugin;
     private final BuildMode buildMode;
+    private final Optional<BlockMask> blocks;
     private final PreviewSettings settings;
     private final BedAnimations animations;
     private final AnimationPlayer animator;
@@ -57,9 +59,10 @@ public final class BedPreview implements PreviewGate, Listener {
     private final Map<UUID, Session> sessions = new HashMap<>();
     private World world;
 
-    public BedPreview(Plugin plugin, BuildMode buildMode, PreviewSettings settings, BedAnimations animations, MessageCatalog messages) {
+    public BedPreview(Plugin plugin, BuildMode buildMode, Optional<BlockMask> blocks, PreviewSettings settings, BedAnimations animations, MessageCatalog messages) {
         this.plugin = plugin;
         this.buildMode = buildMode;
+        this.blocks = blocks;
         this.settings = settings;
         this.animations = animations;
         this.animator = new AnimationPlayer(plugin);
@@ -216,7 +219,8 @@ public final class BedPreview implements PreviewGate, Listener {
             return;
         }
         for (Vec half : List.of(settings.bed().foot(), settings.bed().head())) {
-            viewer.sendBlockChange(new Location(world, half.x(), half.y(), half.z()), Material.AIR, (byte) 0);
+            Location at = new Location(world, half.x(), half.y(), half.z());
+            blocks.ifPresentOrElse(mask -> mask.hide(viewer, at, Material.AIR, (byte) 0), () -> viewer.sendBlockChange(at, Material.AIR, (byte) 0));
         }
     }
 
@@ -228,7 +232,7 @@ public final class BedPreview implements PreviewGate, Listener {
         session.cancel();
         for (Vec half : List.of(settings.bed().foot(), settings.bed().head())) {
             Block block = world.getBlockAt((int) Math.floor(half.x()), (int) Math.floor(half.y()), (int) Math.floor(half.z()));
-            sendBlock(viewer, block);
+            blocks.ifPresentOrElse(mask -> mask.reveal(viewer, block.getLocation()), () -> sendBlock(viewer, block));
         }
         viewer.teleport(session.from);
         viewer.getInventory().setContents(session.contents);

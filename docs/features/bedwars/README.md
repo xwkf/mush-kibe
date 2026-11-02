@@ -108,7 +108,7 @@ Players pick an animation that plays when they break an enemy bed. The menus fol
   - Unavailable (event cosmetics the player does not own, or cosmetics without an animation yet): right click previews when there is an animation.
   - `Incluso no ULTRA` cosmetics are owned by everyone with `muxe.cosmetic.ultra`.
   - Players with `muxe.cosmetic.all` (ops by default) own every cosmetic. The ones without an animation still show `Indisponível`.
-  - In the preview, the bed disappears for the viewer as soon as it is hit and stays hidden until they go back, even after the animation restores its own blocks.
+  - In the preview, the bed disappears for the viewer as soon as it is hit and stays hidden until they go back: it is masked with a `BlockMask`, so the real bed the server resends after the hit never reaches the viewer.
 - 30 cosmetics are listed; 13 have an animation (Ajudante de Papai Noel, Avalanche, Coelhos, Passarinhos, Friaca, Fogos de Artifício, Colheita de Abóboras, Apavorante, Deserto, Tinta, Bola de Canhão, Enderman, Sal na Ferida). The other 17 show `Indisponível.` until their animation exists.
 - Animations are drawn only with packets (armor stands, falling blocks, items, fireworks, particles, sounds and fake block changes), so the real world never changes. They are our own reproductions of the recorded behaviour, with original pixel sprites and community heads.
 

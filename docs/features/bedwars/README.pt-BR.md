@@ -108,7 +108,7 @@ O jogador escolhe uma animação que toca quando ele quebra uma cama inimiga. Os
   - Indisponível (cosméticos de evento que o jogador não tem, ou cosméticos ainda sem animação): botão direito visualiza quando existe animação.
   - Os cosméticos `Incluso no ULTRA` são de todos que têm `muxe.cosmetic.ultra`.
   - Quem tem `muxe.cosmetic.all` (ops, por padrão) possui todos os cosméticos. Os que não têm animação continuam `Indisponível`.
-  - Na prévia, a cama some para quem está vendo assim que é atingida e continua escondida até a volta, mesmo depois que a animação restaura os seus próprios blocos.
+  - Na prévia, a cama some para quem está vendo assim que é atingida e continua escondida até a volta: ela fica mascarada com um `BlockMask`, então a cama real que o servidor reenvia depois do golpe nunca chega a quem está vendo.
 - São 30 cosméticos; 13 têm animação (Ajudante de Papai Noel, Avalanche, Coelhos, Passarinhos, Friaca, Fogos de Artifício, Colheita de Abóboras, Apavorante, Deserto, Tinta, Bola de Canhão, Enderman, Sal na Ferida). Os outros 17 mostram `Indisponível.` até a animação deles existir.
 - As animações são feitas só com pacotes (armor stands, falling blocks, itens, fogos, partículas, sons e blocos falsos), então o mundo real nunca muda. São reproduções nossas do comportamento gravado, com sprites originais e cabeças da comunidade.
 

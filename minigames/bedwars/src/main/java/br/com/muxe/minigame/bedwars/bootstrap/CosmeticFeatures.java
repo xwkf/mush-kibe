@@ -3,6 +3,7 @@ package br.com.muxe.minigame.bedwars.bootstrap;
 import br.com.muxe.core.bukkit.api.MuxeCore;
 import br.com.muxe.core.bukkit.command.framework.Commands;
 import br.com.muxe.core.bukkit.cosmetic.stage.AnimationPlayer;
+import br.com.muxe.core.bukkit.nms.BlockMask;
 import br.com.muxe.core.bukkit.permission.command.Replies;
 import br.com.muxe.core.bukkit.permission.command.TargetLookup;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
@@ -50,7 +51,7 @@ final class CosmeticFeatures {
         BedPreview preview = null;
         PreviewGate gate = (player, cosmetic) -> player.sendMessage(messages.get("preview-only-lobby"));
         if (lobby) {
-            BedPreview started = new BedPreview(plugin, core.buildMode(), PreviewSettings.from(section(config, "preview")), animations, messages);
+            BedPreview started = new BedPreview(plugin, core.buildMode(), BlockMask.start(plugin), PreviewSettings.from(section(config, "preview")), animations, messages);
             if (started.start()) {
                 preview = started;
                 gate = started;
