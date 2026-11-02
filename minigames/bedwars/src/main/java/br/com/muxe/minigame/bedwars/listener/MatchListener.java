@@ -91,6 +91,7 @@ public final class MatchListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
+        event.setJoinMessage(null);
         Player player = event.getPlayer();
         activity.active(player.getUniqueId(), core.clock().instant());
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
@@ -102,6 +103,7 @@ public final class MatchListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
+        event.setQuitMessage(null);
         activity.forget(event.getPlayer().getUniqueId());
         rooms.leave(event.getPlayer());
     }

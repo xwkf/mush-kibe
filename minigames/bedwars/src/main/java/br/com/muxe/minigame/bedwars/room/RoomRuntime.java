@@ -140,9 +140,14 @@ public final class RoomRuntime {
         return Colors.translate(player.team() == null ? "&7" : player.team().color()) + player.name();
     }
 
+    private String tagName(Player player) {
+        return Colors.translate(core.permissions().display(player.getUniqueId()).color()) + player.getName();
+    }
+
     void addWaiting(Player player) {
         Change change = room.join(player.getUniqueId(), player.getName());
         reset(player, PLAYER_MODE);
+        broadcast(RoomAnnouncements.joined(messages, tagName(player), room.players().size(), room.mode().maxPlayers()));
         player.teleport(location(room.arena().waitingSpawn()));
         PlayerInventory inventory = player.getInventory();
         inventory.setItem(settings.hotbar().menu().slot(), named(Material.matchMaterial(settings.hotbar().menu().material()), settings.hotbar().menu().name()));
@@ -156,6 +161,7 @@ public final class RoomRuntime {
     void removeWaiting(Player player) {
         Change change = room.leaveBeforeStart(player.getUniqueId());
         forget(player);
+        broadcast(RoomAnnouncements.left(messages, tagName(player)));
         countdownChanged(change);
         refreshScoreboards();
     }
