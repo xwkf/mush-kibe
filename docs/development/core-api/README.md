@@ -400,7 +400,7 @@ build.addHook(new BuildModeHook() {
 - **On:** clears the inventory, switches to Creative and repeats `build-action-bar` in the action bar every second.
 - **Off:** clears the inventory and the action bar and returns to Adventure on the kinds in `build-mode.adventure-only`, or to the server's default game mode elsewhere. Hooks then give items back.
 - The state lives in Redis (`muxe:build:<uuid>`) for `build-mode.duration` (6 hours), renewed on every server join. A player who turns it on keeps it when moving to another server; players without `muxe.build` lose it on their next join.
-- On `adventure-only` kinds (`LOBBY` and `AUTH`), any game mode other than Adventure is cancelled, except Creative in build mode (`BuildRules.allowsGameMode`).
+- On `adventure-only` kinds (`LOBBY` and `AUTH`), any game mode other than Adventure is cancelled, except Creative in build mode (`BuildRules.allowsGameMode`). A plugin that needs another mode for a moment calls `releaseGameMode(player)` before changing it and `lockGameMode(player)` when it gives the player back, as the BedWars cosmetic preview does with Survival (a 1.8 client in Adventure cannot hit blocks). Quitting locks the player again.
 - Plugins only read `isBuilding` to decide what a player may do. A hook can refuse build mode (`allows`), as the auth server does before login, and react to `entered` and `left`.
 
 ## Hotbar

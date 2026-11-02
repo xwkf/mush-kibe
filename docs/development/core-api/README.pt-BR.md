@@ -400,7 +400,7 @@ build.addHook(new BuildModeHook() {
 - **Ligado:** limpa o inventário, coloca no Criativo e repete `build-action-bar` na action bar a cada segundo.
 - **Desligado:** limpa o inventário e a action bar e volta para o Aventura nos tipos de `build-mode.adventure-only`, ou para o modo de jogo padrão do servidor nos outros. Depois os hooks devolvem os itens.
 - O estado fica no Redis (`muxe:build:<uuid>`) por `build-mode.duration` (6 horas), renovado a cada entrada num servidor. Quem liga o modo continua com ele ao trocar de servidor; quem não tem `muxe.build` o perde na próxima entrada.
-- Nos tipos de `adventure-only` (`LOBBY` e `AUTH`), qualquer modo de jogo que não seja Aventura é cancelado, exceto o Criativo no modo construção (`BuildRules.allowsGameMode`).
+- Nos tipos de `adventure-only` (`LOBBY` e `AUTH`), qualquer modo de jogo que não seja Aventura é cancelado, exceto o Criativo no modo construção (`BuildRules.allowsGameMode`). Um plugin que precisa de outro modo por um momento chama `releaseGameMode(player)` antes de trocá-lo e `lockGameMode(player)` quando devolve o jogador, como a prévia de cosméticos do BedWars faz com o Sobrevivência (um cliente 1.8 no Aventura não consegue bater em blocos). Sair do servidor trava o jogador de novo.
 - Os plugins só leem `isBuilding` para decidir o que o jogador pode fazer. Um hook pode recusar o modo construção (`allows`), como o servidor de autenticação faz antes do login, e reagir a `entered` e `left`.
 
 ## Hotbar

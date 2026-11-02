@@ -38,6 +38,7 @@ public final class BuildMode implements Listener, Runnable {
     private final Logger logger;
     private final Set<UUID> active = ConcurrentHashMap.newKeySet();
     private final List<BuildModeHook> hooks = new CopyOnWriteArrayList<>();
+    private final GameModeLock gameModes = new GameModeLock();
 
     public BuildMode(
         Server server,
@@ -61,6 +62,14 @@ public final class BuildMode implements Listener, Runnable {
 
     public void addHook(BuildModeHook hook) {
         hooks.add(hook);
+    }
+
+    public void releaseGameMode(Player player) {
+        gameModes.release(player.getUniqueId());
+    }
+
+    public void lockGameMode(Player player) {
+        gameModes.lock(player.getUniqueId());
     }
 
     public boolean isBuilding(Player player) {
@@ -129,11 +138,13 @@ public final class BuildMode implements Listener, Runnable {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         active.remove(event.getPlayer().getUniqueId());
+        gameModes.lock(event.getPlayer().getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onGameModeChange(PlayerGameModeChangeEvent event) {
-        if (settings.adventureOnly(kind) && !BuildRules.allowsGameMode(event.getNewGameMode(), isBuilding(event.getPlayer()))) {
+        Player player = event.getPlayer();
+        if (settings.adventureOnly(kind) && !gameModes.allows(player.getUniqueId(), event.getNewGameMode(), isBuilding(player))) {
             event.setCancelled(true);
         }
     }
