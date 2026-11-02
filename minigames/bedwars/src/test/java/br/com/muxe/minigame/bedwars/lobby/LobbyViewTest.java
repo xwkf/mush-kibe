@@ -180,6 +180,24 @@ class LobbyViewTest {
     }
 
     @Test
+    void theLevelTopShowsTheXpEarnedInTheMonthOrWeek() {
+        TopEntry first = new TopEntry(1, UUID.randomUUID(), "liyazita", 402_987, 5_000_000L);
+        TopState state = new TopState();
+        state.nextPeriod(3);
+
+        List<String> monthly = TopView.lines(BOARDS.getLast(), TEXTS, state, List.of(first), id -> "&7", BADGES, mode -> mode);
+
+        assertThat(TopView.period(BOARDS.getLast(), state)).isEqualTo(StatsPeriod.MONTHLY);
+        assertThat(monthly.get(1)).isEqualTo("&e&lNÍVEL");
+        assertThat(monthly.get(2)).isEqualTo("&e1.&r &f&7liyazita&r &7- &e402.987 XP&r");
+        assertThat(monthly.get(13)).isEqualTo("&7Total&r &a&lMensal&r &7Semanal&r");
+
+        state.nextPeriod(3);
+
+        assertThat(TopView.lines(BOARDS.getLast(), TEXTS, state, List.of(first), id -> "&7", BADGES, mode -> mode).get(2)).endsWith("&e402.987 XP&r");
+    }
+
+    @Test
     void theLobbyMenusFollowTheExports() {
         LobbyMenuSettings menus = LobbyMenuSettings.from(RoomFixtures.CONFIG.getConfigurationSection("lobby.menus"));
 

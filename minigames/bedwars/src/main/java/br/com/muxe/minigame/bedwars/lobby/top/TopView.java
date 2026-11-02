@@ -23,6 +23,16 @@ public final class TopView {
         return board.periods().get(state.period() % board.periods().size());
     }
 
+    public static String value(TopBoardSettings board, TopTexts texts, TopState state, TopEntry entry, LevelBadges badges) {
+        if (board.category() != TopCategory.LEVEL) {
+            return CreditFormat.format(entry.value());
+        }
+        if (period(board, state) == StatsPeriod.TOTAL) {
+            return badges.of(Levels.progress(Math.max(0, entry.totalXp())).level());
+        }
+        return texts.xpValue().replace("{xp}", CreditFormat.format(entry.value()));
+    }
+
     public static List<String> lines(TopBoardSettings board, TopTexts texts, TopState state, List<TopEntry> entries, Function<UUID, String> colors,
                                      LevelBadges badges, Function<String, String> modeTitle) {
         List<String> lines = new ArrayList<>();
@@ -33,9 +43,7 @@ public final class TopView {
             int position = state.page() * TopState.PAGE_SIZE + index + 1;
             if (position <= entries.size()) {
                 TopEntry entry = entries.get(position - 1);
-                String value = board.category() == TopCategory.LEVEL
-                    ? badges.of(Levels.progress(Math.max(0, entry.totalXp())).level())
-                    : CreditFormat.format(entry.value());
+                String value = value(board, texts, state, entry, badges);
                 lines.add(texts.entry().replace("{position}", String.valueOf(position)).replace("{name}", colors.apply(entry.playerId()) + entry.name()).replace("{value}", value));
             } else {
                 lines.add(texts.empty().replace("{position}", String.valueOf(position)));

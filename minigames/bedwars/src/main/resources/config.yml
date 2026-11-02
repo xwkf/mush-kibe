@@ -2202,6 +2202,7 @@ lobby:
       TOTAL: "Total"
     refresh-seconds: 60
     click-sound: CLICK
+    xp-value: "{xp} XP"
     selector:
       location:
         world: lobby

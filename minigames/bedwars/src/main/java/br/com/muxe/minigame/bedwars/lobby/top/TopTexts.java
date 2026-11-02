@@ -19,7 +19,8 @@ public record TopTexts(
     Map<StatsPeriod, String> periodNames,
     double labelAboveStand,
     int refreshSeconds,
-    Optional<Sound> clickSound
+    Optional<Sound> clickSound,
+    String xpValue
 ) {
 
     public TopTexts {
@@ -43,7 +44,8 @@ public record TopTexts(
             names,
             section.getDouble("label-above-stand", 2.175),
             Math.max(10, section.getInt("refresh-seconds", 60)),
-            sound(section.getString("click-sound", "CLICK"))
+            sound(section.getString("click-sound", "CLICK")),
+            section.getString("xp-value", "{xp} XP")
         );
     }
 
