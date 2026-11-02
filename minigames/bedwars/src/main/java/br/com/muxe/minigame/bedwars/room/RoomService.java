@@ -9,6 +9,9 @@ import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.minigame.bedwars.arena.BedWarsArena;
 import br.com.muxe.minigame.bedwars.arena.BedWarsSchema;
+import br.com.muxe.minigame.bedwars.matchmaking.RoomChoice;
+import br.com.muxe.minigame.bedwars.network.ArenaInfo;
+import br.com.muxe.minigame.bedwars.network.RoomInfo;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
 import br.com.muxe.minigame.engine.arena.ArenaCatalog;
 import br.com.muxe.minigame.engine.arena.LoadedArena;
@@ -17,9 +20,9 @@ import br.com.muxe.minigame.engine.room.RoomCodes;
 import br.com.muxe.minigame.engine.team.TeamColor;
 import br.com.muxe.minigame.engine.world.cell.Cell;
 import br.com.muxe.minigame.engine.world.server.MatchWorld;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +41,8 @@ import org.bukkit.scheduler.BukkitTask;
 
 public final class RoomService {
 
+    private static final Duration RESERVATION = Duration.ofSeconds(30);
+
     private final JavaPlugin plugin;
     private final MuxeCore core;
     private final BedWarsSettings settings;
@@ -48,6 +53,7 @@ public final class RoomService {
     private final RoomCodes codes = new RoomCodes(ThreadLocalRandom.current());
     private final Map<String, RoomRuntime> rooms = new LinkedHashMap<>();
     private final Map<UUID, String> byPlayer = new ConcurrentHashMap<>();
+    private final Map<UUID, Reservation> reservations = new ConcurrentHashMap<>();
     private final Map<String, List<String>> npcLines = new ConcurrentHashMap<>();
     private final List<BukkitTask> tasks = new ArrayList<>();
     private Predicate<Player> busy = player -> false;
@@ -117,14 +123,44 @@ public final class RoomService {
                 return;
             }
         }
+        Reservation reserved = reservations.remove(player.getUniqueId());
+        if (reserved != null && !reserved.expiresAt().isBefore(now)) {
+            join(player, reserved.mode(), reserved.arena(), Optional.of(reserved.code()));
+            return;
+        }
         join(player, settings.defaultMode());
     }
 
+    public Optional<String> reserve(UUID playerId, String mode, Optional<String> arena, Optional<String> code) {
+        if (!schema.modes().contains(mode)) {
+            return Optional.empty();
+        }
+        Optional<RoomRuntime> runtime = pick(mode, arena, code).or(() -> create(mode, arena));
+        runtime.ifPresent(found -> reservations.put(playerId, new Reservation(found.room().code(), mode, arena, core.clock().instant().plus(RESERVATION))));
+        return runtime.map(found -> found.room().code());
+    }
+
+    public List<RoomInfo> summaries() {
+        return rooms.values().stream().map(runtime -> new RoomInfo(
+            runtime.room().code(),
+            runtime.room().mode().id(),
+            runtime.room().arena().name(),
+            runtime.room().acceptsPlayers(),
+            runtime.room().players().size(),
+            runtime.room().mode().maxPlayers()
+        )).toList();
+    }
+
+    public List<ArenaInfo> arenas() {
+        return catalog.all().stream().map(loaded -> new ArenaInfo(loaded.mode(), loaded.name(), loaded.displayName())).toList();
+    }
+
     public void join(Player player, String mode) {
-        Optional<RoomRuntime> open = rooms.values().stream()
-            .filter(runtime -> runtime.room().mode().id().equals(mode) && runtime.room().acceptsPlayers())
-            .max(Comparator.comparingInt(runtime -> runtime.room().players().size()));
-        RoomRuntime runtime = open.or(() -> create(mode)).orElse(null);
+        join(player, mode, Optional.empty(), Optional.empty());
+    }
+
+    private void join(Player player, String mode, Optional<String> arena, Optional<String> code) {
+        RoomRuntime runtime = pick(mode, arena, code).or(() -> create(mode, arena)).or(() -> pick(mode, Optional.empty(), Optional.empty())).orElse(null);
         if (runtime == null) {
             player.sendMessage(messages.get("no-arena", "mode", schema.modes().contains(mode) ? schema.mode(mode).displayName() : mode));
             return;
@@ -227,11 +263,15 @@ public final class RoomService {
         }
     }
 
-    private Optional<RoomRuntime> create(String mode) {
+    private Optional<RoomRuntime> pick(String mode, Optional<String> arena, Optional<String> code) {
+        return RoomChoice.pick(summaries(), mode, arena, code).map(info -> rooms.get(info.code()));
+    }
+
+    private Optional<RoomRuntime> create(String mode, Optional<String> wanted) {
         if (!schema.modes().contains(mode)) {
             return Optional.empty();
         }
-        List<LoadedArena> arenas = catalog.ofMode(mode);
+        List<LoadedArena> arenas = catalog.ofMode(mode).stream().filter(loaded -> wanted.map(loaded.name()::equals).orElse(true)).toList();
         if (arenas.isEmpty()) {
             return Optional.empty();
         }
@@ -293,6 +333,9 @@ public final class RoomService {
     }
 
     public record NpcClick(RoomRuntime runtime, boolean upgrades) {
+    }
+
+    private record Reservation(String code, String mode, Optional<String> arena, Instant expiresAt) {
     }
 
     @FunctionalInterface
