@@ -4,6 +4,8 @@ import br.com.muxe.core.common.account.AccountDetailsModule;
 import br.com.muxe.core.common.account.AccountModule;
 import br.com.muxe.core.common.account.infrastructure.postgres.PostgresAccountDetailsRepository;
 import br.com.muxe.core.common.account.infrastructure.postgres.PostgresAccountRepository;
+import br.com.muxe.core.common.arena.ArenaModule;
+import br.com.muxe.core.common.arena.infrastructure.postgres.PostgresArenaRepository;
 import br.com.muxe.core.common.concurrent.MuxeExecutors;
 import br.com.muxe.core.common.config.settings.MuxeSettings;
 import br.com.muxe.core.common.cosmetic.CosmeticModule;
@@ -258,6 +260,7 @@ public final class CoreRuntime implements AutoCloseable {
             CreditModule.register(commands, queries, credits, transactions, clock);
             CosmeticModule.register(commands, queries, new PostgresCosmeticRepository(), credits, transactions, clock);
             MissionModule.register(commands, queries, missions, new PostgresMissionRepository(), credits, transactions, clock, MissionModule.ZONE);
+            ArenaModule.register(commands, queries, new PostgresArenaRepository(), transactions, clock);
 
             ServerHeartbeat heartbeat = closer.register(new ServerHeartbeat(packets, identity, hooks.serverLoad(), directory, executors.scheduler(), clock, logger));
             transport.addConnectionListener(new ConnectionListener() {
