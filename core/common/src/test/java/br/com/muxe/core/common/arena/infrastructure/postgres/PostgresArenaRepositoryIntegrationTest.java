@@ -65,4 +65,19 @@ class PostgresArenaRepositoryIntegrationTest {
         assertThat(transactions.readOnly("test.names", () -> repository.names(game))).containsExactly("1v1_slip", "quartetos_teste");
         assertThat(transactions.readOnly("test.names", () -> repository.names("other-" + game))).isEmpty();
     }
+
+    @Test
+    void deletingAnArenaRemovesOnlyThatGamesRow() {
+        String game = "game-" + UUID.randomUUID().toString().substring(0, 8);
+        transactions.inTransaction("test.save", () -> {
+            repository.save(new ArenaRecord(game, "majestic_solo", "solo", false, "name: majestic_solo", new byte[] {1}, NOW), false);
+            repository.save(new ArenaRecord("other-" + game, "majestic_solo", "solo", false, "name: majestic_solo", new byte[] {1}, NOW), false);
+            return null;
+        });
+
+        assertThat(transactions.inTransaction("test.delete", () -> repository.delete(game, "majestic_solo"))).isTrue();
+        assertThat(transactions.inTransaction("test.delete", () -> repository.delete(game, "majestic_solo"))).isFalse();
+        assertThat(transactions.readOnly("test.find", () -> repository.find(game, "majestic_solo"))).isEmpty();
+        assertThat(transactions.readOnly("test.find", () -> repository.find("other-" + game, "majestic_solo"))).isPresent();
+    }
 }

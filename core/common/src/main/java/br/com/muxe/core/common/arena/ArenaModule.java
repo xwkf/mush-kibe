@@ -1,5 +1,7 @@
 package br.com.muxe.core.common.arena;
 
+import br.com.muxe.core.common.arena.application.command.DeleteArenaCommand;
+import br.com.muxe.core.common.arena.application.command.DeleteArenaHandler;
 import br.com.muxe.core.common.arena.application.command.SaveArenaCommand;
 import br.com.muxe.core.common.arena.application.command.SaveArenaHandler;
 import br.com.muxe.core.common.arena.application.query.FindArenaHandler;
@@ -19,6 +21,7 @@ public final class ArenaModule {
 
     public static void register(CommandBus commands, QueryBus queries, ArenaRepository arenas, Transactions transactions, Clock clock) {
         commands.register(SaveArenaCommand.class, new SaveArenaHandler(arenas, transactions, clock));
+        commands.register(DeleteArenaCommand.class, new DeleteArenaHandler(arenas, transactions));
         queries.register(FindArenaQuery.class, new FindArenaHandler(arenas, transactions));
         queries.register(ListArenasQuery.class, new ListArenasHandler(arenas, transactions));
     }

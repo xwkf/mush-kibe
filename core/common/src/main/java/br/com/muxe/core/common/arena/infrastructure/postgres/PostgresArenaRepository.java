@@ -30,6 +30,8 @@ public final class PostgresArenaRepository implements ArenaRepository {
             updated_at = EXCLUDED.updated_at
         """;
 
+    private static final String DELETE = "DELETE FROM core.arenas WHERE game = ? AND name = ?";
+
     @Override
     public List<String> names(String game) {
         try (PreparedStatement statement = TransactionContext.connection().prepareStatement(NAMES)) {
@@ -76,6 +78,17 @@ public final class PostgresArenaRepository implements ArenaRepository {
             statement.executeUpdate();
         } catch (SQLException exception) {
             throw new PersistenceException("arenas.save", exception);
+        }
+    }
+
+    @Override
+    public boolean delete(String game, String name) {
+        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(DELETE)) {
+            statement.setString(1, game);
+            statement.setString(2, name);
+            return statement.executeUpdate() > 0;
+        } catch (SQLException exception) {
+            throw new PersistenceException("arenas.delete", exception);
         }
     }
 }

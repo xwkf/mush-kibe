@@ -29,4 +29,9 @@ public final class InMemoryArenaRepository implements ArenaRepository {
             : arena;
         arenas.put(arena.game() + "/" + arena.name(), saved);
     }
+
+    @Override
+    public boolean delete(String game, String name) {
+        return arenas.remove(game + "/" + name) != null;
+    }
 }

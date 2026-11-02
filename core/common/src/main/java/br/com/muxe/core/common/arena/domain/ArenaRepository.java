@@ -10,4 +10,6 @@ public interface ArenaRepository {
     Optional<ArenaRecord> find(String game, String name);
 
     void save(ArenaRecord arena, boolean keepMap);
+
+    boolean delete(String game, String name);
 }
