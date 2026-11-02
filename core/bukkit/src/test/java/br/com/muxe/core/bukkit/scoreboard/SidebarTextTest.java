@@ -44,6 +44,33 @@ class SidebarTextTest {
     }
 
     @Test
+    void lineBeyondPrefixAndSuffixUsesTheEntryInTheMiddle() {
+        String line = "§f[§a▮▮▮▮▮§7▮▮▮▮▮§f] §7(54.9k/55k)";
+
+        SidebarText.SidebarLine laid = SidebarText.layout(line, "§3");
+
+        assertThat(laid.prefix()).isEqualTo("§f[§a▮▮▮▮▮§7▮▮▮▮");
+        assertThat(laid.entry()).startsWith("§3§7").hasSizeLessThanOrEqualTo(SidebarText.MAX_ENTRY);
+        assertThat(laid.prefix() + laid.entry().substring(2) + laid.suffix()).isEqualTo("§f[§a▮▮▮▮▮§7▮▮▮▮§7▮§f] §7(54.9k/55k)");
+    }
+
+    @Test
+    void lineThatFitsKeepsTheHiddenEntry() {
+        SidebarText.SidebarLine laid = SidebarText.layout("§fJogadores: §b2211", "§3");
+
+        assertThat(laid.entry()).isEqualTo("§3§r");
+        assertThat(laid.suffix()).isEqualTo("§b211");
+    }
+
+    @Test
+    void aLongLineWithoutColorKeepsTheDefaultColorInTheEntry() {
+        SidebarText.SidebarLine laid = SidebarText.layout("x".repeat(70), "§3");
+
+        assertThat(laid.entry()).isEqualTo("§3§r" + "x".repeat(SidebarText.MAX_ENTRY - 4));
+        assertThat(laid.suffix()).hasSize(SidebarText.MAX_PART);
+    }
+
+    @Test
     void bothPartsStayWithinTheProtocolLimit() {
         SidebarText text = SidebarText.split("§f" + "x".repeat(60));
 

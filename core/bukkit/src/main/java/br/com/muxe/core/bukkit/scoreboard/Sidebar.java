@@ -22,6 +22,7 @@ public final class Sidebar {
     private final Scoreboard scoreboard;
     private final Objective objective;
     private final List<String> shown = new ArrayList<>();
+    private final List<String> entries = new ArrayList<>();
     private String title = "";
 
     private Sidebar(Scoreboard scoreboard) {
@@ -55,18 +56,22 @@ public final class Sidebar {
             String line = lines.get(index);
             Team team = team(index);
             if (index >= shown.size() || !shown.get(index).equals(line)) {
-                SidebarText text = SidebarText.split(line);
-                team.setPrefix(text.prefix());
-                team.setSuffix(text.suffix());
+                SidebarText.SidebarLine laid = SidebarText.layout(line, hidden(index));
+                team.setPrefix(laid.prefix());
+                team.setSuffix(laid.suffix());
+                entry(index, team, laid.entry());
             }
-            objective.getScore(entry(index)).setScore(lines.size() - index);
+            objective.getScore(entries.get(index)).setScore(lines.size() - index);
         }
         for (int index = lines.size(); index < shown.size(); index++) {
-            scoreboard.resetScores(entry(index));
+            scoreboard.resetScores(entries.get(index));
             Team team = scoreboard.getTeam(TEAM_PREFIX + index);
             if (team != null) {
                 team.unregister();
             }
+        }
+        while (entries.size() > lines.size()) {
+            entries.removeLast();
         }
         shown.clear();
         shown.addAll(lines);
@@ -76,12 +81,26 @@ public final class Sidebar {
         Team team = scoreboard.getTeam(TEAM_PREFIX + index);
         if (team == null) {
             team = scoreboard.registerNewTeam(TEAM_PREFIX + index);
-            team.addEntry(entry(index));
         }
         return team;
     }
 
-    private static String entry(int index) {
-        return ChatColor.values()[index].toString() + ChatColor.RESET;
+    private void entry(int index, Team team, String entry) {
+        if (index < entries.size()) {
+            String old = entries.get(index);
+            if (old.equals(entry)) {
+                return;
+            }
+            team.removeEntry(old);
+            scoreboard.resetScores(old);
+            entries.set(index, entry);
+        } else {
+            entries.add(entry);
+        }
+        team.addEntry(entry);
+    }
+
+    private static String hidden(int index) {
+        return ChatColor.values()[index].toString();
     }
 }

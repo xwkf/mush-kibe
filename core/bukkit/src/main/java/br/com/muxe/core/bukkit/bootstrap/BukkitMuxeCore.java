@@ -5,6 +5,7 @@ import br.com.muxe.core.bukkit.buildmode.BuildMode;
 import br.com.muxe.core.bukkit.network.NetworkGateway;
 import br.com.muxe.core.bukkit.permission.PermissionService;
 import br.com.muxe.core.bukkit.permission.display.NameTags;
+import br.com.muxe.core.bukkit.scoreboard.SidebarOverrides;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.core.common.cqrs.command.CommandBus;
 import br.com.muxe.core.common.cqrs.query.QueryBus;
@@ -30,6 +31,7 @@ final class BukkitMuxeCore implements MuxeCore {
     private final BuildMode buildMode;
     private final PermissionService permissions;
     private final NameTags nameTags = new NameTags();
+    private final SidebarOverrides sidebars = new SidebarOverrides();
 
     BukkitMuxeCore(CoreRuntime runtime, Executor mainThread, NetworkGateway network, MessageCatalog messages, BuildMode buildMode, PermissionService permissions) {
         this.runtime = runtime;
@@ -43,6 +45,11 @@ final class BukkitMuxeCore implements MuxeCore {
     @Override
     public NameTags nameTags() {
         return nameTags;
+    }
+
+    @Override
+    public SidebarOverrides sidebars() {
+        return sidebars;
     }
 
     @Override

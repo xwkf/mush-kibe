@@ -328,7 +328,8 @@ sidebar.lines(List.of("", "&fJogadores: &b2211", "", "&amuxe.com.br"));
 ```
 
 - Uma scoreboard por jogador, com até 15 linhas. Cada linha fica em um time, então atualizar uma linha nunca faz a sidebar piscar; só as linhas que mudaram são enviadas.
-- Linhas de até uns 30 caracteres visíveis são divididas entre o prefixo e o sufixo do time (16 caracteres cada na 1.8), levando a cor junto (`SidebarText.split`). Linhas em branco funcionam.
+- Linhas de até uns 30 caracteres visíveis são divididas entre o prefixo e o sufixo do time (16 caracteres cada na 1.8), levando a cor junto (`SidebarText.split`). Linhas maiores usam também o nome da entrada da linha no meio (até 40 caracteres, começando com um código de cor escondido que mantém as linhas únicas), então uma linha chega a uns 70 caracteres (`SidebarText.layout`); só essas linhas trocam de entrada quando mudam. Linhas em branco funcionam.
+- `core.sidebars()` (`SidebarOverrides`) deixa um plugin trocar a sidebar que outro plugin desenha: `provide(player -> Optional.of(new SidebarContent(title, lines)))`. A scoreboard do lobby pergunta a ele a cada atualização; o lobby do BedWars usa isso para o anexo 1. `clear()` devolve a sidebar.
 - `scoreboard()` expõe a scoreboard do Bukkit para outros times, como o que esconde o nome dos NPCs.
 - O Muxe-Core coloca os times de cargo (prefixo no tab e acima da cabeça, veja [Cargos e tags](../../features/ranks-and-tags/README.pt-BR.md#prefixos)) em toda scoreboard que um jogador usa, sidebars inclusive, em até 5 ticks. Os nomes deles começam com dígitos, então nunca colidem com os times `muxe-line-*` nem com o time dos NPCs.
 
