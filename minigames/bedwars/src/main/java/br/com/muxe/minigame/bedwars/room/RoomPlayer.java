@@ -21,6 +21,12 @@ public final class RoomPlayer {
     private int kills;
     private int finalKills;
     private int beds;
+    private int deaths;
+    private int finalDeaths;
+    private int assists;
+    private int finalAssists;
+    private int bedsLost;
+    private long xp;
     private int respawnAt;
     private Instant protectedUntil = Instant.MIN;
     private Instant disconnectedUntil = Instant.MIN;
@@ -88,6 +94,54 @@ public final class RoomPlayer {
 
     void addBed() {
         beds++;
+    }
+
+    public int deaths() {
+        return deaths;
+    }
+
+    public int finalDeaths() {
+        return finalDeaths;
+    }
+
+    public int assists() {
+        return assists;
+    }
+
+    public int finalAssists() {
+        return finalAssists;
+    }
+
+    public int bedsLost() {
+        return bedsLost;
+    }
+
+    public long xp() {
+        return xp;
+    }
+
+    void addDeath(boolean finalDeath) {
+        if (finalDeath) {
+            finalDeaths++;
+        } else {
+            deaths++;
+        }
+    }
+
+    void addAssist(boolean finalAssist) {
+        if (finalAssist) {
+            finalAssists++;
+        } else {
+            assists++;
+        }
+    }
+
+    void loseBed() {
+        bedsLost = 1;
+    }
+
+    void addXp(long amount) {
+        xp += Math.max(0, amount);
     }
 
     public int respawnAt() {

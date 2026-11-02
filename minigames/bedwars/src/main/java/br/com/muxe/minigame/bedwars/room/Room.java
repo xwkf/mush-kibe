@@ -3,9 +3,12 @@ package br.com.muxe.minigame.bedwars.room;
 import br.com.muxe.minigame.bedwars.arena.BedWarsArena;
 import br.com.muxe.minigame.bedwars.game.KillCredit;
 import br.com.muxe.minigame.bedwars.game.TeamStatus;
+import br.com.muxe.minigame.bedwars.game.XpRewards;
 import br.com.muxe.minigame.bedwars.room.RoomPlayer.State;
-import br.com.muxe.minigame.engine.match.StartCountdown;
+import br.com.muxe.minigame.bedwars.stats.domain.MatchOutcome;
+import br.com.muxe.minigame.bedwars.stats.domain.MatchResult;
 import br.com.muxe.minigame.engine.match.StartCountdown.Change;
+import br.com.muxe.minigame.engine.match.StartCountdown;
 import br.com.muxe.minigame.engine.mode.GameMode;
 import br.com.muxe.minigame.engine.team.TeamAssigner;
 import br.com.muxe.minigame.engine.team.TeamColor;
@@ -185,6 +188,7 @@ public final class Room {
 
     public void die(RoomPlayer player, int respawnSeconds) {
         RoomTeam team = teams.get(player.team());
+        player.addDeath(!team.bedAlive());
         if (team.bedAlive()) {
             player.state(State.RESPAWNING);
             player.respawnAt(elapsed + respawnSeconds);
@@ -212,6 +216,33 @@ public final class Room {
 
     public void eliminate(RoomPlayer player) {
         player.state(State.ELIMINATED);
+        player.addDeath(true);
+    }
+
+    public List<MatchOutcome> outcomes(Optional<TeamColor> winner, XpRewards rewards) {
+        List<MatchOutcome> outcomes = new ArrayList<>();
+        int minutes = elapsed / 60;
+        for (RoomPlayer player : players.values()) {
+            if (player.team() == null) {
+                continue;
+            }
+            boolean won = winner.filter(player.team()::equals).isPresent();
+            MatchResult result = winner.isEmpty() ? MatchResult.NONE : won ? MatchResult.WIN : MatchResult.LOSS;
+            int teammates = Math.max(0, teams.get(player.team()).members().size() - 1);
+            long xp = player.xp() + rewards.endOfMatch(minutes, teammates, won);
+            outcomes.add(new MatchOutcome(player.id(), mode.id(), player.beds(), player.bedsLost(), player.kills(), player.deaths(), player.assists(),
+                player.finalKills(), player.finalDeaths(), player.finalAssists(), result, xp));
+        }
+        return outcomes;
+    }
+
+    public void assists(RoomPlayer victim, RoomPlayer killer, boolean finalKill, Instant now) {
+        for (UUID helper : credit.assisters(victim.id(), killer.id(), now)) {
+            RoomPlayer assister = players.get(helper);
+            if (assister != null && assister.team() != victim.team()) {
+                assister.addAssist(finalKill);
+            }
+        }
     }
 
     public void credit(RoomPlayer killer, boolean finalKill) {
@@ -227,8 +258,12 @@ public final class Room {
         List<RoomPlayer> lost = new ArrayList<>();
         for (UUID member : team.members()) {
             RoomPlayer player = players.get(member);
+            if (player != null) {
+                player.loseBed();
+            }
             if (player != null && player.state() == State.DISCONNECTED) {
                 player.state(State.ELIMINATED);
+                player.addDeath(true);
                 lost.add(player);
             }
         }

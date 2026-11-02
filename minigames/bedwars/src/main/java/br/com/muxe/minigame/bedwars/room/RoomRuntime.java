@@ -14,6 +14,8 @@ import br.com.muxe.minigame.bedwars.game.Ranking;
 import br.com.muxe.minigame.bedwars.game.Timeline.Event;
 import br.com.muxe.minigame.bedwars.room.RoomPlayer.State;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
+import br.com.muxe.minigame.bedwars.stats.application.command.RecordMatchCommand;
+import br.com.muxe.minigame.bedwars.stats.domain.MatchOutcome;
 import br.com.muxe.minigame.engine.match.StartCountdown.Change;
 import br.com.muxe.minigame.engine.match.StartCountdown.Second;
 import br.com.muxe.minigame.engine.setup.Point;
@@ -33,6 +35,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.ToIntFunction;
+import java.util.logging.Level;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -240,7 +243,9 @@ public final class RoomRuntime {
         broadcast(messages.get(key, "victim", victimName, "killer", killer.map(this::coloredName).orElse("")));
         Map<Material, Integer> loot = resources(victim);
         killer.ifPresent(credited -> {
+            room.assists(dead, credited, finalKill, now);
             room.credit(credited, finalKill);
+            credited.addXp(finalKill ? settings.xp().finalKill() : settings.xp().regularKill());
             Player bukkit = Bukkit.getPlayer(credited.id());
             if (bukkit != null) {
                 giveLoot(bukkit, loot);
@@ -278,8 +283,10 @@ public final class RoomRuntime {
         frame.ifPresent(bed -> service.bedBreaks().broken(breaker, world, bed, online()));
         broadcast(messages.get("bed-destroyed", "team-color", Colors.translate(owner.get().color()), "team", owner.get().displayName(), "player", coloredName(player)));
         breaker.sendMessage(messages.get("xp", "xp", String.valueOf(settings.xp().bedDestroyed())));
+        player.addXp(settings.xp().bedDestroyed());
         for (RoomPlayer gone : lost) {
             room.credit(player, true);
+            player.addXp(settings.xp().finalKill());
             broadcast(messages.get("final-kill", "victim", coloredName(gone), "killer", coloredName(player)));
         }
         checkEliminations();
@@ -328,7 +335,11 @@ public final class RoomRuntime {
                     Optional<RoomPlayer> killer = room.credit().killer(quitter.id(), core.clock().instant(), true, team.bedBreaker())
                         .flatMap(room::player).filter(other -> other.team() != quitter.team());
                     room.eliminate(quitter);
-                    killer.ifPresent(credited -> room.credit(credited, true));
+                    killer.ifPresent(credited -> {
+                        room.assists(quitter, credited, true, core.clock().instant());
+                        room.credit(credited, true);
+                        credited.addXp(settings.xp().finalKill());
+                    });
                     broadcast(messages.get(killer.isPresent() ? "final-kill" : "final-death", "victim", coloredName(quitter), "killer", killer.map(this::coloredName).orElse("")));
                     checkEliminations();
                 }
@@ -619,6 +630,19 @@ public final class RoomRuntime {
             ChatLines.send(player, lines, CenteredText.DEFAULT_CENTER, "");
         }
         refreshScoreboards();
+        record(winner);
+    }
+
+    private void record(Optional<TeamColor> winner) {
+        List<MatchOutcome> outcomes = room.outcomes(winner, settings.xp());
+        if (outcomes.isEmpty()) {
+            return;
+        }
+        core.commands().dispatch(new RecordMatchCommand(outcomes)).whenComplete((result, error) -> {
+            if (error != null || !result.isSuccess()) {
+                service.plugin().getLogger().log(Level.WARNING, "Could not save the stats of room " + room.code(), error);
+            }
+        });
     }
 
     private Map<UUID, Integer> score(ToIntFunction<RoomPlayer> stat) {
