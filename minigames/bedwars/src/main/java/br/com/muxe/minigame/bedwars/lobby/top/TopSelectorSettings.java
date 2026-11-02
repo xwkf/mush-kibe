@@ -8,6 +8,7 @@ import org.bukkit.configuration.ConfigurationSection;
 public record TopSelectorSettings(
     Spot spot,
     double listOffset,
+    double listSpacing,
     double footerOffset,
     int visibleModes,
     String header,
@@ -24,6 +25,7 @@ public record TopSelectorSettings(
         return Optional.of(new TopSelectorSettings(
             Spot.from(Objects.requireNonNull(section.getConfigurationSection("location"), "Missing lobby.tops.selector.location")),
             section.getDouble("list-offset", 0.375),
+            section.getDouble("list-spacing", 0.28125),
             section.getDouble("footer-offset", 1.90625),
             Math.max(1, section.getInt("visible-modes", 5)),
             section.getString("header", "&b&lSELECIONAR MODO"),

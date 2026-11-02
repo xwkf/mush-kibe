@@ -20,7 +20,8 @@ public record TopTexts(
     double labelAboveStand,
     int refreshSeconds,
     Optional<Sound> clickSound,
-    String xpValue
+    String xpValue,
+    Spacing spacing
 ) {
 
     public TopTexts {
@@ -45,8 +46,27 @@ public record TopTexts(
             section.getDouble("label-above-stand", 2.175),
             Math.max(10, section.getInt("refresh-seconds", 60)),
             sound(section.getString("click-sound", "CLICK")),
-            section.getString("xp-value", "{xp} XP")
+            section.getString("xp-value", "{xp} XP"),
+            Spacing.from(section.getConfigurationSection("spacing"))
         );
+    }
+
+    public record Spacing(double title, double list, double entries, double click, double periods) {
+
+        public static final Spacing REFERENCE = new Spacing(0.28125, 0.375, 0.28125, 0.375, 0.34375);
+
+        static Spacing from(ConfigurationSection section) {
+            if (section == null) {
+                return REFERENCE;
+            }
+            return new Spacing(
+                section.getDouble("title", REFERENCE.title()),
+                section.getDouble("list", REFERENCE.list()),
+                section.getDouble("entries", REFERENCE.entries()),
+                section.getDouble("click", REFERENCE.click()),
+                section.getDouble("periods", REFERENCE.periods())
+            );
+        }
     }
 
     public static Optional<Sound> sound(String name) {

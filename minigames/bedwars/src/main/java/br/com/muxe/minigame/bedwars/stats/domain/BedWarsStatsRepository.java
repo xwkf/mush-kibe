@@ -11,6 +11,8 @@ public interface BedWarsStatsRepository {
 
     void record(MatchOutcome outcome, Instant at, ZoneId zone);
 
+    void addXp(UUID playerId, long xp, Instant at, ZoneId zone);
+
     PlayerStats totals(UUID playerId);
 
     PlayerStats period(UUID playerId, StatsPeriod period, Instant at, ZoneId zone);

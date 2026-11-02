@@ -1,6 +1,8 @@
 package br.com.muxe.minigame.bedwars.bootstrap;
 
 import br.com.muxe.core.bukkit.api.MuxeCore;
+import br.com.muxe.core.bukkit.mission.menu.MissionMenus;
+import br.com.muxe.core.bukkit.npc.NpcLabelLayout;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.minigame.bedwars.arena.BedWarsSchema;
 import br.com.muxe.minigame.bedwars.lobby.LobbyNpcs;
@@ -31,6 +33,7 @@ public final class LobbyFeatures {
 
     public static final String DUELS_ACTION = "duelos";
     public static final String NO_ACTION = "nenhuma";
+    public static final String MISSIONS_ACTION = "missoes";
 
     private final MuxeCore core;
     private final LobbyNpcs npcs;
@@ -42,7 +45,7 @@ public final class LobbyFeatures {
         this.boards = boards;
     }
 
-    public static LobbyFeatures start(JavaPlugin plugin, MuxeCore core, FileConfiguration config, MessageCatalog messages, BedWarsSchema schema) {
+    public static LobbyFeatures start(JavaPlugin plugin, MuxeCore core, FileConfiguration config, MessageCatalog messages, BedWarsSchema schema, MissionMenus missions) {
         ConfigurationSection lobby = section(config, "lobby");
         LevelBadges badges = LevelBadges.from(section(config, "levels"));
         TopTexts texts = TopTexts.from(section(lobby, "tops"));
@@ -53,8 +56,8 @@ public final class LobbyFeatures {
         TagColors colors = new TagColors(core);
         TopData tops = new TopData(plugin, core, Duration.ofSeconds(texts.refreshSeconds()));
         LobbyMenus menus = new LobbyMenus(plugin, core, LobbyMenuSettings.from(section(lobby, "menus")), schema, connector, tops, colors, badges, messages);
-        LobbyNpcs npcs = new LobbyNpcs(plugin, LobbyNpc.from(section(lobby, "npcs")), lobby.getStringList("blink-colors"),
-            StatsNpcSettings.from(section(lobby, "stats-npc")), connector.directory(), stats, badges, (player, action) -> act(player, action, menus, schema));
+        LobbyNpcs npcs = new LobbyNpcs(plugin, LobbyNpc.from(section(lobby, "npcs")), NpcLabelLayout.from(lobby.getConfigurationSection("npc-labels")), lobby.getStringList("blink-colors"),
+            StatsNpcSettings.from(section(lobby, "stats-npc")), connector.directory(), stats, badges, (player, action) -> act(player, action, menus, schema, missions));
         npcs.start();
         ConfigurationSection topSection = section(lobby, "tops");
         TopBoards boards = new TopBoards(plugin, TopBoardSettings.from(section(topSection, "boards")), texts, tops, colors, badges, menus::modeTitle, menus::openTopModes,
@@ -72,8 +75,10 @@ public final class LobbyFeatures {
         boards.stop();
     }
 
-    private static void act(Player player, String action, LobbyMenus menus, BedWarsSchema schema) {
-        if (DUELS_ACTION.equals(action)) {
+    private static void act(Player player, String action, LobbyMenus menus, BedWarsSchema schema, MissionMenus missions) {
+        if (MISSIONS_ACTION.equals(action)) {
+            missions.open(player, Optional.empty());
+        } else if (DUELS_ACTION.equals(action)) {
             menus.openDuels(player);
         } else if (LobbyNpcs.STATS_ACTION.equals(action)) {
             menus.openStats(player);

@@ -4,6 +4,7 @@ import br.com.muxe.minigame.bedwars.arena.BedWarsArena;
 import br.com.muxe.minigame.bedwars.game.KillCredit;
 import br.com.muxe.minigame.bedwars.game.TeamStatus;
 import br.com.muxe.minigame.bedwars.game.XpRewards;
+import br.com.muxe.minigame.bedwars.mission.BedWarsGoal;
 import br.com.muxe.minigame.bedwars.room.RoomPlayer.State;
 import br.com.muxe.minigame.bedwars.stats.domain.MatchOutcome;
 import br.com.muxe.minigame.bedwars.stats.domain.MatchResult;
@@ -234,6 +235,23 @@ public final class Room {
                 player.finalKills(), player.finalDeaths(), player.finalAssists(), result, xp));
         }
         return outcomes;
+    }
+
+    public Map<String, Long> missionTotals(RoomPlayer player, Optional<TeamColor> winner, int fastWinSeconds, int endStoneBlocks) {
+        boolean won = player.team() != null && winner.filter(player.team()::equals).isPresent();
+        Map<String, Long> goals = new LinkedHashMap<>();
+        goals.put(BedWarsGoal.KILL_STREAK.name(), (long) player.bestKillStreak());
+        goals.put(BedWarsGoal.INVISIBLE_BED.name(), (long) player.invisibleBeds());
+        goals.put(BedWarsGoal.END_STONE_DEFENSE.name(), player.endStones() >= endStoneBlocks ? 1L : 0L);
+        goals.put(BedWarsGoal.CLEAN_WIN.name(), won && !player.usedExplosives() ? 1L : 0L);
+        goals.put(BedWarsGoal.BEDBUG_KILLS.name(), (long) player.bedbugKills());
+        goals.put(BedWarsGoal.EMERALDS_IN_A_LIFE.name(), (long) player.bestEmeralds());
+        goals.put(BedWarsGoal.FIREBALL_DAMAGE.name(), (long) Math.floor(player.fireballDamage()));
+        goals.put(BedWarsGoal.FINAL_KILLS.name(), (long) player.finalKills());
+        goals.put(BedWarsGoal.EXPLOSIVE_BLOCKS.name(), (long) player.explosiveBlocks());
+        goals.put(BedWarsGoal.FAST_WIN.name(), won && elapsed <= fastWinSeconds ? 1L : 0L);
+        goals.put(BedWarsGoal.CLAY_BOUGHT.name(), (long) player.clayBought());
+        return goals;
     }
 
     public void assists(RoomPlayer victim, RoomPlayer killer, boolean finalKill, Instant now) {

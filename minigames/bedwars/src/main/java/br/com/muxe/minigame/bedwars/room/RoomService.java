@@ -2,6 +2,7 @@ package br.com.muxe.minigame.bedwars.room;
 
 import br.com.muxe.core.bukkit.api.MuxeCore;
 import br.com.muxe.core.bukkit.cosmetic.animation.BedFrame;
+import br.com.muxe.core.bukkit.mission.config.MissionConfig;
 import br.com.muxe.core.bukkit.npc.Npc;
 import br.com.muxe.core.bukkit.npc.NpcService;
 import br.com.muxe.core.bukkit.permission.display.NameTag;
@@ -10,6 +11,7 @@ import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.minigame.bedwars.arena.BedWarsArena;
 import br.com.muxe.minigame.bedwars.arena.BedWarsSchema;
 import br.com.muxe.minigame.bedwars.matchmaking.RoomChoice;
+import br.com.muxe.minigame.bedwars.mission.MissionRules;
 import br.com.muxe.minigame.bedwars.network.ArenaInfo;
 import br.com.muxe.minigame.bedwars.network.RoomInfo;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
@@ -62,6 +64,8 @@ public final class RoomService {
     private BedBreakHandler bedBreaks = (breaker, world, bed, viewers) -> {
     };
     private NpcService npcs;
+    private MissionConfig missions = MissionConfig.empty();
+    private MissionRules missionRules = MissionRules.DEFAULT;
 
     public RoomService(JavaPlugin plugin, MuxeCore core, BedWarsSettings settings, MessageCatalog messages, BedWarsSchema schema, ArenaCatalog catalog, MatchWorld matchWorld) {
         this.plugin = plugin;
@@ -228,6 +232,19 @@ public final class RoomService {
 
     public void arenaSaved(String name) {
         catalog.reload(name);
+    }
+
+    public void missions(MissionConfig config, MissionRules rules) {
+        this.missions = config;
+        this.missionRules = rules;
+    }
+
+    MissionConfig missions() {
+        return missions;
+    }
+
+    MissionRules missionRules() {
+        return missionRules;
     }
 
     MuxeCore core() {

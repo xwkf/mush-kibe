@@ -28,10 +28,11 @@ class BedWarsMenuSettingsTest {
     @Test
     void theOtherBedWarsMenuItemsFollowTheReference() {
         assertThat(settings.bedwarsItems()).containsOnlyKeys(15);
-        assertThat(settings.bedwarsSoon()).containsOnlyKeys(11, 29, 31, 33);
-        assertThat(settings.bedwarsSoon().get(11).material()).isEqualTo(Material.STORAGE_MINECART);
-        assertThat(settings.bedwarsSoon().get(11).name()).isEqualTo("§aMissões");
-        assertThat(settings.bedwarsSoon().get(11).lore()).containsExactly("§7Complete as missões", "§7e ganhe recompensas.", " ", "§eClique para ver mais.");
+        assertThat(settings.bedwarsSoon()).containsOnlyKeys(29, 31, 33);
+        assertThat(settings.missions().orElseThrow().slot()).isEqualTo(11);
+        assertThat(settings.missions().orElseThrow().item().material()).isEqualTo(Material.STORAGE_MINECART);
+        assertThat(settings.missions().orElseThrow().item().name()).isEqualTo("§aMissões");
+        assertThat(settings.missions().orElseThrow().item().lore()).containsExactly("§7Complete as missões", "§7e ganhe recompensas.", " ", "§eClique para ver mais.");
         assertThat(settings.bedwarsItems().get(15).material()).isEqualTo(Material.PAPER);
         assertThat(settings.bedwarsItems().get(15).name()).isEqualTo("§aLista de Níveis");
         assertThat(settings.bedwarsItems().get(15).lore()).containsExactly(

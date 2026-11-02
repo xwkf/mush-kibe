@@ -78,7 +78,7 @@ The shop NPC opens the menus of the exports: Compra Rápida (the exported layout
 - An item costs iron, gold or emeralds from the inventory. Its name is red when unaffordable, with `Você não tem <recurso> o suficiente.`
 - Each purchase says `Você comprou <item>.`
 - Wool comes in the team colour. A sword replaces the wooden sword. Armour gives boots and leggings and cannot be bought below what the player owns. The pickaxe and axe go up one tier per purchase. Shears are permanent.
-- Not working yet: shift-click (editing the quick buy), the hotbar editor, and the special items Percevejo, Golem de Ferro, Leite Mágico, Torre Compacta, Ovo das Pontes, Rastreador and Estilingue, which say they are coming soon and charge nothing.
+- Not working yet: shift-click (editing the quick buy), the hotbar editor, and the special items Golem de Ferro, Leite Mágico, Torre Compacta, Ovo das Pontes, Rastreador and Estilingue, which say they are coming soon and charge nothing.
 
 ### Team upgrades
 
@@ -133,6 +133,31 @@ The BedWars lobby (`bedwars-lobby` group) runs Muxe-Lobby plus this plugin in lo
 - **Mode selector**: the `SELECIONAR MODO` hologram from the export lists five modes (Geral, Solo, Duplas, Trios, Quartetos), the chosen one in green; a click opens `Selecionar modo`, and the choice applies to every top with modes (the level top has none). When the chosen mode is further down the menu, the list moves so it stays visible.
 - **Scoreboard** (annex 1): `&b&lBED WARS` with the level, the XP bar, the wins and current winstreak of the two modes the player played most (1v1 and Solo while they have no games), `Jogadores` (players on the BedWars servers and lobbies) and the site. It replaces the lobby scoreboard through `core.sidebars()`.
 - **Statistics NPC**: shows each player as themselves (their own skin), with their level, XP bar, wins, kills, final kills, beds and winstreak above it. Clicking it opens `Suas estatísticas (Bed Wars)`, with Geral (level and XP included) and every mode.
+- **Missions NPC**: `MISSÕES` / `Clique para ver!` at 24.5 81 8.5 opens `Missões do Bed Wars` without `Voltar`; the `Missões` button of `Menu do Bed Wars` opens it with `Voltar`. See [Missions](#missions).
+- **Hologram spacing**: the NPC lines follow the exported heights. Mode and missions NPCs use `lobby.npc-labels` (bottom line 2.25625 above the feet, then 0.28125, 0.46875 and 0.28125); the statistics NPC uses `lobby.stats-npc.labels`, with the larger gaps of the reference before `Vitórias`, `Winstreak` and `SUAS ESTATÍSTICAS`. The tops use `lobby.tops.spacing` (0.28125 under the header, 0.375 before the first name and before `Clique para trocar!`, 0.28125 between names, 0.34375 before the periods) and the selector list `lobby.tops.selector.list-spacing` (0.28125).
+- **Menu rule**: a menu opened from another menu has `Voltar`; opened directly (NPC, item, command) it has none. `Cosméticos do Bed Wars` shows `Voltar` only when opened from `Menu do Bed Wars`, not from `/cosmeticos`.
+
+### Missions
+
+BedWars is the first game with [missions](../missions/README.md). It registers its catalog, its goals and its reward (the mission XP goes to the player's BedWars statistics, so it counts in the level and the tops); Muxe-Core does the rest.
+
+| Goal | Counts | Missions |
+|---|---|---|
+| `KILL_STREAK` | best | Kills in a row in a match, back to 0 on death. Ninguém me para! (2). |
+| `INVISIBLE_BED` | sum | Beds broken while invisible. Quem foi? (1). |
+| `END_STONE_DEFENSE` | sum | 1 when the player places `end-stone-blocks` (10) End Stone within `end-stone-radius` (3) blocks of their own bed in a match. Proteção do Fim (1). |
+| `CLEAN_WIN` | sum | Wins without placing TNT or throwing a Fireball. Rei das pontes (1). |
+| `BEDBUG_KILLS` | sum | Kills of an enemy a Percevejo of the killer's team hit in the last `bedbug-assist-seconds` (10). Um aliado inesperado (3). |
+| `EMERALDS_IN_A_LIFE` | best | Emeralds picked up from generators without dying. Colecionador de Esmeraldas (8). |
+| `FIREBALL_DAMAGE` | sum | Damage dealt to other players with Fireballs. Sou eu bola de fogo (1.000). |
+| `FINAL_KILLS` | sum | Final kills. Fim da linha (35). |
+| `EXPLOSIVE_BLOCKS` | sum | Placed blocks destroyed by the player's TNT or Fireball. Olha a explosão (1.000). |
+| `FAST_WIN` | sum | Wins within `fast-win-seconds` (210). Ansiedade mais de 8000 (1). |
+| `CLAY_BOUGHT` | sum | Clay blocks bought. Artesão (50). |
+
+Daily missions give 625 XP; weekly ones 2.500 XP and 15 credits; Complecionista (complete every weekly mission) gives 15 credits. Each player gets 3 of the 6 daily missions and the week's 5 weekly missions. The Halloween missions of the reference are not included.
+
+The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the thrower's team where it lands. For 15 seconds it chases the closest enemy within 16 blocks, never breaks blocks, drops nothing, and its kills count for the thrower.
 
 ### Statistics
 
@@ -197,10 +222,13 @@ The BedWars lobby (`bedwars-lobby` group) runs Muxe-Lobby plus this plugin in lo
 | `lobby.menu-item` | slot 3, emerald | Menu do Bed Wars item on the BedWars lobby. |
 | `levels.badges`, `levels.rainbow` | the level list | Badge of each level range; from `rainbow.from` (1000) the digits take the rainbow colours. |
 | `lobby.npcs.<id>` | the exports | `action` (a mode id, `duelos` or `nenhuma`), `location`, signed `skin`, `players` (modes counted in `{players}`) and `lines`; `{blink}` takes the next colour of `lobby.blink-colors` every 0.5 s. |
-| `lobby.stats-npc` | 22.5 81 -1.5 | Position, lines and XP bar size of the statistics NPC. |
+| `lobby.stats-npc` | 22.5 81 -1.5 | Position, lines, XP bar size and `labels` (line heights) of the statistics NPC. |
+| `lobby.npc-labels` | the exports | `bottom`, `gaps` and `spacing` of the mode and missions NPC lines. |
+| `lobby.tops.spacing.*` | the exports | `title`, `list`, `entries`, `click` and `periods` gaps of the tops. |
+| `missions.*` | the exports | The [missions](../missions/README.md#configuration) catalog and texts, plus `fast-win-seconds` (210), `end-stone-radius` (3), `end-stone-blocks` (10) and `bedbug-assist-seconds` (10). |
 | `lobby.tops.boards.<id>` | the four tops | `category` (`FINAL_KILLS`, `WINS`, `WINSTREAK`, `LEVEL`), `title`, `location` of the top stand, `periods` in display order and `modes`. |
 | `lobby.tops.*` | the exports | Header, entry, empty (`Ninguém` - `0`), click and period texts, `label-above-stand` (2.175), `refresh-seconds` (60), `click-sound` (`CLICK`, empty for none) and `xp-value` (`{xp} XP`, the level top outside Total). |
-| `lobby.tops.selector.*` | the export | `location` of the `SELECIONAR MODO` stand, `list-offset` and `footer-offset` (0.375 and 1.90625 below it), `visible-modes` (5) and the header, footer, selected, other and `general-name` texts. |
+| `lobby.tops.selector.*` | the export | `location` of the `SELECIONAR MODO` stand, `list-offset` and `footer-offset` (0.375 and 1.90625 below it), `list-spacing` (0.28125), `visible-modes` (5) and the header, footer, selected, other and `general-name` texts. |
 | `lobby.scoreboard.*` | annex 1 | `title`, `lines` (`{level}`, `{bar}`, `{players}`; `{modes}` becomes the mode lines), `mode-lines` (`{mode}` and the counters), `default-modes` (1v1, solo), `shown-modes` (2) and `bar-segments` (10). |
 | `lobby.menus.*` | the exports | Mode, duels, maps, top mode and statistics menus. |
 
@@ -260,7 +288,7 @@ If Muxe-Core is not enabled, the plugin disables itself.
 - MEGA and PILARES are not modes yet, so their NPCs open nothing. `/retornar` and `/l` are not in yet.
 - A player who reaches a BedWars server without a reservation still joins a room of `default-mode`.
 - The lobby only knows the rooms of servers that published in the last 10 seconds; the room list of a server that stops is forgotten after that.
-- The special shop items, the quick buy editor, the dragons, the spinning blocks above the generators, and the victory and defeat titles are not in yet.
+- The other special shop items, the quick buy editor, the dragons, the spinning blocks above the generators, and the victory and defeat titles are not in yet.
 - A restart or crash ends every match on the server without compensation.
 - 17 bed destruction cosmetics have no animation yet. The other cosmetic categories, Cor preferida and the cosmetic shop are not in yet.
 - A purchase updates the menu at once, but another server sees it only when the player joins it again.

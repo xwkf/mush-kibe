@@ -19,6 +19,27 @@ public final class TopView {
     private TopView() {
     }
 
+    public static List<Double> gaps(TopTexts.Spacing spacing) {
+        List<Double> gaps = new ArrayList<>();
+        gaps.add(spacing.title());
+        gaps.add(spacing.list());
+        for (int entry = 1; entry < TopState.PAGE_SIZE; entry++) {
+            gaps.add(spacing.entries());
+        }
+        gaps.add(spacing.click());
+        gaps.add(spacing.periods());
+        return List.copyOf(gaps);
+    }
+
+    public static double clickBoundary(TopTexts.Spacing spacing) {
+        List<Double> gaps = gaps(spacing);
+        double lastEntry = 0;
+        for (int index = 0; index < UPPER_LINES - 1; index++) {
+            lastEntry += gaps.get(index);
+        }
+        return lastEntry + spacing.click() / 2;
+    }
+
     public static StatsPeriod period(TopBoardSettings board, TopState state) {
         return board.periods().get(state.period() % board.periods().size());
     }

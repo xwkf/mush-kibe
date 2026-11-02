@@ -54,6 +54,11 @@ public final class PostgresBedWarsStatsRepository implements BedWarsStatsReposit
             updated_at = EXCLUDED.updated_at
         """.formatted(STREAK);
 
+    private static final String ADD_XP = """
+        INSERT INTO bedwars.player_stats AS s (player_id, mode, period, period_start, xp, updated_at) VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT (player_id, mode, period, period_start) DO UPDATE SET xp = s.xp + EXCLUDED.xp, updated_at = EXCLUDED.updated_at
+        """;
+
     private static final String STATS = """
         SELECT mode, games, beds_broken, beds_lost, kills, deaths, assists, final_kills, final_deaths, final_assists,
             wins, losses, winstreak, best_winstreak, xp
@@ -112,6 +117,24 @@ public final class PostgresBedWarsStatsRepository implements BedWarsStatsReposit
             statement.executeBatch();
         } catch (SQLException exception) {
             throw new PersistenceException("bedwars.stats.record", exception);
+        }
+    }
+
+    @Override
+    public void addXp(UUID playerId, long xp, Instant at, ZoneId zone) {
+        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(ADD_XP)) {
+            for (StatsPeriod period : StatsPeriod.values()) {
+                statement.setObject(1, playerId);
+                statement.setString(2, PlayerStats.GENERAL);
+                statement.setString(3, period.id());
+                statement.setObject(4, period.start(at, zone));
+                statement.setLong(5, xp);
+                statement.setTimestamp(6, Timestamp.from(at));
+                statement.addBatch();
+            }
+            statement.executeBatch();
+        } catch (SQLException exception) {
+            throw new PersistenceException("bedwars.stats.add_xp", exception);
         }
     }
 

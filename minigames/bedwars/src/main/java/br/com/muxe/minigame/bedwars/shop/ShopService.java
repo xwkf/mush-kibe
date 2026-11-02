@@ -5,6 +5,7 @@ import br.com.muxe.core.bukkit.menu.ClickContext;
 import br.com.muxe.core.bukkit.menu.Menu;
 import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
+import br.com.muxe.minigame.bedwars.listener.Bedbugs;
 import br.com.muxe.minigame.bedwars.room.Kits;
 import br.com.muxe.minigame.bedwars.room.RoomPlayer;
 import br.com.muxe.minigame.bedwars.room.RoomRuntime;
@@ -16,6 +17,7 @@ import br.com.muxe.minigame.bedwars.shop.ShopCatalog.Tier;
 import br.com.muxe.minigame.bedwars.shop.UpgradeCatalog.Entry;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -25,6 +27,8 @@ import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionEffect;
 
 public final class ShopService {
+
+    public static final Set<String> BUYABLE_SPECIALS = Set.of(Bedbugs.ITEM_ID);
 
     public static final List<Integer> ITEM_SLOTS = List.of(19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43);
 
@@ -164,7 +168,7 @@ public final class ShopService {
             player.sendMessage(Colors.translate(shop.texts().owned()));
             return;
         }
-        if (item.type() == ShopCatalog.Type.SPECIAL) {
+        if (item.type() == ShopCatalog.Type.SPECIAL && !BUYABLE_SPECIALS.contains(item.id())) {
             player.sendMessage(messages.get("coming-soon"));
             return;
         }
@@ -181,6 +185,9 @@ public final class ShopService {
         }
         inventory.removeItem(new ItemStack(tier.currency().material(), tier.price()));
         give(player, roomPlayer, team, item, offer);
+        if (tier.material() == Material.HARD_CLAY || tier.material() == Material.STAINED_CLAY) {
+            roomPlayer.addClay(item.amount());
+        }
         player.sendMessage(messages.get("bought", "item", offer.boughtName()));
     }
 
@@ -214,8 +221,7 @@ public final class ShopService {
             }
             case POTION -> inventory.addItem(potion(item, tier));
             case ITEM -> inventory.addItem(plain(item, tier));
-            case SPECIAL -> {
-            }
+            case SPECIAL -> inventory.addItem(new ItemStack(tier.material(), item.amount(), (short) item.data()));
         }
     }
 

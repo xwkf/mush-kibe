@@ -64,9 +64,11 @@ public final class MatchListener implements Listener {
     private final MessageCatalog messages;
     private final Consumer<Player> openMenu;
     private final Map<UUID, UUID> explosives = new HashMap<>();
+    private final Bedbugs bedbugs;
 
-    public MatchListener(Plugin plugin, MuxeCore core, RoomService rooms, BedWarsSettings settings, MessageCatalog messages, Consumer<Player> openMenu) {
+    public MatchListener(Plugin plugin, MuxeCore core, RoomService rooms, BedWarsSettings settings, MessageCatalog messages, Consumer<Player> openMenu, Bedbugs bedbugs) {
         this.openMenu = openMenu;
+        this.bedbugs = bedbugs;
         this.plugin = plugin;
         this.core = core;
         this.rooms = rooms;
@@ -139,6 +141,7 @@ public final class MatchListener implements Listener {
             fireball.setIsIncendiary(false);
             fireball.setYield(2.0f);
             explosives.put(fireball.getUniqueId(), player.getUniqueId());
+            room.player(player.getUniqueId()).ifPresent(RoomPlayer::useExplosive);
         }
     }
 
@@ -165,9 +168,13 @@ public final class MatchListener implements Listener {
             TNTPrimed tnt = block.getWorld().spawn(block.getLocation().add(0.5, 0, 0.5), TNTPrimed.class);
             tnt.setFuseTicks(TNT_FUSE_TICKS);
             explosives.put(tnt.getUniqueId(), player.getUniqueId());
+            runtime.room().player(player.getUniqueId()).ifPresent(RoomPlayer::useExplosive);
             return;
         }
         runtime.placed(block);
+        if (block.getType() == Material.ENDER_STONE) {
+            runtime.endStonePlaced(player, block);
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -211,6 +218,7 @@ public final class MatchListener implements Listener {
             || !room.wasPlaced(block.getX(), block.getY(), block.getZ()));
         event.blockList().forEach(block -> room.unplaced(block.getX(), block.getY(), block.getZ()));
         event.setYield(0);
+        Optional.ofNullable(explosives.get(exploded)).flatMap(room::player).ifPresent(owner -> owner.addExplosiveBlocks(event.blockList().size()));
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -244,6 +252,10 @@ public final class MatchListener implements Listener {
                 if (other.isPresent() && other.get().isAlive()) {
                     room.credit().hit(player.getUniqueId(), attacker.get().getUniqueId(), core.clock().instant());
                 }
+                if (other.isPresent() && byEntity.getDamager() instanceof Fireball && !attacker.get().equals(player)) {
+                    other.get().addFireballDamage(event.getFinalDamage());
+                }
+                bedbugs.bug(byEntity.getDamager()).ifPresent(bug -> runtime.bedbugHit(player.getUniqueId(), bug.team()));
             }
         }
         if (event.getFinalDamage() >= player.getHealth()) {
@@ -328,12 +340,20 @@ public final class MatchListener implements Listener {
             }
             RoomPlayer picker = runtime.room().player(player.getUniqueId()).orElseThrow();
             ItemStack stack = item.getItemStack();
+            if (stack.getType() == Material.EMERALD) {
+                picker.addEmeralds(stack.getAmount());
+            }
             double radius = settings.forges().splitRadius();
             for (Entity nearby : player.getNearbyEntities(radius, radius, 2.0)) {
                 if (nearby instanceof Player mate && !mate.equals(player)) {
                     runtime.room().player(mate.getUniqueId())
                         .filter(other -> other.team() == picker.team() && other.isAlive())
-                        .ifPresent(other -> mate.getInventory().addItem(new ItemStack(stack.getType(), stack.getAmount())));
+                        .ifPresent(other -> {
+                            mate.getInventory().addItem(new ItemStack(stack.getType(), stack.getAmount()));
+                            if (stack.getType() == Material.EMERALD) {
+                                other.addEmeralds(stack.getAmount());
+                            }
+                        });
                 }
             }
         });
@@ -391,6 +411,10 @@ public final class MatchListener implements Listener {
         }
         if (damager instanceof Projectile projectile && projectile.getShooter() instanceof Player shooter) {
             return Optional.of(shooter);
+        }
+        Optional<Bedbugs.Bug> bug = bedbugs.bug(damager);
+        if (bug.isPresent()) {
+            return Optional.ofNullable(plugin.getServer().getPlayer(bug.get().owner()));
         }
         if (damager instanceof TNTPrimed || damager instanceof Fireball) {
             UUID owner = explosives.get(damager.getUniqueId());

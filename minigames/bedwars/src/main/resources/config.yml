@@ -280,6 +280,191 @@ holograms:
     - "&2&lEsmeralda"
     - "&fGera em &c{seconds} &fsegundos."
 
+missions:
+  daily-count: 3
+  weekly-count: 5
+  fast-win-seconds: 210
+  end-stone-radius: 3
+  end-stone-blocks: 10
+  bedbug-assist-seconds: 10
+  daily:
+    ninguem-me-para:
+      name: "Ninguém me para!"
+      goal: KILL_STREAK
+      target: 2
+      xp: 625
+      description:
+        - "&fElimine 2 adversários"
+        - "&fseguidos em uma partida:"
+        - "&f{progress}"
+    quem-foi:
+      name: "Quem foi?"
+      goal: INVISIBLE_BED
+      target: 1
+      xp: 625
+      description:
+        - "&fDestrua 1 cama utilizando"
+        - "&fuma poção de invisibilidade:"
+        - "&f{progress}"
+    protecao-do-fim:
+      name: "Proteção do Fim"
+      goal: END_STONE_DEFENSE
+      target: 1
+      xp: 625
+      description:
+        - "&fProteja sua cama com 10"
+        - "&fPedras do Fim: {progress}"
+    rei-das-pontes:
+      name: "Rei das pontes"
+      goal: CLEAN_WIN
+      target: 1
+      xp: 625
+      description:
+        - "&fVença 1 partida sem utilizar"
+        - "&fexplosivos (TNT e Bola"
+        - "&fde Fogo): {progress}"
+    um-aliado-inesperado:
+      name: "Um aliado inesperado"
+      goal: BEDBUG_KILLS
+      target: 3
+      xp: 625
+      description:
+        - "&fElimine 3 adversários"
+        - "&fcom ajuda dos Percevejos:"
+        - "&f{progress}"
+    colecionador-de-esmeraldas:
+      name: "Colecionador de Esmeraldas"
+      goal: EMERALDS_IN_A_LIFE
+      target: 8
+      xp: 625
+      description:
+        - "&fColete 8 Esmeraldas sem"
+        - "&fmorrer: {progress}"
+  weekly:
+    sou-eu-bola-de-fogo:
+      name: "Sou eu bola de fogo"
+      goal: FIREBALL_DAMAGE
+      target: 1000
+      xp: 2500
+      credits: 15
+      description:
+        - "&fCause 1.000 de dano utilizando"
+        - "&fBola de Fogo: {progress}"
+    fim-da-linha:
+      name: "Fim da linha"
+      goal: FINAL_KILLS
+      target: 35
+      xp: 2500
+      credits: 15
+      description:
+        - "&fElimine 35 adversários"
+        - "&ffinais: {progress}"
+    olha-a-explosao:
+      name: "Olha a explosão"
+      goal: EXPLOSIVE_BLOCKS
+      target: 1000
+      xp: 2500
+      credits: 15
+      description:
+        - "&fDestrua 1.000 blocos com"
+        - "&fTNT ou Bola de Fogo: {progress}"
+    ansiedade-mais-de-8000:
+      name: "Ansiedade mais de 8000"
+      goal: FAST_WIN
+      target: 1
+      xp: 2500
+      credits: 15
+      description:
+        - "&fGanhe 1 partida em 3:30"
+        - "&fminutos: {progress}"
+    artesao:
+      name: "Artesão"
+      goal: CLAY_BOUGHT
+      target: 50
+      xp: 2500
+      credits: 15
+      description:
+        - "&fCompre 50 blocos de Argila:"
+        - "&f{progress}"
+  credit-path:
+    complecionista:
+      name: "Complecionista"
+      goal: WEEKLY_MISSIONS
+      target: 5
+      credits: 15
+      description:
+        - "&fComplete todas as missões"
+        - "&fsemanais: {progress}"
+  announce:
+    prefix: "&b&lMISSÕES &aVocê completou "
+    name: "&e{name} &7({category})"
+    description: "&7{description}"
+    progress: "&f{progress}/{target}"
+    xp: "&b+{xp} XP (Bed Wars)"
+    credits: "&d+{credits} créditos"
+  summary:
+    border: "&a----------------------------------------"
+    headers:
+      DAILY: "&aMISSÕES DIÁRIAS"
+      WEEKLY: "&6MISSÕES SEMANAIS"
+      CREDIT_PATH: "&dCAMINHO DOS CRÉDITOS"
+    line: " &e{name}: &7{progress}/{target} &a(+{added})"
+    completed: " &bCOMPLETO!"
+  menu:
+    title: "Missões do Bed Wars"
+    rows: 6
+    categories:
+      DAILY:
+        slot: 10
+        label: "Diária"
+        item:
+          material: INK_SACK
+          data: 10
+          name: "&aMissões diárias"
+      WEEKLY:
+        slot: 19
+        label: "Semanal"
+        item:
+          material: INK_SACK
+          data: 11
+          name: "&aMissões semanais"
+      CREDIT_PATH:
+        slot: 28
+        label: "Caminho dos créditos"
+        item:
+          material: DOUBLE_PLANT
+          name: "&aCaminho dos créditos"
+    category-lore:
+      - "&fProgresso:"
+      - "&a{done}/{total}"
+      - " "
+      - "&fTempo restante:"
+      - "&a{time}"
+    mission:
+      material: PAPER
+      name: "&e{name}"
+    reward-one: "&eRecompensa:"
+    reward-many: "&eRecompensas:"
+    xp-reward: "&b+{xp} XP (Bed Wars)"
+    credits-reward: "&d+{credits} créditos"
+    in-progress: "&eEm progresso."
+    completed: "&aConcluída."
+    progress: "&a{progress}/{target}"
+    back:
+      slot: 48
+      item:
+        material: ARROW
+        name: "&aVoltar"
+        lore:
+          - "&7Para Menu do Bed Wars"
+    time:
+      day: "1 dia"
+      days: "{n} dias"
+      hour: "1 hora"
+      hours: "{n} horas"
+      minute: "1 minuto"
+      minutes: "{n} minutos"
+
 messages:
   room-requesting: "&aSolicitando nova sala..."
   room-sending: "&aEnviando para {room}..."
@@ -1311,8 +1496,9 @@ cosmetics:
             - "&b[&3300❂&b] &d[&5400❁&d] &7[&f500❋&7]"
             - "&1[&9600✟&1] &2[&a700&l۞&2] &6[&e800&l✌&6]"
             - "&4[&c900&l⚝&4] &c[&61&e0&a0&b0&dΩ&5]"
-      soon:
-        "11":
+      missions:
+        slot: 11
+        item:
           material: STORAGE_MINECART
           name: "&aMissões"
           lore:
@@ -1320,6 +1506,7 @@ cosmetics:
             - "&7e ganhe recompensas."
             - " "
             - "&eClique para ver mais."
+      soon:
         "29":
           material: CHEST
           name: "&aCompra rápida"
@@ -2091,6 +2278,26 @@ lobby:
         - "{blink}&lTEMPORARIO!"
         - "&b&lPILARES"
         - "&e{players} jogando"
+    missoes:
+      action: missoes
+      location:
+        world: lobby
+        x: 24.5
+        y: 81.0
+        z: 8.5
+        yaw: -175.78125
+      skin:
+        value: "ewogICJ0aW1lc3RhbXAiIDogMTc0NzAxNTk2Mjk4MCwKICAicHJvZmlsZUlkIiA6ICJhMDM1YzRhMmFmYzg0MjBmODhhNjA3NjRhN2NiMjFjMiIsCiAgInByb2ZpbGVOYW1lIiA6ICJBbGFib25vIiwKICAic2lnbmF0dXJlUmVxdWlyZWQiIDogdHJ1ZSwKICAidGV4dHVyZXMiIDogewogICAgIlNLSU4iIDogewogICAgICAidXJsIiA6ICJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlLzgxZmQ4YzlhNDI2NGRjNmVmM2FkYTQ4YWI1MzcwMWU2ZjFjMTIzMWFlNGQwNjQyMTMyYjk2NGUxY2YxZTE3Y2QiLAogICAgICAibWV0YWRhdGEiIDogewogICAgICAgICJtb2RlbCIgOiAic2xpbSIKICAgICAgfQogICAgfQogIH0KfQ=="
+        signature: "ndhVRqltiqVoLsLEm1C6EcQkpZ8HqTms3Ere1DlyWnT5GdOTxFnDnVxe+ovfxnOPw14SHFDmSbCmy9lfDZ4ZMAyrSIf/RnjaKDYEZewUtqCNCs1FVn4+YbeZ6LYdxzypARLCfsDYXgRE/LyTG1ciKrS8r5I2zOkT5/GSHUfl+BWlLJ8BGp39wClqsTLUx+la39hc9/uOoEJZFRBtwBY7xjsJV66D845Or6whmWFxJmOVujFDrCubJl/sCVDQF08pgdFzZmOSvEHu9oubhr4HiG+djp7WeDAjJDODT1cQnAlE2XWkUCI0cFvT998qjuSy3c0+BkAjVkLBXUZT+mVe50VaMQ7GWXxY07jmlSY2Rt7GARpzRaJ6RdDFufGBQe6DP9I8mcI5T1aaNSJA8HhTHHt+JMOEOmy5p49as1q/fjIIVLZ1m77qgAhG4E2fkR3igl5vQT9CWF0Oebhvf9awlvXOetHdK+X5+gI/pdyv9f+e24G6JXHuHrcJkbNYSf/CPw1jSdLIrfiZoLaj4KRSbgLOdqgL6RZKp4K4nfleT8gGDW357T7sASvAt9oFa95ym9hxk1GgLtkURau6S4+v1S/ihO+O9a4tt35QJDq21wyh7sAWkle97R+q8Fc6LcfrQQCaVBcfursbQE2By3ZmowILfzyoxj+de6CbSUU6o6I="
+      lines:
+        - "&b&lMISSÕES"
+        - "&eClique para ver!"
+  npc-labels:
+    bottom: 2.25625
+    gaps:
+      - 0.28125
+      - 0.46875
+    spacing: 0.28125
   blink-colors:
     - "&f"
     - "&d"
@@ -2133,6 +2340,18 @@ lobby:
       - "&b&lSUAS ESTATÍSTICAS"
       - "&eClique para ver!"
     bar-segments: 12
+    labels:
+      bottom: 2.25625
+      gaps:
+        - 0.28125
+        - 0.46875
+        - 0.4375
+        - 0.28125
+        - 0.28125
+        - 0.28125
+        - 0.4375
+        - 0.28125
+      spacing: 0.28125
   tops:
     label-above-stand: 2.175
     boards:
@@ -2202,6 +2421,12 @@ lobby:
       TOTAL: "Total"
     refresh-seconds: 60
     click-sound: CLICK
+    spacing:
+      title: 0.28125
+      list: 0.375
+      entries: 0.28125
+      click: 0.375
+      periods: 0.34375
     xp-value: "{xp} XP"
     selector:
       location:
@@ -2210,6 +2435,7 @@ lobby:
         y: 77.78125
         z: 12.5
       list-offset: 0.375
+      list-spacing: 0.28125
       footer-offset: 1.90625
       visible-modes: 5
       header: "&b&lSELECIONAR MODO"

@@ -39,7 +39,7 @@ public final class TopBoards implements Listener {
     private final Optional<TopSelectorSettings> selector;
     private final List<String> modeOrder;
     private final Function<String, String> modeName;
-    private final TextHolograms holograms = TextHolograms.standard();
+    private final TextHolograms holograms;
     private final Map<UUID, Map<String, Shown>> shown = new ConcurrentHashMap<>();
     private final Map<UUID, SelectorShown> selectors = new ConcurrentHashMap<>();
     private final Map<UUID, String> modes = new ConcurrentHashMap<>();
@@ -60,6 +60,7 @@ public final class TopBoards implements Listener {
         this.selector = selector;
         this.modeOrder = List.copyOf(modeOrder);
         this.modeName = modeName;
+        this.holograms = TextHolograms.standard(selector.map(TopSelectorSettings::listSpacing).orElse(TextHolograms.DEFAULT_LINE_SPACING));
     }
 
     public void start() {
@@ -118,7 +119,7 @@ public final class TopBoards implements Listener {
             if (board.modes()) {
                 state.mode(mode);
             }
-            views.put(board.id(), new Shown(board, state, holograms.show(player, top, lines(board, state))));
+            views.put(board.id(), new Shown(board, state, holograms.show(player, top, lines(board, state), TopView.gaps(texts.spacing()))));
         }
         shown.put(player.getUniqueId(), views);
         selector.ifPresent(settings -> {
@@ -179,12 +180,12 @@ public final class TopBoards implements Listener {
             return;
         }
         Location top = top(view.board());
-        List<HologramPixel> pixels = holograms.layout(top, lines(view.board(), view.state()));
+        List<HologramPixel> pixels = holograms.layout(top, lines(view.board(), view.state()), TopView.gaps(texts.spacing()));
         if (view.hologram().rename(pixels.stream().map(HologramPixel::name).toList())) {
             return;
         }
         view.hologram().remove();
-        views.put(boardId, new Shown(view.board(), view.state(), holograms.show(player, top, lines(view.board(), view.state()))));
+        views.put(boardId, new Shown(view.board(), view.state(), holograms.show(player, top, lines(view.board(), view.state()), TopView.gaps(texts.spacing()))));
     }
 
     private void refreshSelector(Player player) {
@@ -256,7 +257,7 @@ public final class TopBoards implements Listener {
     private void clicked(Player player, Shown view) {
         TopBoardSettings board = view.board();
         Location top = top(board);
-        double boundary = top.getY() - (TopView.UPPER_LINES - 0.5) * TextHolograms.DEFAULT_LINE_SPACING;
+        double boundary = top.getY() - TopView.clickBoundary(texts.spacing());
         if (LineAim.heightAt(player.getEyeLocation(), top.getX(), top.getZ()) >= boundary) {
             view.state().nextPage();
         } else {

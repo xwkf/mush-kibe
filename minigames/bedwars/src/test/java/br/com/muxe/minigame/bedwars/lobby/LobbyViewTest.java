@@ -44,7 +44,7 @@ class LobbyViewTest {
         List<LobbyNpc> npcs = LobbyNpc.from(RoomFixtures.CONFIG.getConfigurationSection("lobby.npcs"));
         StatsNpcSettings stats = StatsNpcSettings.from(RoomFixtures.CONFIG.getConfigurationSection("lobby.stats-npc"));
 
-        assertThat(npcs).extracting(LobbyNpc::id).containsExactly("solo", "duplas", "trios", "quartetos", "duelos", "mega", "pilares");
+        assertThat(npcs).extracting(LobbyNpc::id).containsExactly("solo", "duplas", "trios", "quartetos", "duelos", "mega", "pilares", "missoes");
         assertThat(npcs).allMatch(npc -> npc.skin().isPresent());
         assertThat(npcs.get(4).players()).containsExactly("1v1", "2v2", "3v3", "4v4", "4s");
         assertThat(npcs.get(5).action()).isEqualTo("nenhuma");

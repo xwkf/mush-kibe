@@ -34,6 +34,17 @@ public final class RoomPlayer {
     private int pickaxeTier;
     private int axeTier;
     private boolean shears;
+    private int killStreak;
+    private int bestKillStreak;
+    private int invisibleBeds;
+    private int endStones;
+    private boolean usedExplosives;
+    private int bedbugKills;
+    private int emeraldsThisLife;
+    private int bestEmeralds;
+    private double fireballDamage;
+    private int explosiveBlocks;
+    private int clayBought;
 
     public RoomPlayer(UUID id, String name) {
         this.id = id;
@@ -90,6 +101,77 @@ public final class RoomPlayer {
         } else {
             kills++;
         }
+        killStreak++;
+        bestKillStreak = Math.max(bestKillStreak, killStreak);
+    }
+
+    public int bestKillStreak() {
+        return bestKillStreak;
+    }
+
+    public int invisibleBeds() {
+        return invisibleBeds;
+    }
+
+    public void addInvisibleBed() {
+        invisibleBeds++;
+    }
+
+    public int endStones() {
+        return endStones;
+    }
+
+    public void addEndStone() {
+        endStones++;
+    }
+
+    public boolean usedExplosives() {
+        return usedExplosives;
+    }
+
+    public void useExplosive() {
+        usedExplosives = true;
+    }
+
+    public int bedbugKills() {
+        return bedbugKills;
+    }
+
+    public void addBedbugKill() {
+        bedbugKills++;
+    }
+
+    public int bestEmeralds() {
+        return bestEmeralds;
+    }
+
+    public void addEmeralds(int amount) {
+        emeraldsThisLife += amount;
+        bestEmeralds = Math.max(bestEmeralds, emeraldsThisLife);
+    }
+
+    public double fireballDamage() {
+        return fireballDamage;
+    }
+
+    public void addFireballDamage(double amount) {
+        fireballDamage += Math.max(0, amount);
+    }
+
+    public int explosiveBlocks() {
+        return explosiveBlocks;
+    }
+
+    public void addExplosiveBlocks(int amount) {
+        explosiveBlocks += amount;
+    }
+
+    public int clayBought() {
+        return clayBought;
+    }
+
+    public void addClay(int amount) {
+        clayBought += amount;
     }
 
     void addBed() {
@@ -121,6 +203,8 @@ public final class RoomPlayer {
     }
 
     void addDeath(boolean finalDeath) {
+        killStreak = 0;
+        emeraldsThisLife = 0;
         if (finalDeath) {
             finalDeaths++;
         } else {

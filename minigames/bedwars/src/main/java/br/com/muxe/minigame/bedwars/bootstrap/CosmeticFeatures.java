@@ -3,6 +3,7 @@ package br.com.muxe.minigame.bedwars.bootstrap;
 import br.com.muxe.core.bukkit.api.MuxeCore;
 import br.com.muxe.core.bukkit.command.framework.Commands;
 import br.com.muxe.core.bukkit.cosmetic.stage.AnimationPlayer;
+import br.com.muxe.core.bukkit.mission.menu.MissionMenus;
 import br.com.muxe.core.bukkit.nms.BlockMask;
 import br.com.muxe.core.bukkit.permission.command.Replies;
 import br.com.muxe.core.bukkit.permission.command.TargetLookup;
@@ -13,8 +14,8 @@ import br.com.muxe.minigame.bedwars.cosmetic.catalog.CosmeticCatalog;
 import br.com.muxe.minigame.bedwars.cosmetic.command.CosmeticCommand;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.BedWarsMenuItem;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenuSettings;
-import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenus;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenus.PreviewGate;
+import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenus;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.MenuSlot;
 import br.com.muxe.minigame.bedwars.cosmetic.preview.BedPreview;
 import br.com.muxe.minigame.bedwars.cosmetic.preview.PreviewSettings;
@@ -76,6 +77,10 @@ final class CosmeticFeatures {
 
     void openMenu(Player player) {
         menus.openBedWars(player);
+    }
+
+    void onMissions(MissionMenus missions) {
+        menus.onMissions(missions::open);
     }
 
     boolean previewing(Player player) {

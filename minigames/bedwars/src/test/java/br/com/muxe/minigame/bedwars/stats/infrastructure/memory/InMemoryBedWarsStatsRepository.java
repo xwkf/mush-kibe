@@ -50,6 +50,18 @@ public final class InMemoryBedWarsStatsRepository implements BedWarsStatsReposit
     }
 
     @Override
+    public void addXp(UUID playerId, long xp, Instant at, ZoneId zone) {
+        Map<StatsSlot, StatCounters> slots = rows.computeIfAbsent(playerId, ignored -> new HashMap<>());
+        for (StatsPeriod period : StatsPeriod.values()) {
+            StatsSlot slot = new StatsSlot(PlayerStats.GENERAL, period, period.start(at, zone));
+            StatCounters current = slots.getOrDefault(slot, StatCounters.ZERO);
+            slots.put(slot, new StatCounters(current.games(), current.bedsBroken(), current.bedsLost(), current.kills(), current.deaths(), current.assists(),
+                current.finalKills(), current.finalDeaths(), current.finalAssists(), current.wins(), current.losses(), current.winstreak(),
+                current.bestWinstreak(), current.xp() + xp));
+        }
+    }
+
+    @Override
     public PlayerStats totals(UUID playerId) {
         return stats(playerId, StatsPeriod.TOTAL, StatsPeriod.TOTAL_START);
     }

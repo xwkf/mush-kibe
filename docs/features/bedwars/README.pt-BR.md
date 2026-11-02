@@ -78,7 +78,7 @@ O NPC da loja abre os menus dos exports: Compra Rápida (o layout do export) e a
 - Um item custa ferro, ouro ou esmeraldas do inventário. O nome fica vermelho quando não dá para comprar, com `Você não tem <recurso> o suficiente.`
 - Cada compra diz `Você comprou <item>.`
 - A lã vem na cor do time. Uma espada substitui a de madeira. A armadura dá bota e calça e não pode ser comprada abaixo da que o jogador tem. A picareta e o machado sobem um nível por compra. A tesoura é permanente.
-- Ainda não funcionam: o shift-click (editar a compra rápida), o editor de hotbar, e os itens especiais Percevejo, Golem de Ferro, Leite Mágico, Torre Compacta, Ovo das Pontes, Rastreador e Estilingue, que avisam que chegam em breve e não cobram nada.
+- Ainda não funcionam: o shift-click (editar a compra rápida), o editor de hotbar, e os itens especiais Golem de Ferro, Leite Mágico, Torre Compacta, Ovo das Pontes, Rastreador e Estilingue, que avisam que chegam em breve e não cobram nada.
 
 ### Melhorias do time
 
@@ -133,6 +133,31 @@ O lobby do BedWars (grupo `bedwars-lobby`) roda o Muxe-Lobby e este plugin no mo
 - **Seletor de modo**: o holograma `SELECIONAR MODO` do export lista cinco modos (Geral, Solo, Duplas, Trios, Quartetos), o escolhido em verde; um clique abre `Selecionar modo`, e a escolha vale para todos os tops com modos (o top de nível não tem). Quando o modo escolhido fica mais abaixo no menu, a lista anda para ele continuar visível.
 - **Scoreboard** (anexo 1): `&b&lBED WARS` com o nível, a barra de XP, as vitórias e a winstreak atual dos dois modos que o jogador mais jogou (1v1 e Solo enquanto ele não tem partidas), `Jogadores` (jogadores nos servidores e lobbies de BedWars) e o site. Ela substitui a scoreboard do lobby pelo `core.sidebars()`.
 - **NPC de estatísticas**: mostra cada jogador como ele mesmo (com a skin dele), com nível, barra de XP, vitórias, kills, kills finais, camas e winstreak acima. Clicar abre `Suas estatísticas (Bed Wars)`, com Geral (incluindo nível e XP) e cada modo.
+- **NPC de missões**: `MISSÕES` / `Clique para ver!` em 24.5 81 8.5 abre `Missões do Bed Wars` sem `Voltar`; o botão `Missões` do `Menu do Bed Wars` abre com `Voltar`. Veja [Missões](#missões).
+- **Espaçamento dos hologramas**: as linhas dos NPCs seguem as alturas dos exports. Os NPCs de modo e de missões usam `lobby.npc-labels` (última linha 2.25625 acima dos pés, depois 0.28125, 0.46875 e 0.28125); o NPC de estatísticas usa `lobby.stats-npc.labels`, com os espaços maiores da referência antes de `Vitórias`, `Winstreak` e `SUAS ESTATÍSTICAS`. Os tops usam `lobby.tops.spacing` (0.28125 abaixo do cabeçalho, 0.375 antes do primeiro nome e antes do `Clique para trocar!`, 0.28125 entre os nomes, 0.34375 antes dos períodos) e a lista do seletor `lobby.tops.selector.list-spacing` (0.28125).
+- **Regra dos menus**: um menu aberto por outro menu tem `Voltar`; aberto direto (NPC, item, comando) não tem. `Cosméticos do Bed Wars` só mostra `Voltar` quando aberto pelo `Menu do Bed Wars`, não pelo `/cosmeticos`.
+
+### Missões
+
+O BedWars é o primeiro jogo com [missões](../missions/README.pt-BR.md). Ele registra o seu catálogo, os seus objetivos e a sua recompensa (o XP da missão vai para as estatísticas de BedWars do jogador, então conta no nível e nos tops); o Muxe-Core faz o resto.
+
+| Objetivo | Conta | Missões |
+|---|---|---|
+| `KILL_STREAK` | melhor | Kills seguidas numa partida, voltando a 0 ao morrer. Ninguém me para! (2). |
+| `INVISIBLE_BED` | soma | Camas quebradas estando invisível. Quem foi? (1). |
+| `END_STONE_DEFENSE` | soma | 1 quando o jogador coloca `end-stone-blocks` (10) Pedras do Fim a até `end-stone-radius` (3) blocos da própria cama numa partida. Proteção do Fim (1). |
+| `CLEAN_WIN` | soma | Vitórias sem colocar TNT nem lançar Bola de Fogo. Rei das pontes (1). |
+| `BEDBUG_KILLS` | soma | Kills de um inimigo que um Percevejo do time de quem matou acertou nos últimos `bedbug-assist-seconds` (10). Um aliado inesperado (3). |
+| `EMERALDS_IN_A_LIFE` | melhor | Esmeraldas pegas dos geradores sem morrer. Colecionador de Esmeraldas (8). |
+| `FIREBALL_DAMAGE` | soma | Dano causado em outros jogadores com Bolas de Fogo. Sou eu bola de fogo (1.000). |
+| `FINAL_KILLS` | soma | Kills finais. Fim da linha (35). |
+| `EXPLOSIVE_BLOCKS` | soma | Blocos colocados destruídos pela TNT ou Bola de Fogo do jogador. Olha a explosão (1.000). |
+| `FAST_WIN` | soma | Vitórias em até `fast-win-seconds` (210). Ansiedade mais de 8000 (1). |
+| `CLAY_BOUGHT` | soma | Blocos de Argila comprados. Artesão (50). |
+
+As diárias dão 625 XP; as semanais 2.500 XP e 15 créditos; o Complecionista (completar todas as semanais) dá 15 créditos. Cada jogador recebe 3 das 6 diárias e as 5 semanais da semana. As missões de Halloween da referência não entraram.
+
+O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma traça do time de quem arremessou onde cair. Por 15 segundos ela persegue o inimigo mais próximo a até 16 blocos, nunca quebra blocos, não dropa nada, e as kills dela contam para quem arremessou.
 
 ### Estatísticas
 
@@ -197,10 +222,13 @@ O lobby do BedWars (grupo `bedwars-lobby`) roda o Muxe-Lobby e este plugin no mo
 | `lobby.menu-item` | slot 3, esmeralda | Item Menu do Bed Wars no lobby de BedWars. |
 | `levels.badges`, `levels.rainbow` | a lista de níveis | Insígnia de cada faixa de nível; a partir de `rainbow.from` (1000) os dígitos ganham as cores do arco-íris. |
 | `lobby.npcs.<id>` | os exports | `action` (um id de modo, `duelos` ou `nenhuma`), `location`, `skin` assinada, `players` (modos contados em `{players}`) e `lines`; `{blink}` pega a próxima cor de `lobby.blink-colors` a cada 0,5 s. |
-| `lobby.stats-npc` | 22.5 81 -1.5 | Posição, linhas e tamanho da barra de XP do NPC de estatísticas. |
+| `lobby.stats-npc` | 22.5 81 -1.5 | Posição, linhas, tamanho da barra de XP e `labels` (alturas das linhas) do NPC de estatísticas. |
+| `lobby.npc-labels` | os exports | `bottom`, `gaps` e `spacing` das linhas dos NPCs de modo e de missões. |
+| `lobby.tops.spacing.*` | os exports | Espaços `title`, `list`, `entries`, `click` e `periods` dos tops. |
+| `missions.*` | os exports | O catálogo e os textos das [missões](../missions/README.pt-BR.md#configuração), mais `fast-win-seconds` (210), `end-stone-radius` (3), `end-stone-blocks` (10) e `bedbug-assist-seconds` (10). |
 | `lobby.tops.boards.<id>` | os quatro tops | `category` (`FINAL_KILLS`, `WINS`, `WINSTREAK`, `LEVEL`), `title`, `location` do suporte do topo, `periods` na ordem de exibição e `modes`. |
 | `lobby.tops.*` | os exports | Textos de cabeçalho, posição, vazio (`Ninguém` - `0`), clique e períodos, `label-above-stand` (2.175), `refresh-seconds` (60), `click-sound` (`CLICK`, vazio para nenhum) e `xp-value` (`{xp} XP`, o top de nível fora do Total). |
-| `lobby.tops.selector.*` | o export | `location` do suporte do `SELECIONAR MODO`, `list-offset` e `footer-offset` (0.375 e 1.90625 abaixo dele), `visible-modes` (5) e os textos de cabeçalho, rodapé, selecionado, outros e `general-name`. |
+| `lobby.tops.selector.*` | o export | `location` do suporte do `SELECIONAR MODO`, `list-offset` e `footer-offset` (0.375 e 1.90625 abaixo dele), `list-spacing` (0.28125), `visible-modes` (5) e os textos de cabeçalho, rodapé, selecionado, outros e `general-name`. |
 | `lobby.scoreboard.*` | anexo 1 | `title`, `lines` (`{level}`, `{bar}`, `{players}`; `{modes}` vira as linhas dos modos), `mode-lines` (`{mode}` e os contadores), `default-modes` (1v1, solo), `shown-modes` (2) e `bar-segments` (10). |
 | `lobby.menus.*` | os exports | Menus de modo, duelos, mapas, modo do top e estatísticas. |
 
@@ -260,7 +288,7 @@ Se o Muxe-Core não estiver habilitado, o plugin se desabilita.
 - MEGA e PILARES ainda não são modos, então os NPCs deles não abrem nada. O `/retornar` e o `/l` ainda não entraram.
 - Quem chega a um servidor de BedWars sem reserva ainda entra numa sala do `default-mode`.
 - O lobby só conhece as salas dos servidores que publicaram nos últimos 10 segundos; a lista de um servidor que para é esquecida depois disso.
-- Os itens especiais da loja, o editor da compra rápida, os dragões, os blocos girando sobre os geradores e os títulos de vitória e derrota ainda não entraram.
+- Os outros itens especiais da loja, o editor da compra rápida, os dragões, os blocos girando sobre os geradores e os títulos de vitória e derrota ainda não entraram.
 - Um reinício ou crash encerra todas as partidas do servidor sem compensação.
 - 17 cosméticos de destruição de cama ainda não têm animação. As outras categorias de cosméticos, Cor preferida e a loja de cosméticos ainda não existem.
 - Uma compra atualiza o menu na hora, mas outro servidor só vê quando o jogador entra nele de novo.

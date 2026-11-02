@@ -2,6 +2,7 @@ package br.com.muxe.minigame.bedwars.lobby;
 
 import br.com.muxe.core.bukkit.nms.PlayerSkins;
 import br.com.muxe.core.bukkit.npc.Npc;
+import br.com.muxe.core.bukkit.npc.NpcLabelLayout;
 import br.com.muxe.core.bukkit.npc.NpcService;
 import br.com.muxe.minigame.bedwars.lobby.format.LevelBadges;
 import br.com.muxe.minigame.bedwars.lobby.settings.LobbyNpc;
@@ -32,14 +33,16 @@ public final class LobbyNpcs implements Listener {
     private final Map<String, LobbyNpc> npcs;
     private final List<String> blinkColors;
     private final StatsNpcSettings statsNpc;
+    private final NpcLabelLayout labels;
     private final RoomDirectory directory;
     private final StatsCache stats;
     private final LevelBadges badges;
     private final BiConsumer<Player, String> actions;
     private NpcService service;
 
-    public LobbyNpcs(Plugin plugin, List<LobbyNpc> npcs, List<String> blinkColors, StatsNpcSettings statsNpc, RoomDirectory directory, StatsCache stats,
-                     LevelBadges badges, BiConsumer<Player, String> actions) {
+    public LobbyNpcs(Plugin plugin, List<LobbyNpc> npcs, NpcLabelLayout labels, List<String> blinkColors, StatsNpcSettings statsNpc, RoomDirectory directory,
+                     StatsCache stats, LevelBadges badges, BiConsumer<Player, String> actions) {
+        this.labels = labels;
         this.plugin = plugin;
         this.npcs = npcs.stream().collect(Collectors.toMap(LobbyNpc::id, npc -> npc, (first, second) -> first, LinkedHashMap::new));
         this.blinkColors = List.copyOf(blinkColors);
@@ -51,7 +54,7 @@ public final class LobbyNpcs implements Listener {
     }
 
     public void start() {
-        service = NpcService.start(plugin, this::lines);
+        service = NpcService.start(plugin, npc -> npc.id().startsWith(STATS_PREFIX) ? statsNpc.labels() : labels, this::lines);
         service.visibleTo((viewer, npc) -> !npc.id().startsWith(STATS_PREFIX) || npc.id().equals(STATS_PREFIX + viewer.getUniqueId()));
         service.onClick(this::clicked);
         for (LobbyNpc npc : npcs.values()) {

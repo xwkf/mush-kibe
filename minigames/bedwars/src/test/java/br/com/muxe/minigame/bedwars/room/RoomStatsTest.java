@@ -10,6 +10,7 @@ import br.com.muxe.minigame.engine.team.TeamColor;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -124,6 +125,32 @@ class RoomStatsTest {
             new MatchOutcome(blue.id(), "1v1", 1, 0, 0, 0, 0, 1, 0, 0, MatchResult.WIN, 160 + 20 + 250),
             new MatchOutcome(red.id(), "1v1", 0, 1, 0, 0, 0, 0, 1, 0, MatchResult.LOSS, 20));
         assertThat(room.outcomes(Optional.empty(), new XpRewards(10, 5, 250, 100, 12, 60))).extracting(MatchOutcome::result).containsOnly(MatchResult.NONE);
+    }
+
+    @Test
+    void missionTotalsFollowTheMatch() {
+        Room room = started();
+        RoomPlayer red = player(room, TeamColor.VERMELHO);
+        RoomPlayer blue = player(room, TeamColor.AZUL);
+        room.credit(red, false);
+        room.credit(red, false);
+        room.die(red, 5);
+        room.credit(red, true);
+        red.addEmeralds(3);
+        red.addFireballDamage(2.5);
+        red.addClay(16);
+        for (int second = 0; second < 200; second++) {
+            room.tick();
+        }
+
+        Map<String, Long> winning = room.missionTotals(red, Optional.of(TeamColor.VERMELHO), 210, 10);
+        blue.useExplosive();
+        Map<String, Long> losing = room.missionTotals(blue, Optional.of(TeamColor.VERMELHO), 210, 10);
+
+        assertThat(winning).containsEntry("KILL_STREAK", 2L).containsEntry("FINAL_KILLS", 1L).containsEntry("EMERALDS_IN_A_LIFE", 3L)
+            .containsEntry("FIREBALL_DAMAGE", 2L).containsEntry("CLAY_BOUGHT", 16L).containsEntry("FAST_WIN", 1L).containsEntry("CLEAN_WIN", 1L);
+        assertThat(losing).containsEntry("FAST_WIN", 0L).containsEntry("CLEAN_WIN", 0L);
+        assertThat(room.missionTotals(red, Optional.empty(), 210, 10)).containsEntry("FAST_WIN", 0L);
     }
 
     private static Room started() {

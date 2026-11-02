@@ -2,6 +2,7 @@ package br.com.muxe.minigame.bedwars.room;
 
 import br.com.muxe.core.bukkit.api.MuxeCore;
 import br.com.muxe.core.bukkit.cosmetic.animation.BedFrame;
+import br.com.muxe.core.bukkit.mission.tracker.MissionTracker;
 import br.com.muxe.core.bukkit.npc.Npc;
 import br.com.muxe.core.bukkit.scoreboard.Sidebar;
 import br.com.muxe.core.bukkit.text.CenteredText;
@@ -10,8 +11,10 @@ import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.core.bukkit.text.Title;
 import br.com.muxe.minigame.bedwars.arena.BedWarsArena.TeamBase;
+import br.com.muxe.minigame.bedwars.bootstrap.BedWarsBootstrap;
 import br.com.muxe.minigame.bedwars.game.Ranking;
 import br.com.muxe.minigame.bedwars.game.Timeline.Event;
+import br.com.muxe.minigame.bedwars.mission.MissionRules;
 import br.com.muxe.minigame.bedwars.room.RoomPlayer.State;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
 import br.com.muxe.minigame.bedwars.stats.application.command.RecordMatchCommand;
@@ -69,6 +72,8 @@ public final class RoomRuntime {
         LOOT.put(Material.EMERALD, "emerald");
     }
 
+    private final Map<UUID, BedbugHit> bedbugHits = new HashMap<>();
+    private MissionTracker missions;
     private final RoomService service;
     private final MuxeCore core;
     private final BedWarsSettings settings;
@@ -183,6 +188,8 @@ public final class RoomRuntime {
     void start() {
         Instant now = core.clock().instant();
         room.start(List.of(), now);
+        missions = new MissionTracker(core, BedWarsBootstrap.GAME, service.missions(), "room " + room.code(), service.plugin().getLogger());
+        missions.begin(room.players().stream().map(RoomPlayer::id).toList());
         for (Map.Entry<TeamColor, RoomTeam> entry : room.teams().entrySet()) {
             TeamBase base = room.arena().teams().get(entry.getKey());
             boolean occupied = !entry.getValue().members().isEmpty();
@@ -242,7 +249,12 @@ public final class RoomRuntime {
         }
         broadcast(messages.get(key, "victim", victimName, "killer", killer.map(this::coloredName).orElse("")));
         Map<Material, Integer> loot = resources(victim);
+        BedbugHit bedbug = bedbugHits.remove(dead.id());
         killer.ifPresent(credited -> {
+            if (bedbug != null && bedbug.team() == credited.team()
+                && !bedbug.at().plusSeconds(service.missionRules().bedbugAssistSeconds()).isBefore(now)) {
+                credited.addBedbugKill();
+            }
             room.assists(dead, credited, finalKill, now);
             room.credit(credited, finalKill);
             credited.addXp(finalKill ? settings.xp().finalKill() : settings.xp().regularKill());
@@ -276,6 +288,9 @@ public final class RoomRuntime {
         }
         if (!room.team(owner.get()).bedAlive()) {
             return true;
+        }
+        if (breaker.hasPotionEffect(PotionEffectType.INVISIBILITY)) {
+            player.addInvisibleBed();
         }
         List<RoomPlayer> lost = room.breakBed(owner.get(), player);
         Optional<BedFrame> frame = bedFrame(owner.get());
@@ -377,6 +392,25 @@ public final class RoomRuntime {
 
     public void placed(Block block) {
         room.placed(block.getX(), block.getY(), block.getZ());
+    }
+
+    public void endStonePlaced(Player placer, Block block) {
+        room.player(placer.getUniqueId()).filter(player -> player.team() != null).ifPresent(player -> {
+            TeamBase base = room.arena().teams().get(player.team());
+            int radius = service.missionRules().endStoneRadius();
+            if (base != null && location(base.bed()).distanceSquared(block.getLocation().add(0.5, 0.5, 0.5)) <= (radius + 0.5) * (radius + 0.5)) {
+                player.addEndStone();
+            }
+        });
+    }
+
+    private Optional<Map<String, Long>> missionTotals(UUID id, Optional<TeamColor> winner) {
+        MissionRules rules = service.missionRules();
+        return room.player(id).map(player -> room.missionTotals(player, winner, rules.fastWinSeconds(), rules.endStoneBlocks()));
+    }
+
+    public void bedbugHit(UUID victim, TeamColor team) {
+        bedbugHits.put(victim, new BedbugHit(team, core.clock().instant()));
     }
 
     public boolean mayPlace(Location at) {
@@ -539,6 +573,9 @@ public final class RoomRuntime {
 
     private void playingSecond() {
         room.tick();
+        if (missions != null) {
+            missions.check(id -> missionTotals(id, Optional.empty()));
+        }
         Instant now = core.clock().instant();
         for (Event event : settings.timeline().dueAt(room.elapsed())) {
             runEvent(event);
@@ -628,6 +665,9 @@ public final class RoomRuntime {
         }
         for (Player player : online()) {
             ChatLines.send(player, lines, CenteredText.DEFAULT_CENTER, "");
+        }
+        if (missions != null) {
+            missions.finish(id -> missionTotals(id, winner));
         }
         refreshScoreboards();
         record(winner);
@@ -791,5 +831,8 @@ public final class RoomRuntime {
 
     static String clock(int seconds) {
         return seconds / 60 + ":" + String.format("%02d", seconds % 60);
+    }
+
+    private record BedbugHit(TeamColor team, Instant at) {
     }
 }

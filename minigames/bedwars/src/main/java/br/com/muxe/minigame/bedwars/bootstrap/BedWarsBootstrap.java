@@ -2,11 +2,18 @@ package br.com.muxe.minigame.bedwars.bootstrap;
 
 import br.com.muxe.core.bukkit.api.MuxeCore;
 import br.com.muxe.core.bukkit.command.framework.Commands;
+import br.com.muxe.core.bukkit.mission.config.MissionConfig;
+import br.com.muxe.core.bukkit.mission.menu.MissionMenus;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
+import br.com.muxe.core.common.mission.MissionModule;
+import br.com.muxe.core.common.mission.domain.Mission;
 import br.com.muxe.core.common.server.ServerKind;
 import br.com.muxe.minigame.bedwars.arena.BedWarsSchema;
 import br.com.muxe.minigame.bedwars.command.BedWarsCommand;
+import br.com.muxe.minigame.bedwars.listener.Bedbugs;
 import br.com.muxe.minigame.bedwars.listener.MatchListener;
+import br.com.muxe.minigame.bedwars.mission.BedWarsGoal;
+import br.com.muxe.minigame.bedwars.mission.MissionRules;
 import br.com.muxe.minigame.bedwars.network.RoomPublisher;
 import br.com.muxe.minigame.bedwars.room.RoomService;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
@@ -14,6 +21,8 @@ import br.com.muxe.minigame.bedwars.shop.ShopCatalog;
 import br.com.muxe.minigame.bedwars.shop.ShopService;
 import br.com.muxe.minigame.bedwars.shop.UpgradeCatalog;
 import br.com.muxe.minigame.bedwars.stats.StatsModule;
+import br.com.muxe.minigame.bedwars.stats.domain.BedWarsStatsRepository;
+import br.com.muxe.minigame.bedwars.stats.infrastructure.postgres.PostgresBedWarsStatsRepository;
 import br.com.muxe.minigame.engine.MinigameEngine;
 import br.com.muxe.minigame.engine.arena.ArenaCatalog;
 import br.com.muxe.minigame.engine.mode.GameMode;
@@ -45,6 +54,7 @@ public final class BedWarsBootstrap {
     private CosmeticFeatures cosmetics;
     private LobbyFeatures lobbyFeatures;
     private RoomPublisher publisher;
+    private Bedbugs bedbugs;
 
     public BedWarsBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -64,9 +74,15 @@ public final class BedWarsBootstrap {
         boolean lobby = core.identity().kind() == ServerKind.LOBBY;
         plugin.getLogger().info("Schema '" + GAME + "' at version " + core.migrations().migrate(GAME, plugin.getClass().getClassLoader()).schemaVersion());
         StatsModule.register(core.commands(), core.queries(), core.transactions(), core.clock(), STATS_ZONE);
+        MissionConfig missions = MissionConfig.from(config.getConfigurationSection("missions"), BedWarsGoal::find);
+        BedWarsStatsRepository missionXp = new PostgresBedWarsStatsRepository();
+        core.missions().register(GAME, missions.catalog(),
+            (playerId, completed, at) -> missionXp.addXp(playerId, completed.stream().mapToLong(Mission::xp).sum(), at, STATS_ZONE));
+        MissionMenus missionMenus = new MissionMenus(GAME, missions, core.queries(), core.mainThread(), core.clock(), MissionModule.ZONE, plugin.getLogger());
         cosmetics = CosmeticFeatures.start(plugin, core, config, messages, commands, lobby);
+        cosmetics.onMissions(missionMenus);
         if (lobby) {
-            lobbyFeatures = LobbyFeatures.start(plugin, core, config, messages, schema);
+            lobbyFeatures = LobbyFeatures.start(plugin, core, config, messages, schema, missionMenus);
             plugin.getLogger().info("BedWars ready in lobby mode");
             return engine;
         }
@@ -83,6 +99,7 @@ public final class BedWarsBootstrap {
         }
 
         rooms = new RoomService(plugin, core, settings, messages, schema, catalog, matchWorld);
+        rooms.missions(missions, MissionRules.from(config.getConfigurationSection("missions")));
         rooms.start();
         rooms.onBedBreak(cosmetics.bedBreaks());
         ShopService shop = new ShopService(
@@ -93,7 +110,9 @@ public final class BedWarsBootstrap {
         rooms.onNpcClick((player, click) -> shop.open(player, click.runtime(), click.upgrades()));
         publisher = new RoomPublisher(plugin, core, rooms, settings.lobbyGroup());
         publisher.start();
-        plugin.getServer().getPluginManager().registerEvents(new MatchListener(plugin, core, rooms, settings, messages, cosmetics::openMenu), plugin);
+        bedbugs = new Bedbugs(plugin, rooms, core.clock());
+        bedbugs.start();
+        plugin.getServer().getPluginManager().registerEvents(new MatchListener(plugin, core, rooms, settings, messages, cosmetics::openMenu, bedbugs), plugin);
 
         setup = new SetupService(plugin, schema, messages, worlds, data);
         setup.onSaved(rooms::arenaSaved);
@@ -111,6 +130,9 @@ public final class BedWarsBootstrap {
         }
         if (publisher != null) {
             publisher.stop();
+        }
+        if (bedbugs != null) {
+            bedbugs.stop();
         }
         if (cosmetics != null) {
             cosmetics.stop();

@@ -5,12 +5,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import org.bukkit.configuration.ConfigurationSection;
 
 public record CosmeticMenuSettings(
     String bedwarsTitle,
     int bedwarsRows,
     MenuSlot cosmetics,
+    Optional<MenuSlot> missions,
     Map<Integer, ItemBuilder> bedwarsItems,
     Map<Integer, ItemBuilder> bedwarsSoon,
     String categoriesTitle,
@@ -46,6 +48,7 @@ public record CosmeticMenuSettings(
             bedwars.getString("title", "Menu do Bed Wars"),
             bedwars.getInt("rows", 3),
             MenuSlot.from(section(bedwars, "cosmetics")),
+            Optional.ofNullable(bedwars.getConfigurationSection("missions")).map(MenuSlot::from),
             itemsBySlot(section(bedwars, "items")),
             itemsBySlot(section(bedwars, "soon")),
             categories.getString("title", "Cosméticos do Bed Wars"),
