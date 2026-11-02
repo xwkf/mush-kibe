@@ -4,7 +4,7 @@
 
 O hub principal, onde os jogadores chegam depois de fazer login e escolhem um jogo. Fica no `servers:lobby` (`Muxe-Lobby`). A rede pode ter vários lobbys (`lobby-1`, `lobby-2`, …), todos no grupo `lobby`; cada jogo também terá os seus próprios servidores de lobby.
 
-O plugin do lobby cuida do spawn e da chegada, do voo, da proteção, da scoreboard, da boss bar e do `/jogar`. A hotbar, os seus menus (seletor de jogo, perfil, seletor de lobby) e a visibilidade dos jogadores vêm do Muxe-Core, então todo lobby da rede os recebe: veja [Hotbar](../hotbar/README.pt-BR.md).
+O mesmo plugin roda em todo lobby, nos principais e nos de cada jogo (como `bedwars-lobby`); um jogo só acrescenta o que o seu lobby precisa, como o BedWars faz no modo lobby. O plugin do lobby cuida do spawn e da chegada, do voo, da proteção, da scoreboard, da boss bar e do `/jogar`. A hotbar, os seus menus (seletor de jogo, perfil, seletor de lobby) e a visibilidade dos jogadores vêm do Muxe-Core, então todo lobby da rede os recebe: veja [Hotbar](../hotbar/README.pt-BR.md).
 
 ## Histórias de usuário
 
@@ -100,7 +100,7 @@ O `/build` vem do Muxe-Core e funciona em todos os servidores, como descrito na 
 | Comando | Descrição | Permissão |
 |---|---|---|
 | `/jogar <modo>` (`/play`) | Envia o jogador para o lobby do jogo (`<modo>-lobby`) quando há um vivo, senão para o grupo do jogo. | Nenhuma |
-| `/setspawn` | Salva a posição atual como spawn do lobby. | `muxe.lobby.setspawn` |
+| `/setspawn` (`/setlobby`) | Salva a posição atual como spawn deste lobby. | `muxe.lobby.setspawn` |
 | `/fly` (`/voar`) | Liga ou desliga o voo. | `muxe.lobby.fly` |
 | `/build <on\|off>` | Liga ou desliga o modo construção em qualquer servidor; sem argumento, alterna. Vem do Muxe-Core. | `muxe.build` |
 

@@ -76,6 +76,7 @@ class LobbyCommandsTest {
 
         assertThat(received).containsExactly("players-only", "no-permission");
         assertThat(registered.get("jogar").definition().aliases()).containsExactly("play");
+        assertThat(registered.get("setspawn").definition().aliases()).containsExactly("setlobby");
     }
 
     @Test

@@ -7,7 +7,7 @@ import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.lobby.spawn.SpawnService;
 import org.bukkit.entity.Player;
 
-@Command(name = "setspawn", description = "Sets the lobby spawn at your position.")
+@Command(name = "setspawn", aliases = "setlobby", description = "Sets the lobby spawn at your position.")
 @Permission(SetSpawnCommand.PERMISSION)
 public final class SetSpawnCommand {
 

@@ -4,7 +4,7 @@
 
 The main hub, where players arrive after logging in and choose a game. Lives in `servers:lobby` (`Muxe-Lobby`). The network can run several lobbies (`lobby-1`, `lobby-2`, …), all in the `lobby` group; each game will also have its own lobby servers.
 
-The lobby plugin handles the spawn and arrival, flight, protection, the scoreboard, the boss bar and `/jogar`. The hotbar, its menus (game selector, profile, lobby selector) and the player visibility come from Muxe-Core, so every lobby of the network gets them: see [Hotbar](../hotbar/README.md).
+The same plugin runs on every lobby, the main ones and each game's (such as `bedwars-lobby`); a game only adds what its lobby needs, as BedWars does in lobby mode. The lobby plugin handles the spawn and arrival, flight, protection, the scoreboard, the boss bar and `/jogar`. The hotbar, its menus (game selector, profile, lobby selector) and the player visibility come from Muxe-Core, so every lobby of the network gets them: see [Hotbar](../hotbar/README.md).
 
 ## User stories
 
@@ -100,7 +100,7 @@ Players are always in Adventure mode: any change to another game mode is cancell
 | Command | Description | Permission |
 |---|---|---|
 | `/jogar <mode>` (`/play`) | Sends the player to the game's lobby (`<mode>-lobby`) when one is alive, otherwise to the game group. | None |
-| `/setspawn` | Saves the current position as the lobby spawn. | `muxe.lobby.setspawn` |
+| `/setspawn` (`/setlobby`) | Saves the current position as the spawn of this lobby. | `muxe.lobby.setspawn` |
 | `/fly` (`/voar`) | Turns flight on or off. | `muxe.lobby.fly` |
 | `/build <on\|off>` | Turns build mode on or off on any server; without an argument it toggles. Provided by Muxe-Core. | `muxe.build` |
 
