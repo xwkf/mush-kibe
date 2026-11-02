@@ -1,5 +1,6 @@
 package br.com.muxe.minigame.bedwars.cosmetic.profile;
 
+import br.com.muxe.core.common.cosmetic.domain.CosmeticOrder;
 import br.com.muxe.minigame.bedwars.cosmetic.catalog.Availability;
 import br.com.muxe.minigame.bedwars.cosmetic.catalog.BedCosmetic;
 import br.com.muxe.minigame.bedwars.cosmetic.catalog.CosmeticCatalog;
@@ -51,7 +52,7 @@ public record CosmeticWallet(Set<String> owned, String selected, long credits, b
     }
 
     public List<BedCosmetic> sorted(CosmeticCatalog catalog) {
-        return catalog.all().stream().sorted((a, b) -> Integer.compare(rank(a), rank(b))).toList();
+        return catalog.all().stream().sorted(CosmeticOrder.ownedFirst(this::owns, BedCosmetic::name)).toList();
     }
 
     public Optional<String> animation(CosmeticCatalog catalog, RandomGenerator random) {
@@ -77,13 +78,5 @@ public record CosmeticWallet(Set<String> owned, String selected, long credits, b
         Set<String> more = new HashSet<>(owned);
         more.add(id);
         return new CosmeticWallet(more, selected, balance, ultra);
-    }
-
-    private int rank(BedCosmetic cosmetic) {
-        return switch (state(cosmetic)) {
-            case SELECTED, OWNED -> 0;
-            case BUY -> 1;
-            case UNAVAILABLE -> 2;
-        };
     }
 }

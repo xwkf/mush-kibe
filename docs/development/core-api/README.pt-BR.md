@@ -458,6 +458,7 @@ Pacote `br.com.muxe.core.bukkit.credit`. O comportamento está em [Créditos e c
 
 - `CreditBalancesListener.start(plugin, core, Duration.ofSeconds(30))` devolve um `CreditBalances` que carrega o saldo de cada jogador ao entrar, esquece ao sair e recarrega todos no período dado. `of(playerId)` lê o valor em cache (0 até carregar) sem bloquear; `refresh(playerId)` recarrega um agora.
 - `CreditFormat.format(1750)` dá `1.750`.
+- Todo menu de cosméticos lista primeiro os cosméticos possuídos, depois os outros, cada grupo em ordem alfabética sem diferenciar acentos e maiúsculas: ordene com `CosmeticOrder.ownedFirst(wallet::owns, Cosmetic::name)` (core:common).
 - Créditos e cosméticos mudam pelos comandos do core: `ChangeCreditsCommand`, `BuyCosmeticCommand`, `GrantCosmeticCommand`, `SelectCosmeticCommand`; leituras por `FindCreditsQuery` e `FindCosmeticsQuery`.
 
 ## Animações de cama

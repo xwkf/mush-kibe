@@ -458,6 +458,7 @@ Package `br.com.muxe.core.bukkit.credit`. Feature behaviour is in [Credits and c
 
 - `CreditBalancesListener.start(plugin, core, Duration.ofSeconds(30))` returns a `CreditBalances` that loads every online player's balance on join, forgets it on quit and reloads all of them on the given period. `of(playerId)` reads the cached value (0 until loaded) without blocking; `refresh(playerId)` reloads one now.
 - `CreditFormat.format(1750)` gives `1.750`.
+- Every cosmetics menu lists the owned cosmetics first, then the others, each group in alphabetical order ignoring accents and case: sort with `CosmeticOrder.ownedFirst(wallet::owns, Cosmetic::name)` (core:common).
 - Changing credits or cosmetics goes through the core commands: `ChangeCreditsCommand`, `BuyCosmeticCommand`, `GrantCosmeticCommand`, `SelectCosmeticCommand`; reads through `FindCreditsQuery` and `FindCosmeticsQuery`.
 
 ## Bed animations

@@ -14,7 +14,10 @@ import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticAccess;
 import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticState;
 import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticWallet;
 import br.com.muxe.minigame.bedwars.room.RoomFixtures;
+import java.text.Collator;
 import java.time.Duration;
+import java.util.List;
+import java.util.Locale;
 import java.util.Random;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -83,12 +86,16 @@ class CosmeticCatalogTest {
     }
 
     @Test
-    void ownedCosmeticsComeFirstThenTheOnesForSale() {
-        CosmeticWallet wallet = new CosmeticWallet(Set.of("enderman"), CosmeticWallet.RANDOM, 0, false);
+    void ownedCosmeticsComeFirstInAlphabeticalOrderThenTheRestAlphabetically() {
+        CosmeticWallet wallet = new CosmeticWallet(Set.of("tinta", "enderman", "apavorante"), CosmeticWallet.RANDOM, 0, false);
+        Collator alphabetical = Collator.getInstance(Locale.forLanguageTag("pt-BR"));
+        alphabetical.setStrength(Collator.PRIMARY);
 
-        assertThat(wallet.sorted(catalog).getFirst().id()).isEqualTo("enderman");
-        assertThat(wallet.sorted(catalog).get(1).id()).isEqualTo("colheita-de-aboboras");
-        assertThat(wallet.sorted(catalog).getLast().forSale()).isFalse();
+        List<BedCosmetic> sorted = wallet.sorted(catalog);
+
+        assertThat(sorted.subList(0, 3)).extracting(BedCosmetic::id).containsExactly("apavorante", "enderman", "tinta");
+        assertThat(sorted.subList(3, sorted.size())).extracting(BedCosmetic::name).isSortedAccordingTo(alphabetical::compare);
+        assertThat(sorted.subList(3, sorted.size())).noneMatch(wallet::owns);
     }
 
     @Test
