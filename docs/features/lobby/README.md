@@ -43,6 +43,7 @@ muxe.com.br
 
 - `{lobby}` is the number at the end of the server id (`lobby-4` shows `#4`), and `{players}` counts every player on the network's Spigot servers. Lines refresh every `scoreboard.update-interval`.
 - `Tag` shows the tag the player displays (`&aVIP`, `&dUltra`, `&cNatal`...), as described in [Ranks and tags](../ranks-and-tags/README.md); it changes within a second of `/tag` or a new rank. `scoreboard.default-tag` is shown until the player's ranks are loaded. `Créditos` is the player's balance, described in [Credits and cosmetics](../credits/README.md); it is loaded on join and reloaded every 30 seconds. The values come from `PlayerInfoSource` (`RankInfoSource`).
+- A plugin can replace these lines through `core.sidebars()`; the BedWars lobby shows its own scoreboard this way (see [BedWars](../bedwars/README.md)).
 
 ### Hotbar, menus and player visibility
 

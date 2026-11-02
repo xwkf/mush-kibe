@@ -2,9 +2,11 @@ package br.com.muxe.lobby.scoreboard;
 
 import br.com.muxe.core.bukkit.api.MuxeCore;
 import br.com.muxe.core.bukkit.scoreboard.Sidebar;
+import br.com.muxe.core.bukkit.scoreboard.SidebarContent;
 import br.com.muxe.core.bukkit.selector.lobby.LobbyNumber;
 import br.com.muxe.lobby.profile.PlayerInfoSource;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
@@ -44,6 +46,12 @@ public final class LobbyScoreboard implements Runnable {
     }
 
     private void render(Player player, Sidebar sidebar) {
+        Optional<SidebarContent> override = core.sidebars().contentFor(player);
+        if (override.isPresent()) {
+            sidebar.title(override.get().title());
+            sidebar.lines(override.get().lines());
+            return;
+        }
         sidebar.title(template.title());
         sidebar.lines(template.render(info.of(player.getUniqueId()), LobbyNumber.label(core.identity().id()), core.servers().onlinePlayers()));
     }

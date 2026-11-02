@@ -43,6 +43,7 @@ muxe.com.br
 
 - `{lobby}` é o número no fim do id do servidor (`lobby-4` mostra `#4`), e `{players}` conta todos os jogadores nos servidores Spigot da rede. As linhas são atualizadas a cada `scoreboard.update-interval`.
 - `Tag` mostra a tag que o jogador exibe (`&aVIP`, `&dUltra`, `&cNatal`...), como descrito em [Cargos e tags](../ranks-and-tags/README.pt-BR.md); ela muda em até um segundo depois de um `/tag` ou de um cargo novo. `scoreboard.default-tag` aparece enquanto os cargos do jogador não carregaram. `Créditos` é o saldo do jogador, descrito em [Créditos e cosméticos](../credits/README.pt-BR.md); ele carrega ao entrar e recarrega a cada 30 segundos. Os valores vêm do `PlayerInfoSource` (`RankInfoSource`).
+- Um plugin pode trocar essas linhas pelo `core.sidebars()`; o lobby do BedWars mostra a sua própria scoreboard assim (veja [BedWars](../bedwars/README.pt-BR.md)).
 
 ### Hotbar, menus e visibilidade dos jogadores
 
