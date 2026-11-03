@@ -48,7 +48,7 @@ public interface Stage {
 
     Actor hook(Vec position, UUID owner);
 
-    Actor player(Vec position, float yaw, String name);
+    Actor player(Vec position, float yaw);
 
     void lightning(Vec position);
 

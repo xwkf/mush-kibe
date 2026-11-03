@@ -5,10 +5,9 @@ import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import br.com.muxe.core.bukkit.item.ItemBuilder;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.lang.reflect.Field;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -17,39 +16,46 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 import net.minecraft.server.v1_8_R3.Entity;
 import net.minecraft.server.v1_8_R3.EntityArmorStand;
 import net.minecraft.server.v1_8_R3.EntityFallingBlock;
-import net.minecraft.server.v1_8_R3.EntityFishingHook;
 import net.minecraft.server.v1_8_R3.EntityFireworks;
+import net.minecraft.server.v1_8_R3.EntityFishingHook;
 import net.minecraft.server.v1_8_R3.EntityItem;
 import net.minecraft.server.v1_8_R3.EntityLightning;
 import net.minecraft.server.v1_8_R3.EntityLiving;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
-import net.minecraft.server.v1_8_R3.MinecraftServer;
 import net.minecraft.server.v1_8_R3.EntitySnowball;
 import net.minecraft.server.v1_8_R3.EntityTypes;
 import net.minecraft.server.v1_8_R3.EnumParticle;
 import net.minecraft.server.v1_8_R3.IBlockData;
+import net.minecraft.server.v1_8_R3.MinecraftServer;
 import net.minecraft.server.v1_8_R3.Packet;
 import net.minecraft.server.v1_8_R3.PacketPlayOutBlockChange;
 import net.minecraft.server.v1_8_R3.PacketPlayOutEntityMetadata;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk;
-import net.minecraft.server.v1_8_R3.PacketPlayOutMultiBlockChange;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMultiBlockChange.MultiBlockChangeInfo;
+import net.minecraft.server.v1_8_R3.PacketPlayOutMultiBlockChange;
 import net.minecraft.server.v1_8_R3.PacketPlayOutNamedEntitySpawn;
 import net.minecraft.server.v1_8_R3.PacketPlayOutNamedSoundEffect;
 import net.minecraft.server.v1_8_R3.PacketPlayOutPlayerInfo;
+import net.minecraft.server.v1_8_R3.PacketPlayOutScoreboardTeam;
 import net.minecraft.server.v1_8_R3.PacketPlayOutSpawnEntity;
 import net.minecraft.server.v1_8_R3.PacketPlayOutSpawnEntityLiving;
 import net.minecraft.server.v1_8_R3.PacketPlayOutSpawnEntityWeather;
-import net.minecraft.server.v1_8_R3.PlayerInteractManager;
 import net.minecraft.server.v1_8_R3.PacketPlayOutWorldParticles;
+import net.minecraft.server.v1_8_R3.PlayerInteractManager;
+import net.minecraft.server.v1_8_R3.Scoreboard;
+import net.minecraft.server.v1_8_R3.ScoreboardTeam;
+import net.minecraft.server.v1_8_R3.ScoreboardTeamBase.EnumNameTagVisibility;
 import net.minecraft.server.v1_8_R3.WorldServer;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
@@ -71,10 +77,14 @@ public final class PacketStage implements Stage, AutoCloseable {
     private static final int OBJECT_FIREWORK = 76;
     private static final int OBJECT_SNOWBALL = 61;
     private static final int OBJECT_FISHING_HOOK = 90;
-    private static final int MAX_NAME = 16;
     private static final int SKIN_LAYERS = 10;
     private static final int TAB_LIST_TICKS = 40;
     private static final String TEXTURES = "textures";
+    private static final String HIDDEN_NAMES = "muxe_npc_";
+    private static final AtomicInteger NEXT_TEAM = new AtomicInteger();
+    private static final int TEAM_CREATE = 0;
+    private static final int TEAM_REMOVE = 1;
+    private static final int TEAM_JOIN = 3;
     private static final int WORLD_HEIGHT = 256;
     private static final int FULL_CHUNK = 65535;
     private static final Field MULTI_BLOCK_CHUNK = field(ChunkCoordIntPair.class);
@@ -90,6 +100,7 @@ public final class PacketStage implements Stage, AutoCloseable {
     private final Map<UUID, Integer> tools = new LinkedHashMap<>();
     private final Map<EntityPlayer, Integer> listed = new LinkedHashMap<>();
     private final Set<ChunkCoordIntPair> bulkChunks = new LinkedHashSet<>();
+    private ScoreboardTeam hiddenNames;
     private boolean closed;
 
     public PacketStage(World world, Supplier<Collection<Player>> viewers, MountGuard guard) {
@@ -299,17 +310,15 @@ public final class PacketStage implements Stage, AutoCloseable {
     }
 
     @Override
-    public Actor player(Vec position, float yaw, String name) {
-        GameProfile profile = new GameProfile(UUID.randomUUID(), name.length() > MAX_NAME ? name.substring(0, MAX_NAME) : name);
-        List<Player> others = new ArrayList<>(world.getWorld().getPlayers());
-        Collections.shuffle(others);
-        for (Player other : others) {
-            Collection<Property> textures = ((CraftPlayer) other).getProfile().getProperties().get(TEXTURES);
-            if (!textures.isEmpty()) {
-                profile.getProperties().put(TEXTURES, textures.iterator().next());
-                break;
-            }
-        }
+    public Actor player(Vec position, float yaw) {
+        GameProfile profile = new GameProfile(UUID.randomUUID(), FakePlayers.name(ThreadLocalRandom.current()));
+        Set<UUID> watching = viewers.get().stream().map(Player::getUniqueId).collect(Collectors.toSet());
+        List<UUID> online = Bukkit.getOnlinePlayers().stream()
+            .filter(other -> !((CraftPlayer) other).getProfile().getProperties().get(TEXTURES).isEmpty())
+            .map(Player::getUniqueId).toList();
+        FakePlayers.skinOwner(online, watching, ThreadLocalRandom.current()).map(Bukkit::getPlayer)
+            .ifPresent(owner -> profile.getProperties().put(TEXTURES, ((CraftPlayer) owner).getProfile().getProperties().get(TEXTURES).iterator().next()));
+        hideName(profile.getName());
         EntityPlayer body = new EntityPlayer(MinecraftServer.getServer(), world, profile, new PlayerInteractManager(world));
         body.setLocation(position.x(), position.y(), position.z(), yaw, 0);
         body.getDataWatcher().watch(SKIN_LAYERS, (byte) 127);
@@ -320,6 +329,16 @@ public final class PacketStage implements Stage, AutoCloseable {
         actors.add(actor);
         listed.put(body, TAB_LIST_TICKS);
         return actor;
+    }
+
+    private void hideName(String name) {
+        if (hiddenNames == null) {
+            hiddenNames = new ScoreboardTeam(new Scoreboard(), HIDDEN_NAMES + NEXT_TEAM.incrementAndGet());
+            hiddenNames.setNameTagVisibility(EnumNameTagVisibility.NEVER);
+            send(new PacketPlayOutScoreboardTeam(hiddenNames, TEAM_CREATE));
+        }
+        hiddenNames.getPlayerNameSet().add(name);
+        send(new PacketPlayOutScoreboardTeam(hiddenNames, List.of(name), TEAM_JOIN));
     }
 
     @Override
@@ -364,6 +383,10 @@ public final class PacketStage implements Stage, AutoCloseable {
         bulkChunks.clear();
         listed.keySet().forEach(body -> send(new PacketPlayOutPlayerInfo(PacketPlayOutPlayerInfo.EnumPlayerInfoAction.REMOVE_PLAYER, body)));
         listed.clear();
+        if (hiddenNames != null) {
+            send(new PacketPlayOutScoreboardTeam(hiddenNames, TEAM_REMOVE));
+            hiddenNames = null;
+        }
         mounts.forEach(Seats::remove);
         mounts.clear();
         tools.forEach((player, slot) -> {

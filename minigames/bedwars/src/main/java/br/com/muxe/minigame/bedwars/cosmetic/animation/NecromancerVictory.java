@@ -239,7 +239,7 @@ public final class NecromancerVictory implements SceneAnimation {
 
             Risen(String name, Vec winner) {
                 this.position = origin.add(0, -3, 0);
-                this.body = stage.player(position, 0, name);
+                this.body = stage.player(position, 0);
                 this.label = stage.armorStand(position.add(0, NAME_HEIGHT, 0), 0, LABEL_STYLE);
                 this.label.watch(2, GREY + name);
                 this.label.watch(3, (byte) 0);

@@ -136,7 +136,7 @@ final class RecordingStage implements Stage {
     }
 
     @Override
-    public Actor player(Vec position, float yaw, String name) {
+    public Actor player(Vec position, float yaw) {
         return add("Player", position);
     }
 
