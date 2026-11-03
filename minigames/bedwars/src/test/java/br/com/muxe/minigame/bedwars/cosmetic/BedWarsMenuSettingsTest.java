@@ -6,6 +6,8 @@ import br.com.muxe.core.bukkit.item.ItemBuilder;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenuSettings;
 import br.com.muxe.minigame.bedwars.room.RoomFixtures;
 import org.bukkit.Material;
+import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
 
 class BedWarsMenuSettingsTest {
@@ -23,6 +25,20 @@ class BedWarsMenuSettingsTest {
         assertThat(cosmetics.data()).isEqualTo((short) 3);
         assertThat(cosmetics.name()).isEqualTo("§aCosméticos");
         assertThat(cosmetics.lore()).containsExactly("§7Visualize os cosméticos", "§7disponíveis.", " ", "§eClique para ver mais.");
+    }
+
+    @Test
+    void aComingSoonItemLeftInAnOlderFileNeverCoversAButtonThatWorks() throws InvalidConfigurationException {
+        YamlConfiguration older = new YamlConfiguration();
+        older.loadFromString(RoomFixtures.CONFIG.saveToString());
+        older.set("cosmetics.menus.bedwars.soon.29.material", "CHEST");
+        older.set("cosmetics.menus.bedwars.soon.29.name", "&aCompra rápida");
+        older.set("cosmetics.menus.bedwars.soon.11.material", "STORAGE_MINECART");
+
+        CosmeticMenuSettings fromOlderFile = CosmeticMenuSettings.from(older.getConfigurationSection("cosmetics.menus"));
+
+        assertThat(fromOlderFile.quickBuy().orElseThrow().slot()).isEqualTo(29);
+        assertThat(fromOlderFile.bedwarsSoon()).containsOnlyKeys(31, 33);
     }
 
     @Test

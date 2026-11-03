@@ -36,7 +36,11 @@ public record CosmeticMenuSettings(
 
     public CosmeticMenuSettings {
         bedwarsItems = Map.copyOf(bedwarsItems);
-        bedwarsSoon = Map.copyOf(bedwarsSoon);
+        Map<Integer, ItemBuilder> stillSoon = new LinkedHashMap<>(bedwarsSoon);
+        stillSoon.remove(cosmetics.slot());
+        missions.ifPresent(button -> stillSoon.remove(button.slot()));
+        quickBuy.ifPresent(button -> stillSoon.remove(button.slot()));
+        bedwarsSoon = Map.copyOf(stillSoon);
         soon = Map.copyOf(soon);
         listSlots = List.copyOf(listSlots);
     }
