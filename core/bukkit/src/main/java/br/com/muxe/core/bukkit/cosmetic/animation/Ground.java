@@ -1,5 +1,7 @@
 package br.com.muxe.core.bukkit.cosmetic.animation;
 
+import java.util.OptionalDouble;
+
 public final class Ground {
 
     public static final int DEPTH = 32;
@@ -18,6 +20,18 @@ public final class Ground {
             }
         }
         return y;
+    }
+
+    public static OptionalDouble hit(Solid solid, double x, double top, double z, int depth) {
+        int blockX = (int) Math.floor(x);
+        int blockZ = (int) Math.floor(z);
+        int from = (int) Math.floor(top);
+        for (int blockY = from; blockY >= from - depth; blockY--) {
+            if (solid.at(blockX, blockY, blockZ)) {
+                return OptionalDouble.of(blockY + 1);
+            }
+        }
+        return OptionalDouble.empty();
     }
 
     public static Vec surface(Solid solid, Vec position) {

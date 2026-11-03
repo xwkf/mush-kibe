@@ -36,6 +36,20 @@ class GroundTest {
     }
 
     @Test
+    void somethingFallingHitsTheFirstBlockBelowIt() {
+        Ground.Solid tree = (x, y, z) -> y <= 26 || x == 0 && y <= 31;
+
+        assertThat(Ground.hit(tree, 0.5, 40, 0.5, 64)).hasValue(32);
+        assertThat(Ground.hit(tree, 3.5, 40, 0.5, 64)).hasValue(27);
+    }
+
+    @Test
+    void somethingFallingOverTheVoidHitsNothing() {
+        assertThat(Ground.hit((x, y, z) -> false, 0, 40, 0, 64)).isEmpty();
+        assertThat(Ground.hit(floorAt26, 0, 40, 0, 10)).isEmpty();
+    }
+
+    @Test
     void overTheVoidTheEffectKeepsItsHeight() {
         assertThat(Ground.surface((x, y, z) -> false, 0, 12.5, 0)).isEqualTo(12.5);
     }
