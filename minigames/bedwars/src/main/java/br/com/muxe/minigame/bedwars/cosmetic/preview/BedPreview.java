@@ -51,6 +51,7 @@ import org.bukkit.scoreboard.Scoreboard;
 public final class BedPreview implements PreviewGate, Listener {
 
     private static final long TICKS_PER_SECOND = 20;
+    private static final long CHUNKS_ARRIVED = 10;
 
     private final Plugin plugin;
     private final BuildMode buildMode;
@@ -60,6 +61,8 @@ public final class BedPreview implements PreviewGate, Listener {
     private final AnimationPlayer animator;
     private final MessageCatalog messages;
     private final Map<UUID, Session> sessions = new HashMap<>();
+    private final BedBreakers breakers = new BedBreakers();
+    private final List<BedHalf> halves = new ArrayList<>();
     private World world;
 
     public BedPreview(Plugin plugin, BuildMode buildMode, Optional<BlockMask> blocks, PreviewSettings settings, BedAnimations animations, MessageCatalog messages) {
@@ -72,6 +75,7 @@ public final class BedPreview implements PreviewGate, Listener {
         this.messages = messages;
     }
 
+    @SuppressWarnings("deprecation")
     public boolean start() {
         if (!plugin.getServer().getWorldContainer().toPath().resolve(settings.world()).toFile().isDirectory()) {
             plugin.getLogger().warning("The bed preview is off: there is no world folder named " + settings.world());
@@ -87,6 +91,12 @@ public final class BedPreview implements PreviewGate, Listener {
         world.setTime(6000);
         world.setStorm(false);
         world.setThundering(false);
+        for (Vec half : List.of(settings.bed().foot(), settings.bed().head())) {
+            Block block = blockAt(half);
+            if (block.getType() == Material.BED_BLOCK) {
+                halves.add(new BedHalf(block.getLocation(), block.getData()));
+            }
+        }
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
         return true;
     }
@@ -119,6 +129,13 @@ public final class BedPreview implements PreviewGate, Listener {
         viewer.setGameMode(GameMode.SURVIVAL);
         viewer.setAllowFlight(false);
         viewer.teleport(new Location(world, settings.x(), settings.y(), settings.z(), settings.yaw(), settings.pitch()));
+        if (breakers.broken()) {
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                if (previewing(viewer) && breakers.broken() && !breakers.breaker(viewer.getUniqueId())) {
+                    showBed(viewer);
+                }
+            }, CHUNKS_ARRIVED);
+        }
         for (Session other : sessions.values()) {
             if (other != session) {
                 session.hide(other.viewer);
@@ -225,6 +242,9 @@ public final class BedPreview implements PreviewGate, Listener {
         session.actionBar.cancel();
         ActionBar.send(viewer, "");
         session.timeout.cancel();
+        if (breakers.broke(viewer.getUniqueId())) {
+            takeBed();
+        }
         hideBed(viewer);
         plugin.getServer().getScheduler().runTask(plugin, () -> hideBed(viewer));
         Location at = viewer.getLocation();
@@ -252,11 +272,15 @@ public final class BedPreview implements PreviewGate, Listener {
             return;
         }
         session.cancel();
+        boolean lastBreaker = breakers.left(viewer.getUniqueId());
         for (Vec half : List.of(settings.bed().foot(), settings.bed().head())) {
-            Block block = world.getBlockAt((int) Math.floor(half.x()), (int) Math.floor(half.y()), (int) Math.floor(half.z()));
+            Block block = blockAt(half);
             blocks.ifPresentOrElse(mask -> mask.reveal(viewer, block.getLocation()), () -> sendBlock(viewer, block));
         }
         viewer.teleport(session.from);
+        if (lastBreaker) {
+            putBed();
+        }
         viewer.getInventory().setContents(session.contents);
         viewer.getInventory().setArmorContents(session.armor);
         viewer.setGameMode(session.mode);
@@ -276,6 +300,47 @@ public final class BedPreview implements PreviewGate, Listener {
     @SuppressWarnings("deprecation")
     private static void sendBlock(Player viewer, Block block) {
         viewer.sendBlockChange(block.getLocation(), block.getType(), block.getData());
+    }
+
+    private Block blockAt(Vec half) {
+        return world.getBlockAt((int) Math.floor(half.x()), (int) Math.floor(half.y()), (int) Math.floor(half.z()));
+    }
+
+    @SuppressWarnings("deprecation")
+    private void takeBed() {
+        List<Player> others = world.getPlayers().stream().filter(player -> !breakers.breaker(player.getUniqueId())).toList();
+        if (blocks.isPresent()) {
+            others.forEach(this::showBed);
+        }
+        for (BedHalf half : halves) {
+            half.at().getBlock().setTypeIdAndData(Material.AIR.getId(), (byte) 0, false);
+        }
+        if (blocks.isEmpty()) {
+            plugin.getServer().getScheduler().runTask(plugin, () -> others.stream().filter(Player::isOnline).forEach(this::showBed));
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    private void showBed(Player viewer) {
+        for (BedHalf half : halves) {
+            blocks.ifPresentOrElse(mask -> mask.hide(viewer, half.at(), Material.BED_BLOCK, half.data()),
+                () -> viewer.sendBlockChange(half.at(), Material.BED_BLOCK, half.data()));
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    private void putBed() {
+        for (BedHalf half : halves) {
+            half.at().getBlock().setTypeIdAndData(Material.BED_BLOCK.getId(), half.data(), false);
+        }
+        for (Player player : world.getPlayers()) {
+            for (BedHalf half : halves) {
+                blocks.ifPresentOrElse(mask -> mask.reveal(player, half.at()), () -> sendBlock(player, half.at().getBlock()));
+            }
+        }
+    }
+
+    private record BedHalf(Location at, byte data) {
     }
 
     private static final class Session {
