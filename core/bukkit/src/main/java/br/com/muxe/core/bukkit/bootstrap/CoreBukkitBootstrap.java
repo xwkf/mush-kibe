@@ -18,6 +18,7 @@ import br.com.muxe.core.bukkit.menu.MenuListener;
 import br.com.muxe.core.bukkit.monitor.BukkitServerLoad;
 import br.com.muxe.core.bukkit.monitor.TickMonitor;
 import br.com.muxe.core.bukkit.network.NetworkGateway;
+import br.com.muxe.core.bukkit.nms.JoinTraffic;
 import br.com.muxe.core.bukkit.permission.PermissionService;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.core.bukkit.text.Title;
@@ -89,7 +90,7 @@ public final class CoreBukkitBootstrap {
         }
         String lobbyGroup = config.getString("network.lobby-group", "lobby");
         Commands commands = Commands.of(plugin, messages);
-        commands.register(new MuxeAdminCommand(core), new LobbyCommand(core, lobbyGroup), new BuildCommand(buildMode, messages));
+        commands.register(new MuxeAdminCommand(core, JoinTraffic.start(plugin, runtime.metrics())), new LobbyCommand(core, lobbyGroup), new BuildCommand(buildMode, messages));
         ranks = RankFeatures.start(plugin, core, config, commands);
         features = PlacedFeatures.start(plugin, core, config, commands);
         HotbarFeatures.start(plugin, core, config, features);

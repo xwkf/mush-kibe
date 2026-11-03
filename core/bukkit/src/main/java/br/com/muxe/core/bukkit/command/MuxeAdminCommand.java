@@ -7,6 +7,7 @@ import br.com.muxe.core.bukkit.command.framework.annotation.Permission;
 import br.com.muxe.core.bukkit.command.framework.annotation.Subcommand;
 import br.com.muxe.core.bukkit.command.framework.annotation.Suggest;
 import br.com.muxe.core.bukkit.command.framework.completion.SuggestionRegistry;
+import br.com.muxe.core.bukkit.nms.JoinTraffic;
 import br.com.muxe.core.bukkit.nms.PlayerPing;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.core.common.messaging.channel.PacketTarget;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 
@@ -29,12 +31,19 @@ public final class MuxeAdminCommand {
 
     public static final String PERMISSION = "muxe.admin";
     public static final int LATENCY_LINES = 12;
+    public static final int JOIN_PACKET_KINDS = 6;
 
     private final MuxeCore core;
+    private final Optional<JoinTraffic> joins;
     private Optional<PlayerPing> pingReader;
 
     public MuxeAdminCommand(MuxeCore core) {
+        this(core, Optional.empty());
+    }
+
+    public MuxeAdminCommand(MuxeCore core, Optional<JoinTraffic> joins) {
         this.core = core;
+        this.joins = joins;
     }
 
     @Subcommand("servers")
@@ -93,6 +102,12 @@ public final class MuxeAdminCommand {
         if (!pings.isEmpty()) {
             sender.sendMessage(messages.get("admin.latency-pings", "players", PingList.describe(pings, messages.get("admin.latency-ping"))));
         }
+        joins.ifPresent(traffic -> Bukkit.getOnlinePlayers().forEach(player -> traffic.report(player.getUniqueId()).ifPresent(report ->
+            sender.sendMessage(messages.get("admin.latency-join",
+                "player", player.getName(),
+                "ready", report.readyMillis().isPresent() ? Long.toString(report.readyMillis().getAsLong()) : "?",
+                "total", Integer.toString(report.total()),
+                "busiest", report.busiest(JOIN_PACKET_KINDS).stream().map(entry -> entry.getKey() + " " + entry.getValue()).collect(Collectors.joining(", ")))))));
         sender.sendMessage(messages.get("admin.latency-pools",
             "db-active", whole(snapshot.gaugeTotal("muxe_db_connections_active")),
             "db-pending", whole(snapshot.gaugeTotal("muxe_db_connections_pending")),

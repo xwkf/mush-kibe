@@ -1579,6 +1579,7 @@ messages:
     metrics: "&7Pacotes: &a{published} &7enviados, &a{received} &7recebidos, &e{duplicates} &7duplicados, &c{rejected} &7rejeitados, &c{failures} &7falhas. &7TPS: &a{tps}"
     latency-pings: "&7Ping (ida e volta até o jogo do jogador): {players}"
     latency-ping: "&f{player} &e{ping} ms"
+    latency-join: "&f{player}&7: o jogo respondeu &e{ready} ms &7depois de entrar; &e{total} &7pacotes nos primeiros 10 s ({busiest})"
     latency-pools: "&7Banco: &a{db-active} &7conexões em uso, &c{db-pending} &7esperando. Handlers: &a{active} &7rodando, &e{queued} &7na fila."
     latency-header: "&bOperações mais lentas desde que o servidor ligou (média / máximo):"
     latency-line: "&8- &f{label} &7x{count}: &e{mean} ms &7/ &c{max} ms"
