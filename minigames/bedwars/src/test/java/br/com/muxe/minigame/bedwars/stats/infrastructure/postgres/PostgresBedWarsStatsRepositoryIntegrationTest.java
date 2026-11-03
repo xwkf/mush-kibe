@@ -65,7 +65,7 @@ class PostgresBedWarsStatsRepositoryIntegrationTest {
 
     @Test
     void migrationsCreateTheBedWarsSchema() {
-        assertThat(migration.schemaVersion()).isEqualTo("5");
+        assertThat(migration.schemaVersion()).isEqualTo("6");
     }
 
     @Test

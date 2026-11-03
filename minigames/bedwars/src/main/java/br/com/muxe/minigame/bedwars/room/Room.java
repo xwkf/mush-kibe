@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.random.RandomGenerator;
 
 public final class Room {
@@ -200,11 +201,15 @@ public final class Room {
     }
 
     public void start(List<List<UUID>> parties, Instant now) {
+        start(parties, Map.of(), ThreadLocalRandom.current(), now);
+    }
+
+    public void start(List<List<UUID>> parties, Map<UUID, TeamColor> preferences, RandomGenerator random, Instant now) {
         if (phase == Phase.PLAYING || phase == Phase.ENDING) {
             throw new IllegalStateException("Room " + code + " already started");
         }
         matchId = UUID.randomUUID();
-        Map<TeamColor, List<UUID>> assigned = TeamAssigner.assign(List.copyOf(teams.keySet()), mode.teamSize(), joinOrder(), parties);
+        Map<TeamColor, List<UUID>> assigned = TeamAssigner.assign(List.copyOf(teams.keySet()), mode.teamSize(), joinOrder(), parties, preferences, random);
         assigned.forEach((color, members) -> members.forEach(member -> {
             teams.get(color).add(member);
             RoomPlayer player = players.get(member);

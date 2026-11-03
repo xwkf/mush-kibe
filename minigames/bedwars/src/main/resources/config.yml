@@ -649,6 +649,57 @@ preferences:
       lore:
         - "&7Para Menu do Bed Wars"
 
+favourite-color:
+  title: "Cor preferida (1/1)"
+  rows: 6
+  choose:
+    - " "
+    - "&eClique para selecionar."
+  chosen:
+    - " "
+    - "&aSelecionada!"
+  none:
+    slot: 10
+    item:
+      material: BARRIER
+      name: "&aNenhuma"
+  colors:
+    vermelho:
+      slot: 11
+      name: "&cVermelho"
+    azul:
+      slot: 12
+      name: "&9Azul"
+    verde:
+      slot: 13
+      name: "&aVerde"
+    amarelo:
+      slot: 14
+      name: "&eAmarelo"
+    ciano:
+      slot: 15
+      name: "&bCiano"
+    branco:
+      slot: 16
+      name: "&fBranco"
+    laranja:
+      slot: 19
+      name: "&6Laranja"
+    rosa:
+      slot: 20
+      name: "&dRosa"
+    cinza:
+      slot: 21
+      name: "&8Cinza"
+  back:
+    slot: 48
+    item:
+      material: ARROW
+      hide-flags: false
+      name: "&aVoltar"
+      lore:
+        - "&7Para Cosméticos do Bed Wars"
+
 tnt-timer:
   format: "{color}{seconds}s"
   height: 1.1
@@ -2566,7 +2617,9 @@ cosmetics:
             - "&7Selecionado: &aAleatório"
             - " "
             - "&eClique para ver mais."
-        "35":
+      team-color:
+        slot: 35
+        item:
           material: WOOL
           data: 7
           hide-flags: false

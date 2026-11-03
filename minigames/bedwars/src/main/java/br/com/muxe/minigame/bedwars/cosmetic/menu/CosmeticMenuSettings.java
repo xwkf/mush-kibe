@@ -22,6 +22,7 @@ public record CosmeticMenuSettings(
     String categoriesTitle,
     int categoriesRows,
     Map<String, CategoryMenu> categories,
+    Optional<MenuSlot> teamColor,
     Map<Integer, ItemBuilder> soon,
     MenuSlot categoriesBack
 ) {
@@ -44,6 +45,7 @@ public record CosmeticMenuSettings(
         categories = Collections.unmodifiableMap(new LinkedHashMap<>(categories));
         Map<Integer, ItemBuilder> categorySoon = new LinkedHashMap<>(soon);
         categories.values().forEach(category -> categorySoon.remove(category.button().slot()));
+        teamColor.ifPresent(button -> categorySoon.remove(button.slot()));
         soon = Map.copyOf(categorySoon);
     }
 
@@ -72,6 +74,7 @@ public record CosmeticMenuSettings(
             categories.getString("title", "Cosméticos do Bed Wars"),
             categories.getInt("rows", 6),
             byKey,
+            Optional.ofNullable(categories.getConfigurationSection("team-color")).map(MenuSlot::from),
             itemsBySlot(section(categories, "soon")),
             MenuSlot.from(section(categories, "back"))
         );

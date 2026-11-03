@@ -44,6 +44,10 @@ import br.com.muxe.minigame.bedwars.shop.UpgradeCatalog;
 import br.com.muxe.minigame.bedwars.stats.StatsModule;
 import br.com.muxe.minigame.bedwars.stats.domain.BedWarsStatsRepository;
 import br.com.muxe.minigame.bedwars.stats.infrastructure.postgres.PostgresBedWarsStatsRepository;
+import br.com.muxe.minigame.bedwars.teamcolor.FavouriteColors;
+import br.com.muxe.minigame.bedwars.teamcolor.TeamColorModule;
+import br.com.muxe.minigame.bedwars.teamcolor.menu.FavouriteColorMenu;
+import br.com.muxe.minigame.bedwars.teamcolor.menu.FavouriteColorMenuSettings;
 import br.com.muxe.minigame.bedwars.tnt.TntTimerSettings;
 import br.com.muxe.minigame.bedwars.title.EndTitles;
 import br.com.muxe.minigame.bedwars.tnt.TntTimers;
@@ -103,6 +107,7 @@ public final class BedWarsBootstrap {
         QuickBuyModule.register(core.commands(), core.queries(), core.transactions(), core.clock());
         HotbarModule.register(core.commands(), core.queries(), core.transactions(), core.clock());
         PreferencesModule.register(core.commands(), core.queries(), core.transactions(), core.clock());
+        TeamColorModule.register(core.commands(), core.queries(), core.transactions(), core.clock());
         MissionConfig missions = MissionConfig.from(config.getConfigurationSection("missions"), BedWarsGoal::find);
         BedWarsStatsRepository missionXp = new PostgresBedWarsStatsRepository();
         core.missions().register(GAME, missions.catalog(),
@@ -130,6 +135,11 @@ public final class BedWarsBootstrap {
         plugin.getServer().getOnlinePlayers().forEach(player -> preferences.load(player.getUniqueId()));
         cosmetics.onPreferences(new PreferencesMenu(PreferencesMenu.Settings.from(
             Objects.requireNonNull(config.getConfigurationSection("preferences"), "Missing configuration section preferences")), preferences));
+        FavouriteColors teamColors = new FavouriteColors(core, plugin.getLogger());
+        plugin.getServer().getPluginManager().registerEvents(teamColors, plugin);
+        plugin.getServer().getOnlinePlayers().forEach(player -> teamColors.load(player.getUniqueId()));
+        cosmetics.onTeamColor(new FavouriteColorMenu(FavouriteColorMenuSettings.from(
+            Objects.requireNonNull(config.getConfigurationSection("favourite-color"), "Missing configuration section favourite-color")), teamColors, messages));
         ArenaSavedPacket.register(core.packetRegistry());
         ArenaStore arenas = new DatabaseArenaStore(GAME, core.commands(), core.queries());
         MuxeWorlds worlds = new MuxeWorlds(plugin);
@@ -168,6 +178,7 @@ public final class BedWarsBootstrap {
         rooms = new RoomService(plugin, core, settings, messages, schema, catalog, matchWorld, LevelBadges.from(config.getConfigurationSection("levels")));
         rooms.missions(missions, MissionRules.from(config.getConfigurationSection("missions")));
         rooms.preferences(preferences);
+        rooms.teamColors(teamColors);
         rooms.start();
         engine.track(rooms::activeMatches, () -> catalog.all().size());
         rooms.onBedBreak(cosmetics.bedBreaks());

@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -318,6 +319,61 @@ class RoomTest {
         assertThat(room.wasPlaced(-1030, 65, 2049)).isFalse();
         room.unplaced(-1030, 64, 2049);
         assertThat(room.wasPlaced(-1030, 64, 2049)).isFalse();
+    }
+
+    @Test
+    void playersStartOnTheirFavouriteColourWhenTheArenaHasIt() {
+        Room room = RoomFixtures.room("abc124", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
+        UUID first = join(room, "tadeu");
+        UUID second = join(room, "x572");
+        UUID third = join(room, "lia");
+
+        room.start(List.of(), Map.of(first, TeamColor.CINZA, third, TeamColor.ROSA), new Random(1), NOW);
+
+        assertThat(room.player(first).orElseThrow().team()).isEqualTo(TeamColor.CINZA);
+        assertThat(room.player(third).orElseThrow().team()).isEqualTo(TeamColor.ROSA);
+        assertThat(room.player(second).orElseThrow().team()).isEqualTo(TeamColor.VERMELHO);
+        assertThat(room.team(TeamColor.CINZA).members()).containsExactly(first);
+        assertThat(room.team(TeamColor.ROSA).members()).containsExactly(third);
+    }
+
+    @Test
+    void aColourTheArenaDoesNotHaveFallsBackToTheEmptiestTeam() {
+        Room room = RoomFixtures.room("abc125", RoomFixtures.ONE_V_ONE, RoomFixtures.arena("1v1", "Slip", RED_BLUE));
+        UUID first = join(room, "tadeu");
+        UUID second = join(room, "x572");
+
+        room.start(List.of(), Map.of(first, TeamColor.ROSA, second, TeamColor.AZUL), new Random(1), NOW);
+
+        assertThat(room.player(second).orElseThrow().team()).isEqualTo(TeamColor.AZUL);
+        assertThat(room.player(first).orElseThrow().team()).isEqualTo(TeamColor.VERMELHO);
+    }
+
+    @Test
+    void inDoublesPlayersWhoShareAFavouriteColourPlayTogether() {
+        Room room = RoomFixtures.room("abc126", RoomFixtures.DOUBLES, RoomFixtures.arena("duplas", "Slip", EIGHT.subList(0, 4)));
+        UUID first = join(room, "tadeu");
+        UUID second = join(room, "x572");
+        UUID third = join(room, "lia");
+        UUID fourth = join(room, "rui");
+
+        room.start(List.of(), Map.of(second, TeamColor.VERDE, fourth, TeamColor.VERDE), new Random(1), NOW);
+
+        assertThat(room.team(TeamColor.VERDE).members()).containsExactlyInAnyOrder(second, fourth);
+        assertThat(room.player(first).orElseThrow().team()).isNotEqualTo(TeamColor.VERDE);
+        assertThat(room.player(third).orElseThrow().team()).isNotEqualTo(TeamColor.VERDE);
+    }
+
+    @Test
+    void startingWithoutPreferencesKeepsTheJoinOrderTeams() {
+        Room room = RoomFixtures.room("abc127", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
+        UUID first = join(room, "tadeu");
+        UUID second = join(room, "x572");
+
+        room.start(List.of(), NOW);
+
+        assertThat(room.player(first).orElseThrow().team()).isEqualTo(TeamColor.VERMELHO);
+        assertThat(room.player(second).orElseThrow().team()).isEqualTo(TeamColor.AZUL);
     }
 
     private static UUID join(Room room, String name) {

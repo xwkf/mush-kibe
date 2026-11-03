@@ -89,6 +89,20 @@ A player who reaches a BedWars server goes back to the match they left if they s
 - **Disconnecting:** a player who leaves with the bed alive can come back within 3 minutes and respawns 5 seconds later (`reconectou`). `/l` takes the player to the BedWars lobby and warns `Você desconectou de uma partida...` first. `/retornar`, on any server, sends the player back to that match: the match server keeps `match:return:<player>` in `MuxeCore.store()` while the player can return and deletes it when they come back, lose the bed, run out of time or the room closes.
 - **Invisibility:** the invisibility potion shows no particles. While it lasts, enemies and spectators see no armour on the player (the real armour stays on, so hits are reduced as usual), no name and only the footsteps the player leaves on the ground, every 0.8 blocks walked. Teammates see the player half transparent, with the armour. Leaving without a bed eliminates the player, crediting the last hit or the bed breaker.
 
+### Favourite team colour
+
+Each player can pick a favourite team colour in `Cosméticos do Bed Wars` (button `Cor preferida`, slot 35, which opens `Cor preferida (1/1)`). The menu has `Nenhuma` (barrier, slot 10) and one wool per team colour, in this order: `Vermelho`, `Azul`, `Verde`, `Amarelo`, `Ciano`, `Branco` (slots 11 to 16), `Laranja`, `Rosa` and `Cinza` (slots 19 to 21). Every option says `Clique para selecionar.`; the chosen one (`Nenhuma` while nothing is chosen) says `Selecionada!` and glows. Clicking an option saves it, says `Você selecionou <nome>.` (`messages.cosmetic-selected`) and refreshes the menu; clicking the one already chosen does nothing. `Voltar` (slot 48) goes back to the cosmetics menu. The button is open to everyone for now, although its lore still says `Exclusivo para ULTRA`.
+
+The choice is saved in PostgreSQL (`bedwars.favourite_team_color`, one row per player; choosing `Nenhuma` deletes the row) and loaded into memory when the player joins a BedWars server, so the room never waits for the database when a match starts.
+
+When the match starts, `TeamAssigner` puts players on their favourite team when it can:
+
+1. Parties first, as always, and a party is never split. If most of the party's members prefer the same colour (the first colour wins a tie) and that team of the arena is still empty, the whole party takes it; otherwise it goes to the emptiest team. A party larger than a team starts on its preferred team and spills into the others.
+2. Then the players without a party who have a favourite colour, colour by colour: those whose colour is a team of the arena with seats left take them. When more players want a colour than it has seats (a team of 1 in solo, 2 in doubles, 4 in quads), a random draw picks who gets the seats and the others go to step 3. In team modes, players without a party who prefer the same colour therefore play together.
+3. Everyone else goes to the team with the fewest players, in join order, as before.
+
+A colour the arena does not have, or a player whose preference could not be loaded, is treated as no preference. With nobody having a preference, the teams are exactly the ones of the join order.
+
 ### Shop
 
 The shop NPC opens the menus of the exports: Compra Rápida (the exported layout) and the seven categories, with the tab of the open category marked by a green pane.
@@ -131,7 +145,7 @@ Players pick an animation that plays when they break an enemy bed. The menus fol
 - **Menu do Bed Wars** (emerald): in the waiting room on BedWars servers, and in hotbar slot 3 on the BedWars lobby. Five rows, as in the reference export: `Missões` (slot 11), `Cosméticos` (pufferfish, slot 13), `Lista de Níveis` (slot 15, the level badges in its lore), `Compra rápida` (29), `Editor de hotbar` (31) and `Preferências` (33). `Editor de hotbar` opens the hotbar editor described in the Shop section.
 - **Preferências** (slot 33) opens `Preferências do Bed Wars` (4 rows): `Mostrar nível no chat` (slot 11), `Mostrar temporizador da TNT` (13) and `Guardar itens clicando no baú` (15: `Ativado`, `Sem hologramas`, `Desativado`), each with a dye below showing its value (lime on, grey off, light blue without holograms). Clicking either switches the value; `Voltar` goes back to the Bed Wars menu. They are saved in `bedwars.preferences` and loaded on every BedWars server.
 - **Compra rápida** (slot 29 of the Bed Wars menu) opens `Editando compra rápida...` with the player's 21 positions. Left click swaps the item, right click removes it, `Voltar` goes back to the Bed Wars menu and `Importar compra rápida` opens an anvil with `Insira o usuário`: the nick typed and taken from the result slot opens `Importando compra rápida...` with that player's quick buy (the default one if they never changed it, every position empty if there is no such player), `Cancelar` (back to the editor) and `Confirmar`, which copies it into the player's own. Swapping opens `Selecionando item... (1/2)`, every item the shop sells in category order, 21 per page; clicking one puts it in that position. Pickaxe and axe show as `Picareta` and `Machado` in diamond, and `editor-name`, `editor-material` and `editor-description` of a shop item change how it looks here. Changes are saved like those made in a match.
-- **Cosméticos do Bed Wars**: the **Destruição de Cama** category shows `owned/total (percent%)` and the selected cosmetic. The other categories, **Cor preferida** and the **Loja** button answer "coming soon".
+- **Cosméticos do Bed Wars**: the **Destruição de Cama** category shows `owned/total (percent%)` and the selected cosmetic. **Cor preferida** (slot 35) opens the favourite team colour menu described in Favourite team colour. The other categories and the **Loja** button answer "coming soon".
 - **Destruição de Cama (page/pages)**: 28 entries per page. Page 1 starts with **Nenhuma** and **Aleatório** (the default). The **Aleatório** icon cycles every 10 ticks through the icons of the cosmetics it can draw (the owned ones with an animation), keeping its name and lore; with none it keeps its own icon. Owned cosmetics come first in alphabetical order, then all the others in alphabetical order (`CosmeticOrder`, the rule for every cosmetics menu of the network).
   - Owned: left click selects, right click previews. The selected one glows and shows `Já selecionado.`
   - For sale: left click buys with credits (price by stars: 750, 900, 1.300, 1.750, 2.000), right click previews. When the player lacks credits, the lore shows `Faltam <n> créditos!`.
@@ -280,6 +294,8 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | `timings.*` | 5 s respawn, 180 s rejoin, 30 s restart, 4 s protection, island radius 17, protection radii 5/1/1, 60 s empty room | Match timings and protected areas; `empty-room-seconds` closes rooms left empty. |
 | `countdown.titles` | `30`, `10`, `5`...`1` | Titles of the start countdown. |
 | `preferences.*` | 4 rows, slots 11/13/15 | Texts, slots and dyes of the preferences menu. |
+| `favourite-color.*` | 6 rows, `Nenhuma` at slot 10, colours at 11 to 16 and 19 to 21 | Title, option lore (`choose`, `chosen`), slot and name of each team colour (keyed by its id: `vermelho`, `azul`...) and the back button of the favourite colour menu. |
+| `cosmetics.menus.categories.team-color` | slot 35, grey wool | The `Cor preferida` button of the cosmetics menu. Without it the slot stays a "coming soon" item. |
 | `tnt-timer.*` | `{color}{seconds}s`, 24 blocks, every 2 ticks | TNT timer format, height, view distance, update rate, colour thresholds and colours. |
 | `item-names.*` | `IRON_INGOT: Barra de Ferro`... | Portuguese name of each item handed out in a match. |
 | `sounds.*` | `CLICK`, `NOTE_PLING`, `VILLAGER_NO`, `CHEST_OPEN` | `countdown`, `bought`, `upgrade`, `cannot-afford` and `ender-chest`, each with `sound`, `volume` and `pitch`. A sound left empty plays nothing. |
@@ -346,6 +362,7 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | `bedwars.favourite_maps` | Favourite arenas of each player. |
 | `bedwars.preferences` | The BedWars preferences of each player (`show_level`, `tnt_timer`, `chest_deposit`). Migration `V4__create_preferences.sql`. |
 | `bedwars.quick_buy` | The quick buy of each player: the 21 item ids in order (`''` for an empty position). Migration `V3__create_quick_buy.sql`. |
+| `bedwars.favourite_team_color` | The favourite team colour of each player (`team_color`, the colour id). A player without a favourite has no row. Migration `V6__create_favourite_team_color.sql`. |
 | `bedwars.hotbar_layout` | The hotbar layout of each player: 9 texts, one per slot, each a comma-separated list of entries (`c:<category id>` or `i:<item id>`, `''` for an empty slot). Migration `V5__create_hotbar_layout.sql`. |
 
 Commands and queries in `br.com.muxe.minigame.bedwars.stats`: `RecordMatchCommand`, `ToggleFavouriteMapCommand`, `FindPlayerStatsQuery`, `FindTopQuery`, `FindFavouriteMapsQuery`.
@@ -368,6 +385,7 @@ Commands and queries in `br.com.muxe.minigame.bedwars.stats`: `RecordMatchComman
 - [x] Scoreboards, team indicators and the forge, timeline, kill credit, level, XP and ranking rules follow the spec (`RoomTest`, `GameRulesTest`, `GeneratorTimerTest`).
 - [x] Shop and upgrade names and lore follow the exports (`ShopCatalogTest`, `UpgradeCatalogTest`).
 - [x] The hotbar editor menus, the one-slot-per-entry layout, the storage and the placement of bought items follow the rules above (`HotbarLayoutTest`, `HotbarPlacementTest`, `HotbarEditorTest`, `HotbarHandlersTest`, `PostgresHotbarRepositoryIntegrationTest`).
+- [x] The favourite colour menu, its storage and the team assignment by favourite colour follow the rules above (`FavouriteColorMenuTest`, `FavouriteColorHandlersTest`, `PostgresFavouriteColorRepositoryIntegrationTest`, `TeamAssignerTest`, `RoomTest`).
 - [x] The 13 animations end without leftovers and follow the recorded timings (`BedAnimationsTest`).
 - [x] Cosmetic states, prices, sorting and lore follow the exports (`CosmeticCatalogTest`).
 - [x] Deaths, assists, beds lost, XP and match outcomes are counted (`RoomStatsTest`); periods, counters, tops and favourites are saved (`StatsHandlersTest`, `StatCountersTest`, `StatsPeriodTest`, `PostgresBedWarsStatsRepositoryIntegrationTest`).
@@ -389,5 +407,5 @@ If Muxe-Core is not enabled, the plugin disables itself.
 - The lobby only knows the rooms of servers that published in the last 10 seconds; the room list of a server that stops is forgotten after that.
 - The other special shop items, the dragons and the victory and defeat titles are not in yet.
 - A restart or crash ends every match on the server without compensation.
-- 17 bed destruction cosmetics have no animation yet. The other cosmetic categories, Cor preferida and the cosmetic shop are not in yet.
+- 17 bed destruction cosmetics have no animation yet. The other cosmetic categories and the cosmetic shop are not in yet. The favourite colour is read when the player joins the server, so a choice made on another server is seen only after the player joins again.
 - A purchase updates the menu at once, but another server sees it only when the player joins it again.

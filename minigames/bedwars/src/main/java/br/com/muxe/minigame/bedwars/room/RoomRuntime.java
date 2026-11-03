@@ -277,7 +277,7 @@ public final class RoomRuntime {
 
     void start() {
         Instant now = core.clock().instant();
-        room.start(List.of(), now);
+        room.start(List.of(), service.teamColors().preferred(room.joinOrder()), ThreadLocalRandom.current(), now);
         missions = new MissionTracker(core, BedWarsBootstrap.GAME, service.missions(), "room " + room.code(), service.plugin().getLogger());
         missions.begin(room.players().stream().map(RoomPlayer::id).toList());
         for (Map.Entry<TeamColor, RoomTeam> entry : room.teams().entrySet()) {

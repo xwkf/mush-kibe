@@ -89,6 +89,20 @@ Quem chega num servidor de BedWars volta para a partida que deixou, se ainda pud
 - **Desconexão:** quem sai com a cama de pé pode voltar em até 3 minutos e renasce 5 segundos depois (`reconectou`). O `/l` leva o jogador para o lobby de BedWars e avisa antes `Você desconectou de uma partida...`. O `/retornar`, em qualquer servidor, manda o jogador de volta para essa partida: o servidor da partida guarda `match:return:<jogador>` no `MuxeCore.store()` enquanto o jogador pode voltar e apaga quando ele volta, perde a cama, o tempo acaba ou a sala fecha.
 - **Invisibilidade:** a poção de invisibilidade não mostra partículas. Enquanto dura, inimigos e espectadores não veem a armadura do jogador (a armadura de verdade continua nele, então os golpes são reduzidos como sempre), nem o nome, só as pegadas que ele deixa no chão a cada 0,8 bloco andado. Os companheiros de time veem o jogador meio transparente, com a armadura. Sair sem cama elimina o jogador, dando a kill ao último golpe ou a quem quebrou a cama.
 
+### Cor preferida
+
+Cada jogador pode escolher uma cor de time preferida em `Cosméticos do Bed Wars` (botão `Cor preferida`, slot 35, que abre `Cor preferida (1/1)`). O menu tem `Nenhuma` (barreira, slot 10) e uma lã por cor de time, nesta ordem: `Vermelho`, `Azul`, `Verde`, `Amarelo`, `Ciano`, `Branco` (slots 11 a 16), `Laranja`, `Rosa` e `Cinza` (slots 19 a 21). Todas as opções dizem `Clique para selecionar.`; a escolhida (`Nenhuma` enquanto nada foi escolhido) diz `Selecionada!` e brilha. Clicar em uma opção salva, avisa `Você selecionou <nome>.` (`messages.cosmetic-selected`) e atualiza o menu; clicar na que já está escolhida não faz nada. `Voltar` (slot 48) volta ao menu de cosméticos. Por enquanto o botão está liberado para todos, embora o lore ainda diga `Exclusivo para ULTRA`.
+
+A escolha é salva no PostgreSQL (`bedwars.favourite_team_color`, uma linha por jogador; escolher `Nenhuma` apaga a linha) e carregada na memória quando o jogador entra num servidor de BedWars, então a sala nunca espera o banco quando a partida começa.
+
+Quando a partida começa, o `TeamAssigner` coloca os jogadores no time preferido quando consegue:
+
+1. Primeiro as parties, como sempre, e uma party nunca é dividida. Se a maioria dos membros da party prefere a mesma cor (a primeira cor vence um empate) e esse time da arena ainda está vazio, a party inteira fica nele; caso contrário vai para o time mais vazio. Uma party maior que um time começa no time preferido e transborda para os outros.
+2. Depois os jogadores sem party que têm cor preferida, cor por cor: os que preferem uma cor que é time da arena e ainda tem vagas ocupam as vagas. Quando mais jogadores querem uma cor do que ela tem vagas (time de 1 no solo, 2 em duplas, 4 em quartetos), um sorteio aleatório decide quem fica com as vagas e os outros seguem para o passo 3. Em modos de time, jogadores sem party que preferem a mesma cor acabam jogando juntos.
+3. Todos os outros vão para o time com menos jogadores, na ordem de entrada, como antes.
+
+Uma cor que a arena não tem, ou um jogador cuja preferência não pôde ser carregada, conta como sem preferência. Sem ninguém com preferência, os times são exatamente os da ordem de entrada.
+
 ### Loja
 
 O NPC da loja abre os menus dos exports: Compra Rápida (o layout do export) e as sete categorias, com a aba da categoria aberta marcada por um vidro verde.
@@ -131,7 +145,7 @@ O jogador escolhe uma animação que toca quando ele quebra uma cama inimiga. Os
 - **Menu do Bed Wars** (esmeralda): na sala de espera dos servidores de BedWars e no slot 3 da hotbar do lobby de BedWars. Cinco linhas, como no export de referência: `Missões` (slot 11), `Cosméticos` (baiacu, slot 13), `Lista de Níveis` (slot 15, com as insígnias de nível na descrição), `Compra rápida` (29), `Editor de hotbar` (31) e `Preferências` (33). `Editor de hotbar` abre o editor de hotbar descrito na seção Loja.
 - **Preferências** (slot 33) abre `Preferências do Bed Wars` (4 linhas): `Mostrar nível no chat` (slot 11), `Mostrar temporizador da TNT` (13) e `Guardar itens clicando no baú` (15: `Ativado`, `Sem hologramas`, `Desativado`), cada um com um corante embaixo mostrando o valor (verde-limão ligado, cinza desligado, azul-claro sem hologramas). Clicar em qualquer um troca o valor; `Voltar` volta ao menu do Bed Wars. Elas ficam salvas em `bedwars.preferences` e são carregadas em todo servidor de BedWars.
 - **Compra rápida** (slot 29 do menu do Bed Wars) abre `Editando compra rápida...` com as 21 posições do jogador. Botão esquerdo troca o item, botão direito tira, `Voltar` volta para o menu do Bed Wars e `Importar compra rápida` abre uma bigorna com `Insira o usuário`: o nick digitado e retirado do slot de resultado abre `Importando compra rápida...` com a compra rápida desse jogador (a padrão se ele nunca mudou, todas as posições vazias se o jogador não existe), `Cancelar` (volta ao editor) e `Confirmar`, que copia ela para a do jogador. Trocar abre `Selecionando item... (1/2)`, todos os itens que a loja vende na ordem das categorias, 21 por página; clicar num deles coloca ele naquela posição. Picareta e machado aparecem como `Picareta` e `Machado` de diamante, e `editor-name`, `editor-material` e `editor-description` de um item da loja mudam como ele aparece aqui. As mudanças são salvas como as feitas numa partida.
-- **Cosméticos do Bed Wars**: a categoria **Destruição de Cama** mostra `possuídos/total (porcentagem%)` e o cosmético selecionado. As outras categorias, **Cor preferida** e o botão **Loja** respondem "em breve".
+- **Cosméticos do Bed Wars**: a categoria **Destruição de Cama** mostra `possuídos/total (porcentagem%)` e o cosmético selecionado. **Cor preferida** (slot 35) abre o menu de cor de time preferida descrito em Cor preferida. As outras categorias e o botão **Loja** respondem "em breve".
 - **Destruição de Cama (página/páginas)**: 28 itens por página. A página 1 começa com **Nenhuma** e **Aleatório** (o padrão). O ícone do **Aleatório** troca a cada 10 ticks pelos ícones dos cosméticos que ele pode sortear (os possuídos com animação), mantendo o nome e a descrição; sem nenhum, ele fica com o próprio ícone. Primeiro vêm os cosméticos possuídos em ordem alfabética, depois todos os outros em ordem alfabética (`CosmeticOrder`, a regra de todo menu de cosméticos da rede).
   - Possuído: botão esquerdo seleciona, botão direito visualiza. O selecionado brilha e mostra `Já selecionado.`
   - À venda: botão esquerdo compra com créditos (preço por estrelas: 750, 900, 1.300, 1.750, 2.000), botão direito visualiza. Quando faltam créditos, a lore mostra `Faltam <n> créditos!`.
@@ -280,6 +294,8 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 | `timings.*` | 5 s renascer, 180 s voltar, 30 s reiniciar, 4 s proteção, raio da ilha 17, raios de proteção 5/1/1, 60 s sala vazia | Tempos da partida e áreas protegidas; `empty-room-seconds` fecha as salas que ficaram vazias. |
 | `countdown.titles` | `30`, `10`, `5`...`1` | Títulos da contagem para iniciar. |
 | `preferences.*` | 4 linhas, slots 11/13/15 | Textos, slots e corantes do menu de preferências. |
+| `favourite-color.*` | 6 linhas, `Nenhuma` no slot 10, cores nos slots 11 a 16 e 19 a 21 | Título, lore das opções (`choose`, `chosen`), slot e nome de cada cor de time (pela chave do id: `vermelho`, `azul`...) e o botão de voltar do menu de cor preferida. |
+| `cosmetics.menus.categories.team-color` | slot 35, lã cinza | O botão `Cor preferida` do menu de cosméticos. Sem ele o slot continua um item "em breve". |
 | `tnt-timer.*` | `{color}{seconds}s`, 24 blocos, a cada 2 ticks | Formato, altura, distância, frequência, limites e cores do temporizador da TNT. |
 | `item-names.*` | `IRON_INGOT: Barra de Ferro`... | Nome em português de cada item entregue numa partida. |
 | `sounds.*` | `CLICK`, `NOTE_PLING`, `VILLAGER_NO`, `CHEST_OPEN` | `countdown`, `bought`, `upgrade`, `cannot-afford` e `ender-chest`, cada um com `sound`, `volume` e `pitch`. Um som vazio não toca nada. |
@@ -344,6 +360,7 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 | `bedwars.favourite_maps` | Arenas favoritas de cada jogador. |
 | `bedwars.preferences` | As preferências de BedWars de cada jogador (`show_level`, `tnt_timer`, `chest_deposit`). Migração `V4__create_preferences.sql`. |
 | `bedwars.quick_buy` | A compra rápida de cada jogador: os 21 ids de item em ordem (`''` numa posição vazia). Migração `V3__create_quick_buy.sql`. |
+| `bedwars.favourite_team_color` | A cor de time preferida de cada jogador (`team_color`, o id da cor). Quem não tem preferida não tem linha. Migração `V6__create_favourite_team_color.sql`. |
 | `bedwars.hotbar_layout` | O layout da hotbar de cada jogador: 9 textos, um por slot, cada um uma lista de entradas separadas por vírgula (`c:<id da categoria>` ou `i:<id do item>`, `''` num slot vazio). Migração `V5__create_hotbar_layout.sql`. |
 | `<server>/previa_quebra_de_cama/` | O mundo da prévia. Vai só para o lobby de BedWars, nunca para o repositório. |
 | `<server>/previa_aura/` | O mundo da prévia de aura. Vai só para o lobby de BedWars, nunca para o repositório. |
@@ -368,6 +385,7 @@ Comandos e consultas em `br.com.muxe.minigame.bedwars.stats`: `RecordMatchComman
 - [x] Placares, indicadores dos times e as regras de forja, linha do tempo, kills, níveis, XP e ranking seguem a especificação (`RoomTest`, `GameRulesTest`, `GeneratorTimerTest`).
 - [x] Nomes e lores da loja e das melhorias seguem os exports (`ShopCatalogTest`, `UpgradeCatalogTest`).
 - [x] Os menus do editor de hotbar, o layout com uma entrada por slot, o armazenamento e a colocação dos itens comprados seguem as regras acima (`HotbarLayoutTest`, `HotbarPlacementTest`, `HotbarEditorTest`, `HotbarHandlersTest`, `PostgresHotbarRepositoryIntegrationTest`).
+- [x] O menu de cor preferida, o armazenamento e a divisão dos times pela cor preferida seguem as regras acima (`FavouriteColorMenuTest`, `FavouriteColorHandlersTest`, `PostgresFavouriteColorRepositoryIntegrationTest`, `TeamAssignerTest`, `RoomTest`).
 - [x] As 13 animações terminam sem deixar nada e seguem os tempos gravados (`BedAnimationsTest`).
 - [x] Estados, preços, ordem e lore dos cosméticos seguem os exports (`CosmeticCatalogTest`).
 - [x] Mortes, assistências, camas perdidas, XP e resultados das partidas são contados (`RoomStatsTest`); períodos, contadores, tops e favoritos são salvos (`StatsHandlersTest`, `StatCountersTest`, `StatsPeriodTest`, `PostgresBedWarsStatsRepositoryIntegrationTest`).
@@ -389,5 +407,5 @@ Se o Muxe-Core não estiver habilitado, o plugin se desabilita.
 - O lobby só conhece as salas dos servidores que publicaram nos últimos 10 segundos; a lista de um servidor que para é esquecida depois disso.
 - Os outros itens especiais da loja, os dragões e os títulos de vitória e derrota ainda não entraram.
 - Um reinício ou crash encerra todas as partidas do servidor sem compensação.
-- 17 cosméticos de destruição de cama ainda não têm animação. As outras categorias de cosméticos, Cor preferida e a loja de cosméticos ainda não existem.
+- 17 cosméticos de destruição de cama ainda não têm animação. As outras categorias de cosméticos e a loja de cosméticos ainda não existem. A cor preferida é lida quando o jogador entra no servidor, então uma escolha feita em outro servidor só é vista depois que o jogador entrar de novo.
 - Uma compra atualiza o menu na hora, mas outro servidor só vê quando o jogador entra nele de novo.

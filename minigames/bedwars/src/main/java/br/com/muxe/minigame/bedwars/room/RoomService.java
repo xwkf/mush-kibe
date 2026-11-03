@@ -21,6 +21,7 @@ import br.com.muxe.minigame.bedwars.network.ArenaInfo;
 import br.com.muxe.minigame.bedwars.network.RoomInfo;
 import br.com.muxe.minigame.bedwars.preferences.PlayerPreferences;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
+import br.com.muxe.minigame.bedwars.teamcolor.TeamColorStore;
 import br.com.muxe.minigame.bedwars.title.EndTitles;
 import br.com.muxe.minigame.engine.arena.ArenaCatalog;
 import br.com.muxe.minigame.engine.arena.LoadedArena;
@@ -89,6 +90,7 @@ public final class RoomService {
     private final LevelBadges levelBadges;
     private final MatchReturns returns;
     private PlayerPreferences preferences;
+    private TeamColorStore teamColors;
     private volatile int activeMatches;
 
     public RoomService(JavaPlugin plugin, MuxeCore core, BedWarsSettings settings, MessageCatalog messages, BedWarsSchema schema, ArenaCatalog catalog, MatchWorld matchWorld,
@@ -450,6 +452,14 @@ public final class RoomService {
 
     public void preferences(PlayerPreferences preferences) {
         this.preferences = preferences;
+    }
+
+    public void teamColors(TeamColorStore teamColors) {
+        this.teamColors = teamColors;
+    }
+
+    TeamColorStore teamColors() {
+        return teamColors;
     }
 
     PlayerPreferences preferences() {

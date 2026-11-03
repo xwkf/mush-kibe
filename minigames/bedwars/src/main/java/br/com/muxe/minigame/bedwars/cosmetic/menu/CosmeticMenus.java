@@ -50,6 +50,8 @@ public final class CosmeticMenus {
     };
     private BiConsumer<Player, Consumer<Player>> hotbar = (player, back) -> {
     };
+    private BiConsumer<Player, Consumer<Player>> teamColor = (player, back) -> {
+    };
     private BiConsumer<Player, Optional<Consumer<Player>>> missions = (player, back) -> {
     };
 
@@ -76,6 +78,10 @@ public final class CosmeticMenus {
 
     public void onHotbar(BiConsumer<Player, Consumer<Player>> opener) {
         this.hotbar = opener;
+    }
+
+    public void onTeamColor(BiConsumer<Player, Consumer<Player>> opener) {
+        this.teamColor = opener;
     }
 
     public void openBedWars(Player player) {
@@ -107,6 +113,8 @@ public final class CosmeticMenus {
                 CosmeticWallet wallet = wallets.getOrDefault(category.key(), CosmeticWallet.EMPTY);
                 menu.button(category.menu().button().slot(), category.icons().category(wallet), context -> openList(context.player(), category.key(), 1));
             }
+            settings.teamColor().ifPresent(button -> menu.button(button.slot(), button.item(),
+                context -> teamColor.accept(context.player(), viewer -> openCategories(viewer, categoriesFromMenu.getOrDefault(viewer.getUniqueId(), false)))));
             settings.soon().forEach((slot, item) -> menu.button(slot, item, context -> context.player().sendMessage(messages.get("coming-soon"))));
             if (fromBedWarsMenu) {
                 menu.button(settings.categoriesBack().slot(), settings.categoriesBack().item(), context -> openBedWars(context.player()));

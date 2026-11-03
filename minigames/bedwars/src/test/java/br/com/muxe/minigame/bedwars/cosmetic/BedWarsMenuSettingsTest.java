@@ -74,4 +74,27 @@ class BedWarsMenuSettingsTest {
         assertThat(settings.preferences().orElseThrow().item().name()).isEqualTo("§aPreferências");
         assertThat(settings.preferences().orElseThrow().item().lore()).containsExactly("§7Altere as preferências", "§7do modo.", " ", "§eClique para ver mais.");
     }
+
+    @Test
+    void theFavouriteColourButtonKeepsTheLookOfTheComingSoonItemAndTakesItsSlot() throws InvalidConfigurationException {
+        ItemBuilder button = settings.teamColor().orElseThrow().item();
+
+        assertThat(settings.teamColor().orElseThrow().slot()).isEqualTo(35);
+        assertThat(button.material()).isEqualTo(Material.WOOL);
+        assertThat(button.data()).isEqualTo((short) 7);
+        assertThat(button.hidesFlags()).isFalse();
+        assertThat(button.name()).isEqualTo("§aCor preferida");
+        assertThat(button.lore()).containsExactly("§7Escolha a sua cor preferida", "§7para a partida!", " ", "§7Exclusivo para §d§lULTRA", " ", "§eClique para ver mais.");
+        assertThat(settings.soon()).doesNotContainKey(35).containsOnlyKeys(14, 27, 29, 31);
+
+        YamlConfiguration older = new YamlConfiguration();
+        older.loadFromString(RoomFixtures.CONFIG.saveToString());
+        older.set("cosmetics.menus.categories.team-color", null);
+        older.set("cosmetics.menus.categories.soon.35.material", "WOOL");
+
+        CosmeticMenuSettings fromOlderFile = CosmeticMenuSettings.from(older.getConfigurationSection("cosmetics.menus"));
+
+        assertThat(fromOlderFile.teamColor()).isEmpty();
+        assertThat(fromOlderFile.soon()).containsKey(35);
+    }
 }

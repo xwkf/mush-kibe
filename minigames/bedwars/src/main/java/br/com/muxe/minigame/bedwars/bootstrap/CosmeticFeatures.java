@@ -33,6 +33,7 @@ import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticProfileListener;
 import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticProfiles;
 import br.com.muxe.minigame.bedwars.hotbar.menu.HotbarEditor;
 import br.com.muxe.minigame.bedwars.preferences.menu.PreferencesMenu;
+import br.com.muxe.minigame.bedwars.teamcolor.menu.FavouriteColorMenu;
 import br.com.muxe.minigame.bedwars.settings.MatchSounds;
 import br.com.muxe.minigame.bedwars.shop.QuickBuyEditor;
 import br.com.muxe.minigame.bedwars.title.EndTitles;
@@ -194,6 +195,10 @@ final class CosmeticFeatures {
 
     void onHotbar(HotbarEditor editor) {
         menus.onHotbar(editor::openFromBedWarsMenu);
+    }
+
+    void onTeamColor(FavouriteColorMenu teamColor) {
+        menus.onTeamColor(teamColor::open);
     }
 
     void onPreferences(PreferencesMenu preferences) {
