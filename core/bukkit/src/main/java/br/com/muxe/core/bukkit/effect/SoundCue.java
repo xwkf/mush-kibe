@@ -17,16 +17,20 @@ public record SoundCue(Sound sound, float volume, float pitch) {
         if (section == null) {
             return Optional.empty();
         }
-        String name = section.getString("sound", "");
-        if (name.isBlank()) {
+        String name = section.getString("sound");
+        if (name == null || name.isBlank()) {
             return Optional.empty();
         }
         try {
             Sound sound = Sound.valueOf(name.trim().toUpperCase(Locale.ROOT));
-            return Optional.of(new SoundCue(sound, (float) section.getDouble("volume", 1.0), (float) section.getDouble("pitch", 1.0)));
+            return Optional.of(new SoundCue(sound, number(section, "volume"), number(section, "pitch")));
         } catch (IllegalArgumentException exception) {
             throw new IllegalArgumentException("Unknown sound '" + name + "' at " + section.getCurrentPath(), exception);
         }
+    }
+
+    private static float number(ConfigurationSection section, String key) {
+        return section.contains(key) ? (float) section.getDouble(key) : 1f;
     }
 
     public void play(Player player) {

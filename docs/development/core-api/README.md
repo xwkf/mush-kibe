@@ -190,7 +190,7 @@ Optional<SoundCue> cue = SoundCue.from(config.getConfigurationSection("parkour.s
 cue.ifPresent(sound -> sound.play(player));
 ```
 
-- `from(section)` reads `sound` (a 1.8 `Sound` name), `volume` and `pitch` (1.0 by default). A missing section or an empty `sound` gives nothing; an unknown sound is an error.
+- `from(section)` reads `sound` (a 1.8 `Sound` name), `volume` and `pitch` (1.0 by default). A missing section or an empty `sound` gives nothing; an unknown sound is an error. Keys missing from the server's file come from the defaults of the jar, so a sound added in a new version plays on a server whose `config.yml` was created by an older one.
 - `play(player)` plays it to that player only, at their position. The [parkour](../../features/parkour/README.md) uses it.
 
 ## Missions
