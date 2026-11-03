@@ -6,5 +6,5 @@ public interface SceneAnimation {
 
     String id();
 
-    void script(Vec origin, Vec facing, Stage stage, Timeline timeline, RandomGenerator random);
+    void script(Scene scene, Stage stage, Timeline timeline, RandomGenerator random);
 }

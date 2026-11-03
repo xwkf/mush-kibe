@@ -2,6 +2,7 @@ package br.com.muxe.core.bukkit.cosmetic.stage;
 
 import br.com.muxe.core.bukkit.cosmetic.animation.BedAnimation;
 import br.com.muxe.core.bukkit.cosmetic.animation.BedFrame;
+import br.com.muxe.core.bukkit.cosmetic.animation.Scene;
 import br.com.muxe.core.bukkit.cosmetic.animation.SceneAnimation;
 import br.com.muxe.core.bukkit.cosmetic.animation.Timeline;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
@@ -28,9 +29,9 @@ public final class AnimationPlayer {
             (stage, timeline) -> animation.script(bed, breaker, stage, timeline, ThreadLocalRandom.current()));
     }
 
-    public Playback play(SceneAnimation animation, World world, Vec origin, Vec facing, Supplier<Collection<Player>> viewers, Runnable onFinish) {
+    public Playback play(SceneAnimation animation, World world, Scene scene, Supplier<Collection<Player>> viewers, Runnable onFinish) {
         return run(animation.id(), world, viewers, onFinish,
-            (stage, timeline) -> animation.script(origin, facing, stage, timeline, ThreadLocalRandom.current()));
+            (stage, timeline) -> animation.script(scene, stage, timeline, ThreadLocalRandom.current()));
     }
 
     private Playback run(String id, World world, Supplier<Collection<Player>> viewers, Runnable onFinish, BiConsumer<PacketStage, Timeline> script) {
