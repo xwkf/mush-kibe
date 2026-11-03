@@ -59,12 +59,12 @@ class RoomTest {
 
         assertThat(view.lines(room, tadeu, 0)).containsExactly(
             "&82v7bss", "", "&fDiamante II em &a4:11", "",
-            "&c&lV&c &fVermelho: &a✔ &7VOCÊ", "&9&lA&9 &fAzul: &a✔", "",
+            "&cV &fVermelho: &a✔ &7VOCÊ", "&9A &fAzul: &a✔", "",
             "&fKills: &a0", "&fKills Finais: &a0", "&fCamas Quebradas: &a0", "", "&amuxe.com.br");
     }
 
     @Test
-    void theTeamLetterIsAlwaysBold() {
+    void theTeamLetterIsBoldInTheNameTagAndTabList() {
         assertThat(TeamColor.VERMELHO.boldLetter()).isEqualTo("&lV&c");
         assertThat(RoomService.tag(TeamColor.VERMELHO).prefix()).isEqualTo("§c§lV§c ");
     }
@@ -82,7 +82,7 @@ class RoomTest {
         List<String> lines = view.lines(room, first, 0);
 
         assertThat(lines).hasSize(14).doesNotContain("&fKills: &a0");
-        assertThat(lines).contains("&c&lV&c &fVermelho: &a✔ &7VOCÊ", "&8&lC&8 &fCinza: &c✘", "&d&lR&d &fRosa: &c✘");
+        assertThat(lines).contains("&cV &fVermelho: &a✔ &7VOCÊ", "&8C &fCinza: &c✘", "&dR &fRosa: &c✘");
     }
 
     @Test

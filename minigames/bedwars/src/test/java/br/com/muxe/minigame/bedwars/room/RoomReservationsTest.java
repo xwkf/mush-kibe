@@ -75,7 +75,7 @@ class RoomReservationsTest {
 
         assertThat(waiting.get(red).prefix()).isEmpty();
         assertThat(waiting.get(red).audience(false)).containsExactlyInAnyOrder(red, blue);
-        assertThat(playing.get(red).prefix()).isEqualTo("&c[&lV&c] ");
+        assertThat(playing.get(red).prefix()).isEqualTo("&c[V] ");
         assertThat(playing.get(blue).audience(false)).containsExactly(red);
         assertThat(playing.get(blue).teamOnly()).isFalse();
     }

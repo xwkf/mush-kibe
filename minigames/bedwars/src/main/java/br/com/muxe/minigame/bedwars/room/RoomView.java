@@ -43,7 +43,7 @@ public final class RoomView {
         };
         return settings.team()
             .replace("{color}", color.color())
-            .replace("{letter}", color.boldLetter())
+            .replace("{letter}", String.valueOf(color.letter()))
             .replace("{name}", color.displayName())
             .replace("{status}", mark)
             .replace("{you}", viewerTeam.filter(color::equals).isPresent() ? settings.you() : "");
