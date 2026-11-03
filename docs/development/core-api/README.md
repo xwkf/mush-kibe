@@ -69,6 +69,14 @@ Spigot 1.8.8 has no action bar API, so this sends the 1.8 packet through `Legacy
 
 The 1.8 client draws the action bar from the plain text of the message and drops JSON colors, so the `&` colors are kept inside the text as `§` codes, which the client does draw.
 
+### Plugin configuration
+
+```java
+FileConfiguration config = PluginConfig.load(plugin);
+```
+
+`load` saves the default `config.yml` when there is none, then writes into the server's file every key of the jar's `config.yml` that it lacks, without changing the values already there, and reads it again. A plugin updated with new sections or messages keeps working on a server whose file was created by an older version. BedWars loads its configuration this way.
+
 ### Message catalog
 
 ```java

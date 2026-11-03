@@ -1,6 +1,7 @@
 package br.com.muxe.minigame.bedwars.bootstrap;
 
 import br.com.muxe.core.bukkit.api.MuxeCore;
+import br.com.muxe.core.bukkit.config.PluginConfig;
 import br.com.muxe.core.bukkit.command.framework.Commands;
 import br.com.muxe.core.bukkit.mission.config.MissionConfig;
 import br.com.muxe.core.bukkit.mission.menu.MissionMenus;
@@ -70,9 +71,8 @@ public final class BedWarsBootstrap {
     }
 
     public MinigameEngine enable() {
-        plugin.saveDefaultConfig();
+        FileConfiguration config = PluginConfig.load(plugin);
         MuxeCore core = MuxeCore.get();
-        FileConfiguration config = plugin.getConfig();
         MessageCatalog messages = SetupMessages.withOverrides(core.messages().merge(MessageCatalog.from(config.getConfigurationSection("messages"))));
         ConfigurationSection modeSection = Objects.requireNonNull(config.getConfigurationSection("modes"), "Missing configuration section modes");
         List<GameMode> modes = GameModeLoader.load(modeSection);

@@ -69,6 +69,14 @@ O Spigot 1.8.8 não tem API de action bar, então isso envia o pacote da 1.8 pel
 
 O cliente 1.8 desenha a action bar a partir do texto puro da mensagem e descarta as cores do JSON, então as cores `&` ficam dentro do texto como códigos `§`, que o cliente desenha.
 
+### Configuração do plugin
+
+```java
+FileConfiguration config = PluginConfig.load(plugin);
+```
+
+`load` salva o `config.yml` padrão quando não há nenhum, depois escreve no arquivo do servidor todas as chaves do `config.yml` do jar que faltam nele, sem mudar os valores que já estão lá, e lê o arquivo de novo. Um plugin atualizado com seções ou mensagens novas continua funcionando num servidor cujo arquivo foi criado por uma versão antiga. O BedWars carrega a configuração assim.
+
 ### Catálogo de mensagens
 
 ```java
