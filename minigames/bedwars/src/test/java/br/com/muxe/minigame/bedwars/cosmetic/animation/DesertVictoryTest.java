@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 import br.com.muxe.core.bukkit.cosmetic.animation.Area;
+import br.com.muxe.core.bukkit.cosmetic.animation.Ground;
 import br.com.muxe.core.bukkit.cosmetic.animation.Scene;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.BlockChange;
 import br.com.muxe.core.bukkit.cosmetic.animation.Timeline;
@@ -357,4 +358,29 @@ class DesertVictoryTest {
             assertThat(spot.y() - vehicle.y()).isBetween(DesertVictory.RAIN_MIN_HEIGHT, DesertVictory.RAIN_MAX_HEIGHT);
         }
     }
+
+    @Test
+    void theOasisFloatsOverTheVoidRightAfterTheEdgeOfTheIslandTheWinnerFaces() {
+        Ground.Solid island = (x, y, z) -> Math.abs(x) <= 5 && Math.abs(z) <= 5 && y < 64;
+
+        assertThat(DesertVictory.oasisCentre(island, 0, 64, 0, new Vec(0, 0, 1))).hasValueSatisfying(centre -> assertThat(centre).containsExactly(0, 14));
+        assertThat(DesertVictory.oasisCentre(island, 0, 64, 0, new Vec(-1, 0, 0))).hasValueSatisfying(centre -> assertThat(centre).containsExactly(-14, 0));
+    }
+
+    @Test
+    void whenTheWayAheadIsBuiltOverTheOasisTurnsToTheSide() {
+        Ground.Solid island = (x, y, z) -> Math.abs(x) <= 5 && z >= -5 && z <= 70 && y < 64 || Math.abs(x) <= 5 && z > 5 && y < 80;
+
+        Optional<int[]> centre = DesertVictory.oasisCentre(island, 0, 64, 0, new Vec(0, 0, 1));
+
+        assertThat(centre).isPresent();
+        assertThat(Math.abs(centre.get()[0])).isGreaterThanOrEqualTo(14);
+        assertThat(DesertVictory.oasisClear(island, centre.get()[0], 64, centre.get()[1])).isTrue();
+    }
+
+    @Test
+    void withNoRoomAroundTheOasisFallsBackToItsUsualPlace() {
+        assertThat(DesertVictory.oasisCentre((x, y, z) -> true, 0, 64, 0, new Vec(0, 0, 1))).isEmpty();
+    }
+
 }

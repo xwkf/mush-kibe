@@ -1,6 +1,7 @@
 package br.com.muxe.minigame.bedwars.cosmetic.animation;
 
 import br.com.muxe.core.bukkit.cosmetic.animation.Area;
+import br.com.muxe.core.bukkit.cosmetic.animation.Ground;
 import br.com.muxe.core.bukkit.cosmetic.animation.Scene;
 import br.com.muxe.core.bukkit.cosmetic.animation.SceneAnimation;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.Actor;
@@ -15,10 +16,12 @@ import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import br.com.muxe.minigame.bedwars.cosmetic.animation.DesertRules.Patches;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.random.RandomGenerator;
@@ -85,6 +88,10 @@ public final class DesertVictory implements SceneAnimation {
     static final int POND_RINGS = 3;
     static final int OASIS_MIN_DISTANCE = 10;
     static final int OASIS_MAX_DISTANCE = 11;
+    static final int OASIS_SEARCH = 48;
+    static final int OASIS_BELOW = 4;
+    static final int OASIS_ABOVE = 12;
+    static final int[] OASIS_TURNS = {0, 20, -20, 40, -40, 60, -60, 90, -90, 120, -120, 150, -150, 180};
     static final int OASIS_START_TICK = 22;
     static final int FOUNTAIN_FIRST = 40;
     static final int FOUNTAIN_LAST_NUGGET = 190;
@@ -108,7 +115,7 @@ public final class DesertVictory implements SceneAnimation {
         timeline.lasts(LENGTH);
         Drops drops = new Drops(stage, random);
         scheduleWave(stage, timeline, random, originX, originY, originZ);
-        scheduleOasis(stage, timeline, random, drops, originX, originY, originZ);
+        scheduleOasis(stage, timeline, random, drops, originX, originY, originZ, scene.facing());
         scheduleCarpet(scene, stage, timeline, random, drops);
         timeline.repeat(0, LENGTH - 1, 1, tick -> drops.step());
         timeline.at(LENGTH, drops::removeAll);
@@ -186,12 +193,13 @@ public final class DesertVictory implements SceneAnimation {
         stage.particle("BLOCK_CRACK", centre, 10, new Vec(0.25, 0.25, 0.25), 0.1, Kit.blockId(placement.material(), placement.data()));
     }
 
-    private static void scheduleOasis(Stage stage, Timeline timeline, RandomGenerator random, Drops drops, int originX, int originY, int originZ) {
-        double angle = random.nextDouble() * 2 * Math.PI;
-        double distance = Kit.between(random, OASIS_MIN_DISTANCE, OASIS_MAX_DISTANCE);
-        int centreX = originX + (int) Math.round(Math.cos(angle) * distance);
-        int centreZ = originZ + (int) Math.round(Math.sin(angle) * distance);
-        Oasis oasis = new Oasis(centreX, originY, centreZ, random);
+    private static void scheduleOasis(Stage stage, Timeline timeline, RandomGenerator random, Drops drops, int originX, int originY, int originZ, Vec facing) {
+        int[] centre = oasisCentre(stage::solid, originX, originY, originZ, facing).orElseGet(() -> {
+            double angle = random.nextDouble() * 2 * Math.PI;
+            double distance = Kit.between(random, OASIS_MIN_DISTANCE, OASIS_MAX_DISTANCE);
+            return new int[] {originX + (int) Math.round(Math.cos(angle) * distance), originZ + (int) Math.round(Math.sin(angle) * distance)};
+        });
+        Oasis oasis = new Oasis(centre[0], originY, centre[1], random);
         for (int ring = 0; ring <= Oasis.RADIUS; ring++) {
             int current = ring;
             timeline.at(Oasis.ringTick(ring), () -> buildRing(stage, oasis, current));
@@ -210,6 +218,52 @@ public final class DesertVictory implements SceneAnimation {
         }
         byTick.forEach((tick, placements) -> timeline.at(tick, () -> placements.forEach(placement -> place(stage, placement))));
         scheduleFountain(stage, timeline, random, drops, oasis);
+    }
+
+    static Optional<int[]> oasisCentre(Ground.Solid solid, int originX, int originY, int originZ, Vec facing) {
+        Map<Long, Boolean> blocked = new HashMap<>();
+        double heading = Math.atan2(facing.z(), facing.x());
+        for (int turn : OASIS_TURNS) {
+            double angle = heading + Math.toRadians(turn);
+            for (int distance = OASIS_MIN_DISTANCE; distance <= OASIS_SEARCH; distance++) {
+                int centreX = originX + (int) Math.round(Math.cos(angle) * distance);
+                int centreZ = originZ + (int) Math.round(Math.sin(angle) * distance);
+                if (oasisClear(solid, centreX, originY, centreZ, blocked)) {
+                    return Optional.of(new int[] {centreX, centreZ});
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    static boolean oasisClear(Ground.Solid solid, int centreX, int originY, int centreZ) {
+        return oasisClear(solid, centreX, originY, centreZ, new HashMap<>());
+    }
+
+    private static boolean oasisClear(Ground.Solid solid, int centreX, int originY, int centreZ, Map<Long, Boolean> blocked) {
+        for (int dx = -Oasis.RADIUS; dx <= Oasis.RADIUS; dx++) {
+            for (int dz = -Oasis.RADIUS; dz <= Oasis.RADIUS; dz++) {
+                if (Math.hypot(dx, dz) >= Oasis.RADIUS + 1) {
+                    continue;
+                }
+                int x = centreX + dx;
+                int z = centreZ + dz;
+                boolean taken = blocked.computeIfAbsent((long) x << 32 | (z & 0xFFFFFFFFL), key -> columnTaken(solid, x, originY, z));
+                if (taken) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private static boolean columnTaken(Ground.Solid solid, int x, int originY, int z) {
+        for (int y = originY - OASIS_BELOW; y <= originY + OASIS_ABOVE; y++) {
+            if (solid.at(x, y, z)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void buildRing(Stage stage, Oasis oasis, int ring) {
