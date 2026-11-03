@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.UUID;
+import java.util.random.RandomGenerator;
 
 public final class Room {
 
@@ -351,6 +352,11 @@ public final class Room {
     public Optional<TeamColor> winner() {
         List<TeamColor> standing = standing();
         return standing.size() == 1 ? Optional.of(standing.getFirst()) : Optional.empty();
+    }
+
+    public Optional<UUID> celebrant(TeamColor color, Set<UUID> online, RandomGenerator random) {
+        List<UUID> winners = members(color).stream().map(RoomPlayer::id).filter(online::contains).toList();
+        return winners.isEmpty() ? Optional.empty() : Optional.of(winners.get(random.nextInt(winners.size())));
     }
 
     public List<RoomPlayer> members(TeamColor color) {

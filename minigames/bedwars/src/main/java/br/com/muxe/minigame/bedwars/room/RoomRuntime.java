@@ -54,6 +54,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.ToIntFunction;
 import java.util.logging.Level;
 import org.bukkit.Bukkit;
@@ -983,10 +984,12 @@ public final class RoomRuntime {
                     titles.defeat(player);
                 }
             });
-            if (won) {
-                service.victories().won(player, audience);
-            }
         }
+        Set<UUID> online = new HashSet<>();
+        audience.forEach(player -> online.add(player.getUniqueId()));
+        room.celebrant(team, online, ThreadLocalRandom.current())
+            .map(Bukkit::getPlayer)
+            .ifPresent(winner -> service.victories().won(winner, audience));
     }
 
     private void record(Optional<TeamColor> winner) {

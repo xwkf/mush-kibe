@@ -166,7 +166,7 @@ public final class ScenePreview implements PreviewGate, Listener {
             }, (long) index * settings.countdownTicks()));
         }
         session.tasks.add(plugin.getServer().getScheduler().runTaskLater(plugin, () -> play(session, SceneCosmetics.onGround(world, viewer.getLocation()),
-            SceneCosmetics.facing(viewer.getLocation()), Optional.empty()), Math.max(1, settings.sceneStart())));
+            SceneCosmetics.facing(viewer.getLocation()), Optional.empty(), List.of(viewer.getUniqueId())), Math.max(1, settings.sceneStart())));
     }
 
     private void placeTarget(Session session, ScenePreviewSettings.Target target) {
@@ -213,16 +213,16 @@ public final class ScenePreview implements PreviewGate, Listener {
         session.target = null;
         ActionBar.send(player, "");
         player.playSound(npc.location(), Sound.HURT_FLESH, 1, 1);
-        play(session, SceneCosmetics.onGround(world, npc.location()), SceneCosmetics.away(player.getLocation(), npc.location()), session.targetSkin.map(NpcSkin::value));
+        play(session, SceneCosmetics.onGround(world, npc.location()), SceneCosmetics.away(player.getLocation(), npc.location()), session.targetSkin.map(NpcSkin::value), List.of());
     }
 
-    private void play(Session session, Vec origin, Vec facing, Optional<String> skin) {
+    private void play(Session session, Vec origin, Vec facing, Optional<String> skin, List<UUID> riders) {
         Player viewer = session.viewer;
         if (!previewing(viewer)) {
             return;
         }
         onScene.accept(viewer);
-        session.playback = animator.play(session.animation, world, new Scene(origin, facing, skin), () -> List.of(viewer), () ->
+        session.playback = animator.play(session.animation, world, new Scene(origin, facing, skin, riders), () -> List.of(viewer), () ->
             session.tasks.add(plugin.getServer().getScheduler().runTaskLater(plugin, () -> finish(viewer, true), Math.max(1, settings.returnDelay().toMillis() / 50))));
     }
 

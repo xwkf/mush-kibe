@@ -15,7 +15,8 @@ public final class SceneAnimations {
     }
 
     public static SceneAnimations victories() {
-        return new SceneAnimations(List.of(new PaintVictory()));
+        return new SceneAnimations(List.of(new PaintVictory(), new FlyingHyenaVictory(), new FlyingPigVictory(), new BalloonsVictory(), new PumpkinHarvestVictory(),
+            new HauntedVictory(), new PaparazziVictory(), new ZombieApocalypseVictory(), new GrapplerVictory(), new NecromancerVictory()));
     }
 
     public static SceneAnimations finalKills() {

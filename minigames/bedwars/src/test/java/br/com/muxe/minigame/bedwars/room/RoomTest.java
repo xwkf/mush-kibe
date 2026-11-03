@@ -8,7 +8,10 @@ import br.com.muxe.minigame.engine.match.StartCountdown.Change;
 import br.com.muxe.minigame.engine.team.TeamColor;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -198,6 +201,36 @@ class RoomTest {
         room.start(List.of(), NOW);
 
         assertThat(room.winner()).isEmpty();
+    }
+
+    @Test
+    void onlyOneWinnerOfTheTeamIsDrawnToPlayTheVictoryEffect() {
+        Room room = RoomFixtures.room("abc123", RoomFixtures.ONE_V_ONE, RoomFixtures.arena("1v1", "Slip", RED_BLUE));
+        UUID tadeu = join(room, "tadeu");
+        UUID other = join(room, "x572");
+        room.start(List.of(), NOW);
+        TeamColor team = room.player(tadeu).orElseThrow().team();
+
+        assertThat(room.celebrant(team, Set.of(tadeu, other), new Random(1))).contains(tadeu);
+        assertThat(room.celebrant(team, Set.of(other), new Random(1))).isEmpty();
+    }
+
+    @Test
+    void theCelebrantIsDrawnAmongTheOnlineWinners() {
+        Room room = RoomFixtures.room("abc123", RoomFixtures.DOUBLES, RoomFixtures.arena("duplas", "Slip", RED_BLUE));
+        UUID first = join(room, "tadeu");
+        UUID second = join(room, "x572");
+        room.forceStart(10);
+        room.start(List.of(List.of(first, second)), NOW);
+        TeamColor team = room.player(first).orElseThrow().team();
+        Set<UUID> drawn = new HashSet<>();
+        Random random = new Random(7);
+        for (int draw = 0; draw < 40; draw++) {
+            room.celebrant(team, Set.of(first, second), random).ifPresent(drawn::add);
+        }
+
+        assertThat(room.player(second).orElseThrow().team()).isEqualTo(team);
+        assertThat(drawn).containsExactlyInAnyOrder(first, second);
     }
 
     @Test

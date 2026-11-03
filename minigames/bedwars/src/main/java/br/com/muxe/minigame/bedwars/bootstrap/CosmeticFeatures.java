@@ -146,12 +146,12 @@ final class CosmeticFeatures {
     }
 
     void victory(Player winner, List<Player> viewers) {
-        victories.play(winner, winner.getLocation(), SceneCosmetics.facing(winner.getLocation()), Optional.empty(), viewers);
+        victories.play(winner, winner.getLocation(), SceneCosmetics.facing(winner.getLocation()), Optional.empty(), SceneCosmetics.riders(winner, viewers), viewers);
     }
 
     void finalKill(Player killer, Player victim, List<Player> viewers) {
         Location at = victim.getLocation();
-        finalKills.play(killer, at, SceneCosmetics.away(killer.getLocation(), at), PlayerSkins.of(victim).map(NpcSkin::value), viewers);
+        finalKills.play(killer, at, SceneCosmetics.away(killer.getLocation(), at), PlayerSkins.of(victim).map(NpcSkin::value), List.of(), viewers);
     }
 
     void openMenu(Player player) {

@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import org.bukkit.Material;
 
@@ -15,6 +18,12 @@ final class RecordingStage implements Stage {
     final Map<String, Integer> particles = new HashMap<>();
     final List<String> sounds = new ArrayList<>();
     final List<String> blocks = new ArrayList<>();
+    final List<Long> times = new ArrayList<>();
+    final List<FakeMount> mounts = new ArrayList<>();
+    final Map<UUID, Consumer<Click>> tools = new HashMap<>();
+    final List<Vec> pushes = new ArrayList<>();
+    Vec eyes = new Vec(0, 1.62, 0);
+    Vec look = new Vec(0, 0, 1);
     private final Predicate<int[]> solid;
 
     RecordingStage(Predicate<int[]> solid) {
@@ -76,6 +85,53 @@ final class RecordingStage implements Stage {
         blocks.add(x + "," + y + "," + z + "=" + material);
     }
 
+    @Override
+    public void time(long dayTime) {
+        times.add(dayTime);
+    }
+
+    @Override
+    public Mount mount(Vec seat, float yaw, List<UUID> riders) {
+        FakeMount mount = new FakeMount(seat);
+        mounts.add(mount);
+        return mount;
+    }
+
+    @Override
+    public void give(UUID player, int slot, Material material, String name, Consumer<Click> onClick) {
+        tools.put(player, onClick);
+    }
+
+    @Override
+    public void push(UUID player, Vec velocity) {
+        pushes.add(velocity);
+    }
+
+    @Override
+    public Optional<Vec> eyes(UUID player) {
+        return Optional.of(eyes);
+    }
+
+    @Override
+    public Optional<Vec> look(UUID player) {
+        return Optional.of(look);
+    }
+
+    @Override
+    public Actor hook(Vec position, UUID owner) {
+        return add("FishingHook", position);
+    }
+
+    @Override
+    public Actor player(Vec position, float yaw, String name) {
+        return add("Player", position);
+    }
+
+    @Override
+    public void lightning(Vec position) {
+        sounds.add("lightning");
+    }
+
     long alive() {
         return actors.stream().filter(actor -> !actor.removed()).count();
     }
@@ -129,6 +185,11 @@ final class RecordingStage implements Stage {
         }
 
         @Override
+        public void leash(Actor holder) {
+            watched.put(-1, holder);
+        }
+
+        @Override
         public void status(int opcode) {
         }
 
@@ -140,6 +201,45 @@ final class RecordingStage implements Stage {
         @Override
         public boolean removed() {
             return removed;
+        }
+    }
+
+    static final class FakeMount implements Mount {
+
+        Vec seat;
+        float yaw;
+        float pitch;
+        boolean pushing;
+        final List<Vec> path = new ArrayList<>();
+
+        FakeMount(Vec seat) {
+            this.seat = seat;
+        }
+
+        @Override
+        public Vec seat() {
+            return seat;
+        }
+
+        @Override
+        public float lookYaw() {
+            return yaw;
+        }
+
+        @Override
+        public float lookPitch() {
+            return pitch;
+        }
+
+        @Override
+        public boolean pushing() {
+            return pushing;
+        }
+
+        @Override
+        public void move(Vec seat, float yaw) {
+            this.seat = seat;
+            path.add(seat);
         }
     }
 }
