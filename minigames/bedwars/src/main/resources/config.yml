@@ -575,6 +575,7 @@ messages:
     - "&e/bedwars iniciar &7- Começa a partida sem esperar o mínimo."
     - "&e/bedwars finalizar &7- Encerra a partida sem vencedor."
   inventory-full: "&cSeu inventário está cheio."
+  hotbar-slot-full: "&cEste slot da hotbar já tem o máximo de entradas."
   trap-triggered: "&c&lARMADILHA! &cUm inimigo ativou uma armadilha da sua ilha."
   cosmetic-selected: "&aVocê selecionou &f{name}&a."
   cosmetic-bought: "&aVocê comprou &f{name} &apor &d{price} créditos&a."
@@ -841,6 +842,75 @@ shop:
       - "&7da hotbar."
       - ""
       - "&eClique para ver mais."
+  hotbar-menus:
+    frame-ticks: 20
+    destinations:
+      bedwars-menu: "Menu do Bed Wars"
+      shop: "Compra Rápida"
+    editing:
+      title: "Editando hotbar..."
+      rows: 3
+      slot-name: "&aSlot #{slot}"
+      selected-one: "&eSelecionado:"
+      selected-many: "&eSelecionados:"
+      entry-shown: "&a- {name}"
+      entry-other: "&7- {name}"
+      add: "&eBotão esquerdo: &fAdicionar"
+      remove: "&eBotão direito: &fRemover"
+      back:
+        slot: 21
+        item:
+          material: ARROW
+          name: "&aVoltar"
+          lore:
+            - "&7Para {destination}"
+    adding:
+      title: "Adicionado no slot #{slot}..."
+      rows: 6
+      item-name: "&a{name}"
+      category-name: "&a{name}"
+      category-description:
+        - "&7Incluí todos os itens desta categoria."
+      add: "&eClique para adicionar."
+      other-tab: "&eClique para ver mais."
+      categories-tab:
+        slot: 0
+        item:
+          material: BOOK
+          name: "&aCategorias"
+      items-tab:
+        slot: 1
+        item:
+          material: DIAMOND_PICKAXE
+          name: "&aItens"
+      back:
+        slot: 48
+        item:
+          material: ARROW
+          name: "&aVoltar"
+          lore:
+            - "&7Para Editando hotbar..."
+      previous:
+        slot: 48
+        item:
+          material: ARROW
+          name: "&aPágina {page}"
+      next:
+        slot: 50
+        item:
+          material: ARROW
+          name: "&aPágina {page}"
+    removing:
+      title: "Removendo do slot #{slot}..."
+      rows: 4
+      remove: "&eClique para remover."
+      back:
+        slot: 30
+        item:
+          material: ARROW
+          name: "&aVoltar"
+          lore:
+            - "&7Para Editando hotbar..."
   tabs:
     - slot: 0
       category: compra-rapida
@@ -2354,8 +2424,9 @@ cosmetics:
             - "&7do modo."
             - " "
             - "&eClique para ver mais."
-      soon:
-        "31":
+      hotbar:
+        slot: 31
+        item:
           material: BLAZE_POWDER
           name: "&aEditor de hotbar"
           lore:

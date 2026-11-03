@@ -5,6 +5,8 @@ import br.com.muxe.core.bukkit.menu.ClickContext;
 import br.com.muxe.core.bukkit.menu.Menu;
 import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
+import br.com.muxe.minigame.bedwars.hotbar.HotbarDelivery;
+import br.com.muxe.minigame.bedwars.hotbar.menu.HotbarEditor;
 import br.com.muxe.minigame.bedwars.invisibility.Invisibility;
 import br.com.muxe.minigame.bedwars.item.ItemNames;
 import br.com.muxe.minigame.bedwars.listener.Bedbugs;
@@ -51,14 +53,19 @@ public final class ShopService {
     private final MatchSounds sounds;
     private final QuickBuys quickBuys;
     private final ItemNames names;
+    private final HotbarDelivery hotbarDelivery;
+    private final HotbarEditor hotbarEditor;
 
-    public ShopService(ShopCatalog shop, UpgradeCatalog upgrades, MessageCatalog messages, MatchSounds sounds, QuickBuys quickBuys, ItemNames names) {
+    public ShopService(ShopCatalog shop, UpgradeCatalog upgrades, MessageCatalog messages, MatchSounds sounds, QuickBuys quickBuys, ItemNames names,
+                       HotbarDelivery hotbarDelivery, HotbarEditor hotbarEditor) {
         this.names = names;
         this.shop = shop;
         this.upgrades = upgrades;
         this.messages = messages;
         this.sounds = sounds;
         this.quickBuys = quickBuys;
+        this.hotbarDelivery = hotbarDelivery;
+        this.hotbarEditor = hotbarEditor;
     }
 
     public void open(Player player, RoomRuntime runtime, boolean upgradeMenu) {
@@ -111,7 +118,8 @@ public final class ShopService {
             });
         }
         if (quickBuy) {
-            menu.button(shop.editor().slot(), ItemBuilder.of(shop.editor().material()).name(shop.editor().name()).lore(shop.editor().lore()));
+            menu.button(shop.editor().slot(), ItemBuilder.of(shop.editor().material()).name(shop.editor().name()).lore(shop.editor().lore()),
+                context -> hotbarEditor.openFromShop(context.player(), viewer -> openShop(viewer, runtime, ShopCatalog.QUICK_BUY)));
         }
         menu.build().open(player);
     }
@@ -274,11 +282,11 @@ public final class ShopService {
         PlayerInventory inventory = player.getInventory();
         Tier tier = offer.tier();
         switch (item.type()) {
-            case WOOL -> inventory.addItem(Kits.wool(team.color(), item.amount(), names));
-            case BLOCK -> inventory.addItem(names.named(new ItemStack(tier.material(), item.amount(), (short) item.data()), offer.boughtName()));
+            case WOOL -> deliver(player, item, Kits.wool(team.color(), item.amount(), names));
+            case BLOCK -> deliver(player, item, names.named(new ItemStack(tier.material(), item.amount(), (short) item.data()), offer.boughtName()));
             case SWORD -> {
                 inventory.remove(Material.WOOD_SWORD);
-                inventory.addItem(Kits.sword(tier.material(), team, names));
+                deliver(player, item, Kits.sword(tier.material(), team, names));
             }
             case ARMOR -> {
                 roomPlayer.armorTier(item.armorTier());
@@ -286,22 +294,26 @@ public final class ShopService {
             }
             case SHEARS -> {
                 roomPlayer.giveShears();
-                inventory.addItem(names.named(Kits.unbreakable(new ItemStack(Material.SHEARS))));
+                deliver(player, item, names.named(Kits.unbreakable(new ItemStack(Material.SHEARS))));
             }
             case PICKAXE -> {
                 removeAll(inventory, Kits::isPickaxe);
                 roomPlayer.pickaxeTier(offer.level());
-                inventory.addItem(Kits.pickaxe(offer.level(), names));
+                deliver(player, item, Kits.pickaxe(offer.level(), names));
             }
             case AXE -> {
                 removeAll(inventory, Kits::isAxe);
                 roomPlayer.axeTier(offer.level());
-                inventory.addItem(Kits.axe(offer.level(), team, names));
+                deliver(player, item, Kits.axe(offer.level(), team, names));
             }
-            case POTION -> inventory.addItem(potion(item, tier));
-            case ITEM -> inventory.addItem(names.named(plain(item, tier), offer.boughtName()));
-            case SPECIAL -> inventory.addItem(names.named(new ItemStack(tier.material(), item.amount(), (short) item.data()), offer.boughtName()));
+            case POTION -> deliver(player, item, potion(item, tier));
+            case ITEM -> deliver(player, item, names.named(plain(item, tier), offer.boughtName()));
+            case SPECIAL -> deliver(player, item, names.named(new ItemStack(tier.material(), item.amount(), (short) item.data()), offer.boughtName()));
         }
+    }
+
+    private void deliver(Player player, ShopItem item, ItemStack stack) {
+        hotbarDelivery.give(player, item.id(), stack);
     }
 
     private static ItemStack plain(ShopItem item, Tier tier) {

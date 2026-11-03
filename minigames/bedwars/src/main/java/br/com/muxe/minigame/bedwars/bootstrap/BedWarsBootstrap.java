@@ -14,6 +14,13 @@ import br.com.muxe.core.common.server.ServerKind;
 import br.com.muxe.minigame.bedwars.arena.BedWarsSchema;
 import br.com.muxe.minigame.bedwars.command.BedWarsCommand;
 import br.com.muxe.minigame.bedwars.command.GlobalChatCommand;
+import br.com.muxe.minigame.bedwars.hotbar.HotbarChoices;
+import br.com.muxe.minigame.bedwars.hotbar.HotbarDelivery;
+import br.com.muxe.minigame.bedwars.hotbar.HotbarModule;
+import br.com.muxe.minigame.bedwars.hotbar.Hotbars;
+import br.com.muxe.minigame.bedwars.hotbar.menu.HotbarEditor;
+import br.com.muxe.minigame.bedwars.hotbar.menu.HotbarIcons;
+import br.com.muxe.minigame.bedwars.hotbar.menu.HotbarMenuSettings;
 import br.com.muxe.minigame.bedwars.invisibility.InvisiblePlayers;
 import br.com.muxe.minigame.bedwars.listener.Bedbugs;
 import br.com.muxe.minigame.bedwars.listener.MatchListener;
@@ -92,6 +99,7 @@ public final class BedWarsBootstrap {
         plugin.getLogger().info("Schema '" + GAME + "' at version " + core.migrations().migrate(GAME, plugin.getClass().getClassLoader()).schemaVersion());
         StatsModule.register(core.commands(), core.queries(), core.transactions(), core.clock(), STATS_ZONE);
         QuickBuyModule.register(core.commands(), core.queries(), core.transactions(), core.clock());
+        HotbarModule.register(core.commands(), core.queries(), core.transactions(), core.clock());
         PreferencesModule.register(core.commands(), core.queries(), core.transactions(), core.clock());
         MissionConfig missions = MissionConfig.from(config.getConfigurationSection("missions"), BedWarsGoal::find);
         BedWarsStatsRepository missionXp = new PostgresBedWarsStatsRepository();
@@ -107,6 +115,14 @@ public final class BedWarsBootstrap {
         plugin.getServer().getOnlinePlayers().forEach(player -> quickBuys.load(player.getUniqueId()));
         cosmetics.onQuickBuy(new QuickBuyEditor(shopCatalog, QuickBuyEditor.Settings.from(Objects.requireNonNull(config.getConfigurationSection("shop.quick-buy-editor"), "Missing configuration section shop.quick-buy-editor")), quickBuys,
             messages, AnvilPrompts.start(plugin), core.mainThread(), plugin.getLogger()));
+        HotbarChoices hotbarChoices = new HotbarChoices(shopCatalog);
+        Hotbars hotbars = new Hotbars(core, plugin.getLogger(), hotbarChoices::exists);
+        plugin.getServer().getPluginManager().registerEvents(hotbars, plugin);
+        plugin.getServer().getOnlinePlayers().forEach(player -> hotbars.load(player.getUniqueId()));
+        HotbarMenuSettings hotbarMenus = HotbarMenuSettings.from(
+            Objects.requireNonNull(config.getConfigurationSection("shop.hotbar-menus"), "Missing configuration section shop.hotbar-menus"));
+        HotbarEditor hotbarEditor = new HotbarEditor(hotbarMenus, hotbarChoices, new HotbarIcons(shopCatalog, hotbarChoices, hotbarMenus.adding()), hotbars, messages);
+        cosmetics.onHotbar(hotbarEditor);
         PlayerPreferences preferences = new PlayerPreferences(core, plugin.getLogger());
         plugin.getServer().getPluginManager().registerEvents(preferences, plugin);
         plugin.getServer().getOnlinePlayers().forEach(player -> preferences.load(player.getUniqueId()));
@@ -162,7 +178,9 @@ public final class BedWarsBootstrap {
             messages,
             settings.sounds(),
             quickBuys,
-            settings.items()
+            settings.items(),
+            new HotbarDelivery(hotbars, hotbarChoices),
+            hotbarEditor
         );
         rooms.onNpcClick((player, click) -> shop.open(player, click.runtime(), click.upgrades()));
         publisher = new RoomPublisher(plugin, core, rooms, settings.lobbyGroup());

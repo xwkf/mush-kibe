@@ -48,6 +48,8 @@ public final class CosmeticMenus {
     };
     private BiConsumer<Player, Consumer<Player>> preferences = (player, back) -> {
     };
+    private BiConsumer<Player, Consumer<Player>> hotbar = (player, back) -> {
+    };
     private BiConsumer<Player, Optional<Consumer<Player>>> missions = (player, back) -> {
     };
 
@@ -72,6 +74,10 @@ public final class CosmeticMenus {
         this.preferences = opener;
     }
 
+    public void onHotbar(BiConsumer<Player, Consumer<Player>> opener) {
+        this.hotbar = opener;
+    }
+
     public void openBedWars(Player player) {
         Menu.Builder menu = Menu.builder(settings.bedwarsTitle()).rows(settings.bedwarsRows());
         settings.bedwarsItems().forEach(menu::button);
@@ -81,6 +87,8 @@ public final class CosmeticMenus {
             context -> quickBuy.accept(context.player(), this::openBedWars)));
         settings.preferences().ifPresent(button -> menu.button(button.slot(), button.item(),
             context -> preferences.accept(context.player(), this::openBedWars)));
+        settings.hotbar().ifPresent(button -> menu.button(button.slot(), button.item(),
+            context -> hotbar.accept(context.player(), this::openBedWars)));
         settings.bedwarsSoon().forEach((slot, item) -> menu.button(slot, item, context -> context.player().sendMessage(messages.get("coming-soon"))));
         menu.button(settings.cosmetics().slot(), settings.cosmetics().item(), context -> openCategories(context.player(), true))
             .build()

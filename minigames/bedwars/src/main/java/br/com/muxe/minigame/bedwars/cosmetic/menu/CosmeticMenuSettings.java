@@ -16,6 +16,7 @@ public record CosmeticMenuSettings(
     Optional<MenuSlot> missions,
     Optional<MenuSlot> quickBuy,
     Optional<MenuSlot> preferences,
+    Optional<MenuSlot> hotbar,
     Map<Integer, ItemBuilder> bedwarsItems,
     Map<Integer, ItemBuilder> bedwarsSoon,
     String categoriesTitle,
@@ -37,6 +38,7 @@ public record CosmeticMenuSettings(
         missions.ifPresent(button -> stillSoon.remove(button.slot()));
         quickBuy.ifPresent(button -> stillSoon.remove(button.slot()));
         preferences.ifPresent(button -> stillSoon.remove(button.slot()));
+        hotbar.ifPresent(button -> stillSoon.remove(button.slot()));
         bedwarsSoon = Map.copyOf(stillSoon);
         categories = Collections.unmodifiableMap(new LinkedHashMap<>(categories));
         Map<Integer, ItemBuilder> categorySoon = new LinkedHashMap<>(soon);
@@ -63,8 +65,9 @@ public record CosmeticMenuSettings(
             Optional.ofNullable(bedwars.getConfigurationSection("missions")).map(MenuSlot::from),
             Optional.ofNullable(bedwars.getConfigurationSection("quick-buy")).map(MenuSlot::from),
             Optional.ofNullable(bedwars.getConfigurationSection("preferences")).map(MenuSlot::from),
+            Optional.ofNullable(bedwars.getConfigurationSection("hotbar")).map(MenuSlot::from),
             itemsBySlot(section(bedwars, "items")),
-            itemsBySlot(section(bedwars, "soon")),
+            Optional.ofNullable(bedwars.getConfigurationSection("soon")).map(CosmeticMenuSettings::itemsBySlot).orElseGet(Map::of),
             categories.getString("title", "Cosméticos do Bed Wars"),
             categories.getInt("rows", 6),
             byKey,

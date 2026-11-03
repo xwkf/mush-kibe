@@ -126,11 +126,7 @@ public final class QuickBuyEditor {
     }
 
     private ItemBuilder look(ShopItem item) {
-        boolean dataMatters = item.type() == ShopCatalog.Type.POTION || item.type() == ShopCatalog.Type.SPECIAL;
-        ItemBuilder icon = ItemBuilder.of(item.editor().material(), dataMatters ? item.data() : 0)
-            .amount(item.amount())
-            .name(settings.name().replace("{name}", item.editor().name()));
-        return !item.enchantments().isEmpty() || item.type() == ShopCatalog.Type.POTION ? icon.glow() : icon;
+        return ShopLook.icon(item, settings.name());
     }
 
     static List<String> slotLore(List<String> description, Settings settings) {

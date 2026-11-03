@@ -100,7 +100,13 @@ The shop NPC opens the menus of the exports: Compra Rápida (the exported layout
   - Shift-click on any other item opens `Adicionando à Compra Rápida...`: the item on top and the 21 positions below, each with `Clique para substituir!` or `Espaço vazio! Clique para adicionar!`. Clicking a position puts the item there (and takes it out of where it was) and opens Compra Rápida again.
   - Items the shop no longer sells show as empty positions.
 - Wool comes in the team colour. A sword replaces the wooden sword. Armour gives boots and leggings and cannot be bought below what the player owns. The pickaxe and axe go up one tier per purchase. Shears are permanent.
-- Not working yet: the hotbar editor, and the special items Golem de Ferro, Leite Mágico, Torre Compacta, Ovo das Pontes, Rastreador and Estilingue, which say they are coming soon and charge nothing.
+- **Hotbar editor:** each player can say where bought items go in the hotbar, saved in PostgreSQL (`bedwars.hotbar_layout`) and loaded when they join a BedWars server. It is opened by `Editor de hotbar` in the Menu do Bed Wars (slot 31) and by the `&aEditor de hotbar` button of the Compra Rápida page of the shop (slot 53, `shop.hotbar-editor`); `Voltar` returns to where it was opened from. A player who never edited it has an empty layout and nothing changes: bought items are added to the first free slot, as before.
+  - `Editando hotbar...` (3 rows) shows the 9 hotbar slots at 9 to 17 as `&aSlot #N`. A slot with entries shows the icon of one of them and lists them all under `Selecionado:` or `Selecionados:`, the one shown in green; with more than one entry, the icon and the green line move to the next entry every second (`shop.hotbar-menus.frame-ticks`, 20). An empty slot is a red pane. Left click adds, right click removes.
+  - `Adicionado no slot #N...` (6 rows) has the tabs `Categorias` and `Itens` at slots 0 and 1, the open one marked by a green pane under it. Categories lists every shop category except `armadura`; Itens lists every non-armour item with its shop look, 21 per page (`Página N` arrows at 48 and 50, the previous-page arrow replacing `Voltar`). Clicking one adds it to the end of the slot, saves and returns to the editor. An entry is in one slot only: adding it to another slot moves it. A slot holds at most 14 entries; a full slot answers `messages.hotbar-slot-full`.
+  - `Removendo do slot #N...` (4 rows) lists the entries of the slot from slot 10. Clicking one removes it and saves; the menu stays open while entries remain and returns to the editor when the last one is gone.
+  - **Placement rule:** when a purchase delivers an item, the slots are checked from #1 to #9; the first slot that lists the item or a category it belongs to and is empty, or holds a stack of the same item with room for the whole purchase, receives it. If there is none, the item is added as before. Armour is not affected. The rule is `HotbarPlacement` in `br.com.muxe.minigame.bedwars.hotbar.domain`; `HotbarDelivery` applies it to the inventory. The "inventory is full" check of a purchase is unchanged.
+  - Entries the shop no longer sells are dropped when the layout is loaded.
+- Not working yet: the special items Golem de Ferro, Leite Mágico, Torre Compacta, Ovo das Pontes, Rastreador and Estilingue, which say they are coming soon and charge nothing.
 
 ### Team upgrades
 
@@ -122,7 +128,7 @@ The whole team sees `<player> adquiriu a melhoria <upgrade>.`
 
 Players pick an animation that plays when they break an enemy bed. The menus follow the recorded exports:
 
-- **Menu do Bed Wars** (emerald): in the waiting room on BedWars servers, and in hotbar slot 3 on the BedWars lobby. Five rows, as in the reference export: `Missões` (slot 11), `Cosméticos` (pufferfish, slot 13), `Lista de Níveis` (slot 15, the level badges in its lore), `Compra rápida` (29), `Editor de hotbar` (31) and `Preferências` (33). Editor de hotbar answers `coming-soon`.
+- **Menu do Bed Wars** (emerald): in the waiting room on BedWars servers, and in hotbar slot 3 on the BedWars lobby. Five rows, as in the reference export: `Missões` (slot 11), `Cosméticos` (pufferfish, slot 13), `Lista de Níveis` (slot 15, the level badges in its lore), `Compra rápida` (29), `Editor de hotbar` (31) and `Preferências` (33). `Editor de hotbar` opens the hotbar editor described in the Shop section.
 - **Preferências** (slot 33) opens `Preferências do Bed Wars` (4 rows): `Mostrar nível no chat` (slot 11), `Mostrar temporizador da TNT` (13) and `Guardar itens clicando no baú` (15: `Ativado`, `Sem hologramas`, `Desativado`), each with a dye below showing its value (lime on, grey off, light blue without holograms). Clicking either switches the value; `Voltar` goes back to the Bed Wars menu. They are saved in `bedwars.preferences` and loaded on every BedWars server.
 - **Compra rápida** (slot 29 of the Bed Wars menu) opens `Editando compra rápida...` with the player's 21 positions. Left click swaps the item, right click removes it, `Voltar` goes back to the Bed Wars menu and `Importar compra rápida` opens an anvil with `Insira o usuário`: the nick typed and taken from the result slot opens `Importando compra rápida...` with that player's quick buy (the default one if they never changed it, every position empty if there is no such player), `Cancelar` (back to the editor) and `Confirmar`, which copies it into the player's own. Swapping opens `Selecionando item... (1/2)`, every item the shop sells in category order, 21 per page; clicking one puts it in that position. Pickaxe and axe show as `Picareta` and `Machado` in diamond, and `editor-name`, `editor-material` and `editor-description` of a shop item change how it looks here. Changes are saved like those made in a match.
 - **Cosméticos do Bed Wars**: the **Destruição de Cama** category shows `owned/total (percent%)` and the selected cosmetic. The other categories, **Cor preferida** and the **Loja** button answer "coming soon".
@@ -270,6 +276,9 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | `scoreboard.*` | annexes 2, 3, 5 and 12 | Scoreboard lines; `{teams}` and `{event}` become the team lines and the next event. |
 | `holograms.*` | annexes 7 and 8 | NPC and generator holograms. |
 | `shop.*`, `upgrades.*` | the exports | Shop categories, items, prices and texts; upgrades, tiers and prices. |
+| `shop.hotbar-menus.*` | the exports | Titles, rows, slots, texts and refresh period of the three hotbar editor menus, and the names of the places `Voltar` goes to. |
+| `cosmetics.menus.bedwars.hotbar` | slot 31 | The `Editor de hotbar` button of the Menu do Bed Wars. |
+| `messages.hotbar-slot-full` | `&cEste slot da hotbar já tem o máximo de entradas.` | Said when a slot already has 14 entries. |
 | `messages.*` | annexes 4, 6, 9, 10, 11, 13, 14, 15 | Every match message. `setup-*` overrides the engine's setup messages. `cosmetic-*` and `preview-*` are the cosmetic messages. |
 | `cosmetics.category` | `bedwars-cama` | Category under which ownership and selection are saved. |
 | `cosmetics.prices.<stars>` | 750, 900, 1300, 1750, 2000 | Price in credits by stars. |
@@ -319,6 +328,7 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | `bedwars.favourite_maps` | Favourite arenas of each player. |
 | `bedwars.preferences` | The BedWars preferences of each player (`show_level`, `tnt_timer`, `chest_deposit`). Migration `V4__create_preferences.sql`. |
 | `bedwars.quick_buy` | The quick buy of each player: the 21 item ids in order (`''` for an empty position). Migration `V3__create_quick_buy.sql`. |
+| `bedwars.hotbar_layout` | The hotbar layout of each player: 9 texts, one per slot, each a comma-separated list of entries (`c:<category id>` or `i:<item id>`, `''` for an empty slot). Migration `V5__create_hotbar_layout.sql`. |
 
 Commands and queries in `br.com.muxe.minigame.bedwars.stats`: `RecordMatchCommand`, `ToggleFavouriteMapCommand`, `FindPlayerStatsQuery`, `FindTopQuery`, `FindFavouriteMapsQuery`.
 
@@ -339,12 +349,14 @@ Commands and queries in `br.com.muxe.minigame.bedwars.stats`: `RecordMatchComman
 - [x] An arena can be set up in game, with a checklist of what is missing (engine tests).
 - [x] Scoreboards, team indicators and the forge, timeline, kill credit, level, XP and ranking rules follow the spec (`RoomTest`, `GameRulesTest`, `GeneratorTimerTest`).
 - [x] Shop and upgrade names and lore follow the exports (`ShopCatalogTest`, `UpgradeCatalogTest`).
+- [x] The hotbar editor menus, the one-slot-per-entry layout, the storage and the placement of bought items follow the rules above (`HotbarLayoutTest`, `HotbarPlacementTest`, `HotbarEditorTest`, `HotbarHandlersTest`, `PostgresHotbarRepositoryIntegrationTest`).
 - [x] The 13 animations end without leftovers and follow the recorded timings (`BedAnimationsTest`).
 - [x] Cosmetic states, prices, sorting and lore follow the exports (`CosmeticCatalogTest`).
 - [x] Deaths, assists, beds lost, XP and match outcomes are counted (`RoomStatsTest`); periods, counters, tops and favourites are saved (`StatsHandlersTest`, `StatCountersTest`, `StatsPeriodTest`, `PostgresBedWarsStatsRepositoryIntegrationTest`).
 - [x] Matchmaking picks the fullest open room or asks the emptiest server for one (`MatchmakerTest`).
 - [x] Lobby NPCs, menus, tops, the mode selector, level badges, the statistics NPC and the lobby scoreboard follow the exports and annex 1 (`LobbyViewTest`, `LobbyFormatTest`).
 - [ ] A full match checked in game.
+- [ ] The hotbar editor and the placement of purchases checked in game.
 - [ ] Lobby NPCs, menus, matchmaking, map choice and tops checked in game.
 - [ ] Every animation and the preview checked in game.
 
