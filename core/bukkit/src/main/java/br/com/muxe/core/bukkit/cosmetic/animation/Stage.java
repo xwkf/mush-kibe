@@ -1,6 +1,9 @@
 package br.com.muxe.core.bukkit.cosmetic.animation;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Consumer;
 import org.bukkit.Material;
 
 public interface Stage {
@@ -27,6 +30,24 @@ public interface Stage {
 
     void block(int x, int y, int z, Material material, int data);
 
+    void time(long dayTime);
+
+    Mount mount(Vec seat, float yaw, List<UUID> riders);
+
+    void give(UUID player, int slot, Material material, String name, Consumer<Click> onClick);
+
+    void push(UUID player, Vec velocity);
+
+    Optional<Vec> eyes(UUID player);
+
+    Optional<Vec> look(UUID player);
+
+    Actor hook(Vec position, UUID owner);
+
+    Actor player(Vec position, float yaw, String name);
+
+    void lightning(Vec position);
+
     interface Actor {
 
         void teleport(Vec position, float yaw, float pitch);
@@ -43,11 +64,31 @@ public interface Stage {
 
         void ride(Actor vehicle);
 
+        void leash(Actor holder);
+
         void status(int opcode);
 
         void remove();
 
         boolean removed();
+    }
+
+    interface Mount {
+
+        Vec seat();
+
+        float lookYaw();
+
+        float lookPitch();
+
+        boolean pushing();
+
+        void move(Vec seat, float yaw);
+    }
+
+    enum Click {
+        LEFT,
+        RIGHT
     }
 
     enum Slot {

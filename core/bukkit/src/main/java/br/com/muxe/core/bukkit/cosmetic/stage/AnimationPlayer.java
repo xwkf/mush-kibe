@@ -35,12 +35,13 @@ public final class AnimationPlayer {
     }
 
     private Playback run(String id, World world, Supplier<Collection<Player>> viewers, Runnable onFinish, BiConsumer<PacketStage, Timeline> script) {
-        PacketStage stage = new PacketStage(world, viewers);
+        PacketStage stage = new PacketStage(world, viewers, MountGuard.of(plugin));
         Timeline timeline = new Timeline();
         script.accept(stage, timeline);
         Playback playback = new Playback(stage, onFinish);
         playback.task = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
             try {
+                stage.tick();
                 timeline.run(playback.tick);
             } catch (RuntimeException exception) {
                 plugin.getLogger().log(Level.WARNING, "Animation " + id + " failed", exception);

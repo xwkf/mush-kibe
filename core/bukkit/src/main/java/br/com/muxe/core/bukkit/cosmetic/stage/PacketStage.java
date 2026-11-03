@@ -3,21 +3,31 @@ package br.com.muxe.core.bukkit.cosmetic.stage;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import br.com.muxe.core.bukkit.item.ItemBuilder;
+import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.Property;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.Entity;
 import net.minecraft.server.v1_8_R3.EntityArmorStand;
 import net.minecraft.server.v1_8_R3.EntityFallingBlock;
+import net.minecraft.server.v1_8_R3.EntityFishingHook;
 import net.minecraft.server.v1_8_R3.EntityFireworks;
 import net.minecraft.server.v1_8_R3.EntityItem;
+import net.minecraft.server.v1_8_R3.EntityLightning;
 import net.minecraft.server.v1_8_R3.EntityLiving;
+import net.minecraft.server.v1_8_R3.EntityPlayer;
+import net.minecraft.server.v1_8_R3.MinecraftServer;
 import net.minecraft.server.v1_8_R3.EntitySnowball;
 import net.minecraft.server.v1_8_R3.EntityTypes;
 import net.minecraft.server.v1_8_R3.EnumParticle;
@@ -25,11 +35,16 @@ import net.minecraft.server.v1_8_R3.IBlockData;
 import net.minecraft.server.v1_8_R3.Packet;
 import net.minecraft.server.v1_8_R3.PacketPlayOutBlockChange;
 import net.minecraft.server.v1_8_R3.PacketPlayOutEntityMetadata;
+import net.minecraft.server.v1_8_R3.PacketPlayOutNamedEntitySpawn;
 import net.minecraft.server.v1_8_R3.PacketPlayOutNamedSoundEffect;
+import net.minecraft.server.v1_8_R3.PacketPlayOutPlayerInfo;
 import net.minecraft.server.v1_8_R3.PacketPlayOutSpawnEntity;
 import net.minecraft.server.v1_8_R3.PacketPlayOutSpawnEntityLiving;
+import net.minecraft.server.v1_8_R3.PacketPlayOutSpawnEntityWeather;
+import net.minecraft.server.v1_8_R3.PlayerInteractManager;
 import net.minecraft.server.v1_8_R3.PacketPlayOutWorldParticles;
 import net.minecraft.server.v1_8_R3.WorldServer;
+import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Material;
@@ -40,6 +55,7 @@ import org.bukkit.craftbukkit.v1_8_R3.inventory.CraftItemStack;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
+import org.bukkit.util.Vector;
 
 public final class PacketStage implements Stage, AutoCloseable {
 
@@ -47,16 +63,27 @@ public final class PacketStage implements Stage, AutoCloseable {
     private static final int OBJECT_FALLING_BLOCK = 70;
     private static final int OBJECT_FIREWORK = 76;
     private static final int OBJECT_SNOWBALL = 61;
+    private static final int OBJECT_FISHING_HOOK = 90;
+    private static final int MAX_NAME = 16;
+    private static final int SKIN_LAYERS = 10;
+    private static final int TAB_LIST_TICKS = 40;
+    private static final String TEXTURES = "textures";
 
     private final WorldServer world;
     private final Supplier<Collection<Player>> viewers;
     private final List<PacketActor> actors = new ArrayList<>();
     private final Map<BlockPosition, Boolean> changed = new LinkedHashMap<>();
+    private final List<Player> timed = new ArrayList<>();
+    private final MountGuard guard;
+    private final List<Seats> mounts = new ArrayList<>();
+    private final Map<UUID, Integer> tools = new LinkedHashMap<>();
+    private final Map<EntityPlayer, Integer> listed = new LinkedHashMap<>();
     private boolean closed;
 
-    public PacketStage(World world, Supplier<Collection<Player>> viewers) {
+    public PacketStage(World world, Supplier<Collection<Player>> viewers, MountGuard guard) {
         this.world = ((CraftWorld) world).getHandle();
         this.viewers = viewers;
+        this.guard = guard;
     }
 
     @Override
@@ -155,6 +182,109 @@ public final class PacketStage implements Stage, AutoCloseable {
         send(packet);
     }
 
+    @Override
+    public void time(long dayTime) {
+        for (Player viewer : viewers.get()) {
+            if (viewer.isOnline()) {
+                viewer.setPlayerTime(dayTime, false);
+                if (!timed.contains(viewer)) {
+                    timed.add(viewer);
+                }
+            }
+        }
+    }
+
+    @Override
+    public Mount mount(Vec seat, float yaw, List<UUID> riders) {
+        Seats mount = Seats.create(world.getWorld(), guard, this::send, seat, yaw, riders);
+        mounts.add(mount);
+        return mount;
+    }
+
+    @Override
+    public void give(UUID player, int slot, Material material, String name, Consumer<Click> onClick) {
+        Player holder = Bukkit.getPlayer(player);
+        if (holder == null || !holder.isOnline()) {
+            return;
+        }
+        holder.getInventory().setItem(slot, ItemBuilder.of(material).name(name).build());
+        holder.getInventory().setHeldItemSlot(slot);
+        guard.tool(player, slot, onClick);
+        tools.put(player, slot);
+    }
+
+    @Override
+    public void push(UUID player, Vec velocity) {
+        Player pushed = Bukkit.getPlayer(player);
+        if (pushed != null && pushed.isOnline()) {
+            pushed.setFallDistance(0);
+            pushed.setVelocity(new Vector(velocity.x(), velocity.y(), velocity.z()));
+        }
+    }
+
+    @Override
+    public Optional<Vec> eyes(UUID player) {
+        return Optional.ofNullable(Bukkit.getPlayer(player)).filter(Player::isOnline)
+            .map(Player::getEyeLocation).map(at -> new Vec(at.getX(), at.getY(), at.getZ()));
+    }
+
+    @Override
+    public Optional<Vec> look(UUID player) {
+        return Optional.ofNullable(Bukkit.getPlayer(player)).filter(Player::isOnline)
+            .map(found -> found.getLocation().getDirection()).map(direction -> new Vec(direction.getX(), direction.getY(), direction.getZ()));
+    }
+
+    @Override
+    public Actor hook(Vec position, UUID owner) {
+        Player holder = Bukkit.getPlayer(owner);
+        EntityFishingHook hook = new EntityFishingHook(world);
+        hook.setPosition(position.x(), position.y(), position.z());
+        int ownerId = holder == null ? 0 : holder.getEntityId();
+        return object(hook, new PacketPlayOutSpawnEntity(hook, OBJECT_FISHING_HOOK, ownerId), false);
+    }
+
+    @Override
+    public Actor player(Vec position, float yaw, String name) {
+        GameProfile profile = new GameProfile(UUID.randomUUID(), name.length() > MAX_NAME ? name.substring(0, MAX_NAME) : name);
+        List<Player> others = new ArrayList<>(world.getWorld().getPlayers());
+        Collections.shuffle(others);
+        for (Player other : others) {
+            Collection<Property> textures = ((CraftPlayer) other).getProfile().getProperties().get(TEXTURES);
+            if (!textures.isEmpty()) {
+                profile.getProperties().put(TEXTURES, textures.iterator().next());
+                break;
+            }
+        }
+        EntityPlayer body = new EntityPlayer(MinecraftServer.getServer(), world, profile, new PlayerInteractManager(world));
+        body.setLocation(position.x(), position.y(), position.z(), yaw, 0);
+        body.getDataWatcher().watch(SKIN_LAYERS, (byte) 127);
+        send(new PacketPlayOutPlayerInfo(PacketPlayOutPlayerInfo.EnumPlayerInfoAction.ADD_PLAYER, body));
+        PacketActor actor = new PacketActor(this, body);
+        send(new PacketPlayOutNamedEntitySpawn(body));
+        actor.headYaw(yaw);
+        actors.add(actor);
+        listed.put(body, TAB_LIST_TICKS);
+        return actor;
+    }
+
+    @Override
+    public void lightning(Vec position) {
+        send(new PacketPlayOutSpawnEntityWeather(new EntityLightning(world, position.x(), position.y(), position.z(), true)));
+        sound("ambient.weather.thunder", position, 2, 1);
+    }
+
+    void tick() {
+        listed.entrySet().removeIf(entry -> {
+            int left = entry.getValue() - 1;
+            if (left > 0) {
+                entry.setValue(left);
+                return false;
+            }
+            send(new PacketPlayOutPlayerInfo(PacketPlayOutPlayerInfo.EnumPlayerInfoAction.REMOVE_PLAYER, entry.getKey()));
+            return true;
+        });
+    }
+
     public boolean isClosed() {
         return closed;
     }
@@ -171,8 +301,26 @@ public final class PacketStage implements Stage, AutoCloseable {
         for (BlockPosition position : changed.keySet()) {
             send(new PacketPlayOutBlockChange(world, position));
         }
+        listed.keySet().forEach(body -> send(new PacketPlayOutPlayerInfo(PacketPlayOutPlayerInfo.EnumPlayerInfoAction.REMOVE_PLAYER, body)));
+        listed.clear();
+        mounts.forEach(Seats::remove);
+        mounts.clear();
+        tools.forEach((player, slot) -> {
+            guard.dropTool(player);
+            Player holder = Bukkit.getPlayer(player);
+            if (holder != null && holder.isOnline()) {
+                holder.getInventory().setItem(slot, null);
+            }
+        });
+        tools.clear();
+        for (Player viewer : timed) {
+            if (viewer.isOnline()) {
+                viewer.resetPlayerTime();
+            }
+        }
         actors.clear();
         changed.clear();
+        timed.clear();
     }
 
     void send(Packet<?> packet) {

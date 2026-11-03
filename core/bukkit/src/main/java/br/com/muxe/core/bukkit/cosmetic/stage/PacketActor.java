@@ -98,6 +98,13 @@ final class PacketActor implements Actor {
     }
 
     @Override
+    public void leash(Actor holder) {
+        if (!removed && holder instanceof PacketActor other) {
+            stage.send(new PacketPlayOutAttachEntity(1, entity, other.entity));
+        }
+    }
+
+    @Override
     public void status(int opcode) {
         if (!removed) {
             stage.send(new PacketPlayOutEntityStatus(entity, (byte) opcode));
