@@ -25,6 +25,7 @@ import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.core.bukkit.text.Title;
 import br.com.muxe.core.bukkit.thread.BukkitMainThreadExecutor;
 import br.com.muxe.core.bukkit.thread.BukkitMainThreadGuard;
+import br.com.muxe.core.bukkit.world.ClearMidday;
 import br.com.muxe.core.common.buildmode.BuildState;
 import br.com.muxe.core.common.config.ConfigException;
 import br.com.muxe.core.common.config.secret.SecretResolver;
@@ -83,6 +84,7 @@ public final class CoreBukkitBootstrap {
 
         plugin.getServer().getScheduler().runTaskTimer(plugin, new TickMonitor(load, runtime.metrics()), 1L, 1L);
         plugin.getServer().getPluginManager().registerEvents(new MenuListener(), plugin);
+        ClearMidday.start(plugin);
         plugin.getServer().getPluginManager().registerEvents(buildMode, plugin);
         plugin.getServer().getScheduler().runTaskTimer(plugin, buildMode, BuildMode.ACTION_BAR_PERIOD_TICKS, BuildMode.ACTION_BAR_PERIOD_TICKS);
         plugin.getServer().getPluginManager().registerEvents(new LeftoverTitleCleaner(Title::clear), plugin);

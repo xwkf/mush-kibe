@@ -521,6 +521,10 @@ Location target = spawn.location().orElseGet(world::getSpawnLocation);
 - `ConfigLocation`: uma `StoredLocation` salva em um caminho do `config.yml` de um plugin, gravada em disco a cada mudança. Implementa `LocationSlot`, então os serviços podem ser testados com uma posição em memória.
 - `Anchors.lookingAt(content, viewerEyes, height)`: posiciona um conteúdo, como um `ParticleText` ou um `PixelHolograms`, virado para quem o vê de outro lugar.
 
+## Mundos
+
+- Todo mundo de todo servidor Spigot fica ao meio-dia e sem chuva: o `ClearMidday` (pacote `br.com.muxe.core.bukkit.world`) desliga o `doDaylightCycle`, põe a hora em 6000 e limpa o clima de todo mundo carregado, inclusive os que um plugin cria depois, como os mundos das partidas, e cancela toda mudança para chuva ou trovoada. Os plugins não precisam fazer nada.
+
 ## Créditos
 
 Pacote `br.com.muxe.core.bukkit.credit`. O comportamento está em [Créditos e cosméticos](../../features/credits/README.pt-BR.md).

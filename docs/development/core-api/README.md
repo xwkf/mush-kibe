@@ -519,6 +519,10 @@ Location target = spawn.location().orElseGet(world::getSpawnLocation);
 - `ConfigLocation`: one `StoredLocation` saved under a path of a plugin's `config.yml`, saved to disk on every change. It implements `LocationSlot`, so services can be tested with an in-memory slot.
 - `Anchors.lookingAt(content, viewerEyes, height)`: places content, such as `ParticleText` or `PixelHolograms`, so it faces a viewer standing elsewhere.
 
+## Worlds
+
+- Every world of every Spigot server stays at midday without rain: `ClearMidday` (package `br.com.muxe.core.bukkit.world`) turns `doDaylightCycle` off, sets the time to 6000 and clears the weather of every world loaded, including the ones a plugin creates later, such as match worlds, and cancels every change to rain or thunder. Plugins do not need to do anything.
+
 ## Credits
 
 Package `br.com.muxe.core.bukkit.credit`. Feature behaviour is in [Credits and cosmetics](../../features/credits/README.md).
