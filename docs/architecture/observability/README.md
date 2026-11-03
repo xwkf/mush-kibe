@@ -22,7 +22,7 @@ http://<metrics.host>:<metrics.port>/metrics
 
 Every sample carries the labels `server` and `group` of the process, so one Prometheus can scrape the whole network.
 
-`/muxe metrics` shows a short summary in game. `/muxe latencia` shows the ping of each player on the server, how long their game took to answer after joining (also the `muxe_player_join_ready_seconds` timer) and the packets and kilobytes sent in their first 10 seconds, with the longest a packet waited to leave the server, the database connections in use and waiting, the command and query handlers running and queued, and the 12 timers with the highest average since the server started (handlers, executor queue wait, packet latency), each with its count, average and maximum in milliseconds.
+`/muxe metrics` shows a short summary in game. `/muxe latencia` shows the ping of each player on the server, how long their game took to answer after joining (also the `muxe_player_join_ready_seconds` timer) and the packets and kilobytes sent in their first 10 seconds, with the longest a packet waited to leave the server, and how long their game took to answer confirmation packets sent during the first 9 seconds, the database connections in use and waiting, the command and query handlers running and queued, and the 12 timers with the highest average since the server started (handlers, executor queue wait, packet latency), each with its count, average and maximum in milliseconds.
 
 ## Instruments
 

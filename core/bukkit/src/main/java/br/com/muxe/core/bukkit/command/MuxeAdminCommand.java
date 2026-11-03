@@ -102,14 +102,22 @@ public final class MuxeAdminCommand {
         if (!pings.isEmpty()) {
             sender.sendMessage(messages.get("admin.latency-pings", "players", PingList.describe(pings, messages.get("admin.latency-ping"))));
         }
-        joins.ifPresent(traffic -> Bukkit.getOnlinePlayers().forEach(player -> traffic.report(player.getUniqueId()).ifPresent(report ->
+        joins.ifPresent(traffic -> Bukkit.getOnlinePlayers().forEach(player -> traffic.report(player.getUniqueId()).ifPresent(report -> {
             sender.sendMessage(messages.get("admin.latency-join",
                 "player", player.getName(),
                 "ready", report.readyMillis().isPresent() ? Long.toString(report.readyMillis().getAsLong()) : "?",
                 "total", Integer.toString(report.total()),
                 "kb", Long.toString(report.kilobytes()),
                 "wait", Long.toString(report.slowestWriteMillis()),
-                "busiest", report.busiest(JOIN_PACKET_KINDS).stream().map(entry -> entry.getKey() + " " + entry.getValue()).collect(Collectors.joining(", ")))))));
+                "busiest", report.busiest(JOIN_PACKET_KINDS).stream().map(entry -> entry.getKey() + " " + entry.getValue()).collect(Collectors.joining(", "))));
+            if (!report.probes().isEmpty()) {
+                sender.sendMessage(messages.get("admin.latency-probes", "probes", report.probes().stream()
+                    .map(probe -> messages.get("admin.latency-probe",
+                        "at", String.format(Locale.ROOT, "%.1f", probe.sentAfterMillis() / 1000.0),
+                        "answer", probe.answeredInMillis().isPresent() ? Long.toString(probe.answeredInMillis().getAsLong()) : "?"))
+                    .collect(Collectors.joining(", "))));
+            }
+        })));
         sender.sendMessage(messages.get("admin.latency-pools",
             "db-active", whole(snapshot.gaugeTotal("muxe_db_connections_active")),
             "db-pending", whole(snapshot.gaugeTotal("muxe_db_connections_pending")),

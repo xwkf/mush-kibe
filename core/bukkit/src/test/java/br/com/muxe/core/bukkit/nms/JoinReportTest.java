@@ -2,6 +2,7 @@ package br.com.muxe.core.bukkit.nms;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import org.junit.jupiter.api.Test;
@@ -10,24 +11,32 @@ class JoinReportTest {
 
     @Test
     void addsUpEveryPacketSent() {
-        JoinReport report = new JoinReport(OptionalLong.of(320), Map.of("MapChunkBulk", 40, "SpawnEntityLiving", 210, "KeepAlive", 1), 0, 0);
+        JoinReport report = new JoinReport(OptionalLong.of(320), Map.of("MapChunkBulk", 40, "SpawnEntityLiving", 210, "KeepAlive", 1), 0, 0, List.of());
 
         assertThat(report.total()).isEqualTo(251);
     }
 
     @Test
     void listsTheMostSentKindsFirst() {
-        JoinReport report = new JoinReport(OptionalLong.empty(), Map.of("MapChunkBulk", 40, "SpawnEntityLiving", 210, "KeepAlive", 1, "EntityMetadata", 40), 0, 0);
+        JoinReport report = new JoinReport(OptionalLong.empty(), Map.of("MapChunkBulk", 40, "SpawnEntityLiving", 210, "KeepAlive", 1, "EntityMetadata", 40), 0, 0, List.of());
 
         assertThat(report.busiest(3)).containsExactly(Map.entry("SpawnEntityLiving", 210), Map.entry("EntityMetadata", 40), Map.entry("MapChunkBulk", 40));
     }
 
     @Test
     void bytesAreShownInWholeKilobytes() {
-        JoinReport report = new JoinReport(OptionalLong.empty(), Map.of(), 3_276_800, 4_100);
+        JoinReport report = new JoinReport(OptionalLong.empty(), Map.of(), 3_276_800, 4_100, List.of());
 
         assertThat(report.kilobytes()).isEqualTo(3_200);
         assertThat(report.slowestWriteMillis()).isEqualTo(4_100);
+    }
+
+    @Test
+    void eachProbeHasItsOwnActionFarFromTheInventoryOnes() {
+        assertThat(JoinReport.probeAction(0)).isEqualTo((short) -30_000);
+        assertThat(JoinReport.probeAction(7)).isEqualTo((short) -30_007);
+        assertThat(JoinReport.probeIndex(JoinReport.probeAction(5))).isEqualTo(5);
+        assertThat(JoinReport.probeIndex((short) 3)).isNegative();
     }
 
     @Test

@@ -8,8 +8,11 @@ import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -34,12 +37,16 @@ public final class JoinTraffic implements Listener {
     private static final String BYTES_HANDLER = "muxe_join_bytes";
     private static final String MINECRAFT_HANDLER = "packet_handler";
     private static final long TICKS_PER_SECOND = 20L;
+    private static final long[] PROBE_TICKS = {10, 20, 40, 60, 80, 100, 140, 180};
 
     private final Plugin plugin;
     private final Field networkManager;
     private final Field channel;
     private final ServerInternals internals;
     private final Timer readyTimer;
+    private final Constructor<?> transactionOut;
+    private final Class<?> transactionIn;
+    private final Field transactionAction;
     private final Map<UUID, Counting> counting = new ConcurrentHashMap<>();
     private final Map<UUID, JoinReport> reports = new ConcurrentHashMap<>();
 
@@ -49,6 +56,9 @@ public final class JoinTraffic implements Listener {
         this.networkManager = ServerInternals.fieldOfType(internals.nms("PlayerConnection"), internals.nms("NetworkManager"));
         this.channel = ServerInternals.fieldOfType(internals.nms("NetworkManager"), Channel.class);
         this.readyTimer = metrics.timer("muxe_player_join_ready_seconds");
+        this.transactionOut = internals.nms("PacketPlayOutTransaction").getConstructor(int.class, short.class, boolean.class);
+        this.transactionIn = internals.nms("PacketPlayInTransaction");
+        this.transactionAction = ServerInternals.fieldOfType(transactionIn, short.class);
     }
 
     public static Optional<JoinTraffic> start(Plugin plugin, MetricRegistry metrics) {
@@ -80,7 +90,23 @@ public final class JoinTraffic implements Listener {
                 found.pipeline().addFirst(BYTES_HANDLER, current.wire());
             }
         }));
+        for (int index = 0; index < PROBE_TICKS.length; index++) {
+            int probe = index;
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> probe(player, current, probe), PROBE_TICKS[index]);
+        }
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> finish(player, current), WINDOW.toSeconds() * TICKS_PER_SECOND);
+    }
+
+    private void probe(Player player, Counting current, int index) {
+        if (!player.isOnline() || counting.get(player.getUniqueId()) != current) {
+            return;
+        }
+        try {
+            current.probeSent(index);
+            internals.send(player, transactionOut.newInstance(0, JoinReport.probeAction(index), false));
+        } catch (ReflectiveOperationException | RuntimeException exception) {
+            Bukkit.getLogger().log(Level.FINE, "[Muxe] Could not probe the game of " + player.getName(), exception);
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -124,6 +150,8 @@ public final class JoinTraffic implements Listener {
         private final Map<String, Integer> sent = new ConcurrentHashMap<>();
         private final AtomicLong bytes = new AtomicLong();
         private final AtomicLong slowestWrite = new AtomicLong();
+        private final long[] probeSent = new long[PROBE_TICKS.length];
+        private final long[] probeAnswered = new long[PROBE_TICKS.length];
         private volatile long readyNanos = -1;
 
         private Counting(long joinedAt) {
@@ -136,8 +164,36 @@ public final class JoinTraffic implements Listener {
             super.write(context, message, promise);
         }
 
+        private synchronized void probeSent(int index) {
+            probeSent[index] = System.nanoTime();
+        }
+
+        private synchronized boolean probeAnswered(short action) {
+            int index = JoinReport.probeIndex(action);
+            if (index < 0 || index >= probeSent.length || probeSent[index] == 0) {
+                return false;
+            }
+            probeAnswered[index] = System.nanoTime() - probeSent[index];
+            return true;
+        }
+
+        private synchronized List<JoinReport.Probe> probes() {
+            List<JoinReport.Probe> probes = new ArrayList<>();
+            for (int index = 0; index < probeSent.length; index++) {
+                if (probeSent[index] != 0) {
+                    long sentAfter = TimeUnit.NANOSECONDS.toMillis(probeSent[index] - joinedAt);
+                    OptionalLong answer = probeAnswered[index] == 0 ? OptionalLong.empty() : OptionalLong.of(TimeUnit.NANOSECONDS.toMillis(probeAnswered[index]));
+                    probes.add(new JoinReport.Probe(sentAfter, answer));
+                }
+            }
+            return probes;
+        }
+
         @Override
         public void channelRead(ChannelHandlerContext context, Object message) throws Exception {
+            if (transactionIn.isInstance(message) && probeAnswered(transactionAction.getShort(message))) {
+                return;
+            }
             if (readyNanos < 0 && JoinReport.isMovement(message.getClass().getName())) {
                 readyNanos = System.nanoTime() - joinedAt;
                 readyTimer.record(readyNanos);
@@ -164,7 +220,7 @@ public final class JoinTraffic implements Listener {
         private JoinReport report() {
             long ready = readyNanos;
             return new JoinReport(ready < 0 ? OptionalLong.empty() : OptionalLong.of(TimeUnit.NANOSECONDS.toMillis(ready)), sent,
-                bytes.get(), TimeUnit.NANOSECONDS.toMillis(slowestWrite.get()));
+                bytes.get(), TimeUnit.NANOSECONDS.toMillis(slowestWrite.get()), probes());
         }
     }
 }
