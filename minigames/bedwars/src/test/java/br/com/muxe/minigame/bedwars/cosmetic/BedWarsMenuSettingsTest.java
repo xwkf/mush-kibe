@@ -38,13 +38,13 @@ class BedWarsMenuSettingsTest {
         CosmeticMenuSettings fromOlderFile = CosmeticMenuSettings.from(older.getConfigurationSection("cosmetics.menus"));
 
         assertThat(fromOlderFile.quickBuy().orElseThrow().slot()).isEqualTo(29);
-        assertThat(fromOlderFile.bedwarsSoon()).containsOnlyKeys(31, 33);
+        assertThat(fromOlderFile.bedwarsSoon()).containsOnlyKeys(31);
     }
 
     @Test
     void theOtherBedWarsMenuItemsFollowTheReference() {
         assertThat(settings.bedwarsItems()).containsOnlyKeys(15);
-        assertThat(settings.bedwarsSoon()).containsOnlyKeys(31, 33);
+        assertThat(settings.bedwarsSoon()).containsOnlyKeys(31);
         assertThat(settings.missions().orElseThrow().slot()).isEqualTo(11);
         assertThat(settings.missions().orElseThrow().item().material()).isEqualTo(Material.STORAGE_MINECART);
         assertThat(settings.missions().orElseThrow().item().name()).isEqualTo("§aMissões");
@@ -65,8 +65,8 @@ class BedWarsMenuSettingsTest {
         assertThat(settings.quickBuy().orElseThrow().item().name()).isEqualTo("§aCompra rápida");
         assertThat(settings.bedwarsSoon().get(31).material()).isEqualTo(Material.BLAZE_POWDER);
         assertThat(settings.bedwarsSoon().get(31).name()).isEqualTo("§aEditor de hotbar");
-        assertThat(settings.bedwarsSoon().get(33).material()).isEqualTo(Material.DIODE);
-        assertThat(settings.bedwarsSoon().get(33).name()).isEqualTo("§aPreferências");
-        assertThat(settings.bedwarsSoon().get(33).lore()).containsExactly("§7Altere as preferências", "§7do modo.", " ", "§eClique para ver mais.");
+        assertThat(settings.preferences().orElseThrow().item().material()).isEqualTo(Material.DIODE);
+        assertThat(settings.preferences().orElseThrow().item().name()).isEqualTo("§aPreferências");
+        assertThat(settings.preferences().orElseThrow().item().lore()).containsExactly("§7Altere as preferências", "§7do modo.", " ", "§eClique para ver mais.");
     }
 }

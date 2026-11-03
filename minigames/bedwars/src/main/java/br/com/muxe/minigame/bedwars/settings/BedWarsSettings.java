@@ -5,6 +5,7 @@ import br.com.muxe.minigame.bedwars.game.Timeline;
 import br.com.muxe.minigame.bedwars.game.Timeline.Event;
 import br.com.muxe.minigame.bedwars.game.Timeline.Kind;
 import br.com.muxe.minigame.bedwars.game.XpRewards;
+import br.com.muxe.minigame.bedwars.item.ItemNames;
 import br.com.muxe.minigame.engine.match.CountdownTitles;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +24,8 @@ public record BedWarsSettings(
     ScoreboardSettings scoreboard,
     Holograms holograms,
     WaitingHotbar hotbar,
-    MatchSounds sounds
+    MatchSounds sounds,
+    ItemNames items
 ) {
 
     private static final String[] ROMAN = {"", "I", "II", "III", "IV", "V"};
@@ -41,7 +43,8 @@ public record BedWarsSettings(
             ScoreboardSettings.from(section(config, "scoreboard")),
             Holograms.from(section(config, "holograms")),
             WaitingHotbar.from(section(config, "hotbar.waiting")),
-            MatchSounds.from(config.getConfigurationSection("sounds"))
+            MatchSounds.from(config.getConfigurationSection("sounds")),
+            ItemNames.from(config.getConfigurationSection("item-names"))
         );
     }
 

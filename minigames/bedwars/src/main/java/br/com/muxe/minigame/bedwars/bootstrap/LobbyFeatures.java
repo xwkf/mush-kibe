@@ -5,6 +5,7 @@ import br.com.muxe.core.bukkit.mission.menu.MissionMenus;
 import br.com.muxe.core.bukkit.npc.NpcLabelLayout;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.minigame.bedwars.arena.BedWarsSchema;
+import br.com.muxe.minigame.bedwars.lobby.LevelChat;
 import br.com.muxe.minigame.bedwars.lobby.LobbyNpcs;
 import br.com.muxe.minigame.bedwars.lobby.LobbySidebar;
 import br.com.muxe.minigame.bedwars.lobby.StatsCache;
@@ -21,6 +22,7 @@ import br.com.muxe.minigame.bedwars.lobby.top.TopData;
 import br.com.muxe.minigame.bedwars.lobby.top.TopSelectorSettings;
 import br.com.muxe.minigame.bedwars.lobby.top.TopTexts;
 import br.com.muxe.minigame.bedwars.matchmaking.MatchConnector;
+import br.com.muxe.minigame.bedwars.preferences.PlayerPreferences;
 import br.com.muxe.minigame.engine.level.LevelUps;
 import java.time.Duration;
 import java.util.Objects;
@@ -46,7 +48,8 @@ public final class LobbyFeatures {
         this.boards = boards;
     }
 
-    public static LobbyFeatures start(JavaPlugin plugin, MuxeCore core, FileConfiguration config, MessageCatalog messages, BedWarsSchema schema, MissionMenus missions) {
+    public static LobbyFeatures start(JavaPlugin plugin, MuxeCore core, FileConfiguration config, MessageCatalog messages, BedWarsSchema schema, MissionMenus missions,
+                                      PlayerPreferences preferences) {
         ConfigurationSection lobby = section(config, "lobby");
         LevelBadges badges = LevelBadges.from(section(config, "levels"));
         TopTexts texts = TopTexts.from(section(lobby, "tops"));
@@ -54,6 +57,7 @@ public final class LobbyFeatures {
         connector.start();
         StatsCache stats = new StatsCache(plugin, core, new LevelUps(messages.get("level-up"), badges::of));
         stats.start();
+        plugin.getServer().getPluginManager().registerEvents(new LevelChat(stats, badges, preferences), plugin);
         TagColors colors = new TagColors(core);
         TopData tops = new TopData(plugin, core, Duration.ofSeconds(texts.refreshSeconds()));
         LobbyMenus menus = new LobbyMenus(plugin, core, LobbyMenuSettings.from(section(lobby, "menus")), schema, connector, tops, colors, badges, messages);

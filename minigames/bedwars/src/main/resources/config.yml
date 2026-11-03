@@ -505,6 +505,11 @@ messages:
   ender-chest-title: "Baú do Fim"
   global-usage: "&cUse /g <mensagem> para falar com todos."
   global-prefix: "&6[G] "
+  chest-deposited: "&eVocê guardou: &a{item} ({amount}x) &eem seu baú."
+  chest-full: "&cO baú está cheio."
+  chest-hologram:
+    - "&eBata para"
+    - "&eguardar!"
   room-joined: "{player} &eentrou na sala (&b{players}&e/&b{max}&e)."
   room-left: "{player} &esaiu da sala."
   health-below-name: "&c❤"
@@ -585,6 +590,134 @@ messages:
   cosmetic-already-had: "&f{player} &cjá possui &f{name}&c."
   cosmetic-unknown: "&cCosmético desconhecido: &f{id}&c."
   player-unknown: "&cO jogador &f{player} &cnunca entrou no servidor."
+
+preferences:
+  title: "Preferências do Bed Wars"
+  rows: 4
+  value-on: "&7Valor: &aAtivado"
+  value-off: "&7Valor: &cDesativado"
+  click-off: "&eClique para desativar."
+  click-on: "&eClique para ativar."
+  status-on:
+    material: INK_SACK
+    data: 10
+  status-off:
+    material: INK_SACK
+    data: 8
+  show-level:
+    slot: 11
+    status-slot: 20
+    material: EXP_BOTTLE
+    name: "&aMostrar nível no chat"
+    description:
+      - "&7Escolha se o seu nível"
+      - "&7é mostrado no chat."
+  tnt-timer:
+    slot: 13
+    status-slot: 22
+    material: WATCH
+    name: "&aMostrar temporizador da TNT"
+    description:
+      - "&7Escolha se o holograma"
+      - "&7temporizador da TNT aparece."
+  chest-deposit:
+    slot: 15
+    status-slot: 24
+    material: CHEST
+    name: "&aGuardar itens clicando no baú"
+    description:
+      - "&7Escolha se deseja guardar"
+      - "&7itens clicando no baú."
+    option: "&7- {option}"
+    selected: "&a- {option}&7 (Selecionado)"
+    click: "&eClique para trocar para {option}."
+    options:
+      enabled:
+        name: "&aAtivado"
+        data: 10
+      no-holograms:
+        name: "&bSem hologramas"
+        data: 12
+      disabled:
+        name: "&cDesativado"
+        data: 8
+  back:
+    slot: 31
+    item:
+      material: ARROW
+      name: "&aVoltar"
+      lore:
+        - "&7Para Menu do Bed Wars"
+
+tnt-timer:
+  format: "{color}{seconds}s"
+  height: 1.1
+  view-distance: 24
+  update-ticks: 2
+  green-threshold: 0.75
+  yellow-threshold: 0.5
+  orange-threshold: 0.25
+  colors:
+    green: "&a"
+    yellow: "&e"
+    orange: "&6"
+    red: "&c"
+
+item-names:
+  IRON_INGOT: "Barra de Ferro"
+  GOLD_INGOT: "Barra de Ouro"
+  DIAMOND: "Diamante"
+  EMERALD: "Esmeralda"
+  WOOL: "Lã"
+  HARD_CLAY: "Argila"
+  STAINED_CLAY: "Argila"
+  GLASS: "Vidro à Prova de Explosões"
+  STAINED_GLASS: "Vidro à Prova de Explosões"
+  ENDER_STONE: "Pedra do Fim"
+  LADDER: "Escada"
+  WOOD: "Madeira"
+  OBSIDIAN: "Obsidian"
+  WOOD_SWORD: "Espada de Madeira"
+  STONE_SWORD: "Espada de Pedra"
+  IRON_SWORD: "Espada de Ferro"
+  DIAMOND_SWORD: "Espada de Diamante"
+  STICK: "Graveto"
+  WOOD_PICKAXE: "Picareta de Madeira"
+  IRON_PICKAXE: "Picareta de Ferro"
+  GOLD_PICKAXE: "Picareta de Ouro"
+  DIAMOND_PICKAXE: "Picareta de Diamante"
+  WOOD_AXE: "Machado de Madeira"
+  STONE_AXE: "Machado de Pedra"
+  IRON_AXE: "Machado de Ferro"
+  DIAMOND_AXE: "Machado de Diamante"
+  SHEARS: "Tesoura"
+  LEATHER_HELMET: "Capacete de Couro"
+  LEATHER_CHESTPLATE: "Peitoral de Couro"
+  LEATHER_LEGGINGS: "Calça de Couro"
+  LEATHER_BOOTS: "Bota de Couro"
+  CHAINMAIL_LEGGINGS: "Calça de Malha"
+  CHAINMAIL_BOOTS: "Bota de Malha"
+  IRON_LEGGINGS: "Calça de Ferro"
+  IRON_BOOTS: "Bota de Ferro"
+  DIAMOND_LEGGINGS: "Calça de Diamante"
+  DIAMOND_BOOTS: "Bota de Diamante"
+  ARROW: "Flecha"
+  BOW: "Arco"
+  GOLDEN_APPLE: "Maçã Dourada"
+  SNOW_BALL: "Percevejo"
+  FIREBALL: "Bola de Fogo"
+  MONSTER_EGG: "Golem de Ferro"
+  TNT: "TNT"
+  ENDER_PEARL: "Pérola do Fim"
+  WATER_BUCKET: "Balde de Água"
+  MILK_BUCKET: "Leite Mágico"
+  SPONGE: "Esponja"
+  CHEST: "Torre Compacta"
+  EGG: "Ovo das Pontes"
+  COMPASS: "Rastreador"
+  MAGMA_CREAM: "Estilingue"
+  POTION: "Poção"
+  BUCKET: "Balde"
 
 shop:
   quick-buy-title: "Compra Rápida"
@@ -1649,6 +1782,16 @@ cosmetics:
             - "&7sua compra rápida."
             - " "
             - "&eClique para ver mais."
+      preferences:
+        slot: 33
+        item:
+          material: DIODE
+          name: "&aPreferências"
+          lore:
+            - "&7Altere as preferências"
+            - "&7do modo."
+            - " "
+            - "&eClique para ver mais."
       soon:
         "31":
           material: BLAZE_POWDER
@@ -1656,14 +1799,6 @@ cosmetics:
           lore:
             - "&7Altere as predefinições"
             - "&7da hotbar."
-            - " "
-            - "&eClique para ver mais."
-        "33":
-          material: DIODE
-          name: "&aPreferências"
-          lore:
-            - "&7Altere as preferências"
-            - "&7do modo."
             - " "
             - "&eClique para ver mais."
     categories:

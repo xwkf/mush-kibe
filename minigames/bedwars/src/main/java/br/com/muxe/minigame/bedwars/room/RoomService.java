@@ -11,7 +11,9 @@ import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.minigame.bedwars.arena.BedWarsArena;
 import br.com.muxe.minigame.bedwars.arena.BedWarsSchema;
+import br.com.muxe.minigame.bedwars.lobby.LevelChat;
 import br.com.muxe.minigame.bedwars.lobby.format.LevelBadges;
+import br.com.muxe.minigame.bedwars.preferences.PlayerPreferences;
 import br.com.muxe.minigame.bedwars.matchmaking.RoomChoice;
 import br.com.muxe.minigame.bedwars.mission.MissionRules;
 import br.com.muxe.minigame.bedwars.network.ArenaInfo;
@@ -76,6 +78,8 @@ public final class RoomService {
     private final Set<UUID> shouting = ConcurrentHashMap.newKeySet();
     private final HealthDisplay healthDisplay;
     private final LevelUps levelUps;
+    private final LevelBadges levelBadges;
+    private PlayerPreferences preferences;
     private volatile int activeMatches;
 
     public RoomService(JavaPlugin plugin, MuxeCore core, BedWarsSettings settings, MessageCatalog messages, BedWarsSchema schema, ArenaCatalog catalog, MatchWorld matchWorld,
@@ -86,6 +90,7 @@ public final class RoomService {
         this.messages = messages;
         this.healthDisplay = new HealthDisplay(messages.get("health-below-name"));
         this.levelUps = new LevelUps(messages.get("level-up"), levelBadges::of);
+        this.levelBadges = levelBadges;
         this.schema = schema;
         this.catalog = catalog;
         this.matchWorld = matchWorld;
@@ -399,6 +404,19 @@ public final class RoomService {
 
     LevelUps levelUps() {
         return levelUps;
+    }
+
+    public void preferences(PlayerPreferences preferences) {
+        this.preferences = preferences;
+    }
+
+    PlayerPreferences preferences() {
+        return preferences;
+    }
+
+    public String chatBadge(UUID playerId) {
+        int level = roomOf(playerId).map(runtime -> runtime.chatLevel(playerId)).orElse(0);
+        return LevelChat.badge(levelBadges, level, preferences.of(playerId).showLevel());
     }
 
     private void clicked(Player player, Npc npc) {

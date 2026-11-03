@@ -2,7 +2,10 @@ package br.com.muxe.minigame.bedwars.room;
 
 import br.com.muxe.core.bukkit.api.MuxeCore;
 import br.com.muxe.core.bukkit.cosmetic.animation.BedFrame;
+import br.com.muxe.core.bukkit.hologram.SpawnedHologram;
+import br.com.muxe.core.bukkit.hologram.TextHolograms;
 import br.com.muxe.core.bukkit.mission.tracker.MissionTracker;
+import br.com.muxe.core.bukkit.nms.PacketHologramTransport;
 import br.com.muxe.core.bukkit.npc.Npc;
 import br.com.muxe.core.bukkit.scoreboard.Sidebar;
 import br.com.muxe.core.bukkit.text.CenteredText;
@@ -13,8 +16,10 @@ import br.com.muxe.core.bukkit.text.Title;
 import br.com.muxe.minigame.bedwars.arena.BedWarsArena.TeamBase;
 import br.com.muxe.minigame.bedwars.bootstrap.BedWarsBootstrap;
 import br.com.muxe.minigame.bedwars.game.ChestAccess;
+import br.com.muxe.minigame.bedwars.game.ChestDeposits;
 import br.com.muxe.minigame.bedwars.game.ForgeHeights;
 import br.com.muxe.minigame.bedwars.game.ForgeLayout;
+import br.com.muxe.minigame.bedwars.game.Levels;
 import br.com.muxe.minigame.bedwars.game.Ranking;
 import br.com.muxe.minigame.bedwars.game.Timeline.Event;
 import br.com.muxe.minigame.bedwars.level.LevelBar;
@@ -22,6 +27,7 @@ import br.com.muxe.minigame.bedwars.mission.MissionRules;
 import br.com.muxe.minigame.bedwars.room.RoomPlayer.State;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
 import br.com.muxe.minigame.bedwars.settings.MatchSounds;
+import br.com.muxe.minigame.bedwars.shop.ResourcePool;
 import br.com.muxe.minigame.bedwars.stats.application.command.RecordMatchCommand;
 import br.com.muxe.minigame.bedwars.stats.application.query.FindPlayerStatsQuery;
 import br.com.muxe.minigame.bedwars.stats.domain.MatchOutcome;
@@ -40,11 +46,13 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.ToIntFunction;
 import java.util.logging.Level;
 import org.bukkit.Bukkit;
@@ -54,6 +62,8 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.Chest;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
@@ -72,6 +82,9 @@ public final class RoomRuntime {
     private static final int RESEND_EVERY = 3;
     private static final Map<Material, String> LOOT = new LinkedHashMap<>();
     private static final int BED_SEARCH = 2;
+    private static final double CHEST_LABEL_RANGE = 48;
+    private static final double CHEST_LABEL_GAP = 0.28125;
+    private static final double CHEST_LABEL_TOP = 1.25;
     private static final BlockFace[] SIDES = {BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST};
 
     static {
@@ -95,7 +108,9 @@ public final class RoomRuntime {
     private final List<String> npcs = new ArrayList<>();
     private final Set<TeamColor> announcedEliminations = new HashSet<>();
     private final Map<UUID, Inventory> enderChests = new HashMap<>();
-    private final Map<UUID, Long> storedXp = new HashMap<>();
+    private final Map<UUID, Long> storedXp = new ConcurrentHashMap<>();
+    private final Map<UUID, Map<Block, SpawnedHologram>> chestLabels = new HashMap<>();
+    private List<Block> islandChests = List.of();
     private int seconds;
 
     RoomRuntime(RoomService service, Room room, World world) {
@@ -174,6 +189,7 @@ public final class RoomRuntime {
     }
 
     void forget(Player player) {
+        hideChestLabels(player.getUniqueId());
         sidebars.remove(player.getUniqueId());
         forges.hide(player.getUniqueId());
         player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
@@ -193,7 +209,10 @@ public final class RoomRuntime {
                     refreshScoreboards();
                 }
             }
-            case PLAYING -> playingSecond();
+            case PLAYING -> {
+                playingSecond();
+                updateChestLabels();
+            }
             case ENDING -> {
                 room.tick();
                 if (room.endingFor() == settings.timings().restartSeconds()) {
@@ -289,6 +308,7 @@ public final class RoomRuntime {
             }
         });
         clearWaitingArea();
+        findIslandChests();
         refreshScoreboards();
     }
 
@@ -697,6 +717,104 @@ public final class RoomRuntime {
         }
     }
 
+    public int chatLevel(UUID id) {
+        long stored = storedXp.getOrDefault(id, 0L);
+        long earned = room.player(id).map(RoomPlayer::xp).orElse(0L);
+        return Levels.progress(Math.max(0, stored + earned)).level();
+    }
+
+    public ResourcePool resources(Player player, boolean teamDiamonds) {
+        List<Inventory> sources = new ArrayList<>();
+        sources.add(player.getInventory());
+        sources.add(enderChest(player));
+        room.player(player.getUniqueId()).map(RoomPlayer::team).ifPresent(team -> {
+            sources.addAll(teamChests(team));
+            if (teamDiamonds) {
+                teammates(player, team).forEach(mate -> sources.add(mate.getInventory()));
+            }
+        });
+        return new ResourcePool(sources);
+    }
+
+    private List<Inventory> teamChests(TeamColor team) {
+        List<Inventory> inventories = new ArrayList<>();
+        for (Block block : islandChests) {
+            if (block.getType() != Material.ENDER_CHEST && ChestDeposits.isChest(block.getType())
+                && chestOwner(center(block)).filter(team::equals).isPresent() && block.getState() instanceof Chest chest) {
+                inventories.add(chest.getBlockInventory());
+            }
+        }
+        return inventories;
+    }
+
+    private List<Player> teammates(Player player, TeamColor team) {
+        List<Player> mates = new ArrayList<>();
+        for (RoomPlayer member : room.members(team)) {
+            Player mate = Bukkit.getPlayer(member.id());
+            if (mate != null && !mate.equals(player) && member.isAlive() && mate.getWorld().equals(world)) {
+                mates.add(mate);
+            }
+        }
+        return mates;
+    }
+
+    private void findIslandChests() {
+        int radius = settings.timings().islandRadius();
+        Set<Block> found = new LinkedHashSet<>();
+        for (TeamBase base : room.arena().teams().values()) {
+            Location spawn = location(base.spawn());
+            for (int chunkX = (spawn.getBlockX() - radius) >> 4; chunkX <= (spawn.getBlockX() + radius) >> 4; chunkX++) {
+                for (int chunkZ = (spawn.getBlockZ() - radius) >> 4; chunkZ <= (spawn.getBlockZ() + radius) >> 4; chunkZ++) {
+                    for (BlockState state : world.getChunkAt(chunkX, chunkZ).getTileEntities()) {
+                        if (ChestDeposits.isChest(state.getType()) && state.getLocation().distanceSquared(spawn) <= (double) radius * radius) {
+                            found.add(state.getBlock());
+                        }
+                    }
+                }
+            }
+        }
+        islandChests = List.copyOf(found);
+    }
+
+    private void updateChestLabels() {
+        for (Player viewer : online()) {
+            Map<Block, SpawnedHologram> shown = chestLabels.computeIfAbsent(viewer.getUniqueId(), id -> new HashMap<>());
+            Set<Block> wanted = new HashSet<>();
+            boolean labels = service.preferences().of(viewer.getUniqueId()).chestDeposit().showsHolograms();
+            if (labels && room.player(viewer.getUniqueId()).filter(RoomPlayer::isAlive).isPresent()) {
+                for (Block chest : islandChests) {
+                    Location at = center(chest);
+                    if (at.distanceSquared(viewer.getLocation()) <= CHEST_LABEL_RANGE * CHEST_LABEL_RANGE
+                        && (chest.getType() == Material.ENDER_CHEST || canOpenChest(viewer, at))) {
+                        wanted.add(chest);
+                    }
+                }
+            }
+            shown.entrySet().removeIf(entry -> {
+                if (wanted.contains(entry.getKey())) {
+                    return false;
+                }
+                entry.getValue().remove();
+                return true;
+            });
+            for (Block chest : wanted) {
+                shown.computeIfAbsent(chest, block -> PacketHologramTransport.instance().spawn(viewer,
+                    TextHolograms.standard(CHEST_LABEL_GAP).layout(center(block).add(0, CHEST_LABEL_TOP, 0), messages.lines("chest-hologram"))));
+            }
+        }
+    }
+
+    private void hideChestLabels(UUID id) {
+        Map<Block, SpawnedHologram> shown = chestLabels.remove(id);
+        if (shown != null) {
+            shown.values().forEach(SpawnedHologram::remove);
+        }
+    }
+
+    private static Location center(Block block) {
+        return block.getLocation().add(0.5, 0, 0.5);
+    }
+
     public Inventory enderChest(Player player) {
         return enderChests.computeIfAbsent(player.getUniqueId(),
             id -> Bukkit.createInventory(null, InventoryType.ENDER_CHEST, messages.get("ender-chest-title")));
@@ -712,15 +830,23 @@ public final class RoomRuntime {
         return ChestAccess.owner(at, spawns, settings.timings().islandRadius());
     }
 
-    public boolean mayOpenChest(Player player, Location chest) {
+    private boolean canOpenChest(Player player, Location chest) {
         Optional<RoomPlayer> viewer = room.player(player.getUniqueId()).filter(RoomPlayer::isAlive);
         if (viewer.isEmpty()) {
             return false;
         }
         Optional<TeamColor> owner = chestOwner(chest);
-        if (ChestAccess.canOpen(owner, viewer.get().team(), owner.map(color -> room.status(color).isEliminated()).orElse(true))) {
+        return ChestAccess.canOpen(owner, viewer.get().team(), owner.map(color -> room.status(color).isEliminated()).orElse(true));
+    }
+
+    public boolean mayOpenChest(Player player, Location chest) {
+        if (room.player(player.getUniqueId()).filter(RoomPlayer::isAlive).isEmpty()) {
+            return false;
+        }
+        if (canOpenChest(player, chest)) {
             return true;
         }
+        Optional<TeamColor> owner = chestOwner(chest);
         player.sendMessage(messages.get("chest-locked", "team-color", Colors.translate(owner.get().color()), "team", owner.get().displayName()));
         return false;
     }
@@ -774,6 +900,7 @@ public final class RoomRuntime {
     private void end(Optional<TeamColor> winner) {
         room.end();
         for (Player player : online()) {
+            hideChestLabels(player.getUniqueId());
             forges.hide(player.getUniqueId());
         }
         String time = clock(room.elapsed());
@@ -844,7 +971,7 @@ public final class RoomRuntime {
         TeamBase base = room.arena().teams().get(roomPlayer.team());
         reset(player, PLAYER_MODE);
         player.teleport(location(base.spawn()));
-        Kits.spawnKit(player, roomPlayer, room.team(roomPlayer.team()));
+        Kits.spawnKit(player, roomPlayer, room.team(roomPlayer.team()), settings.items());
     }
 
     private void spawnNpc(TeamColor team, String kind, Point point, List<String> lines) {
@@ -950,7 +1077,7 @@ public final class RoomRuntime {
 
     private void giveLoot(Player killer, Map<Material, Integer> loot) {
         loot.forEach((material, amount) -> {
-            Map<Integer, ItemStack> left = killer.getInventory().addItem(new ItemStack(material, amount));
+            Map<Integer, ItemStack> left = killer.getInventory().addItem(settings.items().named(new ItemStack(material, amount)));
             left.values().forEach(item -> killer.getWorld().dropItem(killer.getLocation(), item));
             String type = LOOT.get(material);
             killer.sendMessage(messages.get("loot-" + type + (amount == 1 ? "-one" : "-many"), "amount", String.valueOf(amount)));

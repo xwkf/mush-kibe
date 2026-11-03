@@ -14,6 +14,7 @@ public record CosmeticMenuSettings(
     MenuSlot cosmetics,
     Optional<MenuSlot> missions,
     Optional<MenuSlot> quickBuy,
+    Optional<MenuSlot> preferences,
     Map<Integer, ItemBuilder> bedwarsItems,
     Map<Integer, ItemBuilder> bedwarsSoon,
     String categoriesTitle,
@@ -40,6 +41,7 @@ public record CosmeticMenuSettings(
         stillSoon.remove(cosmetics.slot());
         missions.ifPresent(button -> stillSoon.remove(button.slot()));
         quickBuy.ifPresent(button -> stillSoon.remove(button.slot()));
+        preferences.ifPresent(button -> stillSoon.remove(button.slot()));
         bedwarsSoon = Map.copyOf(stillSoon);
         soon = Map.copyOf(soon);
         listSlots = List.copyOf(listSlots);
@@ -55,6 +57,7 @@ public record CosmeticMenuSettings(
             MenuSlot.from(section(bedwars, "cosmetics")),
             Optional.ofNullable(bedwars.getConfigurationSection("missions")).map(MenuSlot::from),
             Optional.ofNullable(bedwars.getConfigurationSection("quick-buy")).map(MenuSlot::from),
+            Optional.ofNullable(bedwars.getConfigurationSection("preferences")).map(MenuSlot::from),
             itemsBySlot(section(bedwars, "items")),
             itemsBySlot(section(bedwars, "soon")),
             categories.getString("title", "Cosméticos do Bed Wars"),

@@ -15,6 +15,7 @@ import br.com.muxe.minigame.bedwars.cosmetic.command.CosmeticCommand;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.BedWarsMenuItem;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenuSettings;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenus.PreviewGate;
+import br.com.muxe.minigame.bedwars.preferences.menu.PreferencesMenu;
 import br.com.muxe.minigame.bedwars.shop.QuickBuyEditor;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenus;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.MenuSlot;
@@ -86,6 +87,10 @@ final class CosmeticFeatures {
 
     void onQuickBuy(QuickBuyEditor editor) {
         menus.onQuickBuy(editor::open);
+    }
+
+    void onPreferences(PreferencesMenu preferences) {
+        menus.onPreferences(preferences::open);
     }
 
     boolean previewing(Player player) {

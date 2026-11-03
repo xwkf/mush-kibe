@@ -1,5 +1,6 @@
 package br.com.muxe.minigame.bedwars.room;
 
+import br.com.muxe.minigame.bedwars.item.ItemNames;
 import br.com.muxe.minigame.bedwars.room.RoomTeam.Upgrade;
 import br.com.muxe.minigame.engine.team.TeamColor;
 import java.util.List;
@@ -29,31 +30,31 @@ public final class Kits {
     private Kits() {
     }
 
-    public static void spawnKit(Player player, RoomPlayer roomPlayer, RoomTeam team) {
+    public static void spawnKit(Player player, RoomPlayer roomPlayer, RoomTeam team, ItemNames names) {
         PlayerInventory inventory = player.getInventory();
         inventory.clear();
-        armor(player, roomPlayer, team);
-        inventory.addItem(sword(Material.WOOD_SWORD, team));
+        armor(player, roomPlayer, team, names);
+        inventory.addItem(sword(Material.WOOD_SWORD, team, names));
         if (roomPlayer.hasShears()) {
-            inventory.addItem(unbreakable(new ItemStack(Material.SHEARS)));
+            inventory.addItem(names.named(unbreakable(new ItemStack(Material.SHEARS))));
         }
         if (roomPlayer.pickaxeTier() > 0) {
-            inventory.addItem(pickaxe(roomPlayer.pickaxeTier()));
+            inventory.addItem(pickaxe(roomPlayer.pickaxeTier(), names));
         }
         if (roomPlayer.axeTier() > 0) {
-            inventory.addItem(axe(roomPlayer.axeTier(), team));
+            inventory.addItem(axe(roomPlayer.axeTier(), team, names));
         }
         effects(player, team);
     }
 
-    public static void armor(Player player, RoomPlayer roomPlayer, RoomTeam team) {
+    public static void armor(Player player, RoomPlayer roomPlayer, RoomTeam team, ItemNames names) {
         PlayerInventory inventory = player.getInventory();
         int protection = team.level(Upgrade.PROTECTION);
-        inventory.setHelmet(enchant(leather(Material.LEATHER_HELMET, team.color()), Enchantment.PROTECTION_ENVIRONMENTAL, protection));
-        inventory.setChestplate(enchant(leather(Material.LEATHER_CHESTPLATE, team.color()), Enchantment.PROTECTION_ENVIRONMENTAL, protection));
+        inventory.setHelmet(enchant(names.named(leather(Material.LEATHER_HELMET, team.color())), Enchantment.PROTECTION_ENVIRONMENTAL, protection));
+        inventory.setChestplate(enchant(names.named(leather(Material.LEATHER_CHESTPLATE, team.color())), Enchantment.PROTECTION_ENVIRONMENTAL, protection));
         int tier = Math.clamp(roomPlayer.armorTier(), 0, BOOTS.length - 1);
-        ItemStack leggings = tier == 0 ? leather(LEGGINGS[0], team.color()) : unbreakable(new ItemStack(LEGGINGS[tier]));
-        ItemStack boots = tier == 0 ? leather(BOOTS[0], team.color()) : unbreakable(new ItemStack(BOOTS[tier]));
+        ItemStack leggings = names.named(tier == 0 ? leather(LEGGINGS[0], team.color()) : unbreakable(new ItemStack(LEGGINGS[tier])));
+        ItemStack boots = names.named(tier == 0 ? leather(BOOTS[0], team.color()) : unbreakable(new ItemStack(BOOTS[tier])));
         inventory.setLeggings(enchant(leggings, Enchantment.PROTECTION_ENVIRONMENTAL, protection));
         inventory.setBoots(enchant(boots, Enchantment.PROTECTION_ENVIRONMENTAL, protection));
     }
@@ -84,20 +85,20 @@ public final class Kits {
         }
     }
 
-    public static ItemStack sword(Material material, RoomTeam team) {
-        return enchant(unbreakable(new ItemStack(material)), Enchantment.DAMAGE_ALL, team.level(Upgrade.SHARPNESS));
+    public static ItemStack sword(Material material, RoomTeam team, ItemNames names) {
+        return enchant(names.named(unbreakable(new ItemStack(material))), Enchantment.DAMAGE_ALL, team.level(Upgrade.SHARPNESS));
     }
 
-    public static ItemStack pickaxe(int tier) {
+    public static ItemStack pickaxe(int tier, ItemNames names) {
         int index = Math.clamp(tier, 1, PICKAXES.length) - 1;
-        ItemStack item = unbreakable(new ItemStack(PICKAXES[index]));
+        ItemStack item = names.named(unbreakable(new ItemStack(PICKAXES[index])));
         enchant(item, Enchantment.DIG_SPEED, PICKAXE_ENCHANTS[index][0]);
         return enchant(item, Enchantment.DAMAGE_ALL, PICKAXE_ENCHANTS[index][1]);
     }
 
-    public static ItemStack axe(int tier, RoomTeam team) {
+    public static ItemStack axe(int tier, RoomTeam team, ItemNames names) {
         int index = Math.clamp(tier, 1, AXES.length) - 1;
-        ItemStack item = enchant(unbreakable(new ItemStack(AXES[index])), Enchantment.DIG_SPEED, AXE_EFFICIENCY[index]);
+        ItemStack item = enchant(names.named(unbreakable(new ItemStack(AXES[index]))), Enchantment.DIG_SPEED, AXE_EFFICIENCY[index]);
         return enchant(item, Enchantment.DAMAGE_ALL, team.level(Upgrade.SHARPNESS));
     }
 
@@ -109,8 +110,8 @@ public final class Kits {
         return List.of(AXES).contains(material);
     }
 
-    public static ItemStack wool(TeamColor color, int amount) {
-        return new ItemStack(Material.WOOL, amount, (short) color.woolData());
+    public static ItemStack wool(TeamColor color, int amount, ItemNames names) {
+        return names.named(new ItemStack(Material.WOOL, amount, (short) color.woolData()));
     }
 
     static ItemStack leather(Material material, TeamColor color) {

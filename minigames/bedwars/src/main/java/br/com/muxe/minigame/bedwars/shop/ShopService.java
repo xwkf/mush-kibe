@@ -5,6 +5,7 @@ import br.com.muxe.core.bukkit.menu.ClickContext;
 import br.com.muxe.core.bukkit.menu.Menu;
 import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
+import br.com.muxe.minigame.bedwars.item.ItemNames;
 import br.com.muxe.minigame.bedwars.listener.Bedbugs;
 import br.com.muxe.minigame.bedwars.quickbuy.domain.QuickBuy;
 import br.com.muxe.minigame.bedwars.room.Kits;
@@ -49,8 +50,10 @@ public final class ShopService {
     private final MessageCatalog messages;
     private final MatchSounds sounds;
     private final QuickBuys quickBuys;
+    private final ItemNames names;
 
-    public ShopService(ShopCatalog shop, UpgradeCatalog upgrades, MessageCatalog messages, MatchSounds sounds, QuickBuys quickBuys) {
+    public ShopService(ShopCatalog shop, UpgradeCatalog upgrades, MessageCatalog messages, MatchSounds sounds, QuickBuys quickBuys, ItemNames names) {
+        this.names = names;
         this.shop = shop;
         this.upgrades = upgrades;
         this.messages = messages;
@@ -173,7 +176,7 @@ public final class ShopService {
             return;
         }
         RoomTeam team = runtime.room().team(found.get().team());
-        int diamonds = count(player.getInventory(), Material.DIAMOND);
+        int diamonds = runtime.resources(player, true).count(Material.DIAMOND);
         Menu.Builder menu = Menu.builder(upgrades.title()).rows(UPGRADE_ROWS);
         for (Entry entry : upgrades.entries()) {
             int level = team.level(entry.upgrade());
@@ -195,12 +198,11 @@ public final class ShopService {
             return;
         }
         int price = entry.nextPrice(level);
-        if (count(player.getInventory(), Material.DIAMOND) < price) {
+        if (!runtime.resources(player, true).take(Material.DIAMOND, price)) {
             player.sendMessage(Colors.translate(upgrades.texts().cannotAfford()));
             MatchSounds.play(sounds.cannotAfford(), player);
             return;
         }
-        player.getInventory().removeItem(new ItemStack(Material.DIAMOND, price));
         team.upgrade(entry.upgrade(), level + 1);
         runtime.upgraded(team, entry.upgrade(), level + 1);
         MatchSounds.play(sounds.upgrade(), player);
@@ -217,7 +219,7 @@ public final class ShopService {
     private ItemBuilder icon(Player player, RoomRuntime runtime, RoomPlayer roomPlayer, ShopItem item, QuickBuy layout) {
         Offer offer = Offer.of(item, roomPlayer);
         Tier tier = offer.tier();
-        boolean affordable = count(player.getInventory(), tier.currency().material()) >= tier.price();
+        boolean affordable = runtime.resources(player, false).count(tier.currency().material()) >= tier.price();
         boolean locked = item.id().equals("rastreador") && runtime.room().teams().values().stream()
             .anyMatch(team -> team.bedAlive() && team.color() != roomPlayer.team());
         boolean inQuickBuy = layout.contains(item.id());
@@ -248,7 +250,8 @@ public final class ShopService {
         }
         Tier tier = offer.tier();
         PlayerInventory inventory = player.getInventory();
-        if (count(inventory, tier.currency().material()) < tier.price()) {
+        ResourcePool pool = runtime.resources(player, false);
+        if (pool.count(tier.currency().material()) < tier.price()) {
             player.sendMessage(Colors.translate(shop.texts().cannotAfford().replace("{currency}", tier.currency().many())));
             MatchSounds.play(sounds.cannotAfford(), player);
             return;
@@ -258,7 +261,7 @@ public final class ShopService {
             player.sendMessage(messages.get("inventory-full"));
             return;
         }
-        inventory.removeItem(new ItemStack(tier.currency().material(), tier.price()));
+        pool.take(tier.currency().material(), tier.price());
         give(player, roomPlayer, team, item, offer);
         if (tier.material() == Material.HARD_CLAY || tier.material() == Material.STAINED_CLAY) {
             roomPlayer.addClay(item.amount());
@@ -271,33 +274,33 @@ public final class ShopService {
         PlayerInventory inventory = player.getInventory();
         Tier tier = offer.tier();
         switch (item.type()) {
-            case WOOL -> inventory.addItem(Kits.wool(team.color(), item.amount()));
-            case BLOCK -> inventory.addItem(new ItemStack(tier.material(), item.amount(), (short) item.data()));
+            case WOOL -> inventory.addItem(Kits.wool(team.color(), item.amount(), names));
+            case BLOCK -> inventory.addItem(names.named(new ItemStack(tier.material(), item.amount(), (short) item.data()), offer.boughtName()));
             case SWORD -> {
                 inventory.remove(Material.WOOD_SWORD);
-                inventory.addItem(Kits.sword(tier.material(), team));
+                inventory.addItem(Kits.sword(tier.material(), team, names));
             }
             case ARMOR -> {
                 roomPlayer.armorTier(item.armorTier());
-                Kits.armor(player, roomPlayer, team);
+                Kits.armor(player, roomPlayer, team, names);
             }
             case SHEARS -> {
                 roomPlayer.giveShears();
-                inventory.addItem(Kits.unbreakable(new ItemStack(Material.SHEARS)));
+                inventory.addItem(names.named(Kits.unbreakable(new ItemStack(Material.SHEARS))));
             }
             case PICKAXE -> {
                 removeAll(inventory, Kits::isPickaxe);
                 roomPlayer.pickaxeTier(offer.level());
-                inventory.addItem(Kits.pickaxe(offer.level()));
+                inventory.addItem(Kits.pickaxe(offer.level(), names));
             }
             case AXE -> {
                 removeAll(inventory, Kits::isAxe);
                 roomPlayer.axeTier(offer.level());
-                inventory.addItem(Kits.axe(offer.level(), team));
+                inventory.addItem(Kits.axe(offer.level(), team, names));
             }
             case POTION -> inventory.addItem(potion(item, tier));
-            case ITEM -> inventory.addItem(plain(item, tier));
-            case SPECIAL -> inventory.addItem(new ItemStack(tier.material(), item.amount(), (short) item.data()));
+            case ITEM -> inventory.addItem(names.named(plain(item, tier), offer.boughtName()));
+            case SPECIAL -> inventory.addItem(names.named(new ItemStack(tier.material(), item.amount(), (short) item.data()), offer.boughtName()));
         }
     }
 
