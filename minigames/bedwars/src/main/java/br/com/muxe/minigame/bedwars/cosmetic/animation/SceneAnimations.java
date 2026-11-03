@@ -15,7 +15,7 @@ public final class SceneAnimations {
     }
 
     public static SceneAnimations victories() {
-        return new SceneAnimations(List.of(new ChristmasGiftsVictory()));
+        return new SceneAnimations(List.of(new PaintVictory()));
     }
 
     public static SceneAnimations finalKills() {

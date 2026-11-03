@@ -8,14 +8,14 @@ import java.util.List;
 import java.util.Random;
 import org.junit.jupiter.api.Test;
 
-class ChristmasGiftsVictoryTest {
+class PaintVictoryTest {
 
     @Test
     void aGiftFallsTwelveBlocksInTwentyTwoTicksSpeedingUp() {
-        assertThat(ChristmasGiftsVictory.fallen(0)).isZero();
-        assertThat(ChristmasGiftsVictory.fallen(22)).isCloseTo(12, offset(1e-9));
-        assertThat(ChristmasGiftsVictory.fallen(11) - ChristmasGiftsVictory.fallen(10)).isLessThan(ChristmasGiftsVictory.fallen(21) - ChristmasGiftsVictory.fallen(20));
-        assertThat(ChristmasGiftsVictory.fallen(40)).isEqualTo(ChristmasGiftsVictory.fallen(22));
+        assertThat(PaintVictory.fallen(0)).isZero();
+        assertThat(PaintVictory.fallen(22)).isCloseTo(12, offset(1e-9));
+        assertThat(PaintVictory.fallen(11) - PaintVictory.fallen(10)).isLessThan(PaintVictory.fallen(21) - PaintVictory.fallen(20));
+        assertThat(PaintVictory.fallen(40)).isEqualTo(PaintVictory.fallen(22));
     }
 
     @Test
@@ -25,7 +25,7 @@ class ChristmasGiftsVictoryTest {
         Vec right = new Vec(1, 0, 0);
         Random random = new Random(7);
         for (int index = 0; index < 200; index++) {
-            Vec spot = ChristmasGiftsVictory.spot(origin, forward, right, random);
+            Vec spot = PaintVictory.spot(origin, forward, right, random);
             assertThat(spot.z()).isBetween(-8.0, -1.5);
             assertThat(Math.abs(spot.x())).isLessThanOrEqualTo(7);
             assertThat(Math.hypot(spot.x(), spot.z())).isGreaterThanOrEqualTo(2.5);
@@ -34,7 +34,7 @@ class ChristmasGiftsVictoryTest {
 
     @Test
     void theStarIsAFivePointedShapeWithItsTipUp() {
-        List<double[]> pixels = ChristmasGiftsVictory.starPixels(1.1, 0.45, 0.12);
+        List<double[]> pixels = PaintVictory.starPixels(1.1, 0.45, 0.12);
 
         assertThat(pixels).hasSizeBetween(60, 200);
         assertThat(pixels).anySatisfy(pixel -> assertThat(pixel[1]).isGreaterThan(0.9));
@@ -48,7 +48,29 @@ class ChristmasGiftsVictoryTest {
 
     @Test
     void aWinnerLookingStraightUpStillGetsAHorizontalDirection() {
-        assertThat(ChristmasGiftsVictory.flat(new Vec(0, 1, 0))).isEqualTo(new Vec(0, 0, 1));
-        assertThat(ChristmasGiftsVictory.flat(new Vec(2, 5, 0))).isEqualTo(new Vec(1, 0, 0));
+        assertThat(PaintVictory.flat(new Vec(0, 1, 0))).isEqualTo(new Vec(0, 0, 1));
+        assertThat(PaintVictory.flat(new Vec(2, 5, 0))).isEqualTo(new Vec(1, 0, 0));
+    }
+
+    @Test
+    void eachFireworkPaintsTheFloorAroundTheBucketWithItsColour() {
+        RecordingStage stage = new RecordingStage(block -> block[1] < 27);
+
+        PaintVictory.paint(stage, new Random(5), new Vec(10.5, 27, 3.5), 14);
+
+        assertThat(stage.blocks).contains("10,26,3=WOOL").hasSizeBetween(2, 10);
+        assertThat(stage.blocks).allSatisfy(block -> assertThat(block).contains(",26,").endsWith("=WOOL"));
+    }
+
+    @Test
+    void paintFollowsTheFloorDownASlope() {
+        RecordingStage stage = new RecordingStage(block -> block[1] < (block[0] > 10 ? 25 : 27));
+
+        PaintVictory.paint(stage, new Random(2), new Vec(10.5, 27, 3.5), 5);
+
+        assertThat(stage.blocks).allSatisfy(block -> {
+            int x = Integer.parseInt(block.split(",")[0]);
+            assertThat(block).contains(x > 10 ? ",24," : ",26,");
+        });
     }
 }

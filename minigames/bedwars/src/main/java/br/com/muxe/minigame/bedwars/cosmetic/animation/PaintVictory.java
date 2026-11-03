@@ -14,15 +14,15 @@ import java.util.List;
 import java.util.random.RandomGenerator;
 import org.bukkit.Material;
 
-public final class ChristmasGiftsVictory implements SceneAnimation {
+public final class PaintVictory implements SceneAnimation {
 
-    static final String GIFT = "8ee7b4a3202b5b59edac14977b318890a4c775f11d4bee05348b1a6cb9429f1b";
-    static final int GIFTS = 22;
-    static final int FIRST_GIFT = 2;
-    static final int GIFT_EVERY = 8;
+    static final String BUCKET = "8ee7b4a3202b5b59edac14977b318890a4c775f11d4bee05348b1a6cb9429f1b";
+    static final int BUCKETS = 22;
+    static final int FIRST_BUCKET = 2;
+    static final int BUCKET_EVERY = 8;
     static final int FALL_TICKS = 22;
     static final double DROP = 12;
-    static final double GIFT_BELOW_GROUND = 1.44;
+    static final double BUCKET_BELOW_GROUND = 1.44;
     static final double WOOL_BELOW_GROUND = 1.38;
     static final double MIN_FORWARD = 1.5;
     static final double MAX_FORWARD = 8;
@@ -41,6 +41,9 @@ public final class ChristmasGiftsVictory implements SceneAnimation {
     static final double STAR_PIXEL = 0.12;
     static final int[] ROCKET_DELAYS = {13, 20, 26, 33};
     static final int[] ROCKET_COLORS = {0x00FF00, 0xFFFF00, 0xFF0000, 0x0000FF};
+    static final int[] ROCKET_WOOL = {5, 4, 14, 11};
+    static final double PAINT_CHANCE = 0.8;
+    static final double SPLAT_DISTANCE = 2;
     static final int[] FINALE_COLORS = {0xB400C7, 0x4DF06F, 0x60D62F, 0x65A81F};
     static final double FINALE_HEIGHT = 3.2;
     static final int SPARKLER_LIFE = 48;
@@ -48,7 +51,7 @@ public final class ChristmasGiftsVictory implements SceneAnimation {
 
     @Override
     public String id() {
-        return "feliz-natal";
+        return "tinta";
     }
 
     @Override
@@ -56,10 +59,10 @@ public final class ChristmasGiftsVictory implements SceneAnimation {
         Vec origin = scene.origin();
         Vec forward = flat(scene.facing());
         Vec right = new Vec(-forward.z(), 0, forward.x());
-        for (int gift = 0; gift < GIFTS; gift++) {
+        for (int bucket = 0; bucket < BUCKETS; bucket++) {
             Vec spot = spot(origin, forward, right, random);
             double ground = ground(stage, spot, origin.y());
-            gift(stage, timeline, random, origin, new Vec(spot.x(), ground, spot.z()), FIRST_GIFT + gift * GIFT_EVERY, gift);
+            bucket(stage, timeline, random, origin, new Vec(spot.x(), ground, spot.z()), FIRST_BUCKET + bucket * BUCKET_EVERY, bucket);
         }
         timeline.lasts(LENGTH);
     }
@@ -90,12 +93,12 @@ public final class ChristmasGiftsVictory implements SceneAnimation {
         return acceleration * clamped * (clamped + 1) / 2;
     }
 
-    private static void gift(Stage stage, Timeline timeline, RandomGenerator random, Vec origin, Vec ground, int start, int index) {
-        Vec landed = ground.add(0, -GIFT_BELOW_GROUND, 0);
+    private static void bucket(Stage stage, Timeline timeline, RandomGenerator random, Vec origin, Vec ground, int start, int index) {
+        Vec landed = ground.add(0, -BUCKET_BELOW_GROUND, 0);
         Actor[] box = new Actor[1];
         timeline.at(start, () -> {
             box[0] = stage.armorStand(landed.add(0, DROP, 0), 0, StandStyle.HIDDEN);
-            box[0].equipSkull(Slot.HELMET, GIFT);
+            box[0].equipSkull(Slot.HELMET, BUCKET);
         });
         timeline.repeat(start + 1, start + FALL_TICKS, 1, offset -> {
             int tick = offset + 1;
@@ -125,11 +128,34 @@ public final class ChristmasGiftsVictory implements SceneAnimation {
         }
         for (int rocket = 0; rocket < ROCKET_DELAYS.length; rocket++) {
             int tick = landing + ROCKET_DELAYS[rocket];
-            int color = ROCKET_COLORS[(rocket + index) % ROCKET_COLORS.length];
-            Kit.flash(stage, timeline, tick, ground.add(0, 0.5, 0), Kit.burst(Kit.STAR, false, false, color));
+            int shade = (rocket + index) % ROCKET_COLORS.length;
+            Kit.flash(stage, timeline, tick, ground.add(0, 0.5, 0), Kit.burst(Kit.STAR, false, false, ROCKET_COLORS[shade]));
+            timeline.at(tick, () -> paint(stage, random, ground, ROCKET_WOOL[shade]));
             sparkler(stage, timeline, random, ground.add(0, 0.5, 0), tick);
         }
         Kit.flash(stage, timeline, landing + ROCKET_DELAYS[ROCKET_DELAYS.length - 1], ground.add(0, FINALE_HEIGHT, 0), Kit.burst(Kit.STAR, false, false, FINALE_COLORS));
+    }
+
+    static void paint(Stage stage, RandomGenerator random, Vec ground, int wool) {
+        int centerX = (int) Math.floor(ground.x());
+        int centerZ = (int) Math.floor(ground.z());
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                if (dx == 0 && dz == 0 || random.nextDouble() < PAINT_CHANCE) {
+                    stain(stage, centerX + dx, ground.y(), centerZ + dz, wool);
+                }
+            }
+        }
+        Vec splat = ground.add(Kit.horizontal(random.nextDouble() * 360, SPLAT_DISTANCE));
+        stain(stage, (int) Math.floor(splat.x()), ground.y(), (int) Math.floor(splat.z()), wool);
+    }
+
+    private static void stain(Stage stage, int x, double near, int z, int wool) {
+        double top = Ground.surface(stage::solid, x + 0.5, near, z + 0.5);
+        int y = (int) Math.floor(top) - 1;
+        if (stage.solid(x, y, z)) {
+            stage.block(x, y, z, Material.WOOL, wool);
+        }
     }
 
     private static void walker(Stage stage, Timeline timeline, RandomGenerator random, Vec origin, Vec ground, int start, double degrees, int wool, int order) {
