@@ -86,7 +86,7 @@ A player who reaches a BedWars server goes back to the match they left if they s
 - **TNT timer:** a lit TNT shows the seconds left above it (`2.6s`, one decimal), green, yellow, orange and red as the fuse burns (`tnt-timer.*`), to players within 24 blocks who kept `Mostrar temporizador da TNT` on.
 - **Item names:** every item the match hands out has its Portuguese name (`Barra de Ferro`, `Bola de Fogo`, `Estilingue`, `Espada de Madeira`...), from `item-names` or, for shop items, the shop name.
 - **Ender chest:** every ender chest opens the player's own `Baú do Fim`, the same one from any ender chest of the map, kept between deaths. When the player is eliminated, its items drop on the team's first island iron generator (or the spawn when there is none).
-- **Disconnecting:** a player who leaves with the bed alive can come back within 3 minutes and respawns 5 seconds later (`reconectou`). `/l` warns `Você desconectou de uma partida...` first. `/retornar`, on any server, sends the player back to that match: the match server keeps `match:return:<player>` in `MuxeCore.store()` while the player can return and deletes it when they come back, lose the bed, run out of time or the room closes.
+- **Disconnecting:** a player who leaves with the bed alive can come back within 3 minutes and respawns 5 seconds later (`reconectou`). `/l` takes the player to the BedWars lobby and warns `Você desconectou de uma partida...` first. `/retornar`, on any server, sends the player back to that match: the match server keeps `match:return:<player>` in `MuxeCore.store()` while the player can return and deletes it when they come back, lose the bed, run out of time or the room closes.
 - **Invisibility:** the invisibility potion shows no particles. While it lasts, enemies and spectators see no armour on the player (the real armour stays on, so hits are reduced as usual), no name and only the footsteps the player leaves on the ground, every 0.8 blocks walked. Teammates see the player half transparent, with the armour. Leaving without a bed eliminates the player, crediting the last hit or the bed breaker.
 
 ### Shop
@@ -320,7 +320,7 @@ If Muxe-Core is not enabled, the plugin disables itself.
 
 ## Known limitations
 
-- MEGA and PILARES are not modes yet, so their NPCs open nothing. `/l` still goes to the main lobby, not to the BedWars lobby.
+- MEGA and PILARES are not modes yet, so their NPCs open nothing.
 - A player who reaches a BedWars server without a reservation still joins a room of `default-mode`.
 - The lobby only knows the rooms of servers that published in the last 10 seconds; the room list of a server that stops is forgotten after that.
 - The other special shop items, the dragons and the victory and defeat titles are not in yet.

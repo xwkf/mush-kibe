@@ -32,7 +32,7 @@ Como os jogadores são colocados nos servidores e levados de um para outro. Fica
 
 | Comando | Descrição | Permissão |
 |---|---|---|
-| `/lobby` (`/hub`, `/l`) | Envia o jogador para um lobby. Disponível em todos os servidores Spigot. | Nenhuma |
+| `/lobby` (`/hub`, `/l`) | Sobe o jogador um nível, sempre para o servidor com vaga menos cheio (`ServerDirectory.lobbyFor`): de uma partida para o lobby do jogo dela (`bedwars` para `bedwars-lobby`, `skywars` para `skywars-lobby`), ou para o lobby principal quando o jogo não tem lobby; de um lobby de jogo para o lobby principal (`network.lobby-group`); de um lobby principal para outro lobby principal, ou `no-other-lobby` quando ele é o único. Disponível em todos os servidores Spigot. | Nenhuma |
 | `/retornar` | Manda o jogador de volta para a partida que ele deixou, quando o servidor dela guardou `match:return:<jogador>` no `MuxeCore.store()` (`MatchReturns`); senão responde `nothing-to-return`. Disponível em todos os servidores Spigot. | Nenhuma |
 
 ## Permissões

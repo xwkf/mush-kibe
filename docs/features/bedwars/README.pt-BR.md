@@ -86,7 +86,7 @@ Quem chega num servidor de BedWars volta para a partida que deixou, se ainda pud
 - **Temporizador da TNT:** uma TNT acesa mostra os segundos que faltam acima dela (`2.6s`, uma casa decimal), verde, amarelo, laranja e vermelho conforme o pavio queima (`tnt-timer.*`), para quem está a até 24 blocos e deixou `Mostrar temporizador da TNT` ligado.
 - **Nomes dos itens:** todo item que a partida entrega tem o nome em português (`Barra de Ferro`, `Bola de Fogo`, `Estilingue`, `Espada de Madeira`...), de `item-names` ou, para itens da loja, o nome da loja.
 - **Baú do fim:** todo baú do fim abre o `Baú do Fim` do próprio jogador, o mesmo em qualquer baú do fim do mapa, mantido entre as mortes. Quando o jogador é eliminado, os itens dele caem no primeiro gerador de ferro da ilha do time (ou no spawn, se não houver).
-- **Desconexão:** quem sai com a cama de pé pode voltar em até 3 minutos e renasce 5 segundos depois (`reconectou`). O `/l` avisa antes `Você desconectou de uma partida...`. O `/retornar`, em qualquer servidor, manda o jogador de volta para essa partida: o servidor da partida guarda `match:return:<jogador>` no `MuxeCore.store()` enquanto o jogador pode voltar e apaga quando ele volta, perde a cama, o tempo acaba ou a sala fecha.
+- **Desconexão:** quem sai com a cama de pé pode voltar em até 3 minutos e renasce 5 segundos depois (`reconectou`). O `/l` leva o jogador para o lobby de BedWars e avisa antes `Você desconectou de uma partida...`. O `/retornar`, em qualquer servidor, manda o jogador de volta para essa partida: o servidor da partida guarda `match:return:<jogador>` no `MuxeCore.store()` enquanto o jogador pode voltar e apaga quando ele volta, perde a cama, o tempo acaba ou a sala fecha.
 - **Invisibilidade:** a poção de invisibilidade não mostra partículas. Enquanto dura, inimigos e espectadores não veem a armadura do jogador (a armadura de verdade continua nele, então os golpes são reduzidos como sempre), nem o nome, só as pegadas que ele deixa no chão a cada 0,8 bloco andado. Os companheiros de time veem o jogador meio transparente, com a armadura. Sair sem cama elimina o jogador, dando a kill ao último golpe ou a quem quebrou a cama.
 
 ### Loja
@@ -320,7 +320,7 @@ Se o Muxe-Core não estiver habilitado, o plugin se desabilita.
 
 ## Limitações conhecidas
 
-- MEGA e PILARES ainda não são modos, então os NPCs deles não abrem nada. O `/l` ainda vai para o lobby principal, não para o lobby de BedWars.
+- MEGA e PILARES ainda não são modos, então os NPCs deles não abrem nada.
 - Quem chega a um servidor de BedWars sem reserva ainda entra numa sala do `default-mode`.
 - O lobby só conhece as salas dos servidores que publicaram nos últimos 10 segundos; a lista de um servidor que para é esquecida depois disso.
 - Os outros itens especiais da loja, os dragões e os títulos de vitória e derrota ainda não entraram.

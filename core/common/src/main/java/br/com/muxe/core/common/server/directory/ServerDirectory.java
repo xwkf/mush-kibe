@@ -1,5 +1,7 @@
 package br.com.muxe.core.common.server.directory;
 
+import br.com.muxe.core.common.server.ServerIdentity;
+import br.com.muxe.core.common.server.ServerKind;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -51,6 +53,24 @@ public final class ServerDirectory {
         return aliveInGroup(group).stream()
             .filter(ServerStatus::hasRoom)
             .min(Comparator.comparingInt(ServerStatus::onlinePlayers).thenComparing(status -> status.identity().id()));
+    }
+
+    public Optional<String> lobbyFor(ServerIdentity here, String mainLobby) {
+        if (here.kind() == ServerKind.MINIGAME) {
+            Optional<String> gameLobby = leastLoadedExcept(lobbyGroup(here.group()), here.id());
+            if (gameLobby.isPresent()) {
+                return gameLobby;
+            }
+        }
+        return leastLoadedExcept(mainLobby, here.id());
+    }
+
+    private Optional<String> leastLoadedExcept(String group, String serverId) {
+        return aliveInGroup(group).stream()
+            .filter(ServerStatus::hasRoom)
+            .filter(status -> !status.identity().id().equals(serverId))
+            .min(Comparator.comparingInt(ServerStatus::onlinePlayers).thenComparing(status -> status.identity().id()))
+            .map(status -> status.identity().id());
     }
 
     public Optional<String> entryGroup(String game) {

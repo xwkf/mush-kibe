@@ -70,6 +70,51 @@ class ServerDirectoryTest {
         assertThat(directory.gamePlayers("murder")).isZero();
     }
 
+    @Test
+    void leavingAMatchGoesToTheLobbyOfItsGame() {
+        reportIn("bedwars-1", "bedwars", ServerKind.MINIGAME, 4);
+        reportIn("bedwars-lobby-1", "bedwars-lobby", ServerKind.LOBBY, 8);
+        reportIn("bedwars-lobby-2", "bedwars-lobby", ServerKind.LOBBY, 2);
+        reportIn("skywars-1", "skywars", ServerKind.MINIGAME, 4);
+        reportIn("skywars-lobby-1", "skywars-lobby", ServerKind.LOBBY, 2);
+        reportIn("lobby-1", "lobby", ServerKind.LOBBY, 0);
+
+        assertThat(directory.lobbyFor(new ServerIdentity("bedwars-1", "bedwars", ServerKind.MINIGAME), "lobby")).contains("bedwars-lobby-2");
+        assertThat(directory.lobbyFor(new ServerIdentity("skywars-1", "skywars", ServerKind.MINIGAME), "lobby")).contains("skywars-lobby-1");
+    }
+
+    @Test
+    void leavingAMatchWithoutAGameLobbyGoesToTheMainLobby() {
+        reportIn("bedwars-1", "bedwars", ServerKind.MINIGAME, 4);
+        reportIn("lobby-1", "lobby", ServerKind.LOBBY, 3);
+
+        assertThat(directory.lobbyFor(new ServerIdentity("bedwars-1", "bedwars", ServerKind.MINIGAME), "lobby")).contains("lobby-1");
+    }
+
+    @Test
+    void leavingAGameLobbyGoesToTheMainLobby() {
+        reportIn("bedwars-lobby-1", "bedwars-lobby", ServerKind.LOBBY, 2);
+        reportIn("lobby-1", "lobby", ServerKind.LOBBY, 9);
+        reportIn("lobby-2", "lobby", ServerKind.LOBBY, 3);
+
+        assertThat(directory.lobbyFor(new ServerIdentity("bedwars-lobby-1", "bedwars-lobby", ServerKind.LOBBY), "lobby")).contains("lobby-2");
+    }
+
+    @Test
+    void theMainLobbySendsToAnotherMainLobby() {
+        reportIn("lobby-1", "lobby", ServerKind.LOBBY, 0);
+        reportIn("lobby-2", "lobby", ServerKind.LOBBY, 30);
+
+        assertThat(directory.lobbyFor(new ServerIdentity("lobby-1", "lobby", ServerKind.LOBBY), "lobby")).contains("lobby-2");
+    }
+
+    @Test
+    void theOnlyMainLobbyHasNowhereElseToGo() {
+        reportIn("lobby-1", "lobby", ServerKind.LOBBY, 0);
+
+        assertThat(directory.lobbyFor(new ServerIdentity("lobby-1", "lobby", ServerKind.LOBBY), "lobby")).isEmpty();
+    }
+
     private void reportIn(String id, String group, ServerKind kind, int online) {
         directory.update(new ServerStatus(new ServerIdentity(id, group, kind), online, 100, true, clock.instant(), clock.instant()));
     }
