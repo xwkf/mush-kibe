@@ -147,7 +147,14 @@ public final class RoomRuntime {
     void addWaiting(Player player) {
         Change change = room.join(player.getUniqueId(), player.getName());
         reset(player, PLAYER_MODE);
-        broadcast(RoomAnnouncements.joined(messages, tagName(player), room.players().size(), room.mode().maxPlayers()));
+        String joined = RoomAnnouncements.joined(messages, tagName(player), room.players().size(), room.mode().maxPlayers());
+        List<UUID> inRoom = online().stream().map(Player::getUniqueId).toList();
+        for (UUID id : RoomAnnouncements.joinAudience(inRoom, player.getUniqueId())) {
+            Player viewer = Bukkit.getPlayer(id);
+            if (viewer != null) {
+                viewer.sendMessage(joined);
+            }
+        }
         player.teleport(location(room.arena().waitingSpawn()));
         PlayerInventory inventory = player.getInventory();
         inventory.setItem(settings.hotbar().menu().slot(), named(Material.matchMaterial(settings.hotbar().menu().material()), settings.hotbar().menu().name()));
