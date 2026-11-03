@@ -112,7 +112,7 @@ public final class DesertVictory implements SceneAnimation {
         int originZ = (int) Math.floor(origin.z());
         timeline.lasts(LENGTH);
         Drops drops = new Drops(stage, random);
-        scheduleWave(stage, timeline, random, originX, originY, originZ);
+        scheduleWave(stage, timeline, random, DesertRules.box(scene.area(), originX, originZ), originX, originY, originZ);
         List<int[]> oases = new ArrayList<>();
         List<Riders.Rider> riders = Riders.of(scene, stage);
         for (Riders.Rider rider : riders) {
@@ -147,9 +147,9 @@ public final class DesertVictory implements SceneAnimation {
         return new Vec(lateral, 0, forward);
     }
 
-    private static void scheduleWave(Stage stage, Timeline timeline, RandomGenerator random, int originX, int originY, int originZ) {
-        List<int[]> order = DesertRules.order(originX, originZ, random);
-        Patches patches = new Patches(originX - DesertRules.AREA_BEFORE, originZ - DesertRules.AREA_BEFORE, random);
+    private static void scheduleWave(Stage stage, Timeline timeline, RandomGenerator random, int[] box, int originX, int originY, int originZ) {
+        List<int[]> order = DesertRules.order(box, originX, originZ, random);
+        Patches patches = new Patches(box, random);
         int bottom = Math.max(0, originY - SCAN_BELOW);
         int top = Math.min(MAX_HEIGHT, originY + SCAN_ABOVE);
         int batches = DesertRules.batches(order.size());

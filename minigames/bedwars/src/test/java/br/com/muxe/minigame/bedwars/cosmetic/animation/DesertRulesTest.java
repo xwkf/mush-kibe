@@ -2,7 +2,9 @@ package br.com.muxe.minigame.bedwars.cosmetic.animation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import br.com.muxe.core.bukkit.cosmetic.animation.Area;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.BlockType;
+import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import br.com.muxe.minigame.bedwars.cosmetic.animation.DesertRules.Patches;
 import java.util.HashSet;
 import java.util.List;
@@ -188,5 +190,36 @@ class DesertRulesTest {
         }
         assertThat(clay / (double) samples).isBetween(0.02, 0.8);
         assertThat(agree / (double) samples).isGreaterThan(0.8);
+    }
+
+    @Test
+    void theWholeMapTurnsToDesertInTheSameTimeHoweverBigItIs() {
+        List<int[]> order = DesertRules.order(new int[] {-150, -150, 149, 149}, 10, 20, new Random(3));
+
+        assertThat(order).hasSize(300 * 300);
+        assertThat(order.stream().map(column -> column[0] + "," + column[1]).distinct()).hasSize(300 * 300);
+        for (int index = 1; index < order.size(); index++) {
+            assertThat(DesertRules.distance(order.get(index)[0], order.get(index)[1], 10, 20))
+                .isGreaterThanOrEqualTo(DesertRules.distance(order.get(index - 1)[0], order.get(index - 1)[1], 10, 20));
+        }
+        assertThat(DesertRules.batches(order.size())).isEqualTo(DesertRules.WAVE_TICKS);
+        assertThat(DesertRules.batch(order, 0)).hasSize(DesertRules.perTick(order.size())).hasSizeGreaterThan(DesertRules.COLUMNS_PER_TICK);
+        assertThat(DesertRules.batch(order, DesertRules.WAVE_TICKS)).isEmpty();
+    }
+
+    @Test
+    void theDesertCoversTheMapOrAtLeastTheRecordedSquare() {
+        assertThat(DesertRules.box(new Area(-200, -10, 250, 30), 0, 0)).containsExactly(-200, -72, 250, 71);
+        assertThat(DesertRules.box(Area.around(new Vec(0.5, 64, 0.5), 16), 0, 0)).containsExactly(-72, -72, 71, 71);
+    }
+
+    @Test
+    void clayPatchesAreSpreadOverTheWholeMap() {
+        Patches patches = new Patches(new int[] {-300, -300, 299, 299}, new Random(4));
+        Set<Boolean> far = new HashSet<>();
+        for (int x = -300; x < 300; x += 7) {
+            far.add(patches.clay(x, 290));
+        }
+        assertThat(far).containsExactlyInAnyOrder(true, false);
     }
 }

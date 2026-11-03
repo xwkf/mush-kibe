@@ -384,4 +384,15 @@ class DesertVictoryTest {
         assertThat(DesertVictory.oasisAhead(0, 0, new Vec(0, 0, 1))).containsExactly(0, 10);
     }
 
+    @Test
+    void onAMatchTheWholeMapTurnsToDesert() {
+        RecordingStage stage = stage();
+        Timeline timeline = new Timeline();
+        Scene scene = new Scene(ORIGIN, new Vec(0, 0, 1), Optional.empty(), List.of(UUID.randomUUID()), new Area(-140, -140, 140, 140));
+        new DesertVictory().script(scene, stage, timeline, new Random(5));
+        run(timeline, 0, DesertVictory.WAVE_FIRST_TICK + DesertRules.WAVE_TICKS);
+
+        assertThat(stage.bulk).anyMatch(change -> change.x() <= -130 && change.z() >= 130);
+        assertThat(stage.bulk).anyMatch(change -> change.x() >= 130 && change.z() <= -130);
+    }
 }

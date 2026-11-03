@@ -1,5 +1,6 @@
 package br.com.muxe.minigame.bedwars.cosmetic.animation;
 
+import br.com.muxe.core.bukkit.cosmetic.animation.Area;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.BlockType;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,6 +16,7 @@ final class DesertRules {
     static final int AREA = 144;
     static final int AREA_BEFORE = 72;
     static final int COLUMNS_PER_TICK = 128;
+    static final int WAVE_TICKS = 162;
     static final int SEEDS = 120;
     static final double CLAY_SHARE = 0.3;
     static final double CACTUS_CHANCE = 0.005;
@@ -137,10 +139,27 @@ final class DesertRules {
         return Math.abs(x - centreX) + Math.abs(z - centreZ);
     }
 
+    static int[] box(Area area, int originX, int originZ) {
+        return new int[] {
+            Math.min((int) Math.floor(area.minX()), originX - AREA_BEFORE),
+            Math.min((int) Math.floor(area.minZ()), originZ - AREA_BEFORE),
+            Math.max((int) Math.floor(area.maxX()), originX - AREA_BEFORE + AREA - 1),
+            Math.max((int) Math.floor(area.maxZ()), originZ - AREA_BEFORE + AREA - 1)
+        };
+    }
+
+    static int[] square(int centreX, int centreZ) {
+        return new int[] {centreX - AREA_BEFORE, centreZ - AREA_BEFORE, centreX - AREA_BEFORE + AREA - 1, centreZ - AREA_BEFORE + AREA - 1};
+    }
+
     static List<int[]> order(int centreX, int centreZ, RandomGenerator random) {
-        List<int[]> columns = new ArrayList<>(AREA * AREA);
-        for (int x = centreX - AREA_BEFORE; x < centreX - AREA_BEFORE + AREA; x++) {
-            for (int z = centreZ - AREA_BEFORE; z < centreZ - AREA_BEFORE + AREA; z++) {
+        return order(square(centreX, centreZ), centreX, centreZ, random);
+    }
+
+    static List<int[]> order(int[] box, int centreX, int centreZ, RandomGenerator random) {
+        List<int[]> columns = new ArrayList<>((box[2] - box[0] + 1) * (box[3] - box[1] + 1));
+        for (int x = box[0]; x <= box[2]; x++) {
+            for (int z = box[1]; z <= box[3]; z++) {
                 columns.add(new int[] {x, z});
             }
         }
@@ -149,25 +168,41 @@ final class DesertRules {
         return columns;
     }
 
+    static int perTick(int columns) {
+        return Math.max(COLUMNS_PER_TICK, (columns + WAVE_TICKS - 1) / WAVE_TICKS);
+    }
+
     static int batches(int columns) {
-        return (columns + COLUMNS_PER_TICK - 1) / COLUMNS_PER_TICK;
+        int perTick = perTick(columns);
+        return (columns + perTick - 1) / perTick;
     }
 
     static List<int[]> batch(List<int[]> order, int index) {
-        int from = index * COLUMNS_PER_TICK;
-        return order.subList(Math.min(from, order.size()), Math.min(from + COLUMNS_PER_TICK, order.size()));
+        int perTick = perTick(order.size());
+        int from = index * perTick;
+        return order.subList(Math.min(from, order.size()), Math.min(from + perTick, order.size()));
     }
 
     static final class Patches {
 
-        private final int[] seedX = new int[SEEDS];
-        private final int[] seedZ = new int[SEEDS];
-        private final boolean[] clay = new boolean[SEEDS];
+        private final int[] seedX;
+        private final int[] seedZ;
+        private final boolean[] clay;
 
         Patches(int minX, int minZ, RandomGenerator random) {
-            for (int seed = 0; seed < SEEDS; seed++) {
-                seedX[seed] = minX + random.nextInt(AREA);
-                seedZ[seed] = minZ + random.nextInt(AREA);
+            this(new int[] {minX, minZ, minX + AREA - 1, minZ + AREA - 1}, random);
+        }
+
+        Patches(int[] box, RandomGenerator random) {
+            int width = box[2] - box[0] + 1;
+            int depth = box[3] - box[1] + 1;
+            int seeds = (int) Math.max(SEEDS, Math.round(SEEDS * (double) width * depth / (AREA * AREA)));
+            seedX = new int[seeds];
+            seedZ = new int[seeds];
+            clay = new boolean[seeds];
+            for (int seed = 0; seed < seeds; seed++) {
+                seedX[seed] = box[0] + random.nextInt(width);
+                seedZ[seed] = box[1] + random.nextInt(depth);
                 clay[seed] = random.nextDouble() < CLAY_SHARE;
             }
         }
@@ -175,7 +210,7 @@ final class DesertRules {
         boolean clay(int x, int z) {
             int nearest = 0;
             int best = Integer.MAX_VALUE;
-            for (int seed = 0; seed < SEEDS; seed++) {
+            for (int seed = 0; seed < seedX.length; seed++) {
                 int distance = distance(x, z, seedX[seed], seedZ[seed]);
                 if (distance < best) {
                     best = distance;
