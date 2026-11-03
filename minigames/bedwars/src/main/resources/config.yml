@@ -2641,7 +2641,7 @@ victory-preview:
   world: previa_efeito_de_vitoria
   spawn:
     x: -19.5
-    y: 35.0
+    y: 27.0
     z: 68.5
     yaw: -161.0
     pitch: 2.0

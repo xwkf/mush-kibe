@@ -1,5 +1,7 @@
 package br.com.muxe.minigame.bedwars.cosmetic.animation;
 
+import br.com.muxe.core.bukkit.cosmetic.animation.Ground;
+import br.com.muxe.core.bukkit.cosmetic.animation.Scene;
 import br.com.muxe.core.bukkit.cosmetic.animation.SceneAnimation;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.Actor;
@@ -50,8 +52,9 @@ public final class ChristmasGiftsVictory implements SceneAnimation {
     }
 
     @Override
-    public void script(Vec origin, Vec facing, Stage stage, Timeline timeline, RandomGenerator random) {
-        Vec forward = flat(facing);
+    public void script(Scene scene, Stage stage, Timeline timeline, RandomGenerator random) {
+        Vec origin = scene.origin();
+        Vec forward = flat(scene.facing());
         Vec right = new Vec(-forward.z(), 0, forward.x());
         for (int gift = 0; gift < GIFTS; gift++) {
             Vec spot = spot(origin, forward, right, random);
@@ -78,15 +81,7 @@ public final class ChristmasGiftsVictory implements SceneAnimation {
     }
 
     static double ground(Stage stage, Vec spot, double fallback) {
-        int x = (int) Math.floor(spot.x());
-        int z = (int) Math.floor(spot.z());
-        int top = (int) Math.floor(fallback) + 3;
-        for (int y = top; y > top - 12; y--) {
-            if (stage.solid(x, y, z) && !stage.solid(x, y + 1, z)) {
-                return y + 1;
-            }
-        }
-        return fallback;
+        return Ground.surface(stage::solid, spot.x(), fallback, spot.z());
     }
 
     static double fallen(int tick) {

@@ -63,7 +63,7 @@ class VictoryEffectTest {
         assertThat(preview.world()).isEqualTo("previa_efeito_de_vitoria");
         assertThat(preview.countdown()).containsExactly("&a3...", "&a2...", "&a1...");
         assertThat(preview.sceneStart()).isEqualTo(60);
-        assertThat(preview.origin()).isEqualTo(new Vec(-19.5, 35, 68.5));
+        assertThat(preview.origin()).isEqualTo(new Vec(-19.5, 27, 68.5));
         assertThat(preview.facing().z()).isLessThan(-0.9);
     }
 }

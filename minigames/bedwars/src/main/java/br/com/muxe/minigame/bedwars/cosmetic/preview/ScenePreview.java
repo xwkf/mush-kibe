@@ -1,6 +1,7 @@
 package br.com.muxe.minigame.bedwars.cosmetic.preview;
 
 import br.com.muxe.core.bukkit.buildmode.BuildMode;
+import br.com.muxe.core.bukkit.cosmetic.animation.Scene;
 import br.com.muxe.core.bukkit.cosmetic.animation.SceneAnimation;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import br.com.muxe.core.bukkit.cosmetic.stage.AnimationPlayer;
@@ -16,6 +17,7 @@ import br.com.muxe.core.bukkit.text.ActionBar;
 import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.core.bukkit.text.Title;
+import br.com.muxe.minigame.bedwars.cosmetic.SceneCosmetics;
 import br.com.muxe.minigame.bedwars.cosmetic.animation.SceneAnimations;
 import br.com.muxe.minigame.bedwars.cosmetic.catalog.BedCosmetic;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenus.PreviewGate;
@@ -140,7 +142,8 @@ public final class ScenePreview implements PreviewGate, Listener {
         buildMode.releaseGameMode(viewer);
         viewer.setGameMode(GameMode.ADVENTURE);
         viewer.setAllowFlight(false);
-        viewer.teleport(new Location(world, settings.x(), settings.y(), settings.z(), settings.yaw(), settings.pitch()));
+        Vec spawn = SceneCosmetics.onGround(world, new Location(world, settings.x(), settings.y(), settings.z()));
+        viewer.teleport(new Location(world, spawn.x(), spawn.y(), spawn.z(), settings.yaw(), settings.pitch()));
         for (Session other : sessions.values()) {
             if (other != session) {
                 session.hide(other.viewer);
@@ -162,15 +165,18 @@ public final class ScenePreview implements PreviewGate, Listener {
                 countdownSound.ifPresent(cue -> cue.play(viewer));
             }, (long) index * settings.countdownTicks()));
         }
-        session.tasks.add(plugin.getServer().getScheduler().runTaskLater(plugin, () -> play(session, settings.origin()), Math.max(1, settings.sceneStart())));
+        session.tasks.add(plugin.getServer().getScheduler().runTaskLater(plugin, () -> play(session, SceneCosmetics.onGround(world, viewer.getLocation()),
+            SceneCosmetics.facing(viewer.getLocation()), Optional.empty()), Math.max(1, settings.sceneStart())));
     }
 
     private void placeTarget(Session session, ScenePreviewSettings.Target target) {
-        Vec at = settings.targetAt();
+        Vec ahead = settings.targetAt();
+        Vec at = SceneCosmetics.onGround(world, new Location(world, ahead.x(), ahead.y(), ahead.z()));
         Location spot = new Location(world, at.x(), at.y(), at.z(), settings.yaw() + 180, 0);
         session.target = TARGET_PREFIX + session.viewer.getUniqueId();
         targetNames.put(session.target, target.name(ThreadLocalRandom.current().nextInt()));
-        targets.put(new Npc(session.target, spot, skin(session.viewer)));
+        session.targetSkin = skin(session.viewer);
+        targets.put(new Npc(session.target, spot, session.targetSkin));
         Material weapon = Material.matchMaterial(target.weapon());
         if (weapon != null) {
             session.viewer.getInventory().setItem(0, new ItemStack(weapon));
@@ -207,16 +213,16 @@ public final class ScenePreview implements PreviewGate, Listener {
         session.target = null;
         ActionBar.send(player, "");
         player.playSound(npc.location(), Sound.HURT_FLESH, 1, 1);
-        play(session, settings.targetAt());
+        play(session, SceneCosmetics.onGround(world, npc.location()), SceneCosmetics.away(player.getLocation(), npc.location()), session.targetSkin.map(NpcSkin::value));
     }
 
-    private void play(Session session, Vec origin) {
+    private void play(Session session, Vec origin, Vec facing, Optional<String> skin) {
         Player viewer = session.viewer;
         if (!previewing(viewer)) {
             return;
         }
         onScene.accept(viewer);
-        session.playback = animator.play(session.animation, world, origin, settings.facing(), () -> List.of(viewer), () ->
+        session.playback = animator.play(session.animation, world, new Scene(origin, facing, skin), () -> List.of(viewer), () ->
             session.tasks.add(plugin.getServer().getScheduler().runTaskLater(plugin, () -> finish(viewer, true), Math.max(1, settings.returnDelay().toMillis() / 50))));
     }
 
@@ -338,6 +344,7 @@ public final class ScenePreview implements PreviewGate, Listener {
         private BukkitTask timeout;
         private Playback playback;
         private String target;
+        private Optional<NpcSkin> targetSkin = Optional.empty();
 
         Session(Player viewer, Consumer<Player> back, SceneAnimation animation) {
             this.viewer = viewer;

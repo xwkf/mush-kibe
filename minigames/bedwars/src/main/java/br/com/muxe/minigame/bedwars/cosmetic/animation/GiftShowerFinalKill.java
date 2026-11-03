@@ -1,5 +1,6 @@
 package br.com.muxe.minigame.bedwars.cosmetic.animation;
 
+import br.com.muxe.core.bukkit.cosmetic.animation.Scene;
 import br.com.muxe.core.bukkit.cosmetic.animation.SceneAnimation;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.Actor;
@@ -10,7 +11,7 @@ import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import java.util.List;
 import java.util.random.RandomGenerator;
 
-public final class GiftedFinalKill implements SceneAnimation {
+public final class GiftShowerFinalKill implements SceneAnimation {
 
     static final List<String> GIFTS = List.of(
         "2b1ec7dc753061ca174424ea45cf9490b39cd5dcca477d138a603e6be755ec72",
@@ -34,11 +35,12 @@ public final class GiftedFinalKill implements SceneAnimation {
 
     @Override
     public String id() {
-        return "presenteado";
+        return "presentes";
     }
 
     @Override
-    public void script(Vec origin, Vec facing, Stage stage, Timeline timeline, RandomGenerator random) {
+    public void script(Scene scene, Stage stage, Timeline timeline, RandomGenerator random) {
+        Vec origin = scene.origin();
         Actor rocket = stage.firework(origin, List.of(Kit.burst(Kit.STAR, false, true, FIREWORK_COLORS)));
         stage.sound("fireworks.launch", origin, 3, 1);
         rocket.velocity(new Vec(0, 0.09, 0));

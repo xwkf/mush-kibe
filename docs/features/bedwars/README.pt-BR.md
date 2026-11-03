@@ -147,10 +147,13 @@ O jogador escolhe uma animação que toca quando ele quebra uma cama inimiga. Os
 
 ### Efeitos de kill final
 
-`Kill Final` (slot 12 de `Cosméticos do Bed Wars`) lista os 43 efeitos de kill final dos exports em `Kill Final ({page}/{pages})`, duas páginas, na categoria `bedwars-kill-final`, com as mesmas regras das outras categorias. Só o `Presenteado` tem animação.
+`Kill Final` (slot 12 de `Cosméticos do Bed Wars`) lista os 43 efeitos de kill final dos exports em `Kill Final ({page}/{pages})`, duas páginas, na categoria `bedwars-kill-final`, com as mesmas regras das outras categorias. `Presenteado`, `Presentes`, `Passarinhos` e `Brain Freeze` têm animação. Todo efeito de cena (vitória e kill final) começa no chão abaixo de onde aconteceu (`Ground.surface`, até 32 blocos para baixo), então toca igual em qualquer mapa e em qualquer altura; um efeito de kill final também sabe a direção do golpe (de quem matou para a vítima) e a skin da vítima.
 
 - **Na partida:** quando um jogador faz uma kill final (fora do void), o seu efeito de kill final selecionado (ou um aleatório que ele tem) toca onde a vítima morreu, visto pela sala toda.
-- **Presenteado:** um fogo em estrela vermelho, verde e branco estoura na vítima e oito presentes diferentes saem dela um a cada 2 ticks em oito direções, girando uns 8 blocos para cima e caindo a uns 3 blocos, cada um com um estalo. Eles somem uns 4 segundos depois.
+- **Presenteado:** um presente grande sobe 5 blocos da vítima por 26 ticks com pó vermelho e faíscas e um pling e um estouro de fogos subindo de tom a cada 2 ticks; depois ele explode, um fogo vermelho e branco estoura e oito presentes voam juntos em oito direções e alturas diferentes, sumindo 3 segundos depois.
+- **Presentes:** um fogo em estrela vermelho, verde e branco estoura na vítima e oito presentes saem um a cada 2 ticks em oito direções, girando uns 8 blocos para cima e caindo a uns 3 blocos. Eles somem uns 4 segundos depois.
+- **Passarinhos:** quatro passarinhos dão uma volta e meia em volta da vítima a 1 bloco, em alturas diferentes e com sons de morcego, depois abrem para 4 blocos subindo mais 2 e estouram em pó de lã (vermelho, azul-claro, amarelo, azul-claro).
+- **Brain Freeze:** a cabeça da vítima, dentro de um bloco de gelo, voa para trás do golpe (para longe de quem matou) e para cima por 28 ticks, soltando gelo e com um pling subindo de tom, e então se estilhaça com uma explosão e vidro quebrando.
 - **Prévia:** o botão direito abre `final-kill-preview.world` (`previa_kill_final`, na raiz do servidor do lobby de BedWars) com uma espada de madeira na mão (`target.weapon`) e um jogador 4 blocos à frente (`final-kill-preview.target.distance`), com a skin de outro jogador online (a do próprio jogador quando está sozinho) e um nick cinza sorteado de `target.names`, e `&eAcerte o jogador!` na barra de ação. Bater nele o remove com o som de dano e toca o efeito ali; depois o jogador volta e a lista abre de novo.
 
 ### Efeitos de vitória
@@ -266,7 +269,7 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 | `cosmetics.final-kill.*` | `bedwars-kill-final`; 750, 900, 1300, 1750, 2000; os 43 efeitos | Categoria, preços por estrelas e efeitos de kill final. |
 | `final-kill-preview.*` | `previa_kill_final`, -3.5 24 2.5 olhando para leste, alvo 4 blocos à frente, `&eAcerte o jogador!` | Como `victory-preview`, com `target.distance` e `target.action-bar` no lugar da contagem. |
 | `end-titles.victory`, `end-titles.defeat` | `VITÓRIA` `&6` `&e` `&f`; `DERROTA` `&c` `&c` `&f` | Palavra, cor depois da varredura, cor da letra que varre, cor inicial e um `sound` opcional. |
-| `victory-preview.*` | `previa_efeito_de_vitoria`, -19.5 35 68.5, `3...` `2...` `1...` a cada 20 ticks, `60s`, `1s` | Mundo, spawn, títulos da contagem e ticks entre eles, tempo limite, espera depois do efeito, item de voltar e scoreboard da prévia de vitória. |
+| `victory-preview.*` | `previa_efeito_de_vitoria`, -19.5 27 68.5, `3...` `2...` `1...` a cada 20 ticks, `60s`, `1s` | Mundo, spawn, títulos da contagem e ticks entre eles, tempo limite, espera depois do efeito, item de voltar e scoreboard da prévia de vitória. |
 | `preview.world` | `previa_quebra_de_cama` | Pasta do mundo da prévia na raiz do servidor. Sem ela a prévia fica desligada. |
 | `preview.spawn`, `preview.bed` | 6.5 11 21.5; pé 6 11 17, cabeceira 6 16 | Onde o jogador fica e a cama que ele quebra. |
 | `preview.timeout`, `preview.return-delay` | `120s`, `2s` | Tempo para quebrar a cama e espera depois da animação. |

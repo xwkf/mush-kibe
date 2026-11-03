@@ -5,6 +5,8 @@ import br.com.muxe.core.bukkit.command.framework.Commands;
 import br.com.muxe.core.bukkit.cosmetic.stage.AnimationPlayer;
 import br.com.muxe.core.bukkit.mission.menu.MissionMenus;
 import br.com.muxe.core.bukkit.nms.BlockMask;
+import br.com.muxe.core.bukkit.nms.PlayerSkins;
+import br.com.muxe.core.bukkit.npc.NpcSkin;
 import br.com.muxe.core.bukkit.permission.command.Replies;
 import br.com.muxe.core.bukkit.permission.command.TargetLookup;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
@@ -144,11 +146,12 @@ final class CosmeticFeatures {
     }
 
     void victory(Player winner, List<Player> viewers) {
-        victories.play(winner, winner.getLocation(), viewers);
+        victories.play(winner, winner.getLocation(), SceneCosmetics.facing(winner.getLocation()), Optional.empty(), viewers);
     }
 
-    void finalKill(Player killer, Location at, List<Player> viewers) {
-        finalKills.play(killer, at, viewers);
+    void finalKill(Player killer, Player victim, List<Player> viewers) {
+        Location at = victim.getLocation();
+        finalKills.play(killer, at, SceneCosmetics.away(killer.getLocation(), at), PlayerSkins.of(victim).map(NpcSkin::value), viewers);
     }
 
     void openMenu(Player player) {

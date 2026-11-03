@@ -147,10 +147,13 @@ Players pick an animation that plays when they break an enemy bed. The menus fol
 
 ### Final kill effects
 
-`Kill Final` (slot 12 of `Cosméticos do Bed Wars`) lists the 43 final kill effects of the exports in `Kill Final ({page}/{pages})`, two pages, under the category `bedwars-kill-final`, with the same rules as the other categories. Only `Presenteado` has an animation.
+`Kill Final` (slot 12 of `Cosméticos do Bed Wars`) lists the 43 final kill effects of the exports in `Kill Final ({page}/{pages})`, two pages, under the category `bedwars-kill-final`, with the same rules as the other categories. `Presenteado`, `Presentes`, `Passarinhos` and `Brain Freeze` have an animation. Every scene effect (victory and final kill) starts on the ground below where it happened (`Ground.surface`, up to 32 blocks down), so it plays the same on any map and at any height; a final kill effect also knows the hit direction (from the killer to the victim) and the victim's skin.
 
 - **In the match:** when a player makes a final kill (not into the void), their selected final kill effect (or a random one they own) plays where the victim died, seen by the whole room.
-- **Presenteado:** a red, green and white star firework goes off on the victim and eight different presents pop out of them one every 2 ticks in eight directions, spinning about 8 blocks up and landing about 3 blocks away, each with a pop. They disappear about 4 seconds later.
+- **Presenteado:** a big present rises 5 blocks from the victim for 26 ticks with red dust and sparks and a pling and firework blast rising in pitch every 2 ticks; then it explodes, a red and white burst firework goes off and eight presents fly out at once in eight directions at different heights, disappearing 3 seconds later.
+- **Presentes:** a red, green and white star firework goes off on the victim and eight presents pop out one every 2 ticks in eight directions, spinning about 8 blocks up and landing about 3 blocks away. They disappear about 4 seconds later.
+- **Passarinhos:** four birds circle the victim at different heights, one and a half turns at 1 block with bat sounds, then widen to 4 blocks while rising 2 more and burst into wool dust (red, light blue, yellow, light blue).
+- **Brain Freeze:** the victim's head, inside an ice block, flies back from the hit (away from the killer) and up for 28 ticks, shedding ice and with a pling rising in pitch, then shatters with an explosion and breaking glass.
 - **Preview:** right click opens `final-kill-preview.world` (`previa_kill_final`, in the server root of the BedWars lobby) with a wooden sword in hand (`target.weapon`) and a player 4 blocks ahead (`final-kill-preview.target.distance`), wearing the skin of another online player (the viewer's own when alone) and a grey nick drawn from `target.names`, with `&eAcerte o jogador!` in the action bar. Hitting it removes it with the hurt sound and plays the effect there; then the player goes back and the list opens again.
 
 ### Victory effects
@@ -266,7 +269,7 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | `cosmetics.final-kill.*` | `bedwars-kill-final`; 750, 900, 1300, 1750, 2000; the 43 effects | Category, prices by stars and final kill effects. |
 | `final-kill-preview.*` | `previa_kill_final`, -3.5 24 2.5 facing east, target 4 blocks ahead, `&eAcerte o jogador!` | Like `victory-preview`, with `target.distance` and `target.action-bar` instead of a countdown. |
 | `end-titles.victory`, `end-titles.defeat` | `VITÓRIA` `&6` `&e` `&f`; `DERROTA` `&c` `&c` `&f` | Word, colour after the sweep, colour of the sweeping letter, starting colour and an optional `sound`. |
-| `victory-preview.*` | `previa_efeito_de_vitoria`, -19.5 35 68.5, `3...` `2...` `1...` every 20 ticks, `60s`, `1s` | World, spawn, countdown titles and ticks between them, timeout, wait after the effect, back item and scoreboard of the victory preview. |
+| `victory-preview.*` | `previa_efeito_de_vitoria`, -19.5 27 68.5, `3...` `2...` `1...` every 20 ticks, `60s`, `1s` | World, spawn, countdown titles and ticks between them, timeout, wait after the effect, back item and scoreboard of the victory preview. |
 | `preview.world` | `previa_quebra_de_cama` | Folder of the preview world in the server root. Without it the preview is off. |
 | `preview.spawn`, `preview.bed` | 6.5 11 21.5; foot 6 11 17, head 6 16 | Where the player stands and the bed they break. |
 | `preview.timeout`, `preview.return-delay` | `120s`, `2s` | Time to break the bed and wait after the animation. |

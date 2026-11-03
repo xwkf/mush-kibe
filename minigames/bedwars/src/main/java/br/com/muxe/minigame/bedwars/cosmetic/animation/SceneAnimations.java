@@ -19,7 +19,7 @@ public final class SceneAnimations {
     }
 
     public static SceneAnimations finalKills() {
-        return new SceneAnimations(List.of(new GiftedFinalKill()));
+        return new SceneAnimations(List.of(new GiftedFinalKill(), new GiftShowerFinalKill(), new BirdsFinalKill(), new BrainFreezeFinalKill()));
     }
 
     public Optional<SceneAnimation> find(String id) {

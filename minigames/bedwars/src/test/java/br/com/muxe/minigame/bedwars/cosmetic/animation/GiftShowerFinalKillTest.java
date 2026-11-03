@@ -6,17 +6,17 @@ import static org.assertj.core.api.Assertions.offset;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import org.junit.jupiter.api.Test;
 
-class GiftedFinalKillTest {
+class GiftShowerFinalKillTest {
 
     @Test
     void eightDifferentGiftsPopOutOfTheVictim() {
-        assertThat(GiftedFinalKill.GIFTS).hasSize(8).doesNotHaveDuplicates();
+        assertThat(GiftShowerFinalKill.GIFTS).hasSize(8).doesNotHaveDuplicates();
     }
 
     @Test
     void eachGiftIsThrownUpAndOutwards() {
-        Vec east = GiftedFinalKill.launch(0);
-        Vec south = GiftedFinalKill.launch(90);
+        Vec east = GiftShowerFinalKill.launch(0);
+        Vec south = GiftShowerFinalKill.launch(90);
 
         assertThat(east.y()).isCloseTo(1.19, offset(1e-9));
         assertThat(east.x()).isCloseTo(0.28, offset(1e-9));
@@ -27,7 +27,7 @@ class GiftedFinalKillTest {
     @Test
     void aThrownGiftArcsAboutEightBlocksUpAndLandsAboutThreeBlocksAway() {
         RecordingStage stage = new RecordingStage(block -> false);
-        Body body = Body.living(Vec.ZERO, GiftedFinalKill.launch(0));
+        Body body = Body.living(Vec.ZERO, GiftShowerFinalKill.launch(0));
         double highest = 0;
         for (int tick = 0; tick < 14; tick++) {
             body.step(stage);
