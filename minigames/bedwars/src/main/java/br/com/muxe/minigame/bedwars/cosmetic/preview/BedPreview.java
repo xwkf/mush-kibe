@@ -5,6 +5,7 @@ import br.com.muxe.core.bukkit.cosmetic.animation.BedAnimation;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import br.com.muxe.core.bukkit.cosmetic.stage.AnimationPlayer;
 import br.com.muxe.core.bukkit.cosmetic.stage.AnimationPlayer.Playback;
+import br.com.muxe.core.bukkit.item.ItemBuilder;
 import br.com.muxe.core.bukkit.nms.BlockMask;
 import br.com.muxe.core.bukkit.scoreboard.Sidebar;
 import br.com.muxe.core.bukkit.text.ActionBar;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 import org.bukkit.Difficulty;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -36,6 +38,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
@@ -89,7 +92,7 @@ public final class BedPreview implements PreviewGate, Listener {
     }
 
     public void stop() {
-        List.copyOf(sessions.keySet()).forEach(id -> Optional.ofNullable(plugin.getServer().getPlayer(id)).ifPresent(this::finish));
+        List.copyOf(sessions.keySet()).forEach(id -> Optional.ofNullable(plugin.getServer().getPlayer(id)).ifPresent(viewer -> finish(viewer, false)));
     }
 
     public boolean previewing(Player viewer) {
@@ -97,7 +100,7 @@ public final class BedPreview implements PreviewGate, Listener {
     }
 
     @Override
-    public void preview(Player viewer, BedCosmetic cosmetic) {
+    public void preview(Player viewer, BedCosmetic cosmetic, Consumer<Player> back) {
         Optional<BedAnimation> animation = animations.find(cosmetic.id());
         if (world == null || animation.isEmpty()) {
             viewer.sendMessage(messages.get(world == null ? "preview-only-lobby" : "cosmetic-no-preview"));
@@ -107,10 +110,11 @@ public final class BedPreview implements PreviewGate, Listener {
             viewer.sendMessage(messages.get("preview-busy"));
             return;
         }
-        Session session = new Session(viewer, animation.get());
+        Session session = new Session(viewer, animation.get(), back);
         sessions.put(viewer.getUniqueId(), session);
         viewer.getInventory().clear();
         viewer.getInventory().setArmorContents(new ItemStack[4]);
+        viewer.getInventory().setItem(settings.back().slot(), backItem());
         buildMode.releaseGameMode(viewer);
         viewer.setGameMode(GameMode.SURVIVAL);
         viewer.setAllowFlight(false);
@@ -126,7 +130,12 @@ public final class BedPreview implements PreviewGate, Listener {
         sidebar.lines(settings.lines(cosmetic.name()));
         String bar = Colors.translate(settings.actionBar());
         session.actionBar = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> ActionBar.send(viewer, bar), 0L, TICKS_PER_SECOND);
-        session.timeout = plugin.getServer().getScheduler().runTaskLater(plugin, () -> finish(viewer), settings.timeout().toSeconds() * TICKS_PER_SECOND);
+        session.timeout = plugin.getServer().getScheduler().runTaskLater(plugin, () -> finish(viewer, true), settings.timeout().toSeconds() * TICKS_PER_SECOND);
+    }
+
+    private ItemStack backItem() {
+        Material material = Material.matchMaterial(settings.back().material());
+        return ItemBuilder.of(material == null ? Material.BED : material).name(settings.back().name()).build();
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -136,6 +145,12 @@ public final class BedPreview implements PreviewGate, Listener {
             return;
         }
         event.setCancelled(true);
+        Action action = event.getAction();
+        boolean rightClick = action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK;
+        if (settings.goesBack(rightClick, event.getPlayer().getInventory().getHeldItemSlot())) {
+            finish(event.getPlayer(), true);
+            return;
+        }
         Block block = event.getClickedBlock();
         if (event.getAction() != Action.LEFT_CLICK_BLOCK || block == null || session.playback != null
             || !settings.isBed(block.getX(), block.getY(), block.getZ())) {
@@ -153,6 +168,13 @@ public final class BedPreview implements PreviewGate, Listener {
         event.setCancelled(true);
         if (session.playback != null) {
             plugin.getServer().getScheduler().runTask(plugin, () -> hideBed(session.viewer));
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onInventoryClick(InventoryClickEvent event) {
+        if (event.getWhoClicked() instanceof Player clicker && previewing(clicker)) {
+            event.setCancelled(true);
         }
     }
 
@@ -194,7 +216,7 @@ public final class BedPreview implements PreviewGate, Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         if (previewing(event.getPlayer())) {
-            finish(event.getPlayer());
+            finish(event.getPlayer(), false);
         }
     }
 
@@ -209,7 +231,7 @@ public final class BedPreview implements PreviewGate, Listener {
         Vec breaker = new Vec(at.getX(), at.getY(), at.getZ());
         session.playback = animator.play(session.animation, world, settings.bed(), breaker, () -> List.of(viewer), () -> {
             hideBed(viewer);
-            session.timeout = plugin.getServer().getScheduler().runTaskLater(plugin, () -> finish(viewer), Math.max(1, settings.returnDelay().toMillis() / 50));
+            session.timeout = plugin.getServer().getScheduler().runTaskLater(plugin, () -> finish(viewer, true), Math.max(1, settings.returnDelay().toMillis() / 50));
         });
     }
 
@@ -224,7 +246,7 @@ public final class BedPreview implements PreviewGate, Listener {
         }
     }
 
-    private void finish(Player viewer) {
+    private void finish(Player viewer, boolean reopen) {
         Session session = sessions.remove(viewer.getUniqueId());
         if (session == null) {
             return;
@@ -246,6 +268,9 @@ public final class BedPreview implements PreviewGate, Listener {
             other.unhide(viewer);
         }
         session.restoreHidden();
+        if (reopen) {
+            session.back.accept(viewer);
+        }
     }
 
     @SuppressWarnings("deprecation")
@@ -257,6 +282,7 @@ public final class BedPreview implements PreviewGate, Listener {
 
         private final Player viewer;
         private final BedAnimation animation;
+        private final Consumer<Player> back;
         private final Location from;
         private final ItemStack[] contents;
         private final ItemStack[] armor;
@@ -268,9 +294,10 @@ public final class BedPreview implements PreviewGate, Listener {
         private BukkitTask timeout;
         private Playback playback;
 
-        Session(Player viewer, BedAnimation animation) {
+        Session(Player viewer, BedAnimation animation, Consumer<Player> back) {
             this.viewer = viewer;
             this.animation = animation;
+            this.back = back;
             this.from = viewer.getLocation();
             this.contents = viewer.getInventory().getContents();
             this.armor = viewer.getInventory().getArmorContents();

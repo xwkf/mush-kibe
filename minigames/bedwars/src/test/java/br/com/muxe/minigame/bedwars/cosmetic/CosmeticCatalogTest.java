@@ -150,4 +150,16 @@ class CosmeticCatalogTest {
         assertThat(preview.timeout()).isEqualTo(Duration.ofMinutes(2));
         assertThat(preview.lines("Tinta")).containsExactly("", "&fVisualizando:", "&eTinta", "", "&amuxe.com.br");
     }
+
+    @Test
+    void thePreviewHasABedInTheLastSlotThatTakesThePlayerBack() {
+        PreviewSettings preview = PreviewSettings.from(RoomFixtures.CONFIG.getConfigurationSection("preview"));
+
+        assertThat(preview.back().slot()).isEqualTo(8);
+        assertThat(preview.back().material()).isEqualTo("BED");
+        assertThat(preview.back().name()).isEqualTo("&aVoltar ao Lobby");
+        assertThat(preview.goesBack(true, 8)).isTrue();
+        assertThat(preview.goesBack(false, 8)).isFalse();
+        assertThat(preview.goesBack(true, 0)).isFalse();
+    }
 }

@@ -130,10 +130,10 @@ Players pick an animation that plays when they break an enemy bed. The menus fol
 
 **Preview** (BedWars lobby only; anywhere else the player gets `Você só pode visualizar cosméticos no lobby.`):
 
-1. The player is saved (place, inventory, armor, game mode, scoreboard) and teleported to the preview world, with an empty inventory.
+1. The player is saved (place, inventory, armor, game mode, scoreboard) and teleported to the preview world, with an empty inventory except for the bed `&aVoltar ao Lobby` in slot 9 (`preview.back-item`). Right-clicking it ends the preview at once.
 2. Other previewers are hidden both ways. The scoreboard shows `Visualizando:` and the cosmetic name, and the action bar repeats `&eQuebre a cama!`.
 3. Left-clicking the bed hides it for that player only and plays the animation for that player only.
-4. `preview.return-delay` after the animation ends (2 s), or after `preview.timeout` without breaking the bed (2 min), the player goes back to where they were, with their lobby items.
+4. `preview.return-delay` after the animation ends (2 s), or after `preview.timeout` without breaking the bed (2 min), the player goes back to where they were, with their lobby items, and the cosmetics menu reopens on the page they were on. Leaving the server during the preview opens nothing.
 
 ### BedWars lobby
 
@@ -236,6 +236,7 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | `preview.world` | `previa_quebra_de_cama` | Folder of the preview world in the server root. Without it the preview is off. |
 | `preview.spawn`, `preview.bed` | 6.5 11 21.5; foot 6 11 17, head 6 16 | Where the player stands and the bed they break. |
 | `preview.timeout`, `preview.return-delay` | `120s`, `2s` | Time to break the bed and wait after the animation. |
+| `preview.back-item` | slot 8 (the 9th), `BED`, `&aVoltar ao Lobby` | The item that ends the preview. The slot counts from 0. |
 | `preview.action-bar`, `preview.scoreboard` | `&eQuebre a cama!`, MUXE / Visualizando | Preview texts; `{name}` is the cosmetic. |
 | `lobby.menu-item` | slot 3, emerald | Menu do Bed Wars item on the BedWars lobby. |
 | `levels.badges`, `levels.rainbow` | the level list | Badge of each level range; from `rainbow.from` (1000) the digits take the rainbow colours. |

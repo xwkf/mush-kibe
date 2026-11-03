@@ -1820,6 +1820,10 @@ preview:
   timeout: 120s
   return-delay: 2s
   action-bar: "&eQuebre a cama!"
+  back-item:
+    slot: 8
+    material: BED
+    name: "&aVoltar ao Lobby"
   scoreboard:
     title: "&b&lMUXE"
     lines:

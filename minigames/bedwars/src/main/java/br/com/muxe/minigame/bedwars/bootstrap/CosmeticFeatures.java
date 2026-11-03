@@ -50,7 +50,7 @@ final class CosmeticFeatures {
         plugin.getServer().getOnlinePlayers().forEach(profileListener::load);
 
         BedPreview preview = null;
-        PreviewGate gate = (player, cosmetic) -> player.sendMessage(messages.get("preview-only-lobby"));
+        PreviewGate gate = (player, cosmetic, back) -> player.sendMessage(messages.get("preview-only-lobby"));
         if (lobby) {
             BedPreview started = new BedPreview(plugin, core.buildMode(), BlockMask.start(plugin), PreviewSettings.from(section(config, "preview")), animations, messages);
             if (started.start()) {

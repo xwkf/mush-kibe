@@ -2,6 +2,7 @@ package br.com.muxe.minigame.bedwars.cosmetic.preview;
 
 import br.com.muxe.core.bukkit.cosmetic.animation.BedFrame;
 import br.com.muxe.core.common.config.source.DurationParser;
+import br.com.muxe.minigame.bedwars.settings.BedWarsSettings.HotbarItem;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -18,6 +19,7 @@ public record PreviewSettings(
     Duration timeout,
     Duration returnDelay,
     String actionBar,
+    HotbarItem back,
     String title,
     List<String> lines
 ) {
@@ -31,6 +33,7 @@ public record PreviewSettings(
         ConfigurationSection foot = section(section, "bed.foot");
         ConfigurationSection head = section(section, "bed.head");
         ConfigurationSection scoreboard = section(section, "scoreboard");
+        ConfigurationSection back = section(section, "back-item");
         return new PreviewSettings(
             section.getString("world", "previa_quebra_de_cama"),
             spawn.getDouble("x"),
@@ -42,6 +45,7 @@ public record PreviewSettings(
             DurationParser.parse(section.getString("timeout", "120s")),
             DurationParser.parse(section.getString("return-delay", "2s")),
             section.getString("action-bar", "&eQuebre a cama!"),
+            new HotbarItem(back.getInt("slot"), back.getString("material"), back.getString("name")),
             scoreboard.getString("title", "&b&lMUXE"),
             scoreboard.getStringList("lines")
         );
@@ -54,6 +58,10 @@ public record PreviewSettings(
         int headX = (int) Math.floor(bed.head().x());
         int headZ = (int) Math.floor(bed.head().z());
         return blockY == footY && (blockX == footX && blockZ == footZ || blockX == headX && blockZ == headZ);
+    }
+
+    public boolean goesBack(boolean rightClick, int heldSlot) {
+        return rightClick && heldSlot == back.slot();
     }
 
     public List<String> lines(String name) {

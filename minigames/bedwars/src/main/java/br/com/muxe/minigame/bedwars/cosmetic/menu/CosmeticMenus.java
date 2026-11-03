@@ -136,8 +136,9 @@ public final class CosmeticMenus {
                 player.sendMessage(messages.get("cosmetic-no-preview"));
                 return;
             }
+            int page = currentPage(player, cosmetic.id());
             player.closeInventory();
-            previews.preview(player, cosmetic);
+            previews.preview(player, cosmetic, viewer -> openList(viewer, page));
             return;
         }
         CosmeticState state = wallet.state(cosmetic);
@@ -225,7 +226,7 @@ public final class CosmeticMenus {
     @FunctionalInterface
     public interface PreviewGate {
 
-        void preview(Player player, BedCosmetic cosmetic);
+        void preview(Player player, BedCosmetic cosmetic, Consumer<Player> back);
     }
 
     private record Entry(ItemBuilder icon, Consumer<ClickContext> click) {
