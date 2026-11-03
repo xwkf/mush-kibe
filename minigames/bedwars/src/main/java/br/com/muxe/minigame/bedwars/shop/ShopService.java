@@ -6,16 +6,19 @@ import br.com.muxe.core.bukkit.menu.Menu;
 import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.minigame.bedwars.listener.Bedbugs;
+import br.com.muxe.minigame.bedwars.quickbuy.domain.QuickBuy;
 import br.com.muxe.minigame.bedwars.room.Kits;
 import br.com.muxe.minigame.bedwars.room.RoomPlayer;
 import br.com.muxe.minigame.bedwars.room.RoomRuntime;
 import br.com.muxe.minigame.bedwars.room.RoomTeam;
 import br.com.muxe.minigame.bedwars.settings.MatchSounds;
 import br.com.muxe.minigame.bedwars.shop.ShopCatalog.Category;
+import br.com.muxe.minigame.bedwars.shop.ShopCatalog.QuickBuyTexts;
 import br.com.muxe.minigame.bedwars.shop.ShopCatalog.ShopItem;
 import br.com.muxe.minigame.bedwars.shop.ShopCatalog.Tab;
 import br.com.muxe.minigame.bedwars.shop.ShopCatalog.Tier;
 import br.com.muxe.minigame.bedwars.shop.UpgradeCatalog.Entry;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -36,6 +39,8 @@ public final class ShopService {
     private static final int PANE_FIRST = 9;
     private static final int PANE_GREEN = 13;
     private static final int PANE_GRAY = 7;
+    private static final int PANE_RED = 14;
+    private static final int ADDING_SLOT = 4;
     private static final int SHOP_ROWS = 6;
     private static final int UPGRADE_ROWS = 3;
 
@@ -43,12 +48,14 @@ public final class ShopService {
     private final UpgradeCatalog upgrades;
     private final MessageCatalog messages;
     private final MatchSounds sounds;
+    private final QuickBuys quickBuys;
 
-    public ShopService(ShopCatalog shop, UpgradeCatalog upgrades, MessageCatalog messages, MatchSounds sounds) {
+    public ShopService(ShopCatalog shop, UpgradeCatalog upgrades, MessageCatalog messages, MatchSounds sounds, QuickBuys quickBuys) {
         this.shop = shop;
         this.upgrades = upgrades;
         this.messages = messages;
         this.sounds = sounds;
+        this.quickBuys = quickBuys;
     }
 
     public void open(Player player, RoomRuntime runtime, boolean upgradeMenu) {
@@ -81,11 +88,19 @@ public final class ShopService {
         for (int column = 0; column < 9; column++) {
             menu.button(PANE_FIRST + column, ItemBuilder.of(Material.STAINED_GLASS_PANE, column == openColumn ? PANE_GREEN : PANE_GRAY).name(" "));
         }
-        List<String> ids = quickBuy ? shop.quickBuy() : category.items();
+        QuickBuy layout = quickBuys.of(player.getUniqueId());
+        List<Optional<String>> ids = quickBuy ? positions(layout) : category.items().stream().map(Optional::of).toList();
         for (int index = 0; index < ids.size() && index < ITEM_SLOTS.size(); index++) {
-            ShopItem item = shop.items().get(ids.get(index));
-            menu.button(ITEM_SLOTS.get(index), icon(player, runtime, roomPlayer, item), context -> {
+            Optional<ShopItem> entry = ids.get(index).map(shop.items()::get);
+            if (entry.isEmpty()) {
+                QuickBuyTexts texts = shop.quickBuyTexts();
+                menu.button(ITEM_SLOTS.get(index), ItemBuilder.of(Material.STAINED_GLASS_PANE, PANE_RED).name(texts.emptyName()).lore(texts.empty()));
+                continue;
+            }
+            ShopItem item = entry.get();
+            menu.button(ITEM_SLOTS.get(index), icon(player, runtime, roomPlayer, item, layout), context -> {
                 if (context.isShiftClick()) {
+                    editQuickBuy(context.player(), runtime, item, categoryId);
                     return;
                 }
                 buy(context, runtime, item);
@@ -96,6 +111,60 @@ public final class ShopService {
             menu.button(shop.editor().slot(), ItemBuilder.of(shop.editor().material()).name(shop.editor().name()).lore(shop.editor().lore()));
         }
         menu.build().open(player);
+    }
+
+    private void editQuickBuy(Player player, RoomRuntime runtime, ShopItem item, String categoryId) {
+        QuickBuy layout = quickBuys.of(player.getUniqueId());
+        if (layout.contains(item.id())) {
+            quickBuys.change(player.getUniqueId(), layout.remove(item.id()));
+            openShop(player, runtime, categoryId);
+            return;
+        }
+        openAdding(player, runtime, item);
+    }
+
+    public void openAdding(Player player, RoomRuntime runtime, ShopItem adding) {
+        Optional<RoomPlayer> found = runtime.room().player(player.getUniqueId());
+        if (found.isEmpty() || !found.get().isAlive()) {
+            return;
+        }
+        RoomPlayer roomPlayer = found.get();
+        QuickBuyTexts texts = shop.quickBuyTexts();
+        QuickBuy layout = quickBuys.of(player.getUniqueId());
+        Menu.Builder menu = Menu.builder(texts.addingTitle()).rows(SHOP_ROWS);
+        menu.button(ADDING_SLOT, icon(player, runtime, roomPlayer, adding, layout).lore(addingLore(adding, texts)));
+        List<Optional<String>> positions = positions(layout);
+        for (int position = 0; position < positions.size(); position++) {
+            int chosen = position;
+            Optional<ShopItem> current = positions.get(position).map(shop.items()::get);
+            ItemBuilder icon = current
+                .map(item -> icon(player, runtime, roomPlayer, item, layout).lore(texts.replace()))
+                .orElseGet(() -> ItemBuilder.of(Material.STAINED_GLASS_PANE, PANE_RED).name(texts.emptyName()).lore(texts.emptyAdd()));
+            menu.button(ITEM_SLOTS.get(position), icon, context -> {
+                quickBuys.change(context.player().getUniqueId(), quickBuys.of(context.player().getUniqueId()).place(chosen, adding.id()));
+                openShop(context.player(), runtime, ShopCatalog.QUICK_BUY);
+            });
+        }
+        menu.build().open(player);
+    }
+
+    static List<String> addingLore(ShopItem item, QuickBuyTexts texts) {
+        List<String> lore = new ArrayList<>();
+        lore.add(" ");
+        if (!item.description().isEmpty()) {
+            lore.addAll(item.description());
+            lore.add(" ");
+        }
+        lore.add(texts.adding());
+        return lore;
+    }
+
+    private static List<Optional<String>> positions(QuickBuy layout) {
+        List<Optional<String>> positions = new ArrayList<>(QuickBuy.SIZE);
+        for (int position = 0; position < QuickBuy.SIZE; position++) {
+            positions.add(layout.at(position));
+        }
+        return positions;
     }
 
     public void openUpgrades(Player player, RoomRuntime runtime) {
@@ -145,13 +214,13 @@ public final class ShopService {
         });
     }
 
-    private ItemBuilder icon(Player player, RoomRuntime runtime, RoomPlayer roomPlayer, ShopItem item) {
+    private ItemBuilder icon(Player player, RoomRuntime runtime, RoomPlayer roomPlayer, ShopItem item, QuickBuy layout) {
         Offer offer = Offer.of(item, roomPlayer);
         Tier tier = offer.tier();
         boolean affordable = count(player.getInventory(), tier.currency().material()) >= tier.price();
         boolean locked = item.id().equals("rastreador") && runtime.room().teams().values().stream()
             .anyMatch(team -> team.bedAlive() && team.color() != roomPlayer.team());
-        boolean inQuickBuy = shop.quickBuy().contains(item.id());
+        boolean inQuickBuy = layout.contains(item.id());
         ItemBuilder icon = ItemBuilder.of(tier.material(), item.type() == ShopCatalog.Type.POTION || item.type() == ShopCatalog.Type.SPECIAL ? item.data() : 0)
             .amount(item.amount())
             .name(offer.name(shop.texts(), affordable && !locked))

@@ -20,7 +20,8 @@ public record ShopCatalog(
     List<String> quickBuy,
     Map<String, Category> categories,
     Map<String, ShopItem> items,
-    Editor editor
+    Editor editor,
+    QuickBuyTexts quickBuyTexts
 ) {
 
     public static final String QUICK_BUY = "compra-rapida";
@@ -62,10 +63,21 @@ public record ShopCatalog(
             shop.getStringList("quick-buy"),
             categories,
             items,
-            new Editor(editor.getInt("slot", 53), material(editor.getString("material")), editor.getString("name"), editor.getStringList("lore"))
+            new Editor(editor.getInt("slot", 53), material(editor.getString("material")), editor.getString("name"), editor.getStringList("lore")),
+            new QuickBuyTexts(
+                shop.getString("quick-buy-adding-title", "Adicionando à Compra Rápida..."), shop.getString("quick-buy-adding"),
+                shop.getStringList("quick-buy-replace"), shop.getString("quick-buy-empty-name"), shop.getStringList("quick-buy-empty-add"),
+                shop.getStringList("quick-buy-empty")
+            )
         );
         catalog.validate();
         return catalog;
+    }
+
+    public List<String> sellable() {
+        List<String> ordered = new ArrayList<>();
+        categories.values().forEach(category -> category.items().stream().filter(id -> !ordered.contains(id)).forEach(ordered::add));
+        return ordered;
     }
 
     private void validate() {
@@ -99,8 +111,12 @@ public record ShopCatalog(
         if (type == Type.POTION) {
             potion = new Potion(section.getString("effect", "").toUpperCase(Locale.ROOT), section.getInt("amplifier"), section.getInt("seconds"));
         }
+        List<String> description = section.getStringList("description");
+        Editor editorLook = new Editor(0, section.contains("editor-material") ? material(section.getString("editor-material")) : tiers.getFirst().material(),
+            section.getString("editor-name", tiers.getFirst().name()),
+            section.contains("editor-description") ? section.getStringList("editor-description") : description);
         return new ShopItem(id, type, section.getInt("data", 0), section.getInt("amount", 1), section.getInt("tier", 0),
-            section.getStringList("description"), enchantments, section.getBoolean("unbreakable", false), tiers, potion);
+            description, enchantments, section.getBoolean("unbreakable", false), tiers, potion, editorLook);
     }
 
     private static Currency currency(Map<String, Currency> currencies, String id) {
@@ -146,7 +162,7 @@ public record ShopCatalog(
     }
 
     public record ShopItem(String id, Type type, int data, int amount, int armorTier, List<String> description,
-                           Map<String, Integer> enchantments, boolean unbreakable, List<Tier> tiers, Potion potion) {
+                           Map<String, Integer> enchantments, boolean unbreakable, List<Tier> tiers, Potion potion, Editor editor) {
 
         public ShopItem {
             description = List.copyOf(description);
@@ -180,5 +196,18 @@ public record ShopCatalog(
     }
 
     public record Editor(int slot, Material material, String name, List<String> lore) {
+
+        public Editor {
+            lore = List.copyOf(lore);
+        }
+    }
+
+    public record QuickBuyTexts(String addingTitle, String adding, List<String> replace, String emptyName, List<String> emptyAdd, List<String> empty) {
+
+        public QuickBuyTexts {
+            replace = List.copyOf(replace);
+            emptyAdd = List.copyOf(emptyAdd);
+            empty = List.copyOf(empty);
+        }
     }
 }

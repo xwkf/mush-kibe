@@ -28,7 +28,7 @@ class BedWarsMenuSettingsTest {
     @Test
     void theOtherBedWarsMenuItemsFollowTheReference() {
         assertThat(settings.bedwarsItems()).containsOnlyKeys(15);
-        assertThat(settings.bedwarsSoon()).containsOnlyKeys(29, 31, 33);
+        assertThat(settings.bedwarsSoon()).containsOnlyKeys(31, 33);
         assertThat(settings.missions().orElseThrow().slot()).isEqualTo(11);
         assertThat(settings.missions().orElseThrow().item().material()).isEqualTo(Material.STORAGE_MINECART);
         assertThat(settings.missions().orElseThrow().item().name()).isEqualTo("§aMissões");
@@ -44,8 +44,9 @@ class BedWarsMenuSettingsTest {
             "§b[§3300❂§b] §d[§5400❁§d] §7[§f500❋§7]",
             "§1[§9600✟§1] §2[§a700§l۞§2] §6[§e800§l✌§6]",
             "§4[§c900§l⚝§4] §c[§61§e0§a0§b0§dΩ§5]");
-        assertThat(settings.bedwarsSoon().get(29).material()).isEqualTo(Material.CHEST);
-        assertThat(settings.bedwarsSoon().get(29).name()).isEqualTo("§aCompra rápida");
+        assertThat(settings.quickBuy().orElseThrow().slot()).isEqualTo(29);
+        assertThat(settings.quickBuy().orElseThrow().item().material()).isEqualTo(Material.CHEST);
+        assertThat(settings.quickBuy().orElseThrow().item().name()).isEqualTo("§aCompra rápida");
         assertThat(settings.bedwarsSoon().get(31).material()).isEqualTo(Material.BLAZE_POWDER);
         assertThat(settings.bedwarsSoon().get(31).name()).isEqualTo("§aEditor de hotbar");
         assertThat(settings.bedwarsSoon().get(33).material()).isEqualTo(Material.DIODE);

@@ -90,9 +90,13 @@ Quem chega num servidor de BedWars volta para a partida que deixou, se ainda pud
 O NPC da loja abre os menus dos exports: Compra Rápida (o layout do export) e as sete categorias, com a aba da categoria aberta marcada por um vidro verde.
 
 - Um item custa ferro, ouro ou esmeraldas do inventário. O nome fica vermelho quando não dá para comprar, com `Você não tem <recurso> o suficiente.`
-- Cada compra diz `Você comprou <item>.` e toca um clique de botão (`sounds.bought`); comprar uma melhoria toca `sounds.upgrade`; uma compra sem recursos suficientes toca `VILLAGER_NO` (`sounds.cannot-afford`).
+- Cada compra diz `Você comprou <item>.` e toca `NOTE_PLING` (`sounds.bought`); comprar uma melhoria toca `sounds.upgrade`; uma compra sem recursos suficientes toca `VILLAGER_NO` (`sounds.cannot-afford`).
+- **Compra rápida:** cada jogador tem a sua, salva no PostgreSQL (`bedwars.quick_buy`) e carregada quando ele entra num servidor de BedWars, então uma mudança feita numa partida vale na próxima. Quem nunca mudou recebe `shop.quick-buy`. Ela tem 21 posições; uma posição vazia mostra `&cEspaço vazio!`.
+  - Shift-click num item que já está na compra rápida tira ele, pela página Compra Rápida ou pela categoria dele.
+  - Shift-click em qualquer outro item abre `Adicionando à Compra Rápida...`: o item em cima e as 21 posições embaixo, cada uma com `Clique para substituir!` ou `Espaço vazio! Clique para adicionar!`. Clicar numa posição coloca o item lá (e tira de onde ele estava) e abre a Compra Rápida de novo.
+  - Itens que a loja não vende mais aparecem como posições vazias.
 - A lã vem na cor do time. Uma espada substitui a de madeira. A armadura dá bota e calça e não pode ser comprada abaixo da que o jogador tem. A picareta e o machado sobem um nível por compra. A tesoura é permanente.
-- Ainda não funcionam: o shift-click (editar a compra rápida), o editor de hotbar, e os itens especiais Golem de Ferro, Leite Mágico, Torre Compacta, Ovo das Pontes, Rastreador e Estilingue, que avisam que chegam em breve e não cobram nada.
+- Ainda não funcionam: o editor de hotbar, e os itens especiais Golem de Ferro, Leite Mágico, Torre Compacta, Ovo das Pontes, Rastreador e Estilingue, que avisam que chegam em breve e não cobram nada.
 
 ### Melhorias do time
 
@@ -114,7 +118,8 @@ O time inteiro vê `<jogador> adquiriu a melhoria <melhoria>.`
 
 O jogador escolhe uma animação que toca quando ele quebra uma cama inimiga. Os menus seguem os exports gravados:
 
-- **Menu do Bed Wars** (esmeralda): na sala de espera dos servidores de BedWars e no slot 3 da hotbar do lobby de BedWars. Cinco linhas, como no export de referência: `Missões` (slot 11), `Cosméticos` (baiacu, slot 13), `Lista de Níveis` (slot 15, com as insígnias de nível na descrição), `Compra rápida` (29), `Editor de hotbar` (31) e `Preferências` (33). Por enquanto só **Cosméticos** funciona; Missões, Compra rápida, Editor de hotbar e Preferências respondem `coming-soon`.
+- **Menu do Bed Wars** (esmeralda): na sala de espera dos servidores de BedWars e no slot 3 da hotbar do lobby de BedWars. Cinco linhas, como no export de referência: `Missões` (slot 11), `Cosméticos` (baiacu, slot 13), `Lista de Níveis` (slot 15, com as insígnias de nível na descrição), `Compra rápida` (29), `Editor de hotbar` (31) e `Preferências` (33). Editor de hotbar e Preferências respondem `coming-soon`.
+- **Compra rápida** (slot 29 do menu do Bed Wars) abre `Editando compra rápida...` com as 21 posições do jogador. Botão esquerdo troca o item, botão direito tira, `Voltar` volta para o menu do Bed Wars e `Importar compra rápida` responde `coming-soon`. Trocar abre `Selecionando item... (1/2)`, todos os itens que a loja vende na ordem das categorias, 21 por página; clicar num deles coloca ele naquela posição. Picareta e machado aparecem como `Picareta` e `Machado` de diamante, e `editor-name`, `editor-material` e `editor-description` de um item da loja mudam como ele aparece aqui. As mudanças são salvas como as feitas numa partida.
 - **Cosméticos do Bed Wars**: a categoria **Destruição de Cama** mostra `possuídos/total (porcentagem%)` e o cosmético selecionado. As outras categorias, **Cor preferida** e o botão **Loja** respondem "em breve".
 - **Destruição de Cama (página/páginas)**: 28 itens por página. A página 1 começa com **Nenhuma** e **Aleatório** (o padrão). Primeiro vêm os cosméticos possuídos em ordem alfabética, depois todos os outros em ordem alfabética (`CosmeticOrder`, a regra de todo menu de cosméticos da rede).
   - Possuído: botão esquerdo seleciona, botão direito visualiza. O selecionado brilha e mostra `Já selecionado.`
@@ -220,7 +225,7 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 | `default-mode` | `solo` | O modo da sala em que o jogador entra ao chegar. |
 | `timings.*` | 5 s renascer, 180 s voltar, 30 s reiniciar, 4 s proteção, raio da ilha 17, raios de proteção 5/1/1, 60 s sala vazia | Tempos da partida e áreas protegidas; `empty-room-seconds` fecha as salas que ficaram vazias. |
 | `countdown.titles` | `30`, `10`, `5`...`1` | Títulos da contagem para iniciar. |
-| `sounds.*` | `CLICK`, `VILLAGER_NO`, `CHEST_OPEN` | `countdown`, `bought`, `upgrade`, `cannot-afford` e `ender-chest`, cada um com `sound`, `volume` e `pitch`. Um som vazio não toca nada. |
+| `sounds.*` | `CLICK`, `NOTE_PLING`, `VILLAGER_NO`, `CHEST_OPEN` | `countdown`, `bought`, `upgrade`, `cannot-afford` e `ender-chest`, cada um com `sound`, `volume` e `pitch`. Um som vazio não toca nada. |
 | `forges.*` | os valores da especificação | Ferro, ouro e esmeralda da ilha, e os três níveis de diamante e esmeralda com o segundo de início. `stack-items: false` mantém separados os itens de células diferentes; `split-radius` (2) é a distância em que os companheiros dividem ferro e ouro. |
 | `events.*` | 1800, 2400, 2520 | Segundos dos eventos de camas destruídas, morte súbita e fim de jogo, e os nomes deles no placar. |
 | `xp-rewards.*` | 10, 5, 250, 100, 12, 60 | XP por minuto, por companheiro, vitória, cama, kill e kill final. |
@@ -269,6 +274,7 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 | `bedwars.player_stats` | Uma linha por jogador, modo (e `geral`), período (`diario`, `semanal`, `mensal`, `total`) e início do período, com todos os contadores e o XP. Migração `V1__create_player_stats_and_favourite_maps.sql`. |
 | `bedwars.recorded_matches` | O id de cada partida já salva, reivindicado na mesma transação das estatísticas, então uma partida salva duas vezes conta uma vez só. Migração `V2__create_recorded_matches.sql`. |
 | `bedwars.favourite_maps` | Arenas favoritas de cada jogador. |
+| `bedwars.quick_buy` | A compra rápida de cada jogador: os 21 ids de item em ordem (`''` numa posição vazia). Migração `V3__create_quick_buy.sql`. |
 | `<server>/previa_quebra_de_cama/` | O mundo da prévia. Vai só para o lobby de BedWars, nunca para o repositório. |
 
 Comandos e consultas em `br.com.muxe.minigame.bedwars.stats`: `RecordMatchCommand`, `ToggleFavouriteMapCommand`, `FindPlayerStatsQuery`, `FindTopQuery`, `FindFavouriteMapsQuery`.
@@ -308,7 +314,7 @@ Se o Muxe-Core não estiver habilitado, o plugin se desabilita.
 - MEGA e PILARES ainda não são modos, então os NPCs deles não abrem nada. O `/retornar` e o `/l` ainda não entraram.
 - Quem chega a um servidor de BedWars sem reserva ainda entra numa sala do `default-mode`.
 - O lobby só conhece as salas dos servidores que publicaram nos últimos 10 segundos; a lista de um servidor que para é esquecida depois disso.
-- Os outros itens especiais da loja, o editor da compra rápida, os dragões e os títulos de vitória e derrota ainda não entraram.
+- Os outros itens especiais da loja, importar a compra rápida de outro jogador, os dragões e os títulos de vitória e derrota ainda não entraram.
 - Um reinício ou crash encerra todas as partidas do servidor sem compensação.
 - 17 cosméticos de destruição de cama ainda não têm animação. As outras categorias de cosméticos, Cor preferida e a loja de cosméticos ainda não existem.
 - Uma compra atualiza o menu na hora, mas outro servidor só vê quando o jogador entra nele de novo.

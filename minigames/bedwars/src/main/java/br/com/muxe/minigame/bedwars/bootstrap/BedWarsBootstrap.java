@@ -18,9 +18,13 @@ import br.com.muxe.minigame.bedwars.lobby.format.LevelBadges;
 import br.com.muxe.minigame.bedwars.mission.BedWarsGoal;
 import br.com.muxe.minigame.bedwars.mission.MissionRules;
 import br.com.muxe.minigame.bedwars.network.RoomPublisher;
+import br.com.muxe.minigame.bedwars.quickbuy.QuickBuyModule;
+import br.com.muxe.minigame.bedwars.quickbuy.domain.QuickBuy;
 import br.com.muxe.minigame.bedwars.room.RoomService;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
 import br.com.muxe.minigame.bedwars.shop.ShopCatalog;
+import br.com.muxe.minigame.bedwars.shop.QuickBuyEditor;
+import br.com.muxe.minigame.bedwars.shop.QuickBuys;
 import br.com.muxe.minigame.bedwars.shop.ShopService;
 import br.com.muxe.minigame.bedwars.shop.UpgradeCatalog;
 import br.com.muxe.minigame.bedwars.stats.StatsModule;
@@ -79,6 +83,7 @@ public final class BedWarsBootstrap {
         boolean lobby = core.identity().kind() == ServerKind.LOBBY;
         plugin.getLogger().info("Schema '" + GAME + "' at version " + core.migrations().migrate(GAME, plugin.getClass().getClassLoader()).schemaVersion());
         StatsModule.register(core.commands(), core.queries(), core.transactions(), core.clock(), STATS_ZONE);
+        QuickBuyModule.register(core.commands(), core.queries(), core.transactions(), core.clock());
         MissionConfig missions = MissionConfig.from(config.getConfigurationSection("missions"), BedWarsGoal::find);
         BedWarsStatsRepository missionXp = new PostgresBedWarsStatsRepository();
         core.missions().register(GAME, missions.catalog(),
@@ -86,6 +91,12 @@ public final class BedWarsBootstrap {
         MissionMenus missionMenus = new MissionMenus(GAME, missions, core.queries(), core.mainThread(), core.clock(), MissionModule.ZONE, plugin.getLogger());
         cosmetics = CosmeticFeatures.start(plugin, core, config, messages, commands, lobby);
         cosmetics.onMissions(missionMenus);
+        ShopCatalog shopCatalog = ShopCatalog.from(Objects.requireNonNull(config.getConfigurationSection("shop"), "Missing configuration section shop"));
+        QuickBuys quickBuys = new QuickBuys(core, plugin.getLogger(), QuickBuy.of(shopCatalog.quickBuy()), shopCatalog.items()::containsKey);
+        plugin.getServer().getPluginManager().registerEvents(quickBuys, plugin);
+        plugin.getServer().getOnlinePlayers().forEach(player -> quickBuys.load(player.getUniqueId()));
+        cosmetics.onQuickBuy(new QuickBuyEditor(shopCatalog, QuickBuyEditor.Settings.from(Objects.requireNonNull(config.getConfigurationSection("shop.quick-buy-editor"), "Missing configuration section shop.quick-buy-editor")), quickBuys,
+            messages));
         ArenaSavedPacket.register(core.packetRegistry());
         ArenaStore arenas = new DatabaseArenaStore(GAME, core.commands(), core.queries());
         MuxeWorlds worlds = new MuxeWorlds(plugin);
@@ -127,10 +138,11 @@ public final class BedWarsBootstrap {
         engine.track(rooms::activeMatches, () -> catalog.all().size());
         rooms.onBedBreak(cosmetics.bedBreaks());
         ShopService shop = new ShopService(
-            ShopCatalog.from(Objects.requireNonNull(config.getConfigurationSection("shop"), "Missing configuration section shop")),
+            shopCatalog,
             UpgradeCatalog.from(Objects.requireNonNull(config.getConfigurationSection("upgrades"), "Missing configuration section upgrades")),
             messages,
-            settings.sounds()
+            settings.sounds(),
+            quickBuys
         );
         rooms.onNpcClick((player, click) -> shop.open(player, click.runtime(), click.upgrades()));
         publisher = new RoomPublisher(plugin, core, rooms, settings.lobbyGroup());

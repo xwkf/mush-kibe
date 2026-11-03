@@ -90,9 +90,13 @@ A player who reaches a BedWars server goes back to the match they left if they s
 The shop NPC opens the menus of the exports: Compra Rápida (the exported layout) and the seven categories, with the tab of the open category marked by a green pane.
 
 - An item costs iron, gold or emeralds from the inventory. Its name is red when unaffordable, with `Você não tem <recurso> o suficiente.`
-- Each purchase says `Você comprou <item>.` and plays a button click (`sounds.bought`); buying an upgrade plays `sounds.upgrade`; a purchase without enough resources plays `VILLAGER_NO` (`sounds.cannot-afford`).
+- Each purchase says `Você comprou <item>.` and plays `NOTE_PLING` (`sounds.bought`); buying an upgrade plays `sounds.upgrade`; a purchase without enough resources plays `VILLAGER_NO` (`sounds.cannot-afford`).
+- **Quick buy:** each player has their own, saved in PostgreSQL (`bedwars.quick_buy`) and loaded when they join a BedWars server, so a change made in one match is there in the next. A player who never changed it gets `shop.quick-buy`. It has 21 positions; an empty one shows `&cEspaço vazio!`.
+  - Shift-click on an item already in the quick buy removes it, from the Compra Rápida page or from its category.
+  - Shift-click on any other item opens `Adicionando à Compra Rápida...`: the item on top and the 21 positions below, each with `Clique para substituir!` or `Espaço vazio! Clique para adicionar!`. Clicking a position puts the item there (and takes it out of where it was) and opens Compra Rápida again.
+  - Items the shop no longer sells show as empty positions.
 - Wool comes in the team colour. A sword replaces the wooden sword. Armour gives boots and leggings and cannot be bought below what the player owns. The pickaxe and axe go up one tier per purchase. Shears are permanent.
-- Not working yet: shift-click (editing the quick buy), the hotbar editor, and the special items Golem de Ferro, Leite Mágico, Torre Compacta, Ovo das Pontes, Rastreador and Estilingue, which say they are coming soon and charge nothing.
+- Not working yet: the hotbar editor, and the special items Golem de Ferro, Leite Mágico, Torre Compacta, Ovo das Pontes, Rastreador and Estilingue, which say they are coming soon and charge nothing.
 
 ### Team upgrades
 
@@ -114,7 +118,8 @@ The whole team sees `<player> adquiriu a melhoria <upgrade>.`
 
 Players pick an animation that plays when they break an enemy bed. The menus follow the recorded exports:
 
-- **Menu do Bed Wars** (emerald): in the waiting room on BedWars servers, and in hotbar slot 3 on the BedWars lobby. Five rows, as in the reference export: `Missões` (slot 11), `Cosméticos` (pufferfish, slot 13), `Lista de Níveis` (slot 15, the level badges in its lore), `Compra rápida` (29), `Editor de hotbar` (31) and `Preferências` (33). Only **Cosméticos** works for now; Missões, Compra rápida, Editor de hotbar and Preferências answer `coming-soon`.
+- **Menu do Bed Wars** (emerald): in the waiting room on BedWars servers, and in hotbar slot 3 on the BedWars lobby. Five rows, as in the reference export: `Missões` (slot 11), `Cosméticos` (pufferfish, slot 13), `Lista de Níveis` (slot 15, the level badges in its lore), `Compra rápida` (29), `Editor de hotbar` (31) and `Preferências` (33). Editor de hotbar and Preferências answer `coming-soon`.
+- **Compra rápida** (slot 29 of the Bed Wars menu) opens `Editando compra rápida...` with the player's 21 positions. Left click swaps the item, right click removes it, `Voltar` goes back to the Bed Wars menu and `Importar compra rápida` answers `coming-soon`. Swapping opens `Selecionando item... (1/2)`, every item the shop sells in category order, 21 per page; clicking one puts it in that position. Pickaxe and axe show as `Picareta` and `Machado` in diamond, and `editor-name`, `editor-material` and `editor-description` of a shop item change how it looks here. Changes are saved like those made in a match.
 - **Cosméticos do Bed Wars**: the **Destruição de Cama** category shows `owned/total (percent%)` and the selected cosmetic. The other categories, **Cor preferida** and the **Loja** button answer "coming soon".
 - **Destruição de Cama (page/pages)**: 28 entries per page. Page 1 starts with **Nenhuma** and **Aleatório** (the default). Owned cosmetics come first in alphabetical order, then all the others in alphabetical order (`CosmeticOrder`, the rule for every cosmetics menu of the network).
   - Owned: left click selects, right click previews. The selected one glows and shows `Já selecionado.`
@@ -220,7 +225,7 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | `default-mode` | `solo` | The mode of the room a player joins on arrival. |
 | `timings.*` | 5 s respawn, 180 s rejoin, 30 s restart, 4 s protection, island radius 17, protection radii 5/1/1, 60 s empty room | Match timings and protected areas; `empty-room-seconds` closes rooms left empty. |
 | `countdown.titles` | `30`, `10`, `5`...`1` | Titles of the start countdown. |
-| `sounds.*` | `CLICK`, `VILLAGER_NO`, `CHEST_OPEN` | `countdown`, `bought`, `upgrade`, `cannot-afford` and `ender-chest`, each with `sound`, `volume` and `pitch`. A sound left empty plays nothing. |
+| `sounds.*` | `CLICK`, `NOTE_PLING`, `VILLAGER_NO`, `CHEST_OPEN` | `countdown`, `bought`, `upgrade`, `cannot-afford` and `ender-chest`, each with `sound`, `volume` and `pitch`. A sound left empty plays nothing. |
 | `forges.*` | the spec values | Island iron, gold and emerald, and the three diamond and emerald tiers with their start second. `stack-items: false` keeps items of different cells apart; `split-radius` (2) is how far teammates share iron and gold. |
 | `events.*` | 1800, 2400, 2520 | Seconds of the beds destroyed, sudden death and game end events, and their names on the scoreboard. |
 | `xp-rewards.*` | 10, 5, 250, 100, 12, 60 | XP per minute, per teammate, win, bed, kill and final kill. |
@@ -270,6 +275,7 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | `bedwars.player_stats` | One row per player, mode (and `geral`), period (`diario`, `semanal`, `mensal`, `total`) and period start, with every counter and the XP. Migration `V1__create_player_stats_and_favourite_maps.sql`. |
 | `bedwars.recorded_matches` | The id of every match already saved, claimed in the same transaction as its stats, so a match saved twice counts once. Migration `V2__create_recorded_matches.sql`. |
 | `bedwars.favourite_maps` | Favourite arenas of each player. |
+| `bedwars.quick_buy` | The quick buy of each player: the 21 item ids in order (`''` for an empty position). Migration `V3__create_quick_buy.sql`. |
 
 Commands and queries in `br.com.muxe.minigame.bedwars.stats`: `RecordMatchCommand`, `ToggleFavouriteMapCommand`, `FindPlayerStatsQuery`, `FindTopQuery`, `FindFavouriteMapsQuery`.
 
@@ -308,7 +314,7 @@ If Muxe-Core is not enabled, the plugin disables itself.
 - MEGA and PILARES are not modes yet, so their NPCs open nothing. `/retornar` and `/l` are not in yet.
 - A player who reaches a BedWars server without a reservation still joins a room of `default-mode`.
 - The lobby only knows the rooms of servers that published in the last 10 seconds; the room list of a server that stops is forgotten after that.
-- The other special shop items, the quick buy editor, the dragons and the victory and defeat titles are not in yet.
+- The other special shop items, importing another player's quick buy, the dragons and the victory and defeat titles are not in yet.
 - A restart or crash ends every match on the server without compensation.
 - 17 bed destruction cosmetics have no animation yet. The other cosmetic categories, Cor preferida and the cosmetic shop are not in yet.
 - A purchase updates the menu at once, but another server sees it only when the player joins it again.

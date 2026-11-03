@@ -101,7 +101,7 @@ sounds:
     volume: 1
     pitch: 1
   bought:
-    sound: CLICK
+    sound: NOTE_PLING
     volume: 1
     pitch: 1
   upgrade:
@@ -613,6 +613,59 @@ shop:
   quick-buy-remove:
     - "&bClique segurando Shift para remover"
     - "&bda compra rápida."
+  quick-buy-adding-title: "Adicionando à Compra Rápida..."
+  quick-buy-adding: "&eAdicionando à compra rápida..."
+  quick-buy-replace:
+    - "&eClique para substituir!"
+  quick-buy-empty-name: "&cEspaço vazio!"
+  quick-buy-empty-add:
+    - "&eClique para adicionar!"
+  quick-buy-empty:
+    - "&7Este é um espaço da compra rápida!"
+    - "&bClique segurando Shift em qualquer"
+    - "&bitem da loja para adicioná-lo aqui."
+  quick-buy-editor:
+    title: "Editando compra rápida..."
+    picker-title: "Selecionando item... ({page}/{pages})"
+    rows: 5
+    name: "&a{name}"
+    swap: "&eBotão esquerdo: &fTrocar"
+    remove: "&eBotão direito: &fRemover"
+    select: "&eClique para selecionar."
+    back:
+      slot: 39
+      item:
+        material: ARROW
+        name: "&aVoltar"
+        lore:
+          - "&7Para Menu do Bed Wars"
+    picker-back:
+      slot: 39
+      item:
+        material: ARROW
+        name: "&aVoltar"
+        lore:
+          - "&7Para Editando compra rápida..."
+    previous:
+      slot: 39
+      item:
+        material: ARROW
+        name: "&aPágina {page}"
+    next:
+      slot: 41
+      item:
+        material: ARROW
+        name: "&aPágina {page}"
+    import:
+      slot: 44
+      item:
+        material: BOOK_AND_QUILL
+        name: "&aImportar compra rápida"
+        lore:
+          - "&7Importe a compra rápida"
+          - "&7de outro jogador!"
+          - " "
+          - "&eClique para ver mais."
   cannot-afford: "&cVocê não tem {currency} o suficiente."
   can-afford: "&eClique para comprar."
   maxed: "&aVocê já tem o nível máximo."
@@ -868,6 +921,9 @@ shop:
         - "&7Ótimo para destruir Lã."
     picareta:
       type: pickaxe
+      editor-name: "Picareta"
+      editor-material: DIAMOND_PICKAXE
+      editor-description: []
       description:
         - "&7Você sempre renascerá com ao mínimo"
         - "&7o último nível."
@@ -890,6 +946,9 @@ shop:
           currency: gold
     machado:
       type: axe
+      editor-name: "Machado"
+      editor-material: DIAMOND_AXE
+      editor-description: []
       description:
         - "&7Você sempre renascerá com ao mínimo"
         - "&7o último nível."
@@ -986,6 +1045,10 @@ shop:
       price: 3
       currency: gold
     percevejo:
+      editor-description:
+        - "&7Invoque uma traça onde sua Bola"
+        - "&7de Neve cair para distrair os seus"
+        - "&7inimigos. Dura 15 segundos."
       type: special
       material: SNOW_BALL
       name: "Percevejo"
@@ -996,6 +1059,9 @@ shop:
         - "&7de Neve cair para distrair os"
         - "&7seus inimigos. Dura 15 segundos."
     bola-de-fogo:
+      editor-description:
+        - "&7Use Direito para lançar! Ótimo para"
+        - "&7empurrar jogadores fazendo ponte."
       type: item
       material: FIREBALL
       name: "Bola de Fogo"
@@ -1006,6 +1072,9 @@ shop:
         - "&7para empurrar jogadores fazendo"
         - "&7ponte."
     golem:
+      editor-description:
+        - "&7Invoque um Golem de Ferro para proteger"
+        - "&7sua base. Dura 4 minutos."
       type: special
       material: MONSTER_EGG
       data: 99
@@ -1025,6 +1094,9 @@ shop:
         - "&7Explode imediatamente, apropriado"
         - "&7para destruir coisas!"
     perola:
+      editor-description:
+        - "&7A forma mais rápida de invadir bases"
+        - "&7inimigas."
       type: item
       material: ENDER_PEARL
       name: "Pérola do Fim"
@@ -1043,6 +1115,9 @@ shop:
         - "&7Ótimo para atrasar inimigos. Também"
         - "&7protege contra TNT."
     leite:
+      editor-description:
+        - "&7Fique imune às Armadilhas por 30"
+        - "&7segundos após o consumo."
       type: special
       material: MILK_BUCKET
       name: "Leite Mágico"
@@ -1540,8 +1615,9 @@ cosmetics:
             - "&7e ganhe recompensas."
             - " "
             - "&eClique para ver mais."
-      soon:
-        "29":
+      quick-buy:
+        slot: 29
+        item:
           material: CHEST
           name: "&aCompra rápida"
           lore:
@@ -1549,6 +1625,7 @@ cosmetics:
             - "&7sua compra rápida."
             - " "
             - "&eClique para ver mais."
+      soon:
         "31":
           material: BLAZE_POWDER
           name: "&aEditor de hotbar"
