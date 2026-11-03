@@ -7,6 +7,7 @@ import br.com.muxe.core.bukkit.command.framework.annotation.Permission;
 import br.com.muxe.core.bukkit.command.framework.annotation.Subcommand;
 import br.com.muxe.core.bukkit.command.framework.annotation.Suggest;
 import br.com.muxe.core.bukkit.command.framework.completion.SuggestionRegistry;
+import br.com.muxe.core.bukkit.nms.PlayerPing;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.core.common.messaging.channel.PacketTarget;
 import br.com.muxe.core.common.metrics.snapshot.MetricsSnapshot;
@@ -14,8 +15,12 @@ import br.com.muxe.core.common.metrics.snapshot.SlowestTimers;
 import br.com.muxe.core.common.network.player.PlayerLocateRequest;
 import br.com.muxe.core.common.network.player.PlayerLocateResponse;
 import br.com.muxe.core.common.server.directory.ServerStatus;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 
 @Command(name = "muxe", description = "Network administration.", usage = "admin.usage")
@@ -26,6 +31,7 @@ public final class MuxeAdminCommand {
     public static final int LATENCY_LINES = 12;
 
     private final MuxeCore core;
+    private Optional<PlayerPing> pingReader;
 
     public MuxeAdminCommand(MuxeCore core) {
         this.core = core;
@@ -79,6 +85,14 @@ public final class MuxeAdminCommand {
     public void showLatency(CommandSender sender) {
         MessageCatalog messages = core.messages();
         MetricsSnapshot snapshot = core.metrics().snapshot();
+        Map<String, Integer> pings = new HashMap<>();
+        if (pingReader == null) {
+            pingReader = PlayerPing.resolve();
+        }
+        pingReader.ifPresent(reader -> Bukkit.getOnlinePlayers().forEach(player -> reader.of(player).ifPresent(ping -> pings.put(player.getName(), ping))));
+        if (!pings.isEmpty()) {
+            sender.sendMessage(messages.get("admin.latency-pings", "players", PingList.describe(pings, messages.get("admin.latency-ping"))));
+        }
         sender.sendMessage(messages.get("admin.latency-pools",
             "db-active", whole(snapshot.gaugeTotal("muxe_db_connections_active")),
             "db-pending", whole(snapshot.gaugeTotal("muxe_db_connections_pending")),
