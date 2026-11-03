@@ -220,6 +220,14 @@ class BedAnimationsTest {
         assertThat(far.y()).isCloseTo(8.8, offset(0.01));
     }
 
+    @Test
+    void aFallenPresentRestsOnTheFloorInsteadOfFloatingAboveIt() {
+        RecordingStage stage = run(new SantaHelperAnimation());
+
+        RecordingStage.FakeActor firstPresent = stage.actors.stream().filter(actor -> actor.type.equals("ArmorStand")).toList().get(6);
+        assertThat(firstPresent.position.y()).isCloseTo(FLOOR + 1 - 1.4375, offset(0.001));
+    }
+
     private static RecordingStage run(BedAnimation animation) {
         RecordingStage stage = new RecordingStage(block -> block[1] <= FLOOR);
         Timeline timeline = new Timeline();

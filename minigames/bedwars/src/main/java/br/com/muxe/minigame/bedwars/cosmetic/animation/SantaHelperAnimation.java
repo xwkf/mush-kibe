@@ -31,6 +31,7 @@ public final class SantaHelperAnimation implements BedAnimation {
     static final int END = 99;
     static final double STEP_BACK = 0.35;
     static final double STEP_UP = 0.10;
+    static final double HEAD = 1.4375;
     static final double[][] TRAIL = {{0.29, 0.65, 0.12}, {1, 1, 1}, {0.94, 0.20, 0.20}};
 
     @Override
@@ -112,9 +113,10 @@ public final class SantaHelperAnimation implements BedAnimation {
             }
             speed = (speed + 0.08) * 0.98;
             Vec next = position.add(0, -speed, 0);
-            if (stage.solid((int) Math.floor(next.x()), (int) Math.floor(next.y()), (int) Math.floor(next.z()))) {
+            double head = next.y() + HEAD;
+            if (stage.solid((int) Math.floor(next.x()), (int) Math.floor(head), (int) Math.floor(next.z()))) {
                 landed = true;
-                next = new Vec(next.x(), Math.floor(next.y()) + 1, next.z());
+                next = new Vec(next.x(), Math.floor(head) + 1 - HEAD, next.z());
             }
             position = next;
             stand.teleport(position, 0, 0);
