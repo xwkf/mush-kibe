@@ -14,6 +14,7 @@ public final class MenuHolder implements InventoryHolder {
     private final Menu menu;
     private final Map<Integer, MenuButton> buttons;
     private final Inventory inventory;
+    private int age;
 
     MenuHolder(Menu menu) {
         this.menu = menu;
@@ -48,6 +49,15 @@ public final class MenuHolder implements InventoryHolder {
         if (button != null) {
             button.click().click(new ClickContext(player, type, slot, this));
         }
+    }
+
+    void tick() {
+        age++;
+        buttons.forEach((slot, button) -> {
+            if (button.changesAt(age)) {
+                inventory.setItem(slot, button.iconAt(age).build());
+            }
+        });
     }
 
     void closed(Player player) {

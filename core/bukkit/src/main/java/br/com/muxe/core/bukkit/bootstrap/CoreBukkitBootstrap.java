@@ -15,6 +15,7 @@ import br.com.muxe.core.bukkit.config.BukkitConfigSource;
 import br.com.muxe.core.bukkit.greeting.GreetingSettings;
 import br.com.muxe.core.bukkit.greeting.JoinGreeting;
 import br.com.muxe.core.bukkit.greeting.LeftoverTitleCleaner;
+import br.com.muxe.core.bukkit.menu.MenuAnimator;
 import br.com.muxe.core.bukkit.menu.MenuListener;
 import br.com.muxe.core.bukkit.monitor.BukkitServerLoad;
 import br.com.muxe.core.bukkit.monitor.TickMonitor;
@@ -84,6 +85,7 @@ public final class CoreBukkitBootstrap {
 
         plugin.getServer().getScheduler().runTaskTimer(plugin, new TickMonitor(load, runtime.metrics()), 1L, 1L);
         plugin.getServer().getPluginManager().registerEvents(new MenuListener(), plugin);
+        plugin.getServer().getScheduler().runTaskTimer(plugin, new MenuAnimator(), 1L, 1L);
         ClearMidday.start(plugin);
         plugin.getServer().getPluginManager().registerEvents(buildMode, plugin);
         plugin.getServer().getScheduler().runTaskTimer(plugin, buildMode, BuildMode.ACTION_BAR_PERIOD_TICKS, BuildMode.ACTION_BAR_PERIOD_TICKS);

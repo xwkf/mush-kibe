@@ -308,6 +308,7 @@ menu.open(player);
 
 - Buttons go by slot or by row and column (`Slots.of(row, column)`). `border` frames the menu, `fill` covers the empty slots; buttons always win.
 - Clicks receive a `ClickContext`: the player, the click type (`isLeftClick`, `isRightClick`, `isShiftClick`), the slot, and actions to `close()`, `open(otherMenu)`, `update(slot, button)` or `updateIcon(icon)` while the menu is open.
+- `MenuButton.animated(frames, period, click)` is a button whose icon cycles through `frames`, one every `period` ticks, while the menu is open (the core's `MenuAnimator` ticks every open menu); with a single frame it is a plain button.
 - Every click inside a menu is cancelled: players never take or drop items from it.
 - Titles are translated and cut to the 32 characters 1.8 allows.
 

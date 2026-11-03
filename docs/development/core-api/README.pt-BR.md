@@ -309,6 +309,7 @@ menu.open(player);
 
 - Os botões vão por slot ou por linha e coluna (`Slots.of(row, column)`). `border` faz a moldura do menu, `fill` cobre os slots vazios; os botões sempre têm prioridade.
 - Os cliques recebem um `ClickContext`: o jogador, o tipo de clique (`isLeftClick`, `isRightClick`, `isShiftClick`), o slot e ações para `close()`, `open(outroMenu)`, `update(slot, button)` ou `updateIcon(icon)` com o menu aberto.
+- `MenuButton.animated(quadros, período, clique)` é um botão cujo ícone passa por `quadros`, um a cada `período` ticks, enquanto o menu está aberto (o `MenuAnimator` do core faz todo menu aberto andar); com um quadro só ele é um botão comum.
 - Todo clique dentro de um menu é cancelado: os jogadores nunca pegam nem largam itens dele.
 - Os títulos são traduzidos e cortados nos 32 caracteres que a 1.8 permite.
 
