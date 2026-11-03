@@ -113,8 +113,19 @@ public final class DesertVictory implements SceneAnimation {
         timeline.lasts(LENGTH);
         Drops drops = new Drops(stage, random);
         scheduleWave(stage, timeline, random, originX, originY, originZ);
-        scheduleOasis(stage, timeline, random, drops, originX, originY, originZ, scene.facing());
-        scheduleCarpet(scene, stage, timeline, random, drops);
+        List<int[]> oases = new ArrayList<>();
+        List<Riders.Rider> riders = Riders.of(scene, stage);
+        for (Riders.Rider rider : riders) {
+            Vec ground = rider.ground();
+            oases.add(scheduleOasis(stage, timeline, random, drops, (int) Math.floor(ground.x()), (int) Math.floor(ground.y()), (int) Math.floor(ground.z()), rider.facing(), List.copyOf(oases)));
+        }
+        CarpetFlight leader = null;
+        for (Riders.Rider rider : riders) {
+            CarpetFlight flight = scheduleCarpet(rider, stage, timeline, random, leader == null);
+            leader = leader == null ? flight : leader;
+        }
+        CarpetFlight rainCarpet = leader;
+        timeline.repeat(RAIN_FIRST, RAIN_LAST, RAIN_EVERY, tick -> rain(random, drops, rainCarpet, scene.area()));
         timeline.repeat(0, LENGTH - 1, 1, tick -> drops.step());
         timeline.at(LENGTH, drops::removeAll);
     }
@@ -191,8 +202,9 @@ public final class DesertVictory implements SceneAnimation {
         stage.particle("BLOCK_CRACK", centre, 10, new Vec(0.25, 0.25, 0.25), 0.1, Kit.blockId(placement.material(), placement.data()));
     }
 
-    private static void scheduleOasis(Stage stage, Timeline timeline, RandomGenerator random, Drops drops, int originX, int originY, int originZ, Vec facing) {
-        int[] centre = oasisCentre(stage::solid, originX, originY, originZ, facing).orElseGet(() -> oasisAhead(originX, originZ, facing));
+    private static int[] scheduleOasis(Stage stage, Timeline timeline, RandomGenerator random, Drops drops, int originX, int originY, int originZ, Vec facing, List<int[]> others) {
+        Ground.Solid taken = (x, y, z) -> stage.solid(x, y, z) || others.stream().anyMatch(other -> Math.hypot(x - other[0], z - other[1]) < Oasis.RADIUS + 1);
+        int[] centre = oasisCentre(taken, originX, originY, originZ, facing).orElseGet(() -> oasisAhead(originX, originZ, facing));
         Oasis oasis = new Oasis(centre[0], originY, centre[1], random);
         for (int ring = 0; ring <= Oasis.RADIUS; ring++) {
             int current = ring;
@@ -212,6 +224,7 @@ public final class DesertVictory implements SceneAnimation {
         }
         byTick.forEach((tick, placements) -> timeline.at(tick, () -> placements.forEach(placement -> place(stage, placement))));
         scheduleFountain(stage, timeline, random, drops, oasis);
+        return centre;
     }
 
     static Optional<int[]> oasisCentre(Ground.Solid solid, int originX, int originY, int originZ, Vec facing) {
@@ -309,14 +322,14 @@ public final class DesertVictory implements SceneAnimation {
         });
     }
 
-    private static void scheduleCarpet(Scene scene, Stage stage, Timeline timeline, RandomGenerator random, Drops drops) {
-        Vec seat = scene.origin().add(0, SEAT_ABOVE_GROUND, 0);
-        float yaw = Vec.ZERO.yawTowards(scene.facing());
+    private static CarpetFlight scheduleCarpet(Riders.Rider rider, Stage stage, Timeline timeline, RandomGenerator random, boolean leader) {
+        Vec seat = rider.ground().add(0, SEAT_ABOVE_GROUND, 0);
+        float yaw = rider.yaw();
         CarpetFlight flight = new CarpetFlight(seat, yaw);
         Mount[] mount = new Mount[1];
         Carpet carpet = new Carpet();
         timeline.at(0, () -> {
-            mount[0] = stage.mount(seat, yaw, scene.riders());
+            mount[0] = stage.mount(seat, yaw, rider.seated());
             carpet.spawn(stage);
             carpet.place(flight);
             stage.sound("mob.enderdragon.wings", seat, 1, 1.49f);
@@ -329,10 +342,12 @@ public final class DesertVictory implements SceneAnimation {
             carpet.place(flight);
             trail(stage, random, flight, tick);
         });
-        timeline.repeat(LAUNCH_FIRST, LAUNCH_LAST, LAUNCH_EVERY, tick -> stage.sound("fireworks.launch", flight.position(), 3, 1));
+        if (leader) {
+            timeline.repeat(LAUNCH_FIRST, LAUNCH_LAST, LAUNCH_EVERY, tick -> stage.sound("fireworks.launch", flight.position(), 3, 1));
+        }
         timeline.repeat(WINGS_FIRST, WINGS_LAST, WINGS_EVERY, tick -> stage.sound("mob.enderdragon.wings", flight.position(), 0.4f, (float) Kit.between(random, 1.75, 1.83)));
-        timeline.repeat(RAIN_FIRST, RAIN_LAST, RAIN_EVERY, tick -> rain(random, drops, flight, scene.area()));
         timeline.at(LENGTH, carpet::remove);
+        return flight;
     }
 
     private static void rain(RandomGenerator random, Drops drops, CarpetFlight flight, Area area) {

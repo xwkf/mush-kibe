@@ -26,6 +26,8 @@ final class RecordingStage implements Stage {
     final List<BlockChange> bulk = new ArrayList<>();
     Function<int[], BlockType> types = block -> new BlockType(this.solid(block[0], block[1], block[2]) ? Material.STONE : Material.AIR, 0);
     Vec eyes = new Vec(0, 1.62, 0);
+    final Map<UUID, Vec> eyesOf = new HashMap<>();
+    final Map<UUID, Vec> lookOf = new HashMap<>();
     Vec look = new Vec(0, 0, 1);
     private final Predicate<int[]> solid;
 
@@ -106,6 +108,7 @@ final class RecordingStage implements Stage {
     @Override
     public Mount mount(Vec seat, float yaw, List<UUID> riders) {
         FakeMount mount = new FakeMount(seat);
+        mount.riders.addAll(riders);
         mounts.add(mount);
         return mount;
     }
@@ -122,12 +125,12 @@ final class RecordingStage implements Stage {
 
     @Override
     public Optional<Vec> eyes(UUID player) {
-        return Optional.of(eyes);
+        return Optional.of(eyesOf.getOrDefault(player, eyes));
     }
 
     @Override
     public Optional<Vec> look(UUID player) {
-        return Optional.of(look);
+        return Optional.of(lookOf.getOrDefault(player, look));
     }
 
     @Override
@@ -219,6 +222,8 @@ final class RecordingStage implements Stage {
 
     static final class FakeMount implements Mount {
 
+        final Vec start;
+        final List<UUID> riders = new ArrayList<>();
         Vec seat;
         float yaw;
         float pitch;
@@ -226,6 +231,7 @@ final class RecordingStage implements Stage {
         final List<Vec> path = new ArrayList<>();
 
         FakeMount(Vec seat) {
+            this.start = seat;
             this.seat = seat;
         }
 

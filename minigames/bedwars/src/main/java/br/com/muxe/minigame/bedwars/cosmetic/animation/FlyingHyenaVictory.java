@@ -56,31 +56,44 @@ public final class FlyingHyenaVictory implements SceneAnimation {
 
     @Override
     public void script(Scene scene, Stage stage, Timeline timeline, RandomGenerator random) {
-        Vec seat = scene.origin().add(0, SEAT_ABOVE_GROUND, 0);
-        float yaw = Vec.ZERO.yawTowards(scene.facing());
-        Flight flight = new Flight(seat, yaw);
-        Mount[] mount = new Mount[1];
-        Actor[] hyena = new Actor[1];
+        List<Ride> rides = Riders.of(scene, stage).stream().map(rider -> new Ride(rider, new Flight(rider.ground().add(0, SEAT_ABOVE_GROUND, 0), rider.yaw()))).toList();
+        Ride leader = rides.getFirst();
         List<Present> presents = new ArrayList<>();
         int[] spawned = {0};
-        timeline.at(0, () -> {
-            mount[0] = stage.mount(seat, yaw, scene.riders());
-            hyena[0] = stage.armorStand(seat.add(0, -HYENA_BELOW_SEAT, 0), yaw, UNSEEN);
-            hyena[0].equipSkull(Slot.HELMET, HYENA);
-        });
-        timeline.repeat(1, LENGTH - 1, 1, tick -> fly(flight, mount[0], hyena[0]));
+        timeline.at(0, () -> rides.forEach(ride -> ride.start(stage)));
+        timeline.repeat(1, LENGTH - 1, 1, tick -> rides.forEach(ride -> fly(ride.flight, ride.mount, ride.hyena)));
         timeline.repeat(FIRST_BATCH, LAST_BATCH, BATCH_EVERY, batch -> {
             for (int count = 0; count < PRESENTS_PER_BATCH * scene.area().copies(); count++) {
-                presents.add(present(stage, random, scene.area(), mount[0].seat(), skin(spawned[0]++)));
+                presents.add(present(stage, random, scene.area(), leader.mount.seat(), skin(spawned[0]++)));
             }
         });
         timeline.repeat(0, LENGTH - 1, 1, tick -> presents.removeIf(present -> present.step(stage)));
-        timeline.repeat(0, LAST_FIREWORK, FIREWORK_EVERY, index -> firework(stage, timeline, random, mount[0].seat(), index * FIREWORK_EVERY, FIREWORK_COLORS[index % FIREWORK_COLORS.length]));
+        timeline.repeat(0, LAST_FIREWORK, FIREWORK_EVERY, index -> firework(stage, timeline, random, leader.mount.seat(), index * FIREWORK_EVERY, FIREWORK_COLORS[index % FIREWORK_COLORS.length]));
         timeline.at(LENGTH, () -> {
             presents.forEach(Present::remove);
             presents.clear();
-            hyena[0].remove();
+            rides.forEach(ride -> ride.hyena.remove());
         });
+    }
+
+    private static final class Ride {
+
+        private final Riders.Rider rider;
+        private final Flight flight;
+        private Mount mount;
+        private Actor hyena;
+
+        Ride(Riders.Rider rider, Flight flight) {
+            this.rider = rider;
+            this.flight = flight;
+        }
+
+        void start(Stage stage) {
+            Vec seat = flight.position();
+            mount = stage.mount(seat, rider.yaw(), rider.seated());
+            hyena = stage.armorStand(seat.add(0, -HYENA_BELOW_SEAT, 0), rider.yaw(), UNSEEN);
+            hyena.equipSkull(Slot.HELMET, HYENA);
+        }
     }
 
     static String skin(int counter) {

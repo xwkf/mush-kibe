@@ -72,11 +72,16 @@ public final class BalloonsVictory implements SceneAnimation {
 
     @Override
     public void script(Scene scene, Stage stage, Timeline timeline, RandomGenerator random) {
-        Flight flight = new Flight(scene, stage, random);
-        timeline.at(0, flight::start);
-        timeline.repeat(0, LENGTH - LAUNCH_EVERY, LAUNCH_EVERY, offset -> stage.sound("fireworks.launch", flight.seat, 3, 1));
-        timeline.repeat(1, LENGTH, 1, offset -> flight.advance(offset + 1));
-        timeline.at(LENGTH, flight::remove);
+        List<Riders.Rider> riders = Riders.of(scene, stage);
+        List<Flight> flights = new ArrayList<>();
+        for (int index = 0; index < riders.size(); index++) {
+            flights.add(new Flight(riders.get(index), stage, random, index == 0));
+        }
+        Flight leader = flights.getFirst();
+        timeline.at(0, () -> flights.forEach(Flight::start));
+        timeline.repeat(0, LENGTH - LAUNCH_EVERY, LAUNCH_EVERY, offset -> stage.sound("fireworks.launch", leader.seat, 3, 1));
+        timeline.repeat(1, LENGTH, 1, offset -> flights.forEach(flight -> flight.advance(offset + 1)));
+        timeline.at(LENGTH, () -> flights.forEach(Flight::remove));
         timeline.lasts(LENGTH);
     }
 
@@ -159,30 +164,32 @@ public final class BalloonsVictory implements SceneAnimation {
 
     private static final class Flight {
 
-        private final Scene scene;
+        private final Riders.Rider rider;
         private final Stage stage;
         private final RandomGenerator random;
+        private final boolean withLoose;
         private final List<HandBalloon> hands = new ArrayList<>();
         private final List<LooseBalloon> loose = new ArrayList<>();
         private Mount mount;
         private Actor anchor;
         private Vec seat;
 
-        Flight(Scene scene, Stage stage, RandomGenerator random) {
-            this.scene = scene;
+        Flight(Riders.Rider rider, Stage stage, RandomGenerator random, boolean withLoose) {
+            this.rider = rider;
             this.stage = stage;
             this.random = random;
-            this.seat = scene.origin();
+            this.withLoose = withLoose;
+            this.seat = rider.ground();
         }
 
         void start() {
-            seat = scene.origin();
-            mount = stage.mount(seat, Vec.ZERO.yawTowards(scene.facing()), scene.riders());
+            seat = rider.ground();
+            mount = stage.mount(seat, rider.yaw(), rider.seated());
             anchor = invisibleChicken(stage, seat.add(ANCHOR_OFFSET));
             for (int index = 0; index < HAND_BALLOONS; index++) {
                 hands.add(new HandBalloon(stage, random, seat, anchor, index));
             }
-            for (int index = 0; index < LOOSE_BALLOONS; index++) {
+            for (int index = 0; withLoose && index < LOOSE_BALLOONS; index++) {
                 loose.add(new LooseBalloon(stage, random, seat));
             }
         }

@@ -40,30 +40,45 @@ public final class FlyingPigVictory implements SceneAnimation {
 
     @Override
     public void script(Scene scene, Stage stage, Timeline timeline, RandomGenerator random) {
-        Vec seat = scene.origin().add(0, SEAT_ABOVE_GROUND, 0);
-        Vec spawn = seat.add(0, -PIG_BELOW_SEAT, 0);
-        float yaw = Vec.ZERO.yawTowards(scene.facing());
-        Flight flight = new Flight(seat, yaw);
-        Mount[] mount = new Mount[1];
-        Train[] train = new Train[1];
-        timeline.at(0, () -> {
-            mount[0] = stage.mount(seat, yaw, scene.riders());
-            train[0] = train(stage, spawn, yaw);
+        List<Ride> rides = Riders.of(scene, stage).stream().map(Ride::new).toList();
+        Ride leader = rides.getFirst();
+        timeline.at(0, () -> rides.forEach(ride -> ride.start(stage)));
+        timeline.repeat(1, LENGTH - 1, 1, tick -> rides.forEach(Ride::fly));
+        timeline.repeat(0, LENGTH - 1, 1, tick -> rides.forEach(ride -> {
+            ride.train.follow();
+            ambience(stage, random, ride.train);
+        }));
+        timeline.repeat(0, LAST_LAUNCH, LAUNCH_EVERY, tick -> stage.sound("fireworks.launch", leader.mount.seat(), 3, 1));
+        timeline.repeat(WINGS_FIRST, LENGTH - 1, WINGS_EVERY, tick -> rides.forEach(ride -> stage.sound("mob.enderdragon.wings", ride.mount.seat(), 0.3f, 1.587f)));
+        timeline.at(LENGTH, () -> rides.forEach(ride -> ride.train.remove()));
+    }
+
+    private static final class Ride {
+
+        private final Riders.Rider rider;
+        private final Flight flight;
+        private Mount mount;
+        private Train train;
+
+        Ride(Riders.Rider rider) {
+            this.rider = rider;
+            this.flight = new Flight(rider.ground().add(0, SEAT_ABOVE_GROUND, 0), rider.yaw());
+        }
+
+        void start(Stage stage) {
+            Vec seat = flight.position();
+            Vec spawn = seat.add(0, -PIG_BELOW_SEAT, 0);
+            mount = stage.mount(seat, rider.yaw(), rider.seated());
+            train = train(stage, spawn, rider.yaw());
             stage.sound("mob.pig.say", spawn, 0.6f, 1);
-        });
-        timeline.repeat(1, LENGTH - 1, 1, tick -> {
-            float lookYaw = mount[0].lookYaw();
-            flight.step(mount[0].pushing(), lookYaw, mount[0].lookPitch());
-            mount[0].move(flight.position(), lookYaw);
-            train[0].lead(flight.position().add(0, -PIG_BELOW_SEAT, 0), flight.yaw());
-        });
-        timeline.repeat(0, LENGTH - 1, 1, tick -> {
-            train[0].follow();
-            ambience(stage, random, train[0]);
-        });
-        timeline.repeat(0, LAST_LAUNCH, LAUNCH_EVERY, tick -> stage.sound("fireworks.launch", mount[0].seat(), 3, 1));
-        timeline.repeat(WINGS_FIRST, LENGTH - 1, WINGS_EVERY, tick -> stage.sound("mob.enderdragon.wings", mount[0].seat(), 0.3f, 1.587f));
-        timeline.at(LENGTH, () -> train[0].remove());
+        }
+
+        void fly() {
+            float lookYaw = mount.lookYaw();
+            flight.step(mount.pushing(), lookYaw, mount.lookPitch());
+            mount.move(flight.position(), lookYaw);
+            train.lead(flight.position().add(0, -PIG_BELOW_SEAT, 0), flight.yaw());
+        }
     }
 
     static int delay(int follower) {
