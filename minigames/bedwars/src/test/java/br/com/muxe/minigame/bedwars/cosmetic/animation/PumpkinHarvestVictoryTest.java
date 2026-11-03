@@ -3,6 +3,7 @@ package br.com.muxe.minigame.bedwars.cosmetic.animation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 
+import br.com.muxe.core.bukkit.cosmetic.animation.Area;
 import br.com.muxe.core.bukkit.cosmetic.animation.Scene;
 import br.com.muxe.core.bukkit.cosmetic.animation.Timeline;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
@@ -51,14 +52,14 @@ class PumpkinHarvestVictoryTest {
     }
 
     @Test
-    void pumpkinsAppearAheadOfTheWinner() {
+    void pumpkinsFallAllOverTheMapButNotOnTheWinner() {
         Random random = new Random(3);
-        Vec forward = new Vec(1, 0, 0);
-        Vec right = new Vec(0, 0, 1);
+        Area map = Area.around(origin, 50);
         for (int index = 0; index < 200; index++) {
-            Vec spot = PumpkinHarvestVictory.spot(origin, forward, right, random);
-            assertThat(spot.x() - origin.x()).isBetween(2.0, 13.0);
-            assertThat(spot.z() - origin.z()).isBetween(-5.5, 7.2);
+            Vec spot = Kit.drop(map, origin, PumpkinHarvestVictory.MIN_AHEAD, random);
+            assertThat(Math.abs(spot.x() - origin.x())).isLessThanOrEqualTo(50);
+            assertThat(Math.abs(spot.z() - origin.z())).isLessThanOrEqualTo(50);
+            assertThat(Math.hypot(spot.x() - origin.x(), spot.z() - origin.z())).isGreaterThanOrEqualTo(2.0);
         }
     }
 
@@ -89,8 +90,13 @@ class PumpkinHarvestVictoryTest {
         RecordingStage empty = new RecordingStage(block -> false);
         RecordingStage ground = new RecordingStage(block -> block[1] < 27);
 
+        RecordingStage highIsland = new RecordingStage(block -> block[1] < 27 || block[1] < 40 && block[0] > 10);
+
         assertThat(PumpkinHarvestVictory.floorAt(empty, 3.5, 27, 3.5)).isEqualTo(OptionalDouble.empty());
         assertThat(PumpkinHarvestVictory.floorAt(ground, 3.5, 27, 3.5)).isEqualTo(OptionalDouble.of(27));
+        assertThat(PumpkinHarvestVictory.floorBelow(empty, 3.5, 43, 3.5)).isEqualTo(OptionalDouble.empty());
+        assertThat(PumpkinHarvestVictory.floorBelow(ground, 3.5, 43, 3.5)).isEqualTo(OptionalDouble.of(27));
+        assertThat(PumpkinHarvestVictory.floorBelow(highIsland, 12.5, 43, 3.5)).isEqualTo(OptionalDouble.of(40));
     }
 
     @Test

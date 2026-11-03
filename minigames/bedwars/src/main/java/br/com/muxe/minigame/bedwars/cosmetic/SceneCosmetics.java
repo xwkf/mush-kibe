@@ -1,5 +1,6 @@
 package br.com.muxe.minigame.bedwars.cosmetic;
 
+import br.com.muxe.core.bukkit.cosmetic.animation.Area;
 import br.com.muxe.core.bukkit.cosmetic.animation.Ground;
 import br.com.muxe.core.bukkit.cosmetic.animation.Scene;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
@@ -51,13 +52,15 @@ public final class SceneCosmetics {
         return riders;
     }
 
-    public void play(Player owner, Location at, Vec facing, Optional<String> skin, List<UUID> riders, List<Player> viewers) {
+    public void play(Player owner, Location at, Vec facing, Optional<String> skin, List<UUID> riders, List<Player> viewers, Optional<Area> area) {
         profiles.of(owner.getUniqueId())
             .flatMap(wallet -> wallet.animation(catalog, ThreadLocalRandom.current()))
             .flatMap(animations::find)
             .ifPresent(animation -> {
                 List<Player> audience = List.copyOf(viewers);
-                animator.play(animation, at.getWorld(), new Scene(onGround(at.getWorld(), at), facing, skin, riders), () -> audience, () -> {
+                Vec origin = onGround(at.getWorld(), at);
+                Scene scene = new Scene(origin, facing, skin, riders, area.orElseGet(() -> Area.around(origin, Scene.REACH)));
+                animator.play(animation, at.getWorld(), scene, () -> audience, () -> {
                 });
             });
     }

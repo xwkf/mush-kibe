@@ -3,6 +3,7 @@ package br.com.muxe.minigame.bedwars.cosmetic.animation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
+import br.com.muxe.core.bukkit.cosmetic.animation.Area;
 import br.com.muxe.core.bukkit.cosmetic.animation.Scene;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.BlockChange;
 import br.com.muxe.core.bukkit.cosmetic.animation.Timeline;
@@ -342,5 +343,18 @@ class DesertVictoryTest {
         assertThat(stage.mounts).hasSize(1);
         assertThat(stage.times).isEmpty();
         assertThat(stage.alive()).isZero();
+    }
+
+    @Test
+    void goldRainsAllOverTheMapAboveTheCarpet() {
+        Area map = new Area(-80, -80, 80, 80);
+        Vec vehicle = new Vec(5, 70, 5);
+        Random random = new Random(9);
+        for (int drop = 0; drop < 300; drop++) {
+            Vec spot = DesertVictory.rainSpot(map, vehicle, random);
+            assertThat(spot.x()).isBetween(-80.0, 80.0);
+            assertThat(spot.z()).isBetween(-80.0, 80.0);
+            assertThat(spot.y() - vehicle.y()).isBetween(DesertVictory.RAIN_MIN_HEIGHT, DesertVictory.RAIN_MAX_HEIGHT);
+        }
     }
 }

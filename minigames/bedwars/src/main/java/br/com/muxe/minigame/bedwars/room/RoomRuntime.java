@@ -989,7 +989,7 @@ public final class RoomRuntime {
         audience.forEach(player -> online.add(player.getUniqueId()));
         room.celebrant(team, online, ThreadLocalRandom.current())
             .map(Bukkit::getPlayer)
-            .ifPresent(winner -> service.victories().won(winner, audience));
+            .ifPresent(winner -> service.victories().won(winner, audience, room.area()));
     }
 
     private void record(Optional<TeamColor> winner) {

@@ -2,6 +2,7 @@ package br.com.muxe.minigame.bedwars.bootstrap;
 
 import br.com.muxe.core.bukkit.api.MuxeCore;
 import br.com.muxe.core.bukkit.command.framework.Commands;
+import br.com.muxe.core.bukkit.cosmetic.animation.Area;
 import br.com.muxe.core.bukkit.cosmetic.stage.AnimationPlayer;
 import br.com.muxe.core.bukkit.mission.menu.MissionMenus;
 import br.com.muxe.core.bukkit.nms.BlockMask;
@@ -19,8 +20,8 @@ import br.com.muxe.minigame.bedwars.cosmetic.command.CosmeticCommand;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.BedWarsMenuItem;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticCategory;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenuSettings;
-import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenus;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenus.PreviewGate;
+import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenus;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.MenuSlot;
 import br.com.muxe.minigame.bedwars.cosmetic.preview.BedPreview;
 import br.com.muxe.minigame.bedwars.cosmetic.preview.PreviewSettings;
@@ -145,13 +146,13 @@ final class CosmeticFeatures {
         return bedBreaks;
     }
 
-    void victory(Player winner, List<Player> viewers) {
-        victories.play(winner, winner.getLocation(), SceneCosmetics.facing(winner.getLocation()), Optional.empty(), SceneCosmetics.riders(winner, viewers), viewers);
+    void victory(Player winner, List<Player> viewers, Area area) {
+        victories.play(winner, winner.getLocation(), SceneCosmetics.facing(winner.getLocation()), Optional.empty(), SceneCosmetics.riders(winner, viewers), viewers, Optional.of(area));
     }
 
     void finalKill(Player killer, Player victim, List<Player> viewers) {
         Location at = victim.getLocation();
-        finalKills.play(killer, at, SceneCosmetics.away(killer.getLocation(), at), PlayerSkins.of(victim).map(NpcSkin::value), List.of(), viewers);
+        finalKills.play(killer, at, SceneCosmetics.away(killer.getLocation(), at), PlayerSkins.of(victim).map(NpcSkin::value), List.of(), viewers, Optional.empty());
     }
 
     void openMenu(Player player) {

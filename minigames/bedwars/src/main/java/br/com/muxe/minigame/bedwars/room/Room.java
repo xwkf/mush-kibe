@@ -1,6 +1,8 @@
 package br.com.muxe.minigame.bedwars.room;
 
+import br.com.muxe.core.bukkit.cosmetic.animation.Area;
 import br.com.muxe.minigame.bedwars.arena.BedWarsArena;
+import br.com.muxe.minigame.bedwars.arena.BedWarsArena.TeamBase;
 import br.com.muxe.minigame.bedwars.game.KillCredit;
 import br.com.muxe.minigame.bedwars.game.TeamStatus;
 import br.com.muxe.minigame.bedwars.game.XpRewards;
@@ -11,6 +13,7 @@ import br.com.muxe.minigame.bedwars.stats.domain.MatchResult;
 import br.com.muxe.minigame.engine.match.StartCountdown.Change;
 import br.com.muxe.minigame.engine.match.StartCountdown;
 import br.com.muxe.minigame.engine.mode.GameMode;
+import br.com.muxe.minigame.engine.setup.Point;
 import br.com.muxe.minigame.engine.team.TeamAssigner;
 import br.com.muxe.minigame.engine.team.TeamColor;
 import br.com.muxe.minigame.engine.world.cell.Cell;
@@ -29,6 +32,8 @@ import java.util.UUID;
 import java.util.random.RandomGenerator;
 
 public final class Room {
+
+    static final double MAP_MARGIN = 12;
 
     public enum Phase {
         WAITING,
@@ -78,6 +83,29 @@ public final class Room {
 
     public Cell cell() {
         return cell;
+    }
+
+    public Area area() {
+        List<Point> points = new ArrayList<>();
+        for (TeamBase base : arena.teams().values()) {
+            points.addAll(List.of(base.spawn(), base.bed(), base.shop(), base.upgrades()));
+            points.addAll(base.iron());
+            points.addAll(base.gold());
+        }
+        points.addAll(arena.diamonds());
+        points.addAll(arena.emeralds());
+        points.addAll(arena.extraShops());
+        points.addAll(arena.extraUpgrades());
+        points.addAll(arena.extraIron());
+        points.addAll(arena.extraGold());
+        if (points.isEmpty()) {
+            points.add(arena.spectator());
+        }
+        double minX = points.stream().mapToDouble(Point::x).min().orElseThrow();
+        double minZ = points.stream().mapToDouble(Point::z).min().orElseThrow();
+        double maxX = points.stream().mapToDouble(Point::x).max().orElseThrow();
+        double maxZ = points.stream().mapToDouble(Point::z).max().orElseThrow();
+        return new Area(cell.toWorldX(minX) - MAP_MARGIN, cell.toWorldZ(minZ) - MAP_MARGIN, cell.toWorldX(maxX) + MAP_MARGIN, cell.toWorldZ(maxZ) + MAP_MARGIN);
     }
 
     public Phase phase() {

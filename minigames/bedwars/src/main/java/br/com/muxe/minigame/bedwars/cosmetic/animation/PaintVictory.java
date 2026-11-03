@@ -26,9 +26,6 @@ public final class PaintVictory implements SceneAnimation {
     static final double DROP = 12;
     static final double BUCKET_BELOW_GROUND = 1.44;
     static final double WOOL_BELOW_GROUND = 1.38;
-    static final double MIN_FORWARD = 1.5;
-    static final double MAX_FORWARD = 8;
-    static final double MAX_SIDE = 7;
     static final double MIN_DISTANCE = 2.5;
     static final int[] WOOL = {5, 4, 11, 14};
     static final double[][] WOOL_COLORS = {{0, 1, 0}, {1, 1, 0}, {0, 0, 1}, {1, 0, 0}};
@@ -59,10 +56,10 @@ public final class PaintVictory implements SceneAnimation {
     @Override
     public void script(Scene scene, Stage stage, Timeline timeline, RandomGenerator random) {
         Vec origin = scene.origin();
-        Vec forward = flat(scene.facing());
-        Vec right = new Vec(-forward.z(), 0, forward.x());
-        for (int bucket = 0; bucket < BUCKETS; bucket++) {
-            Vec spot = spot(origin, forward, right, random);
+        int copies = scene.area().copies();
+        for (int drop = 0; drop < BUCKETS * copies; drop++) {
+            int bucket = drop / copies;
+            Vec spot = Kit.drop(scene.area(), origin, MIN_DISTANCE, random);
             int start = FIRST_BUCKET + bucket * BUCKET_EVERY;
             OptionalDouble ground = Ground.hit(stage::solid, spot.x(), origin.y() + DROP, spot.z(), (int) DROP + Ground.DEPTH);
             if (ground.isPresent()) {
@@ -72,22 +69,6 @@ public final class PaintVictory implements SceneAnimation {
             }
         }
         timeline.lasts(LENGTH);
-    }
-
-    static Vec flat(Vec facing) {
-        Vec flat = new Vec(facing.x(), 0, facing.z()).normalize();
-        return flat.length() == 0 ? new Vec(0, 0, 1) : flat;
-    }
-
-    static Vec spot(Vec origin, Vec forward, Vec right, RandomGenerator random) {
-        Vec spot = origin;
-        for (int attempt = 0; attempt < 6; attempt++) {
-            spot = origin.add(forward.multiply(Kit.between(random, MIN_FORWARD, MAX_FORWARD))).add(right.multiply(Kit.between(random, -MAX_SIDE, MAX_SIDE)));
-            if (new Vec(spot.x() - origin.x(), 0, spot.z() - origin.z()).length() >= MIN_DISTANCE) {
-                return spot;
-            }
-        }
-        return spot;
     }
 
     static double fallen(int tick) {

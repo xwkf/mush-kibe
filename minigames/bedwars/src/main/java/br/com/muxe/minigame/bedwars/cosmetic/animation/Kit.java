@@ -1,10 +1,11 @@
 package br.com.muxe.minigame.bedwars.cosmetic.animation;
 
+import br.com.muxe.core.bukkit.cosmetic.animation.Area;
 import br.com.muxe.core.bukkit.cosmetic.animation.BedFrame;
-import br.com.muxe.core.bukkit.cosmetic.animation.Stage;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.Actor;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.Burst;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.StandStyle;
+import br.com.muxe.core.bukkit.cosmetic.animation.Stage;
 import br.com.muxe.core.bukkit.cosmetic.animation.Timeline;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import java.util.List;
@@ -13,6 +14,8 @@ import java.util.random.RandomGenerator;
 import org.bukkit.Material;
 
 final class Kit {
+
+    static final int DROP_ATTEMPTS = 12;
 
     static final int BALL = 0;
     static final int LARGE_BALL = 1;
@@ -116,6 +119,14 @@ final class Kit {
     static Vec horizontal(double degrees, double length) {
         double radians = Math.toRadians(degrees);
         return new Vec(Math.cos(radians) * length, 0, Math.sin(radians) * length);
+    }
+
+    static Vec drop(Area area, Vec winner, double minDistance, RandomGenerator random) {
+        Vec spot = area.pick(random, winner.y());
+        for (int attempt = 0; attempt < DROP_ATTEMPTS && Math.hypot(spot.x() - winner.x(), spot.z() - winner.z()) < minDistance; attempt++) {
+            spot = area.pick(random, winner.y());
+        }
+        return spot;
     }
 
     static double between(RandomGenerator random, double min, double max) {

@@ -1,14 +1,15 @@
 package br.com.muxe.minigame.bedwars.cosmetic.animation;
 
+import br.com.muxe.core.bukkit.cosmetic.animation.Area;
 import br.com.muxe.core.bukkit.cosmetic.animation.Scene;
 import br.com.muxe.core.bukkit.cosmetic.animation.SceneAnimation;
-import br.com.muxe.core.bukkit.cosmetic.animation.Stage;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.Actor;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.BlockChange;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.BlockType;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.Mount;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.Slot;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.StandStyle;
+import br.com.muxe.core.bukkit.cosmetic.animation.Stage;
 import br.com.muxe.core.bukkit.cosmetic.animation.Timeline;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import br.com.muxe.minigame.bedwars.cosmetic.animation.DesertRules.Patches;
@@ -54,7 +55,6 @@ public final class DesertVictory implements SceneAnimation {
     static final int RAIN_FIRST = 1;
     static final int RAIN_EVERY = 4;
     static final int RAIN_LAST = 197;
-    static final double RAIN_SPREAD = 11.5;
     static final double RAIN_MIN_HEIGHT = 5.1;
     static final double RAIN_MAX_HEIGHT = 9.9;
     static final double RAIN_SIDEWAYS = 0.14;
@@ -278,20 +278,23 @@ public final class DesertVictory implements SceneAnimation {
         });
         timeline.repeat(LAUNCH_FIRST, LAUNCH_LAST, LAUNCH_EVERY, tick -> stage.sound("fireworks.launch", flight.position(), 3, 1));
         timeline.repeat(WINGS_FIRST, WINGS_LAST, WINGS_EVERY, tick -> stage.sound("mob.enderdragon.wings", flight.position(), 0.4f, (float) Kit.between(random, 1.75, 1.83)));
-        timeline.repeat(RAIN_FIRST, RAIN_LAST, RAIN_EVERY, tick -> rain(random, drops, flight));
+        timeline.repeat(RAIN_FIRST, RAIN_LAST, RAIN_EVERY, tick -> rain(random, drops, flight, scene.area()));
         timeline.at(LENGTH, carpet::remove);
     }
 
-    private static void rain(RandomGenerator random, Drops drops, CarpetFlight flight) {
+    private static void rain(RandomGenerator random, Drops drops, CarpetFlight flight, Area area) {
         Vec vehicle = flight.position().add(0, -VEHICLE_BELOW_SEAT, 0);
-        for (Material material : RAIN) {
-            Vec position = vehicle.add(
-                Kit.between(random, -RAIN_SPREAD, RAIN_SPREAD),
-                Kit.between(random, RAIN_MIN_HEIGHT, RAIN_MAX_HEIGHT),
-                Kit.between(random, -RAIN_SPREAD, RAIN_SPREAD));
-            Vec velocity = new Vec(Kit.between(random, -RAIN_SIDEWAYS, RAIN_SIDEWAYS), RAIN_LIFT, Kit.between(random, -RAIN_SIDEWAYS, RAIN_SIDEWAYS));
-            drops.spawn(material, position, velocity);
+        for (int copy = 0; copy < area.copies(); copy++) {
+            for (Material material : RAIN) {
+                Vec position = rainSpot(area, vehicle, random);
+                Vec velocity = new Vec(Kit.between(random, -RAIN_SIDEWAYS, RAIN_SIDEWAYS), RAIN_LIFT, Kit.between(random, -RAIN_SIDEWAYS, RAIN_SIDEWAYS));
+                drops.spawn(material, position, velocity);
+            }
         }
+    }
+
+    static Vec rainSpot(Area area, Vec vehicle, RandomGenerator random) {
+        return area.pick(random, vehicle.y() + Kit.between(random, RAIN_MIN_HEIGHT, RAIN_MAX_HEIGHT));
     }
 
     private static void trail(Stage stage, RandomGenerator random, CarpetFlight flight, int tick) {

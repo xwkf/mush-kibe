@@ -3,6 +3,7 @@ package br.com.muxe.minigame.bedwars.cosmetic.animation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 
+import br.com.muxe.core.bukkit.cosmetic.animation.Area;
 import br.com.muxe.core.bukkit.cosmetic.animation.Scene;
 import br.com.muxe.core.bukkit.cosmetic.animation.Timeline;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
@@ -22,17 +23,31 @@ class PaintVictoryTest {
     }
 
     @Test
-    void giftsLandInFrontOfTheWinnerAndNeverOnTopOfThem() {
+    void bucketsFallAllOverTheMapButNeverOnTopOfTheWinner() {
         Vec origin = new Vec(0, 64, 0);
-        Vec forward = new Vec(0, 0, -1);
-        Vec right = new Vec(1, 0, 0);
+        Area map = new Area(-60, -60, 60, 60);
         Random random = new Random(7);
+        double farthest = 0;
         for (int index = 0; index < 200; index++) {
-            Vec spot = PaintVictory.spot(origin, forward, right, random);
-            assertThat(spot.z()).isBetween(-8.0, -1.5);
-            assertThat(Math.abs(spot.x())).isLessThanOrEqualTo(7);
+            Vec spot = Kit.drop(map, origin, PaintVictory.MIN_DISTANCE, random);
+            assertThat(spot.x()).isBetween(-60.0, 60.0);
+            assertThat(spot.z()).isBetween(-60.0, 60.0);
             assertThat(Math.hypot(spot.x(), spot.z())).isGreaterThanOrEqualTo(2.5);
+            farthest = Math.max(farthest, Math.hypot(spot.x(), spot.z()));
         }
+        assertThat(farthest).isGreaterThan(50);
+    }
+
+    @Test
+    void aBigMapGetsTwiceTheBuckets() {
+        RecordingStage stage = new RecordingStage(block -> block[1] < 64);
+        Timeline timeline = new Timeline();
+        new PaintVictory().script(new Scene(new Vec(0.5, 64, 0.5), new Vec(0, 0, 1), Optional.empty(), List.of(), new Area(-60, -60, 60, 60)), stage, timeline, new Random(3));
+        for (int tick = 0; tick <= timeline.length(); tick++) {
+            timeline.run(tick);
+        }
+
+        assertThat(stage.sounds).filteredOn("random.anvil_land"::equals).hasSize(PaintVictory.BUCKETS * Area.MAX_COPIES);
     }
 
     @Test
@@ -47,12 +62,6 @@ class PaintVictoryTest {
             assertThat(pixel[0]).isEqualTo(0.0);
             assertThat(pixel[1]).isLessThan(-0.6);
         });
-    }
-
-    @Test
-    void aWinnerLookingStraightUpStillGetsAHorizontalDirection() {
-        assertThat(PaintVictory.flat(new Vec(0, 1, 0))).isEqualTo(new Vec(0, 0, 1));
-        assertThat(PaintVictory.flat(new Vec(2, 5, 0))).isEqualTo(new Vec(1, 0, 0));
     }
 
     @Test

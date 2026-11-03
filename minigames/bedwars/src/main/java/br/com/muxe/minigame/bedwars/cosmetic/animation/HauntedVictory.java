@@ -40,7 +40,6 @@ public final class HauntedVictory implements SceneAnimation {
     static final int HEAD_EVERY = 8;
     static final int LAST_HEAD = 192;
     static final double MIN_DISTANCE = 3;
-    static final double MAX_DISTANCE = 12;
     static final double MIN_HEIGHT = 11.2;
     static final double MAX_HEIGHT = 15.2;
     static final double BASE_BELOW_GROUND = 0.78;
@@ -141,10 +140,8 @@ public final class HauntedVictory implements SceneAnimation {
         return tick >= FIRST_HEAD && tick <= LAST_HEAD && (tick - FIRST_HEAD) % HEAD_EVERY == 0;
     }
 
-    static OptionalDouble floor(Stage stage, double x, double y, double z) {
-        double probe = y + 0.5;
-        double found = Ground.surface(stage::solid, x, probe, z);
-        return found == probe ? OptionalDouble.empty() : OptionalDouble.of(found);
+    static OptionalDouble floorBelow(Stage stage, double x, double top, double z) {
+        return Ground.hit(stage::solid, x, top, z, (int) Math.ceil(MAX_HEIGHT) + Ground.DEPTH);
     }
 
     private interface Piece {
@@ -217,12 +214,12 @@ public final class HauntedVictory implements SceneAnimation {
         }
 
         private void head(Vec winner) {
-            Vec away = Kit.horizontal(random.nextDouble() * 360, Kit.between(random, MIN_DISTANCE, MAX_DISTANCE));
-            double x = winner.x() + away.x();
-            double z = winner.z() + away.z();
-            OptionalDouble ground = floor(stage, x, winner.y(), z);
-            double base = ground.isPresent() ? ground.getAsDouble() : winner.y();
-            pieces.add(new Fall(x, z, base + Kit.between(random, MIN_HEIGHT, MAX_HEIGHT), ground));
+            for (int copy = 0; copy < scene.area().copies(); copy++) {
+                Vec spot = Kit.drop(scene.area(), winner, MIN_DISTANCE, random);
+                OptionalDouble ground = floorBelow(stage, spot.x(), winner.y() + MAX_HEIGHT, spot.z());
+                double base = ground.isPresent() ? ground.getAsDouble() : winner.y();
+                pieces.add(new Fall(spot.x(), spot.z(), base + Kit.between(random, MIN_HEIGHT, MAX_HEIGHT), ground));
+            }
         }
 
         private void clear() {

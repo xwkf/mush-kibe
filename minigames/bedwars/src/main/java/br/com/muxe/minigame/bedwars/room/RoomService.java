@@ -1,10 +1,11 @@
 package br.com.muxe.minigame.bedwars.room;
 
 import br.com.muxe.core.bukkit.api.MuxeCore;
+import br.com.muxe.core.bukkit.cosmetic.animation.Area;
 import br.com.muxe.core.bukkit.cosmetic.animation.BedFrame;
+import br.com.muxe.core.bukkit.display.DisplayService;
 import br.com.muxe.core.bukkit.mission.config.MissionConfig;
 import br.com.muxe.core.bukkit.npc.Npc;
-import br.com.muxe.core.bukkit.display.DisplayService;
 import br.com.muxe.core.bukkit.npc.NpcService;
 import br.com.muxe.core.bukkit.permission.display.NameTag;
 import br.com.muxe.core.bukkit.text.Colors;
@@ -14,11 +15,11 @@ import br.com.muxe.minigame.bedwars.arena.BedWarsArena;
 import br.com.muxe.minigame.bedwars.arena.BedWarsSchema;
 import br.com.muxe.minigame.bedwars.lobby.LevelChat;
 import br.com.muxe.minigame.bedwars.lobby.format.LevelBadges;
-import br.com.muxe.minigame.bedwars.preferences.PlayerPreferences;
 import br.com.muxe.minigame.bedwars.matchmaking.RoomChoice;
 import br.com.muxe.minigame.bedwars.mission.MissionRules;
 import br.com.muxe.minigame.bedwars.network.ArenaInfo;
 import br.com.muxe.minigame.bedwars.network.RoomInfo;
+import br.com.muxe.minigame.bedwars.preferences.PlayerPreferences;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
 import br.com.muxe.minigame.bedwars.title.EndTitles;
 import br.com.muxe.minigame.engine.arena.ArenaCatalog;
@@ -70,7 +71,7 @@ public final class RoomService {
     private final List<BukkitTask> tasks = new ArrayList<>();
     private BiConsumer<Player, NpcClick> npcClicks = (player, click) -> {
     };
-    private VictoryHandler victories = (winner, viewers) -> {
+    private VictoryHandler victories = (winner, viewers, area) -> {
     };
     private FinalKillHandler finalKills = (killer, victim, viewers) -> {
     };
@@ -494,7 +495,7 @@ public final class RoomService {
     @FunctionalInterface
     public interface VictoryHandler {
 
-        void won(Player winner, List<Player> viewers);
+        void won(Player winner, List<Player> viewers, Area area);
     }
 
     @FunctionalInterface

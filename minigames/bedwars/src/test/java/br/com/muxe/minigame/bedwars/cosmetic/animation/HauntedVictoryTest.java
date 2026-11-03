@@ -110,4 +110,13 @@ class HauntedVictoryTest {
         assertThat(stage.actors.stream().filter(actor -> actor.type.startsWith("Item"))).isEmpty();
         assertThat(stage.actors).allSatisfy(actor -> assertThat(actor.removed()).isTrue());
     }
+
+    @Test
+    void candyStopsOnTheFirstBlockBelowEvenOnAHigherIsland() {
+        RecordingStage stage = new RecordingStage(block -> block[1] < 27 || block[0] > 10 && block[1] < 40);
+
+        assertThat(HauntedVictory.floorBelow(stage, 12.5, 27 + HauntedVictory.MAX_HEIGHT, 0.5)).hasValue(40);
+        assertThat(HauntedVictory.floorBelow(stage, 2.5, 27 + HauntedVictory.MAX_HEIGHT, 0.5)).hasValue(27);
+        assertThat(HauntedVictory.floorBelow(new RecordingStage(block -> false), 2.5, 42, 0.5)).isEmpty();
+    }
 }

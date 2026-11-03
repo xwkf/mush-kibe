@@ -28,9 +28,6 @@ public final class PumpkinHarvestVictory implements SceneAnimation {
     static final int LIFETIME = 120;
     static final int NO_FLOOR_LIFE = 99;
     static final double MIN_AHEAD = 2;
-    static final double MAX_AHEAD = 13;
-    static final double MIN_SIDE = -5.5;
-    static final double MAX_SIDE = 7.2;
     static final double MIN_HEIGHT = 12.9;
     static final double MAX_HEIGHT = 16.5;
     static final double FALL_START = 0.625;
@@ -76,14 +73,15 @@ public final class PumpkinHarvestVictory implements SceneAnimation {
         Vec origin = scene.origin();
         List<Harvest> harvests = new ArrayList<>();
         timeline.repeat(1, LENGTH - 9, SPAWN_EVERY, offset -> stage.sound("fireworks.launch", origin, 3, 1));
-        for (int index = 0; index < PUMPKINS; index++) {
-            int start = FIRST_SPAWN + index * SPAWN_EVERY;
+        int copies = scene.area().copies();
+        for (int drop = 0; drop < PUMPKINS * copies; drop++) {
+            int start = FIRST_SPAWN + drop / copies * SPAWN_EVERY;
             if (start >= LENGTH) {
                 break;
             }
-            Vec spot = spot(origin, scene.facing(), scene.right(), random);
+            Vec spot = Kit.drop(scene.area(), origin, MIN_AHEAD, random);
             Vec spawn = new Vec(spot.x(), origin.y() + Kit.between(random, MIN_HEIGHT, MAX_HEIGHT), spot.z());
-            Harvest harvest = new Harvest(stage, random, spawn, floorAt(stage, spot.x(), origin.y(), spot.z()));
+            Harvest harvest = new Harvest(stage, random, spawn, floorBelow(stage, spot.x(), spawn.y(), spot.z()));
             harvests.add(harvest);
             timeline.repeat(start, Math.min(LENGTH, start + LIFETIME), 1, harvest::tick);
         }
@@ -91,8 +89,8 @@ public final class PumpkinHarvestVictory implements SceneAnimation {
         timeline.lasts(LENGTH);
     }
 
-    static Vec spot(Vec origin, Vec forward, Vec right, RandomGenerator random) {
-        return origin.add(forward.multiply(Kit.between(random, MIN_AHEAD, MAX_AHEAD))).add(right.multiply(Kit.between(random, MIN_SIDE, MAX_SIDE)));
+    static OptionalDouble floorBelow(Stage stage, double x, double top, double z) {
+        return Ground.hit(stage::solid, x, top, z, (int) Math.ceil(MAX_HEIGHT) + Ground.DEPTH);
     }
 
     static OptionalDouble floorAt(Stage stage, double x, double near, double z) {

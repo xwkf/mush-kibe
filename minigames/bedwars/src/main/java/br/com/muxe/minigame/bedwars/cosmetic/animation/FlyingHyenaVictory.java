@@ -1,5 +1,6 @@
 package br.com.muxe.minigame.bedwars.cosmetic.animation;
 
+import br.com.muxe.core.bukkit.cosmetic.animation.Area;
 import br.com.muxe.core.bukkit.cosmetic.animation.Ground;
 import br.com.muxe.core.bukkit.cosmetic.animation.Scene;
 import br.com.muxe.core.bukkit.cosmetic.animation.SceneAnimation;
@@ -36,7 +37,6 @@ public final class FlyingHyenaVictory implements SceneAnimation {
     static final int FIRST_BATCH = 1;
     static final int LAST_BATCH = 186;
     static final int BATCH_EVERY = 5;
-    static final double PRESENT_RADIUS = 25;
     static final double PRESENT_MIN_HEIGHT = 8;
     static final double PRESENT_MAX_HEIGHT = 13.5;
     static final double FALL_SPEED = 1.5;
@@ -70,8 +70,8 @@ public final class FlyingHyenaVictory implements SceneAnimation {
         });
         timeline.repeat(1, LENGTH - 1, 1, tick -> fly(flight, mount[0], hyena[0]));
         timeline.repeat(FIRST_BATCH, LAST_BATCH, BATCH_EVERY, batch -> {
-            for (int count = 0; count < PRESENTS_PER_BATCH; count++) {
-                presents.add(present(stage, random, mount[0].seat(), skin(spawned[0]++)));
+            for (int count = 0; count < PRESENTS_PER_BATCH * scene.area().copies(); count++) {
+                presents.add(present(stage, random, scene.area(), mount[0].seat(), skin(spawned[0]++)));
             }
         });
         timeline.repeat(0, LENGTH - 1, 1, tick -> presents.removeIf(present -> present.step(stage)));
@@ -91,10 +91,8 @@ public final class FlyingHyenaVictory implements SceneAnimation {
         return FALL_SPEED * ticks + FALL_ACCELERATION / 2 * ticks * (ticks + 1);
     }
 
-    static Vec presentSpot(Vec seat, RandomGenerator random) {
-        double radius = PRESENT_RADIUS * Math.sqrt(random.nextDouble());
-        Vec offset = Kit.horizontal(random.nextDouble() * 360, radius);
-        return seat.add(offset).add(0, Kit.between(random, PRESENT_MIN_HEIGHT, PRESENT_MAX_HEIGHT), 0);
+    static Vec presentSpot(Area area, Vec seat, RandomGenerator random) {
+        return area.pick(random, seat.y() + Kit.between(random, PRESENT_MIN_HEIGHT, PRESENT_MAX_HEIGHT));
     }
 
     static Vec fireworkSpot(Vec seat, RandomGenerator random) {
@@ -108,8 +106,8 @@ public final class FlyingHyenaVictory implements SceneAnimation {
         hyena.teleport(flight.position().add(0, -HYENA_BELOW_SEAT, 0), flight.yaw(), 0);
     }
 
-    private static Present present(Stage stage, RandomGenerator random, Vec seat, String texture) {
-        Vec spot = presentSpot(seat, random);
+    private static Present present(Stage stage, RandomGenerator random, Area area, Vec seat, String texture) {
+        Vec spot = presentSpot(area, seat, random);
         Actor box = stage.armorStand(spot, 0, UNSEEN);
         box.equipSkull(Slot.HELMET, texture);
         return new Present(box, spot);

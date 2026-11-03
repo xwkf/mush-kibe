@@ -2,6 +2,7 @@ package br.com.muxe.minigame.bedwars.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import br.com.muxe.core.bukkit.cosmetic.animation.Area;
 import br.com.muxe.minigame.bedwars.game.TeamStatus.Kind;
 import br.com.muxe.minigame.bedwars.room.RoomPlayer.State;
 import br.com.muxe.minigame.engine.match.StartCountdown.Change;
@@ -23,6 +24,15 @@ class RoomTest {
         TeamColor.CIANO, TeamColor.LARANJA, TeamColor.ROSA, TeamColor.CINZA);
 
     private final RoomView view = new RoomView(RoomFixtures.SETTINGS.scoreboard(), RoomFixtures.SETTINGS.timeline());
+
+    @Test
+    void theMapAreaCoversEveryIslandWithAMarginButNotTheWaitingLobby() {
+        Room room = RoomFixtures.room("2v7are", RoomFixtures.ONE_V_ONE, RoomFixtures.arena("1v1", "Slip", RED_BLUE));
+        double offset = room.cell().offsetBlockX();
+
+        assertThat(room.area()).isEqualTo(new Area(
+            offset - 2.5 - Room.MAP_MARGIN, offset + 0.5 - Room.MAP_MARGIN, offset + 43.5 + Room.MAP_MARGIN, offset + 64.5 + Room.MAP_MARGIN));
+    }
 
     @Test
     void theWaitingScoreboardMatchesTheReference() {

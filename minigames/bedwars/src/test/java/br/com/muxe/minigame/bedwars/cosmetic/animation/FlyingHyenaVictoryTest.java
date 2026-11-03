@@ -3,6 +3,7 @@ package br.com.muxe.minigame.bedwars.cosmetic.animation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 
+import br.com.muxe.core.bukkit.cosmetic.animation.Area;
 import br.com.muxe.core.bukkit.cosmetic.animation.Scene;
 import br.com.muxe.core.bukkit.cosmetic.animation.Timeline;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
@@ -57,12 +58,14 @@ class FlyingHyenaVictoryTest {
     }
 
     @Test
-    void presentsSpawnInsideTheDiscAboveTheSeat() {
+    void presentsSpawnAllOverTheMapAboveTheSeatHeight() {
         Vec seat = new Vec(10, 30, -4);
+        Area map = new Area(-70, -70, 70, 70);
         Random random = new Random(11);
         for (int index = 0; index < 500; index++) {
-            Vec spot = FlyingHyenaVictory.presentSpot(seat, random);
-            assertThat(Math.hypot(spot.x() - seat.x(), spot.z() - seat.z())).isLessThanOrEqualTo(25);
+            Vec spot = FlyingHyenaVictory.presentSpot(map, seat, random);
+            assertThat(spot.x()).isBetween(-70.0, 70.0);
+            assertThat(spot.z()).isBetween(-70.0, 70.0);
             assertThat(spot.y() - seat.y()).isBetween(8.0, 13.5);
         }
     }
