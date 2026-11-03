@@ -5,6 +5,7 @@ import br.com.muxe.core.bukkit.menu.ClickContext;
 import br.com.muxe.core.bukkit.menu.Menu;
 import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
+import br.com.muxe.minigame.bedwars.invisibility.Invisibility;
 import br.com.muxe.minigame.bedwars.item.ItemNames;
 import br.com.muxe.minigame.bedwars.listener.Bedbugs;
 import br.com.muxe.minigame.bedwars.quickbuy.domain.QuickBuy;
@@ -29,7 +30,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.PotionMeta;
-import org.bukkit.potion.PotionEffect;
 
 public final class ShopService {
 
@@ -317,7 +317,7 @@ public final class ShopService {
         ItemStack stack = new ItemStack(Material.POTION, 1, (short) item.data());
         PotionMeta meta = (PotionMeta) stack.getItemMeta();
         meta.clearCustomEffects();
-        meta.addCustomEffect(new PotionEffect(item.potion().type(), item.potion().seconds() * 20, item.potion().amplifier()), true);
+        meta.addCustomEffect(Invisibility.potionEffect(item.potion().type(), item.potion().seconds() * 20, item.potion().amplifier()), true);
         meta.setDisplayName(Colors.translate("&f" + tier.name()));
         stack.setItemMeta(meta);
         return stack;

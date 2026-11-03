@@ -1,11 +1,11 @@
 package br.com.muxe.minigame.bedwars.bootstrap;
 
 import br.com.muxe.core.bukkit.api.MuxeCore;
-import br.com.muxe.core.bukkit.config.PluginConfig;
-import br.com.muxe.core.bukkit.prompt.AnvilPrompts;
 import br.com.muxe.core.bukkit.command.framework.Commands;
+import br.com.muxe.core.bukkit.config.PluginConfig;
 import br.com.muxe.core.bukkit.mission.config.MissionConfig;
 import br.com.muxe.core.bukkit.mission.menu.MissionMenus;
+import br.com.muxe.core.bukkit.prompt.AnvilPrompts;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.core.common.messaging.channel.PacketTarget;
 import br.com.muxe.core.common.mission.MissionModule;
@@ -14,6 +14,7 @@ import br.com.muxe.core.common.server.ServerKind;
 import br.com.muxe.minigame.bedwars.arena.BedWarsSchema;
 import br.com.muxe.minigame.bedwars.command.BedWarsCommand;
 import br.com.muxe.minigame.bedwars.command.GlobalChatCommand;
+import br.com.muxe.minigame.bedwars.invisibility.InvisiblePlayers;
 import br.com.muxe.minigame.bedwars.listener.Bedbugs;
 import br.com.muxe.minigame.bedwars.listener.MatchListener;
 import br.com.muxe.minigame.bedwars.lobby.format.LevelBadges;
@@ -27,16 +28,16 @@ import br.com.muxe.minigame.bedwars.quickbuy.QuickBuyModule;
 import br.com.muxe.minigame.bedwars.quickbuy.domain.QuickBuy;
 import br.com.muxe.minigame.bedwars.room.RoomService;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
-import br.com.muxe.minigame.bedwars.shop.ShopCatalog;
 import br.com.muxe.minigame.bedwars.shop.QuickBuyEditor;
 import br.com.muxe.minigame.bedwars.shop.QuickBuys;
+import br.com.muxe.minigame.bedwars.shop.ShopCatalog;
 import br.com.muxe.minigame.bedwars.shop.ShopService;
 import br.com.muxe.minigame.bedwars.shop.UpgradeCatalog;
-import br.com.muxe.minigame.bedwars.tnt.TntTimerSettings;
-import br.com.muxe.minigame.bedwars.tnt.TntTimers;
 import br.com.muxe.minigame.bedwars.stats.StatsModule;
 import br.com.muxe.minigame.bedwars.stats.domain.BedWarsStatsRepository;
 import br.com.muxe.minigame.bedwars.stats.infrastructure.postgres.PostgresBedWarsStatsRepository;
+import br.com.muxe.minigame.bedwars.tnt.TntTimerSettings;
+import br.com.muxe.minigame.bedwars.tnt.TntTimers;
 import br.com.muxe.minigame.engine.MinigameEngine;
 import br.com.muxe.minigame.engine.arena.ArenaCatalog;
 import br.com.muxe.minigame.engine.arena.ArenaSavedPacket;
@@ -168,6 +169,7 @@ public final class BedWarsBootstrap {
         plugin.getServer().getPluginManager().registerEvents(new MatchListener(plugin, core, rooms, settings, messages, cosmetics::openMenu, bedbugs,
             preferences, tntTimers), plugin);
 
+        InvisiblePlayers.start(plugin, rooms);
         commands.register(new BedWarsCommand(rooms, messages));
         commands.register(new GlobalChatCommand(rooms));
 

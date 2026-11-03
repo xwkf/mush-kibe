@@ -46,6 +46,7 @@ class CoreCommandsTest {
             new ShopCommand(Optional.empty(), null, MESSAGES, null),
             new BuildCommand(null, MESSAGES),
             new LobbyCommand(null, "lobby"),
+            new ReturnCommand(null, null),
             new MuxeAdminCommand(null)
         );
     }

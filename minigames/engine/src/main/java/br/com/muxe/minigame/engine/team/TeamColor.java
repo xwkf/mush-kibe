@@ -54,6 +54,10 @@ public enum TeamColor {
         return displayName.charAt(0);
     }
 
+    public String boldLetter() {
+        return "&l" + letter() + color();
+    }
+
     public int woolData() {
         return woolData;
     }

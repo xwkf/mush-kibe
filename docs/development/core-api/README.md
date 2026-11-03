@@ -572,7 +572,9 @@ ranks.onChange(changed -> refresh(changed));
 - `onChange` runs on the main thread whenever an online player's permissions change (new rank, new tag, world change, expiry).
 - Commands and menus depend on the `PlayerRanks` interface, which tests implement with a `PermissionCache` and a `PermissionSync` over the in-memory fixtures.
 
-- **A plugin can replace a player's name tag**, which also sets the prefix in the tab list. `MuxeCore.get().nameTags().override(player -> Optional.of(tag))` answers a `NameTag(team, prefix)` for the players it wants and `Optional.empty()` for the others, which keep their rank tag. Call `nameTags().refresh(player)` after the answer changes, and `clearOverride()` when the plugin stops. BedWars uses it for the team letter, such as `§9A §9`.
+- **A plugin can replace a player's name tag**, which also sets the prefix in the tab list. `MuxeCore.get().nameTags().override(player -> Optional.of(tag))` answers a `NameTag(team, prefix)` for the players it wants and `Optional.empty()` for the others, which keep their rank tag. Call `nameTags().refresh(player)` after the answer changes, and `clearOverride()` when the plugin stops. BedWars uses it for the team letter, such as `§9§lA§9 `. The name tag teams let teammates see each other half transparent when invisible.
+- `ArmorVisibility.hide(viewer, target)` (package `br.com.muxe.core.bukkit.nms`) sends `viewer` an empty armour for `target` without touching the real armour, and `show(viewer, target)` sends the real one back. BedWars uses it for invisible players.
+- `MatchReturns` (package `br.com.muxe.core.common.match`) keeps, in an `ExpiringStore`, the server a player can return to: `remember(player, serverId, ttl)`, `serverOf(player)` and `forget(player)`. `/retornar` reads it on every server.
 
 ## Commands
 

@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.UUID;
 
@@ -151,14 +152,18 @@ public final class Room {
         return updateCountdown();
     }
 
-    public boolean forceStart(int seconds) {
+    public Optional<Change> forceStart(int seconds) {
         if (phase != Phase.WAITING && phase != Phase.STARTING || players.isEmpty()) {
-            return false;
+            return Optional.empty();
         }
+        OptionalInt before = countdown.remaining();
         countdown.force(seconds);
         phase = Phase.STARTING;
         forced = true;
-        return true;
+        if (before.isEmpty()) {
+            return Optional.of(Change.STARTED);
+        }
+        return Optional.of(before.getAsInt() > seconds ? Change.SHORTENED : Change.NONE);
     }
 
     public void forget(UUID id) {

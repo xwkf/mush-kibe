@@ -1241,6 +1241,7 @@ messages:
   build-not-allowed: "&cVocê não pode entrar no modo construção agora."
   build-action-bar: "&aModo construção ativado"
   connect-failed: "&cNão foi possível enviar você agora. Tente novamente em instantes."
+  nothing-to-return: "&cVocê não tem nenhuma partida para retornar."
   placement-failed: "&cNão foi possível salvar agora. Tente novamente em instantes."
   spam-cooldown: "&cAguarde {seconds}s para usar novamente."
   game-unavailable: "&cNenhuma sala de &f{name} &cdisponível no momento."

@@ -28,7 +28,7 @@ public record ChatView(Set<UUID> team, Set<UUID> everyone, String prefix) {
         Map<UUID, ChatView> views = new HashMap<>();
         for (RoomPlayer player : room.players()) {
             TeamColor team = player.team();
-            String prefix = teamsShown && team != null ? team.color() + "[" + team.letter() + "] " : "";
+            String prefix = teamsShown && team != null ? team.color() + "[" + team.boldLetter() + "] " : "";
             Set<UUID> audience = teamChat && team != null ? mates(room, team, online) : online;
             views.put(player.id(), new ChatView(audience, online, prefix));
         }

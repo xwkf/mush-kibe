@@ -59,8 +59,14 @@ class RoomTest {
 
         assertThat(view.lines(room, tadeu, 0)).containsExactly(
             "&82v7bss", "", "&fDiamante II em &a4:11", "",
-            "&cV &fVermelho: &a✔ &7VOCÊ", "&9A &fAzul: &a✔", "",
+            "&c&lV&c &fVermelho: &a✔ &7VOCÊ", "&9&lA&9 &fAzul: &a✔", "",
             "&fKills: &a0", "&fKills Finais: &a0", "&fCamas Quebradas: &a0", "", "&amuxe.com.br");
+    }
+
+    @Test
+    void theTeamLetterIsAlwaysBold() {
+        assertThat(TeamColor.VERMELHO.boldLetter()).isEqualTo("&lV&c");
+        assertThat(RoomService.tag(TeamColor.VERMELHO).prefix()).isEqualTo("§c§lV§c ");
     }
 
     @Test
@@ -76,7 +82,7 @@ class RoomTest {
         List<String> lines = view.lines(room, first, 0);
 
         assertThat(lines).hasSize(14).doesNotContain("&fKills: &a0");
-        assertThat(lines).contains("&cV &fVermelho: &a✔ &7VOCÊ", "&8C &fCinza: &c✘", "&dR &fRosa: &c✘");
+        assertThat(lines).contains("&c&lV&c &fVermelho: &a✔ &7VOCÊ", "&8&lC&8 &fCinza: &c✘", "&d&lR&d &fRosa: &c✘");
     }
 
     @Test
@@ -188,6 +194,29 @@ class RoomTest {
     }
 
     @Test
+    void aForcedStartReportsTheCountdownSoTheTenSecondsAreShownRightAway() {
+        Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
+        join(room, "tadeu");
+
+        assertThat(room.forceStart(10)).contains(Change.STARTED);
+        assertThat(room.countdown().remaining()).hasValue(10);
+        assertThat(RoomFixtures.SETTINGS.countdownTitles().at(10)).contains("&610 segundos");
+        assertThat(room.forceStart(10)).contains(Change.NONE);
+    }
+
+    @Test
+    void forcingARunningCountdownShortensItToTenSeconds() {
+        Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
+        for (int index = 0; index < RoomFixtures.SOLO.minPlayers(); index++) {
+            join(room, "player" + index);
+        }
+        assertThat(room.countdown().remaining()).hasValue(30);
+
+        assertThat(room.forceStart(10)).contains(Change.SHORTENED);
+        assertThat(room.countdown().remaining()).hasValue(10);
+    }
+
+    @Test
     void aMatchThatWasNotForcedEndsWhenOneTeamIsLeft() {
         Room room = RoomFixtures.room("abc123", RoomFixtures.ONE_V_ONE, RoomFixtures.arena("1v1", "Slip", RED_BLUE));
         join(room, "tadeu");
@@ -203,10 +232,10 @@ class RoomTest {
     @Test
     void staffCanForceAStartThatPlayersJoiningOrLeavingDoNotCancel() {
         Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
-        assertThat(room.forceStart(10)).isFalse();
+        assertThat(room.forceStart(10)).isEmpty();
         UUID first = join(room, "tadeu");
 
-        assertThat(room.forceStart(10)).isTrue();
+        assertThat(room.forceStart(10)).contains(Change.STARTED);
         UUID second = join(room, "x572");
         room.leaveBeforeStart(second);
 

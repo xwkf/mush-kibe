@@ -52,6 +52,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.ToIntFunction;
 import java.util.logging.Level;
@@ -107,6 +108,7 @@ public final class RoomRuntime {
     private final Map<UUID, Sidebar> sidebars = new HashMap<>();
     private final List<String> npcs = new ArrayList<>();
     private final Set<TeamColor> announcedEliminations = new HashSet<>();
+    private final Set<UUID> returnable = new HashSet<>();
     private final Map<UUID, Inventory> enderChests = new HashMap<>();
     private final Map<UUID, Long> storedXp = new ConcurrentHashMap<>();
     private final Map<UUID, Map<Block, SpawnedHologram>> chestLabels = new HashMap<>();
@@ -212,8 +214,10 @@ public final class RoomRuntime {
             case PLAYING -> {
                 playingSecond();
                 updateChestLabels();
+                forgetLostReturns();
             }
             case ENDING -> {
+                forgetLostReturns();
                 room.tick();
                 if (room.endingFor() == settings.timings().restartSeconds()) {
                     online().forEach(player -> core.network().connectToGroup(player.getUniqueId(), settings.lobbyGroup()));
@@ -432,6 +436,7 @@ public final class RoomRuntime {
                 RoomTeam team = room.team(quitter.team());
                 if (team.bedAlive()) {
                     room.disconnected(quitter, core.clock().instant().plusSeconds(settings.timings().rejoinSeconds()));
+                    rememberReturn(quitter.id());
                 } else {
                     Optional<RoomPlayer> killer = room.credit().killer(quitter.id(), core.clock().instant(), true, team.bedBreaker())
                         .flatMap(room::player).filter(other -> other.team() != quitter.team());
@@ -467,6 +472,7 @@ public final class RoomRuntime {
     void rejoin(Player player) {
         RoomPlayer roomPlayer = room.player(player.getUniqueId()).orElseThrow();
         room.reconnected(roomPlayer, settings.timings().respawnSeconds());
+        forgetReturn(player.getUniqueId());
         reset(player, GameMode.SPECTATOR);
         player.teleport(location(room.arena().spectator()));
         sidebars.put(player.getUniqueId(), Sidebar.create(player));
@@ -654,7 +660,33 @@ public final class RoomRuntime {
         npcs.forEach(service.npcs()::remove);
         npcs.clear();
         forges.clear();
+        List.copyOf(returnable).forEach(this::forgetReturn);
         service.closed(this);
+    }
+
+    private void rememberReturn(UUID id) {
+        returnable.add(id);
+        String server = core.identity().id();
+        Duration ttl = Duration.ofSeconds(settings.timings().rejoinSeconds());
+        CompletableFuture.runAsync(() -> service.returns().remember(id, server, ttl), core.async()).exceptionally(error -> {
+            service.plugin().getLogger().log(Level.FINE, "Could not remember the match of " + id, error);
+            return null;
+        });
+    }
+
+    private void forgetReturn(UUID id) {
+        if (!returnable.remove(id)) {
+            return;
+        }
+        CompletableFuture.runAsync(() -> service.returns().forget(id), core.async()).exceptionally(error -> {
+            service.plugin().getLogger().log(Level.FINE, "Could not forget the match of " + id, error);
+            return null;
+        });
+    }
+
+    private void forgetLostReturns() {
+        Instant now = core.clock().instant();
+        List.copyOf(returnable).stream().filter(id -> !canReturn(id, now)).forEach(this::forgetReturn);
     }
 
     private void playingSecond() {
@@ -887,6 +919,13 @@ public final class RoomRuntime {
         if (room.phase() == Room.Phase.PLAYING && room.isOver()) {
             end(room.winner());
         }
+    }
+
+    boolean forceStart(int seconds) {
+        Optional<Change> change = room.forceStart(seconds);
+        change.ifPresent(this::countdownChanged);
+        refreshScoreboards();
+        return change.isPresent();
     }
 
     boolean forceEnd() {

@@ -79,6 +79,7 @@ public final class NameTagTeams implements Listener, Runnable {
             Team team = board.getTeam(tag.team());
             if (team == null) {
                 team = board.registerNewTeam(tag.team());
+                team.setCanSeeFriendlyInvisibles(true);
             }
             if (!tag.prefix().equals(team.getPrefix())) {
                 team.setPrefix(tag.prefix());

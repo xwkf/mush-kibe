@@ -33,6 +33,7 @@ Como os jogadores são colocados nos servidores e levados de um para outro. Fica
 | Comando | Descrição | Permissão |
 |---|---|---|
 | `/lobby` (`/hub`, `/l`) | Envia o jogador para um lobby. Disponível em todos os servidores Spigot. | Nenhuma |
+| `/retornar` | Manda o jogador de volta para a partida que ele deixou, quando o servidor dela guardou `match:return:<jogador>` no `MuxeCore.store()` (`MatchReturns`); senão responde `nothing-to-return`. Disponível em todos os servidores Spigot. | Nenhuma |
 
 ## Permissões
 

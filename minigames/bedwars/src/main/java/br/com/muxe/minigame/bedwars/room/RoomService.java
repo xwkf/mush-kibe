@@ -9,6 +9,7 @@ import br.com.muxe.core.bukkit.npc.NpcService;
 import br.com.muxe.core.bukkit.permission.display.NameTag;
 import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
+import br.com.muxe.core.common.match.MatchReturns;
 import br.com.muxe.minigame.bedwars.arena.BedWarsArena;
 import br.com.muxe.minigame.bedwars.arena.BedWarsSchema;
 import br.com.muxe.minigame.bedwars.lobby.LevelChat;
@@ -79,6 +80,7 @@ public final class RoomService {
     private final HealthDisplay healthDisplay;
     private final LevelUps levelUps;
     private final LevelBadges levelBadges;
+    private final MatchReturns returns;
     private PlayerPreferences preferences;
     private volatile int activeMatches;
 
@@ -94,6 +96,7 @@ public final class RoomService {
         this.schema = schema;
         this.catalog = catalog;
         this.matchWorld = matchWorld;
+        this.returns = new MatchReturns(core.store());
     }
 
     public void start() {
@@ -196,7 +199,7 @@ public final class RoomService {
     }
 
     public boolean forceStart(Player player) {
-        return roomOf(player.getUniqueId()).map(runtime -> runtime.room().forceStart(StartCountdown.WHEN_FULL)).orElse(false);
+        return roomOf(player.getUniqueId()).map(runtime -> runtime.forceStart(StartCountdown.WHEN_FULL)).orElse(false);
     }
 
     public boolean forceEnd(Player player) {
@@ -402,6 +405,14 @@ public final class RoomService {
         return healthDisplay;
     }
 
+    public List<RoomRuntime> runtimes() {
+        return List.copyOf(rooms.values());
+    }
+
+    MatchReturns returns() {
+        return returns;
+    }
+
     LevelUps levelUps() {
         return levelUps;
     }
@@ -440,7 +451,7 @@ public final class RoomService {
     static NameTag tag(TeamColor team) {
         String name = String.format("mxbw%02d%s", team.ordinal(), team.id());
         return new NameTag(name.length() > NameTag.MAX_TEAM ? name.substring(0, NameTag.MAX_TEAM) : name,
-            Colors.translate(team.color() + team.letter() + " " + team.color()));
+            Colors.translate(team.color() + team.boldLetter() + " "));
     }
 
     public record NpcClick(RoomRuntime runtime, boolean upgrades) {

@@ -5,6 +5,7 @@ import br.com.muxe.core.bukkit.buildmode.BuildMode;
 import br.com.muxe.core.bukkit.buildmode.BuildSettings;
 import br.com.muxe.core.bukkit.command.BuildCommand;
 import br.com.muxe.core.bukkit.command.LobbyCommand;
+import br.com.muxe.core.bukkit.command.ReturnCommand;
 import br.com.muxe.core.bukkit.command.MuxeAdminCommand;
 import br.com.muxe.core.bukkit.command.framework.Commands;
 import br.com.muxe.core.bukkit.command.framework.registry.CommandMapRegistrar;
@@ -29,6 +30,7 @@ import br.com.muxe.core.common.config.ConfigException;
 import br.com.muxe.core.common.config.secret.SecretResolver;
 import br.com.muxe.core.common.config.settings.MuxeSettings;
 import br.com.muxe.core.common.config.settings.SettingsLoader;
+import br.com.muxe.core.common.match.MatchReturns;
 import br.com.muxe.core.common.permission.sync.PermissionSync;
 import br.com.muxe.core.common.runtime.CoreRuntime;
 import br.com.muxe.core.common.runtime.PlatformHooks;
@@ -90,7 +92,8 @@ public final class CoreBukkitBootstrap {
         }
         String lobbyGroup = config.getString("network.lobby-group", "lobby");
         Commands commands = Commands.of(plugin, messages);
-        commands.register(new MuxeAdminCommand(core, JoinTraffic.start(plugin, runtime.metrics())), new LobbyCommand(core, lobbyGroup), new BuildCommand(buildMode, messages));
+        commands.register(new MuxeAdminCommand(core, JoinTraffic.start(plugin, runtime.metrics())), new LobbyCommand(core, lobbyGroup), new BuildCommand(buildMode, messages),
+            new ReturnCommand(core, new MatchReturns(core.store())));
         ranks = RankFeatures.start(plugin, core, config, commands);
         features = PlacedFeatures.start(plugin, core, config, commands);
         HotbarFeatures.start(plugin, core, config, features);

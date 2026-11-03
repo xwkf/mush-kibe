@@ -33,6 +33,7 @@ How players are placed on servers and moved between them. Lives in `core:proxy` 
 | Command | Description | Permission |
 |---|---|---|
 | `/lobby` (`/hub`, `/l`) | Sends the player to a lobby. Available on every Spigot server. | None |
+| `/retornar` | Sends the player back to the match they left, when its server kept `match:return:<player>` in `MuxeCore.store()` (`MatchReturns`); otherwise answers `nothing-to-return`. Available on every Spigot server. | None |
 
 ## Permissions
 

@@ -535,7 +535,6 @@ messages:
   cannot-place: "&cVocê não pode colocar blocos aqui."
   left-match: "&cVocê desconectou de uma partida de Bed Wars {mode} em andamento. Utilize /retornar para voltar a jogar."
   reconnected: "{player} &7reconectou."
-  nothing-to-return: "&cVocê não tem nenhuma partida para retornar."
   died-title: "&cVOCÊ MORREU!"
   respawn-subtitle: "&eRenascendo em &c{seconds}&e..."
   spectator-subtitle: "&7Você agora é um espectador."

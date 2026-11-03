@@ -5,6 +5,7 @@ import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.minigame.bedwars.game.Activity;
 import br.com.muxe.minigame.bedwars.game.ChestDeposits;
+import br.com.muxe.minigame.bedwars.game.Foliage;
 import br.com.muxe.minigame.bedwars.preferences.PlayerPreferences;
 import br.com.muxe.minigame.bedwars.room.ChatView;
 import br.com.muxe.minigame.bedwars.room.ForgePickup;
@@ -28,6 +29,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
 import org.bukkit.entity.Entity;
@@ -244,11 +246,28 @@ public final class MatchListener implements Listener {
             runtime.breakBed(player, block);
             return;
         }
+        if (Foliage.isFoliage(block.getType()) && !runtime.room().wasPlaced(block.getX(), block.getY(), block.getZ())) {
+            event.setCancelled(true);
+            clearFoliage(block);
+            return;
+        }
         if (!runtime.room().wasPlaced(block.getX(), block.getY(), block.getZ())) {
             event.setCancelled(true);
             return;
         }
         runtime.room().unplaced(block.getX(), block.getY(), block.getZ());
+    }
+
+    private static void clearFoliage(Block block) {
+        if (Foliage.isTall(block.getType())) {
+            for (BlockFace face : List.of(BlockFace.UP, BlockFace.DOWN)) {
+                Block half = block.getRelative(face);
+                if (Foliage.isTall(half.getType())) {
+                    half.setType(Material.AIR, false);
+                }
+            }
+        }
+        block.setType(Material.AIR, false);
     }
 
     @EventHandler(priority = EventPriority.HIGH)
