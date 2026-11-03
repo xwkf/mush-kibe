@@ -26,14 +26,20 @@ public final class CosmeticCatalog {
         this.cosmetics = byId;
     }
 
+    public static final String BED_CATEGORY = "bedwars-cama";
+
     public static CosmeticCatalog from(ConfigurationSection section, Predicate<String> animated) {
+        return from(section, "bed-destruction", BED_CATEGORY, animated);
+    }
+
+    public static CosmeticCatalog from(ConfigurationSection section, String listKey, String defaultCategory, Predicate<String> animated) {
         Map<Integer, Long> prices = new HashMap<>();
         ConfigurationSection priceSection = required(section, "prices");
         for (String stars : priceSection.getKeys(false)) {
             prices.put(Integer.parseInt(stars), priceSection.getLong(stars));
         }
         List<BedCosmetic> cosmetics = new ArrayList<>();
-        ConfigurationSection list = required(section, "bed-destruction");
+        ConfigurationSection list = required(section, listKey);
         for (String id : list.getKeys(false)) {
             ConfigurationSection entry = required(list, id);
             cosmetics.add(new BedCosmetic(
@@ -47,7 +53,7 @@ public final class CosmeticCatalog {
                 animated.test(id)
             ));
         }
-        return new CosmeticCatalog(section.getString("category", "bedwars-cama"), prices, cosmetics);
+        return new CosmeticCatalog(section.getString("category", defaultCategory), prices, cosmetics);
     }
 
     public String category() {

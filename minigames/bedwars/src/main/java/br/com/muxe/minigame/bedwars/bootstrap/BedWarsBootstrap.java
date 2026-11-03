@@ -37,6 +37,7 @@ import br.com.muxe.minigame.bedwars.stats.StatsModule;
 import br.com.muxe.minigame.bedwars.stats.domain.BedWarsStatsRepository;
 import br.com.muxe.minigame.bedwars.stats.infrastructure.postgres.PostgresBedWarsStatsRepository;
 import br.com.muxe.minigame.bedwars.tnt.TntTimerSettings;
+import br.com.muxe.minigame.bedwars.title.EndTitles;
 import br.com.muxe.minigame.bedwars.tnt.TntTimers;
 import br.com.muxe.minigame.engine.MinigameEngine;
 import br.com.muxe.minigame.engine.arena.ArenaCatalog;
@@ -97,7 +98,8 @@ public final class BedWarsBootstrap {
         core.missions().register(GAME, missions.catalog(),
             (playerId, completed, at) -> missionXp.addXp(playerId, completed.stream().mapToLong(Mission::xp).sum(), at, STATS_ZONE));
         MissionMenus missionMenus = new MissionMenus(GAME, missions, core.queries(), core.mainThread(), core.clock(), MissionModule.ZONE, plugin.getLogger());
-        cosmetics = CosmeticFeatures.start(plugin, core, config, messages, commands, lobby);
+        EndTitles titles = EndTitles.from(plugin, config.getConfigurationSection("end-titles"));
+        cosmetics = CosmeticFeatures.start(plugin, core, config, messages, commands, lobby, titles);
         cosmetics.onMissions(missionMenus);
         ShopCatalog shopCatalog = ShopCatalog.from(Objects.requireNonNull(config.getConfigurationSection("shop"), "Missing configuration section shop"));
         QuickBuys quickBuys = new QuickBuys(core, plugin.getLogger(), QuickBuy.of(shopCatalog.quickBuy()), shopCatalog.items()::containsKey);
@@ -151,6 +153,8 @@ public final class BedWarsBootstrap {
         rooms.start();
         engine.track(rooms::activeMatches, () -> catalog.all().size());
         rooms.onBedBreak(cosmetics.bedBreaks());
+        rooms.onVictory(cosmetics.victories());
+        rooms.endTitles(titles);
         ShopService shop = new ShopService(
             shopCatalog,
             UpgradeCatalog.from(Objects.requireNonNull(config.getConfigurationSection("upgrades"), "Missing configuration section upgrades")),

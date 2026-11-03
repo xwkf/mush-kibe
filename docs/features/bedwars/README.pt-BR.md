@@ -57,7 +57,7 @@ Quem chega num servidor de BedWars volta para a partida que deixou, se ainda pud
 | Espera | Os jogadores esperam na área de espera acima do mapa, no modo sobrevivência como na partida, sem dano nem fome e sem quebrar ou colocar blocos. A hotbar tem a esmeralda `&aMenu do Bed Wars` (slot 5, abre o menu) e `&aVoltar ao Lobby` (slot 9). O placar segue o anexo 2, e o anexo 3 quando a contagem roda. Uma sala sem ninguém dentro e sem ninguém a caminho (nenhuma reserva pendente) fecha depois de `timings.empty-room-seconds` (60) e libera a célula. |
 | Contagem | A [contagem para iniciar](../../architecture/game-engine/README.pt-BR.md#contagem-para-iniciar) da engine, com os títulos `&a30 segundos`, `&610 segundos` e `&c5` a `&c1`. Cada título toca um clique de botão (`sounds.countdown`). |
 | Jogando | Os times são sorteados, os jogadores nascem na ilha com couro completo na cor do time e uma espada de madeira. Os NPCs da loja e das melhorias aparecem com os hologramas, e os geradores começam. Um time que ficou sem jogadores perde a cama (tirada quando achada a até 2 blocos do ponto marcado), mas a ilha dele mantém os geradores e os NPCs da loja e das melhorias, que qualquer um pode usar. Logo depois, a área de espera entre a Pos 1 e a Pos 2 some de uma vez, chunk por chunk (`RegionEraser`). |
-| Fim | Quando sobra um time, todos recebem o resultado (anexo 11), centralizado: vencedor, tempo da partida, top kills finais e top camas quebradas, com os nomes na cor da tag. Depois de 30 segundos todos vão para o `lobby-group` e a sala fecha. |
+| Fim | Quando sobra um time, todos recebem o resultado (anexo 11), centralizado: vencedor, tempo da partida, top kills finais e top camas quebradas, com os nomes na cor da tag. O time vencedor vê o título `VITÓRIA` e todos os outros da sala, eliminados inclusive, veem `DERROTA` (`end-titles.*`): a palavra aparece branca, uma varredura dourada (vermelha na derrota) passa letra por letra a cada 2 ticks e depois ela pisca entre a cor e o branco a cada 7 ticks por uns 6 segundos; a vitória toca o rugido do dragão. Empate não mostra título. Depois de 30 segundos todos vão para o `lobby-group` e a sala fecha. |
 
 **Durante a partida:**
 
@@ -144,6 +144,14 @@ O jogador escolhe uma animação que toca quando ele quebra uma cama inimiga. Os
 2. Quem está em prévia não vê os outros em prévia. A scoreboard mostra `Visualizando:` e o nome do cosmético, e a action bar repete `&eQuebre a cama!`.
 3. Ao bater na cama, ela some só para esse jogador e a animação toca só para ele.
 4. `preview.return-delay` depois do fim da animação (2 s), ou depois de `preview.timeout` sem quebrar a cama (2 min), o jogador volta para onde estava, com os itens do lobby, e o menu de cosméticos reabre na página em que ele estava. Sair do servidor durante a prévia não abre nada.
+
+### Efeitos de vitória
+
+`Efeito de Vitória` (slot 16 de `Cosméticos do Bed Wars`) lista os 22 efeitos de vitória do export em `Efeito de Vitória ({page}/{pages})`, com o mesmo layout, ordem, compra e seleção da lista de destruição de cama. Eles ficam na categoria `bedwars-vitoria`, então a posse e a seleção são separadas das de cama; os créditos são os mesmos. Só o `Feliz Natal` tem animação; os outros respondem `cosmetic-unavailable` como um cosmético de cama sem animação.
+
+- **Na partida:** quando a partida acaba com vencedor, todo jogador do time vencedor toca o seu efeito de vitória selecionado (ou um aleatório que ele tem) na posição dele, visto pela sala toda.
+- **Feliz Natal:** 22 presentes (cabeças de presente) caem um a cada 8 ticks de 12 blocos de altura no chão à frente do vencedor, com brilhos vermelhos, verdes, azuis e amarelos. Quando um cai, faz barulho, espalha confete e quatro blocos de lã (verde-limão, amarelo, azul, vermelho) saltam em quatro direções com um estalo que sobe de tom, cada um acendendo uma estrela rosa de partículas e um feixe curto da sua cor. Depois quatro fogos em estrela (verde, amarelo, vermelho, azul) e um colorido mais alto estouram ali, cada um jogando uma vareta de faísca. Dura 12 segundos.
+- **Prévia:** o botão direito abre o mundo `victory-preview.world` (`previa_efeito_de_vitoria`, que precisa estar na raiz do servidor do lobby de BedWars). O jogador fica em `victory-preview.spawn` e vê `3...`, `2...`, `1...` com um segundo entre eles e o clique da contagem, depois o título `VITÓRIA` e o efeito. Quando acaba (ou na cama `Voltar ao Lobby` do slot 8, ou depois do `timeout`) o jogador volta para onde estava e a lista de efeitos abre de novo.
 
 ### Lobby do BedWars
 
@@ -246,6 +254,9 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 | `cosmetics.prices.<estrelas>` | 750, 900, 1300, 1750, 2000 | Preço em créditos por estrelas. |
 | `cosmetics.bed-destruction.<id>` | os 30 cosméticos | `name`, `icon` (item), `stars`, `tag`, `availability` (`SALE`, `ULTRA`, `EVENT`) e `description`. O id precisa ser o de uma animação para ter animação. |
 | `cosmetics.menus.*` | os exports | Títulos, slots, itens e linhas de lore dos três menus. |
+| `cosmetics.victory-effect.*` | `bedwars-vitoria`; 300, 400, 500, 700, 800; os 22 efeitos | Categoria, preços por estrelas e efeitos de vitória, com os mesmos campos dos de cama (`stars: 0` esconde as estrelas). |
+| `end-titles.victory`, `end-titles.defeat` | `VITÓRIA` `&6` `&e` `&f`; `DERROTA` `&c` `&c` `&f` | Palavra, cor depois da varredura, cor da letra que varre, cor inicial e um `sound` opcional. |
+| `victory-preview.*` | `previa_efeito_de_vitoria`, -19.5 35 68.5, `3...` `2...` `1...` a cada 20 ticks, `60s`, `1s` | Mundo, spawn, títulos da contagem e ticks entre eles, tempo limite, espera depois do efeito, item de voltar e scoreboard da prévia de vitória. |
 | `preview.world` | `previa_quebra_de_cama` | Pasta do mundo da prévia na raiz do servidor. Sem ela a prévia fica desligada. |
 | `preview.spawn`, `preview.bed` | 6.5 11 21.5; pé 6 11 17, cabeceira 6 16 | Onde o jogador fica e a cama que ele quebra. |
 | `preview.timeout`, `preview.return-delay` | `120s`, `2s` | Tempo para quebrar a cama e espera depois da animação. |

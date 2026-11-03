@@ -5,6 +5,7 @@ import br.com.muxe.core.bukkit.item.ItemBuilder;
 import br.com.muxe.minigame.bedwars.cosmetic.catalog.Availability;
 import br.com.muxe.minigame.bedwars.cosmetic.catalog.BedCosmetic;
 import br.com.muxe.minigame.bedwars.cosmetic.catalog.CosmeticCatalog;
+import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenuSettings.CategoryMenu;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenuSettings.LoreTexts;
 import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticState;
 import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticWallet;
@@ -15,11 +16,13 @@ public final class CosmeticIcons {
 
     public static final String BLANK = " ";
 
-    private final CosmeticMenuSettings settings;
+    private final CategoryMenu menu;
+    private final CosmeticListSettings settings;
     private final CosmeticCatalog catalog;
 
-    public CosmeticIcons(CosmeticMenuSettings settings, CosmeticCatalog catalog) {
-        this.settings = settings;
+    public CosmeticIcons(CategoryMenu menu, CosmeticCatalog catalog) {
+        this.menu = menu;
+        this.settings = menu.list();
         this.catalog = catalog;
     }
 
@@ -28,8 +31,10 @@ public final class CosmeticIcons {
         CosmeticState state = wallet.state(cosmetic);
         boolean owned = state == CosmeticState.SELECTED || state == CosmeticState.OWNED;
         List<String> lore = new ArrayList<>();
-        lore.add(stars(cosmetic.stars()));
-        lore.add(BLANK);
+        if (cosmetic.stars() > 0) {
+            lore.add(stars(cosmetic.stars()));
+            lore.add(BLANK);
+        }
         if (!cosmetic.description().isEmpty()) {
             lore.addAll(cosmetic.description());
             lore.add(BLANK);
@@ -41,7 +46,7 @@ public final class CosmeticIcons {
             lore.add(cosmetic.tag().get());
             lore.add(BLANK);
         }
-        long price = catalog.price(cosmetic);
+        long price = state == CosmeticState.BUY ? catalog.price(cosmetic) : 0;
         List<String> block = switch (state) {
             case SELECTED -> texts.selectedWithPreview();
             case OWNED -> texts.select();
@@ -83,7 +88,7 @@ public final class CosmeticIcons {
         long owned = wallet.ownedCount(catalog);
         int total = catalog.all().size();
         long percent = total == 0 ? 0 : owned * 100 / total;
-        return settings.bedDestruction().item().replacing(
+        return menu.button().item().replacing(
             "owned", Long.toString(owned),
             "total", Integer.toString(total),
             "percent", Long.toString(percent),

@@ -12,16 +12,16 @@ import br.com.muxe.core.common.cosmetic.application.command.SelectCosmeticComman
 import br.com.muxe.core.common.cqrs.command.CommandBus;
 import br.com.muxe.core.common.result.Result;
 import br.com.muxe.minigame.bedwars.cosmetic.catalog.BedCosmetic;
-import br.com.muxe.minigame.bedwars.cosmetic.catalog.CosmeticCatalog;
 import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticAccess;
-import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticProfiles;
 import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticState;
 import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticWallet;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
@@ -35,13 +35,10 @@ public final class CosmeticMenus {
     private static final int SPECIAL_ENTRIES = 2;
 
     private final CosmeticMenuSettings settings;
-    private final CosmeticCatalog catalog;
-    private final CosmeticIcons icons;
-    private final CosmeticProfiles profiles;
+    private final Map<String, CosmeticCategory> categories = new LinkedHashMap<>();
     private final CommandBus commands;
     private final Executor mainThread;
     private final MessageCatalog messages;
-    private final PreviewGate previews;
     private final Logger logger;
     private final Map<UUID, Boolean> categoriesFromMenu = new ConcurrentHashMap<>();
     private BiConsumer<Player, Consumer<Player>> quickBuy = (player, back) -> {
@@ -51,16 +48,12 @@ public final class CosmeticMenus {
     private BiConsumer<Player, Optional<Consumer<Player>>> missions = (player, back) -> {
     };
 
-    public CosmeticMenus(CosmeticMenuSettings settings, CosmeticCatalog catalog, CosmeticProfiles profiles, CommandBus commands, Executor mainThread,
-                         MessageCatalog messages, PreviewGate previews, Logger logger) {
+    public CosmeticMenus(CosmeticMenuSettings settings, List<CosmeticCategory> categories, CommandBus commands, Executor mainThread, MessageCatalog messages, Logger logger) {
         this.settings = settings;
-        this.catalog = catalog;
-        this.icons = new CosmeticIcons(settings, catalog);
-        this.profiles = profiles;
+        categories.forEach(category -> this.categories.put(category.key(), category));
         this.commands = commands;
         this.mainThread = mainThread;
         this.messages = messages;
-        this.previews = previews;
         this.logger = logger;
     }
 
@@ -97,9 +90,12 @@ public final class CosmeticMenus {
 
     void openCategories(Player player, boolean fromBedWarsMenu) {
         categoriesFromMenu.put(player.getUniqueId(), fromBedWarsMenu);
-        withWallet(player, wallet -> {
+        withWallets(player, wallets -> {
             Menu.Builder menu = Menu.builder(settings.categoriesTitle()).rows(settings.categoriesRows());
-            menu.button(settings.bedDestruction().slot(), icons.category(wallet), context -> openList(context.player(), 1));
+            for (CosmeticCategory category : categories.values()) {
+                CosmeticWallet wallet = wallets.getOrDefault(category.key(), CosmeticWallet.EMPTY);
+                menu.button(category.menu().button().slot(), category.icons().category(wallet), context -> openList(context.player(), category.key(), 1));
+            }
             settings.soon().forEach((slot, item) -> menu.button(slot, item, context -> context.player().sendMessage(messages.get("coming-soon"))));
             if (fromBedWarsMenu) {
                 menu.button(settings.categoriesBack().slot(), settings.categoriesBack().item(), context -> openBedWars(context.player()));
@@ -108,35 +104,42 @@ public final class CosmeticMenus {
         });
     }
 
-    public void openList(Player player, int page) {
-        withWallet(player, wallet -> list(wallet, page).open(player));
+    public void openList(Player player, String key, int page) {
+        CosmeticCategory category = categories.get(key);
+        if (category == null) {
+            return;
+        }
+        withWallet(player, category, wallet -> list(category, wallet, page).open(player));
     }
 
-    Menu list(CosmeticWallet wallet, int requested) {
+    Menu list(CosmeticCategory category, CosmeticWallet wallet, int requested) {
+        CosmeticIcons icons = category.icons();
+        CosmeticListSettings list = category.list();
         List<Entry> entries = new ArrayList<>();
-        entries.add(new Entry(icons.none(wallet), context -> choose(context, CosmeticWallet.NONE, icons.selectedName(wallet.selecting(CosmeticWallet.NONE)))));
-        entries.add(new Entry(icons.random(wallet), context -> choose(context, CosmeticWallet.RANDOM, icons.selectedName(wallet.selecting(CosmeticWallet.RANDOM)))));
-        for (BedCosmetic cosmetic : wallet.sorted(catalog)) {
-            entries.add(new Entry(icons.cosmetic(cosmetic, wallet), context -> clicked(context, cosmetic)));
+        entries.add(new Entry(icons.none(wallet), context -> choose(context, category, CosmeticWallet.NONE, icons.selectedName(wallet.selecting(CosmeticWallet.NONE)))));
+        entries.add(new Entry(icons.random(wallet), context -> choose(context, category, CosmeticWallet.RANDOM, icons.selectedName(wallet.selecting(CosmeticWallet.RANDOM)))));
+        for (BedCosmetic cosmetic : wallet.sorted(category.catalog())) {
+            entries.add(new Entry(icons.cosmetic(cosmetic, wallet), context -> clicked(context, category, cosmetic)));
         }
-        Page<Entry> page = Page.of(entries, settings.listSlots().size(), requested);
-        String title = settings.listTitle().replace("{page}", Integer.toString(page.number())).replace("{pages}", Integer.toString(page.total()));
-        Menu.Builder menu = Menu.builder(title).rows(settings.listRows());
+        Page<Entry> page = Page.of(entries, list.slots().size(), requested);
+        String title = list.title().replace("{page}", Integer.toString(page.number())).replace("{pages}", Integer.toString(page.total()));
+        Menu.Builder menu = Menu.builder(title).rows(list.rows());
         for (int index = 0; index < page.items().size(); index++) {
             Entry entry = page.items().get(index);
-            menu.button(settings.listSlots().get(index), entry.icon(), entry.click()::accept);
+            menu.button(list.slots().get(index), entry.icon(), entry.click()::accept);
         }
         int number = page.number();
+        String key = category.key();
         if (page.hasPrevious()) {
-            menu.button(settings.previous().slot(), settings.previous().item().replacing("page", Integer.toString(number - 1)), context -> openList(context.player(), number - 1));
+            menu.button(list.previous().slot(), list.previous().item().replacing("page", Integer.toString(number - 1)), context -> openList(context.player(), key, number - 1));
         } else {
-            menu.button(settings.listBack().slot(), settings.listBack().item(), context -> openCategories(context.player(), categoriesFromMenu.getOrDefault(context.player().getUniqueId(), false)));
+            menu.button(list.back().slot(), list.back().item(), context -> openCategories(context.player(), categoriesFromMenu.getOrDefault(context.player().getUniqueId(), false)));
         }
         if (page.hasNext()) {
-            menu.button(settings.next().slot(), settings.next().item().replacing("page", Integer.toString(number + 1)), context -> openList(context.player(), number + 1));
+            menu.button(list.next().slot(), list.next().item().replacing("page", Integer.toString(number + 1)), context -> openList(context.player(), key, number + 1));
         }
-        menu.button(settings.selected().slot(), icons.selected(wallet));
-        menu.button(settings.shop().slot(), settings.shop().item(), context -> context.player().sendMessage(messages.get("coming-soon")));
+        menu.button(list.selected().slot(), icons.selected(wallet));
+        menu.button(list.shop().slot(), list.shop().item(), context -> context.player().sendMessage(messages.get("coming-soon")));
         return menu.build();
     }
 
@@ -144,33 +147,33 @@ public final class CosmeticMenus {
         return entryIndex / perPage + 1;
     }
 
-    private void clicked(ClickContext context, BedCosmetic cosmetic) {
+    private void clicked(ClickContext context, CosmeticCategory category, BedCosmetic cosmetic) {
         Player player = context.player();
-        CosmeticWallet wallet = profiles.of(player.getUniqueId()).orElse(CosmeticWallet.EMPTY);
+        CosmeticWallet wallet = category.profiles().of(player.getUniqueId()).orElse(CosmeticWallet.EMPTY);
         if (context.isRightClick()) {
             if (!cosmetic.animated()) {
                 player.sendMessage(messages.get("cosmetic-no-preview"));
                 return;
             }
-            int page = currentPage(player, cosmetic.id());
+            int page = currentPage(player, category, cosmetic.id());
             player.closeInventory();
-            previews.preview(player, cosmetic, viewer -> openList(viewer, page));
+            category.previews().preview(player, cosmetic, viewer -> openList(viewer, category.key(), page));
             return;
         }
         CosmeticState state = wallet.state(cosmetic);
         switch (state) {
-            case OWNED -> choose(context, cosmetic.id(), cosmetic.name());
-            case BUY -> buy(context, cosmetic);
+            case OWNED -> choose(context, category, cosmetic.id(), cosmetic.name());
+            case BUY -> buy(context, category, cosmetic);
             case UNAVAILABLE -> player.sendMessage(messages.get("cosmetic-unavailable"));
             case SELECTED -> {
             }
         }
     }
 
-    private void choose(ClickContext context, String id, String name) {
+    private void choose(ClickContext context, CosmeticCategory category, String id, String name) {
         Player player = context.player();
-        int page = currentPage(player, id);
-        commands.dispatch(new SelectCosmeticCommand(player.getUniqueId(), catalog.category(), id)).whenCompleteAsync((result, error) -> {
+        int page = currentPage(player, category, id);
+        commands.dispatch(new SelectCosmeticCommand(player.getUniqueId(), category.catalog().category(), id)).whenCompleteAsync((result, error) -> {
             if (!player.isOnline()) {
                 return;
             }
@@ -178,17 +181,17 @@ public final class CosmeticMenus {
                 failed(player, error);
                 return;
             }
-            profiles.of(player.getUniqueId()).ifPresent(wallet -> profiles.update(player.getUniqueId(), wallet.selecting(id)));
+            category.profiles().of(player.getUniqueId()).ifPresent(wallet -> category.profiles().update(player.getUniqueId(), wallet.selecting(id)));
             player.sendMessage(messages.get("cosmetic-selected", "name", name));
-            openList(player, page);
+            openList(player, category.key(), page);
         }, mainThread);
     }
 
-    private void buy(ClickContext context, BedCosmetic cosmetic) {
+    private void buy(ClickContext context, CosmeticCategory category, BedCosmetic cosmetic) {
         Player player = context.player();
-        long price = catalog.price(cosmetic);
-        int page = currentPage(player, cosmetic.id());
-        commands.dispatch(new BuyCosmeticCommand(player.getUniqueId(), catalog.category(), cosmetic.id(), price)).whenCompleteAsync((result, error) -> {
+        long price = category.catalog().price(cosmetic);
+        int page = currentPage(player, category, cosmetic.id());
+        commands.dispatch(new BuyCosmeticCommand(player.getUniqueId(), category.catalog().category(), cosmetic.id(), price)).whenCompleteAsync((result, error) -> {
             if (!player.isOnline()) {
                 return;
             }
@@ -197,30 +200,31 @@ public final class CosmeticMenus {
                 return;
             }
             if (result instanceof Result.Failure<Long> failure) {
-                String key = BuyCosmeticHandler.ALREADY_OWNED.equals(failure.problem().code()) ? "cosmetic-already-owned" : "cosmetic-not-enough";
-                player.sendMessage(messages.get(key));
+                String messageKey = BuyCosmeticHandler.ALREADY_OWNED.equals(failure.problem().code()) ? "cosmetic-already-owned" : "cosmetic-not-enough";
+                player.sendMessage(messages.get(messageKey));
                 return;
             }
             long balance = result.orElseThrow();
-            profiles.of(player.getUniqueId()).ifPresent(wallet -> profiles.update(player.getUniqueId(), wallet.buying(cosmetic.id(), balance)));
+            categories.values().forEach(other -> other.profiles().of(player.getUniqueId())
+                .ifPresent(wallet -> other.profiles().update(player.getUniqueId(), other == category ? wallet.buying(cosmetic.id(), balance) : wallet.withCredits(balance))));
             player.sendMessage(messages.get("cosmetic-bought", "name", cosmetic.name(), "price", CreditFormat.format(price)));
-            openList(player, page);
+            openList(player, category.key(), page);
         }, mainThread);
     }
 
-    private int currentPage(Player player, String id) {
-        CosmeticWallet wallet = profiles.of(player.getUniqueId()).orElse(CosmeticWallet.EMPTY);
-        List<BedCosmetic> sorted = wallet.sorted(catalog);
+    private int currentPage(Player player, CosmeticCategory category, String id) {
+        CosmeticWallet wallet = category.profiles().of(player.getUniqueId()).orElse(CosmeticWallet.EMPTY);
+        List<BedCosmetic> sorted = wallet.sorted(category.catalog());
         for (int index = 0; index < sorted.size(); index++) {
             if (sorted.get(index).id().equals(id)) {
-                return pageOf(index + SPECIAL_ENTRIES, settings.listSlots().size());
+                return pageOf(index + SPECIAL_ENTRIES, category.list().slots().size());
             }
         }
         return 1;
     }
 
-    private void withWallet(Player player, Consumer<CosmeticWallet> action) {
-        profiles.load(player.getUniqueId(), CosmeticAccess.of(player::hasPermission)).whenCompleteAsync((wallet, error) -> {
+    private void withWallet(Player player, CosmeticCategory category, Consumer<CosmeticWallet> action) {
+        category.profiles().load(player.getUniqueId(), CosmeticAccess.of(player::hasPermission)).whenCompleteAsync((wallet, error) -> {
             if (!player.isOnline()) {
                 return;
             }
@@ -229,6 +233,24 @@ public final class CosmeticMenus {
                 return;
             }
             action.accept(wallet);
+        }, mainThread);
+    }
+
+    private void withWallets(Player player, Consumer<Map<String, CosmeticWallet>> action) {
+        CosmeticAccess access = CosmeticAccess.of(player::hasPermission);
+        Map<String, CompletableFuture<CosmeticWallet>> loading = new LinkedHashMap<>();
+        categories.forEach((key, category) -> loading.put(key, category.profiles().load(player.getUniqueId(), access)));
+        CompletableFuture.allOf(loading.values().toArray(CompletableFuture[]::new)).whenCompleteAsync((ignored, error) -> {
+            if (!player.isOnline()) {
+                return;
+            }
+            if (error != null) {
+                failed(player, error);
+                return;
+            }
+            Map<String, CosmeticWallet> wallets = new LinkedHashMap<>();
+            loading.forEach((key, future) -> wallets.put(key, future.join()));
+            action.accept(wallets);
         }, mainThread);
     }
 

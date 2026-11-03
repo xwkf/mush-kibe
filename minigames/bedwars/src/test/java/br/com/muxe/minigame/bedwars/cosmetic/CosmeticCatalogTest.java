@@ -26,7 +26,7 @@ class CosmeticCatalogTest {
 
     private static final BedAnimations ANIMATIONS = new BedAnimations();
     private final CosmeticCatalog catalog = CosmeticCatalog.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics"), id -> ANIMATIONS.find(id).isPresent());
-    private final CosmeticIcons icons = new CosmeticIcons(CosmeticMenuSettings.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus")), catalog);
+    private final CosmeticIcons icons = new CosmeticIcons(CosmeticMenuSettings.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus")).category(CosmeticMenuSettings.BED_DESTRUCTION), catalog);
 
     @Test
     void theCatalogListsThirtyCosmeticsAndEveryAnimationHasAnEntry() {

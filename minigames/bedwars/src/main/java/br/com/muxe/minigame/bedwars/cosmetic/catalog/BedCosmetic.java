@@ -13,8 +13,8 @@ public record BedCosmetic(String id, String name, ItemBuilder icon, int stars, O
         Objects.requireNonNull(id, "id");
         Objects.requireNonNull(name, "name");
         Objects.requireNonNull(icon, "icon");
-        if (stars < 1 || stars > MAX_STARS) {
-            throw new IllegalArgumentException("Cosmetic " + id + " needs 1 to 5 stars, got " + stars);
+        if (stars < 0 || stars > MAX_STARS) {
+            throw new IllegalArgumentException("Cosmetic " + id + " needs 0 to 5 stars, got " + stars);
         }
         description = List.copyOf(description);
     }

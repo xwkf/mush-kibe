@@ -74,6 +74,10 @@ public record CosmeticWallet(Set<String> owned, String selected, long credits, b
         return new CosmeticWallet(owned, id, credits, ultra);
     }
 
+    public CosmeticWallet withCredits(long balance) {
+        return new CosmeticWallet(owned, selected, balance, ultra);
+    }
+
     public CosmeticWallet buying(String id, long balance) {
         Set<String> more = new HashSet<>(owned);
         more.add(id);

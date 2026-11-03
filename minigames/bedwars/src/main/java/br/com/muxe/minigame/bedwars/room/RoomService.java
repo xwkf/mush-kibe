@@ -20,6 +20,7 @@ import br.com.muxe.minigame.bedwars.mission.MissionRules;
 import br.com.muxe.minigame.bedwars.network.ArenaInfo;
 import br.com.muxe.minigame.bedwars.network.RoomInfo;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
+import br.com.muxe.minigame.bedwars.title.EndTitles;
 import br.com.muxe.minigame.engine.arena.ArenaCatalog;
 import br.com.muxe.minigame.engine.arena.LoadedArena;
 import br.com.muxe.minigame.engine.level.LevelUps;
@@ -69,6 +70,9 @@ public final class RoomService {
     private final List<BukkitTask> tasks = new ArrayList<>();
     private BiConsumer<Player, NpcClick> npcClicks = (player, click) -> {
     };
+    private VictoryHandler victories = (winner, viewers) -> {
+    };
+    private EndTitles endTitles;
     private BedBreakHandler bedBreaks = (breaker, world, bed, viewers) -> {
     };
     private DisplayService displays;
@@ -127,6 +131,22 @@ public final class RoomService {
 
     public void onNpcClick(BiConsumer<Player, NpcClick> handler) {
         this.npcClicks = handler;
+    }
+
+    public void onVictory(VictoryHandler handler) {
+        this.victories = handler;
+    }
+
+    VictoryHandler victories() {
+        return victories;
+    }
+
+    public void endTitles(EndTitles titles) {
+        this.endTitles = titles;
+    }
+
+    Optional<EndTitles> endTitles() {
+        return Optional.ofNullable(endTitles);
     }
 
     public void onBedBreak(BedBreakHandler handler) {
@@ -460,6 +480,12 @@ public final class RoomService {
     public record Reserved(String code, boolean created) {
     }
 
+
+    @FunctionalInterface
+    public interface VictoryHandler {
+
+        void won(Player winner, List<Player> viewers);
+    }
 
     @FunctionalInterface
     public interface BedBreakHandler {

@@ -938,10 +938,12 @@ public final class RoomRuntime {
 
     private void end(Optional<TeamColor> winner) {
         room.end();
-        for (Player player : online()) {
+        List<Player> audience = online();
+        for (Player player : audience) {
             hideChestLabels(player.getUniqueId());
             forges.hide(player.getUniqueId());
         }
+        winner.ifPresent(team -> celebrate(team, audience));
         String time = clock(room.elapsed());
         List<String> lines;
         if (winner.isPresent()) {
@@ -966,6 +968,22 @@ public final class RoomRuntime {
         }
         refreshScoreboards();
         record(winner);
+    }
+
+    private void celebrate(TeamColor team, List<Player> audience) {
+        for (Player player : audience) {
+            boolean won = room.player(player.getUniqueId()).map(RoomPlayer::team).filter(team::equals).isPresent();
+            service.endTitles().ifPresent(titles -> {
+                if (won) {
+                    titles.victory(player);
+                } else {
+                    titles.defeat(player);
+                }
+            });
+            if (won) {
+                service.victories().won(player, audience);
+            }
+        }
     }
 
     private void record(Optional<TeamColor> winner) {

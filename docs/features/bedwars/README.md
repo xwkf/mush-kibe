@@ -57,7 +57,7 @@ A player who reaches a BedWars server goes back to the match they left if they s
 | Waiting | Players wait in the waiting area above the map, in survival like the match, without damage or hunger and without breaking or placing blocks. The hotbar has the emerald `&aMenu do Bed Wars` (slot 5, opens the menu) and `&aVoltar ao Lobby` (slot 9). The scoreboard follows annex 2, and annex 3 once the countdown runs. A room nobody is in and nobody is coming to (no pending reservation) closes after `timings.empty-room-seconds` (60) and frees its cell. |
 | Countdown | The [start countdown](../../architecture/game-engine/README.md#start-countdown) of the engine, with the titles `&a30 segundos`, `&610 segundos` and `&c5` to `&c1`. Each title plays a button click (`sounds.countdown`). |
 | Playing | Teams are drawn, players spawn at their island with full leather armour in the team colour and a wooden sword. The shop and upgrades NPCs appear with their holograms, and the generators start. A team that got no players loses its bed (removed when found within 2 blocks of the marked point), but its island keeps the generators and the shop and upgrades NPCs, which anyone can use. Right after, the waiting area between Pos 1 and Pos 2 disappears at once, chunk by chunk (`RegionEraser`). |
-| Ending | When one team is left, every player gets the result (annex 11), centred: winner, match time, top final kills and top beds broken, with names in the colour of their tag. After 30 seconds everyone goes to `lobby-group` and the room closes. |
+| Ending | When one team is left, every player gets the result (annex 11), centred: winner, match time, top final kills and top beds broken, with names in the colour of their tag. The winning team sees the `VITÓRIA` title and everyone else in the room, eliminated players included, sees `DERROTA` (`end-titles.*`): the word appears white, a gold (red for the defeat) sweep goes over it letter by letter every 2 ticks, then it blinks between the colour and white every 7 ticks for about 6 seconds; the victory plays the dragon growl. A draw shows no title. After 30 seconds everyone goes to `lobby-group` and the room closes. |
 
 **During the match:**
 
@@ -144,6 +144,14 @@ Players pick an animation that plays when they break an enemy bed. The menus fol
 2. Other previewers are hidden both ways. The scoreboard shows `Visualizando:` and the cosmetic name, and the action bar repeats `&eQuebre a cama!`.
 3. Left-clicking the bed hides it for that player only and plays the animation for that player only.
 4. `preview.return-delay` after the animation ends (2 s), or after `preview.timeout` without breaking the bed (2 min), the player goes back to where they were, with their lobby items, and the cosmetics menu reopens on the page they were on. Leaving the server during the preview opens nothing.
+
+### Victory effects
+
+`Efeito de Vitória` (slot 16 of `Cosméticos do Bed Wars`) lists the 22 victory effects of the export in `Efeito de Vitória ({page}/{pages})`, with the same layout, order, buying and selection as the bed destruction list. They are saved under the category `bedwars-vitoria`, so ownership and selection are separate from the bed ones; credits are shared. Only `Feliz Natal` has an animation; the others answer `cosmetic-unavailable` like a bed cosmetic without animation.
+
+- **In the match:** when the match ends with a winner, every player of the winning team plays their selected victory effect (or a random one they own) at their position, seen by the whole room.
+- **Feliz Natal:** 22 presents (gift heads) fall one every 8 ticks from 12 blocks up onto the ground in front of the winner, with red, green, blue and yellow sparkles. When one lands it thuds, scatters confetti and four wool blocks (lime, yellow, blue, red) hop out in four directions with a pop that rises in pitch, each one flashing a pink star of particles and a short beam of its colour. Then four star fireworks (green, yellow, red, blue) and a coloured one higher up go off on that spot, each tossing a sparkler stick. It lasts 12 seconds.
+- **Preview:** right click opens the world `victory-preview.world` (`previa_efeito_de_vitoria`, which must be in the server root of the BedWars lobby). The player stands at `victory-preview.spawn` and sees `3...`, `2...`, `1...` one second apart with the countdown click, then the `VITÓRIA` title and the effect. When it ends (or on the `Voltar ao Lobby` bed in slot 8, or after `timeout`) the player goes back where they were and the effect list opens again.
 
 ### BedWars lobby
 
@@ -246,6 +254,9 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | `cosmetics.prices.<stars>` | 750, 900, 1300, 1750, 2000 | Price in credits by stars. |
 | `cosmetics.bed-destruction.<id>` | the 30 cosmetics | `name`, `icon` (item), `stars`, `tag`, `availability` (`SALE`, `ULTRA`, `EVENT`) and `description`. The id must match an animation id to have an animation. |
 | `cosmetics.menus.*` | the exports | Titles, slots, items and lore lines of the three menus. |
+| `cosmetics.victory-effect.*` | `bedwars-vitoria`; 300, 400, 500, 700, 800; the 22 effects | Category, prices by stars and victory effects, with the same fields as the bed ones (`stars: 0` hides the stars). |
+| `end-titles.victory`, `end-titles.defeat` | `VITÓRIA` `&6` `&e` `&f`; `DERROTA` `&c` `&c` `&f` | Word, colour after the sweep, colour of the sweeping letter, starting colour and an optional `sound`. |
+| `victory-preview.*` | `previa_efeito_de_vitoria`, -19.5 35 68.5, `3...` `2...` `1...` every 20 ticks, `60s`, `1s` | World, spawn, countdown titles and ticks between them, timeout, wait after the effect, back item and scoreboard of the victory preview. |
 | `preview.world` | `previa_quebra_de_cama` | Folder of the preview world in the server root. Without it the preview is off. |
 | `preview.spawn`, `preview.bed` | 6.5 11 21.5; foot 6 11 17, head 6 16 | Where the player stands and the bed they break. |
 | `preview.timeout`, `preview.return-delay` | `120s`, `2s` | Time to break the bed and wait after the animation. |

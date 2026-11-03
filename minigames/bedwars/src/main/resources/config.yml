@@ -1733,6 +1733,213 @@ cosmetics:
       description:
         - "&7Comemore a sua destruição"
         - "&7de cama com balões!"
+  victory-effect:
+    category: bedwars-vitoria
+    prices:
+      "1": 300
+      "2": 400
+      "3": 500
+      "4": 700
+      "5": 800
+    cosmetics:
+      feliz-natal:
+        name: "Feliz Natal"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: ebd46b38b21b342caf917ad9ca42afb68388a5591bcc9aded1e8e346e18890
+        stars: 5
+        tag: "&cNatal 2025"
+        availability: EVENT
+      altas-aventuras:
+        name: "Altas aventuras"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: 52dd11da04252f76b6934bc26612f54f264f30eed74df89941209e191bebc0a2
+        stars: 5
+        tag: "&aAniversário 2025"
+        availability: EVENT
+      colheita-de-aboboras:
+        name: "Colheita de Abóboras"
+        icon:
+          material: JACK_O_LANTERN
+        stars: 3
+        tag: "&6Halloween 2026"
+        availability: SALE
+      apavorante:
+        name: "Apavorante"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: c11de96c3e7b52fa5e4c794b4be14a05fc67694ca5eff9c9eb8baac672d21c09
+        stars: 3
+        tag: "&6Halloween 2026"
+        availability: SALE
+      deserto:
+        name: "Deserto"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: d4b3ea5cb6b6f046e326621ca11ffb7d6aec22d66c0d81e5039b19ee4400309f
+        stars: 5
+        description:
+          - "&7Será uma miragem?"
+        availability: SALE
+      tinta:
+        name: "Tinta"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: 8ee7b4a3202b5b59edac14977b318890a4c775f11d4bee05348b1a6cb9429f1b
+        stars: 4
+        description:
+          - "&7Previsão do tempo: chuva"
+          - "&7de tinta!"
+        availability: SALE
+      como-treinar-seu-porco:
+        name: "Como treinar seu... porco?"
+        icon:
+          material: SADDLE
+        stars: 4
+        description:
+          - "&7Ele não cospe fogo..."
+          - "&7mas voa. Mais ou menos."
+        availability: SALE
+      contagem-de-flash:
+        name: "Contagem de Flash"
+        icon:
+          material: FIREWORK_CHARGE
+        stars: 1
+        description:
+          - "&7Sorria! Os paparazzi"
+          - "&7não perdem um campeão..."
+        availability: SALE
+      apocalipse-zumbi:
+        name: "Apocalipse Zumbi"
+        icon:
+          material: SKULL_ITEM
+          data: 2
+        stars: 3
+        description:
+          - "&7Os derrotados ainda"
+          - "&7têm contas a acertar"
+          - "&7com você..."
+        availability: SALE
+      aventureiro:
+        name: "Aventureiro"
+        icon:
+          material: LEASH
+        stars: 3
+        description:
+          - "&7Mapa? Bússola? Pra quê..."
+          - "&7é só se pendurar e ir!"
+        availability: SALE
+      necromante:
+        name: "Necromante"
+        icon:
+          material: SKULL_ITEM
+          data: 1
+        stars: 3
+        description:
+          - "&7Levantem-se, derrotados..."
+          - "&7o seu mestre ordena!"
+        availability: SALE
+      garota-magica:
+        name: "Garota Mágica"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: a64c1490c1254807b7e3fe7b3a5a3b3f15cc699ab3872cc02968e9712570ef99
+        stars: 5
+        description:
+          - "&7Acenda o foguete e risque"
+          - "&7o céu com sua estrela"
+          - "&7de arco-íris!"
+        availability: SALE
+      anoitecer:
+        name: "Anoitecer"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: d6cd9fc319e14176dba72cf9e83030e538f5499235e0cf2531959eaa2e31dbcb
+        stars: 5
+        description:
+          - "&7A noite é sua! Passeie"
+          - "&7com a coruja enquanto"
+          - "&7o bando celebra no céu."
+        availability: SALE
+      encantado:
+        name: "Encantado"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: 2278b4061f63755ba5a85c1d2491c261d6bd4a5d0536a17bdad934570f3cbfee
+        stars: 5
+        description:
+          - "&7Os gnomos vieram comemorar..."
+          - "&7e trouxeram a floresta"
+          - "&7inteira junto!"
+        availability: SALE
+      tsunami:
+        name: "Tsunami"
+        icon:
+          material: WATER_BUCKET
+        stars: 5
+        tag: "&aAniversário 2026"
+        availability: EVENT
+      inferno:
+        name: "Inferno"
+        icon:
+          material: BLAZE_ROD
+        stars: 5
+        tag: "&aAniversário 2026"
+        availability: EVENT
+      festival-dourado:
+        name: "Festival Dourado"
+        icon:
+          material: GOLD_BLOCK
+        stars: 5
+        tag: "&6Premiação de torneio"
+        availability: EVENT
+      bruxa:
+        name: "Bruxa"
+        icon:
+          material: STICK
+        stars: 5
+        tag: "&6Halloween 2025"
+        availability: EVENT
+      wither:
+        name: "Wither"
+        icon:
+          material: NETHER_STAR
+          glow: true
+        stars: 0
+        tag: "&6Premiação mensal"
+        description:
+          - "&7Suba em um Wither!"
+        availability: EVENT
+      dragao:
+        name: "Dragão"
+        icon:
+          material: EYE_OF_ENDER
+        stars: 5
+        tag: "&6Premiação de torneio"
+        description:
+          - "&7Suba em um dragão!"
+        availability: EVENT
+      o-end:
+        name: "O End"
+        icon:
+          material: ENDER_STONE
+        stars: 3
+        availability: SALE
+      congelado:
+        name: "Congelado"
+        icon:
+          material: PACKED_ICE
+        stars: 3
+        availability: SALE
   menus:
     bedwars:
       title: "Menu do Bed Wars"
@@ -1817,6 +2024,20 @@ cosmetics:
             - "&7Selecionado: &a{selected}"
             - " "
             - "&eClique para ver mais."
+      victory-effect:
+        slot: 16
+        item:
+          material: GOLD_INGOT
+          name: "&aEfeito de Vitória"
+          lore:
+            - "&8{owned}/{total} ({percent}%)"
+            - " "
+            - "&7Customize o seu efeito"
+            - "&7de vitória!"
+            - " "
+            - "&7Selecionado: &a{selected}"
+            - " "
+            - "&eClique para ver mais."
       soon:
         "12":
           material: DIAMOND_SWORD
@@ -1840,18 +2061,6 @@ cosmetics:
             - " "
             - "&7Customize a skin dos"
             - "&7vendedores da ilha."
-            - " "
-            - "&7Selecionado: &aAleatório"
-            - " "
-            - "&eClique para ver mais."
-        "16":
-          material: GOLD_INGOT
-          name: "&aEfeito de Vitória"
-          lore:
-            - "&80/22 (0%)"
-            - " "
-            - "&7Customize o seu efeito"
-            - "&7de vitória!"
             - " "
             - "&7Selecionado: &aAleatório"
             - " "
@@ -1923,6 +2132,14 @@ cosmetics:
           name: "&aVoltar"
           lore:
             - "&7Para Menu do Bed Wars"
+    victory-effect:
+      title: "Efeito de Vitória ({page}/{pages})"
+      random:
+        material: NAME_TAG
+        name: "&aAleatório"
+        lore:
+          - "&7Seleciona um cosmético"
+          - "&7aleatório que você possui"
     bed-destruction:
       title: "Destruição de Cama ({page}/{pages})"
       rows: 6
@@ -2035,6 +2252,50 @@ cosmetics:
         unavailable:
           - "&cIndisponível."
           - "&eBotão direito: &fVisualizar"
+
+end-titles:
+  victory:
+    word: "VITÓRIA"
+    accent: "&6"
+    highlight: "&e"
+    base: "&f"
+    sound:
+      sound: ENDERDRAGON_GROWL
+      volume: 1
+      pitch: 1
+  defeat:
+    word: "DERROTA"
+    accent: "&c"
+    highlight: "&c"
+    base: "&f"
+
+victory-preview:
+  world: previa_efeito_de_vitoria
+  spawn:
+    x: -19.5
+    y: 35.0
+    z: 68.5
+    yaw: -161.0
+    pitch: 2.0
+  countdown:
+    - "&a3..."
+    - "&a2..."
+    - "&a1..."
+  countdown-ticks: 20
+  timeout: 60s
+  return-delay: 1s
+  back-item:
+    slot: 8
+    material: BED
+    name: "&aVoltar ao Lobby"
+  scoreboard:
+    title: "&b&lMUXE"
+    lines:
+      - ""
+      - "&fVisualizando:"
+      - "&e{name}"
+      - ""
+      - "&amuxe.com.br"
 
 preview:
   world: previa_quebra_de_cama
