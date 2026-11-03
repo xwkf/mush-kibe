@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import org.bukkit.Material;
 
@@ -22,6 +23,8 @@ final class RecordingStage implements Stage {
     final List<FakeMount> mounts = new ArrayList<>();
     final Map<UUID, Consumer<Click>> tools = new HashMap<>();
     final List<Vec> pushes = new ArrayList<>();
+    final List<BlockChange> bulk = new ArrayList<>();
+    Function<int[], BlockType> types = block -> new BlockType(this.solid(block[0], block[1], block[2]) ? Material.STONE : Material.AIR, 0);
     Vec eyes = new Vec(0, 1.62, 0);
     Vec look = new Vec(0, 0, 1);
     private final Predicate<int[]> solid;
@@ -88,6 +91,16 @@ final class RecordingStage implements Stage {
     @Override
     public void time(long dayTime) {
         times.add(dayTime);
+    }
+
+    @Override
+    public BlockType type(int x, int y, int z) {
+        return types.apply(new int[] {x, y, z});
+    }
+
+    @Override
+    public void blocks(List<BlockChange> changes) {
+        bulk.addAll(changes);
     }
 
     @Override
