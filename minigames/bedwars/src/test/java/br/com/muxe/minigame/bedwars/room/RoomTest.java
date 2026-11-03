@@ -180,6 +180,27 @@ class RoomTest {
     }
 
     @Test
+    void endingAForcedMatchWithASinglePlayerIsThatPlayersVictory() {
+        Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
+        UUID tadeu = join(room, "tadeu");
+        room.forceStart(10);
+        room.start(List.of(), NOW);
+
+        assertThat(room.winner()).contains(room.player(tadeu).orElseThrow().team());
+    }
+
+    @Test
+    void endingAMatchWithSeveralTeamsStandingIsADraw() {
+        Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
+        join(room, "tadeu");
+        join(room, "x572");
+        room.forceStart(10);
+        room.start(List.of(), NOW);
+
+        assertThat(room.winner()).isEmpty();
+    }
+
+    @Test
     void staffCanOnlyEndAMatchThatIsBeingPlayed() {
         Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
         join(room, "tadeu");

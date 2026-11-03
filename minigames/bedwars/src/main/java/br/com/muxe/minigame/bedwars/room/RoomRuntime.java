@@ -932,7 +932,7 @@ public final class RoomRuntime {
         if (!room.canForceEnd()) {
             return false;
         }
-        end(Optional.empty());
+        end(room.winner());
         return true;
     }
 

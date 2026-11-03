@@ -199,7 +199,7 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 | `/bedwars entrar <modo>` (`/bw`) | nenhuma | Leva o jogador para uma sala desse modo, enquanto espera. |
 | `/g <mensagem>` | nenhuma | Fala com todos da sala, com `&6[G]` antes da mensagem. Nas partidas com time o chat normal chega só ao time. |
 | `/bedwars iniciar` | `muxe.bedwars.admin` | Começa a contagem em 10 segundos sem o mínimo de jogadores, para testes, mostrando o título `10 segundos` na hora (uma contagem que já corre com mais de 10 segundos é encurtada). Uma partida iniciada assim com um time só continua até esse time ser eliminado; com dois times ou mais ela acaba como sempre, quando sobra um time. |
-| `/bedwars finalizar` | `muxe.bedwars.admin` | Encerra na hora a partida em andamento, sem vencedor, para testes. |
+| `/bedwars finalizar` | `muxe.bedwars.admin` | Encerra na hora a partida em andamento, para testes, como uma partida de verdade termina: o time que sobrou vence (o único jogador de uma partida forçada também), com o resultado, os tops, o resumo das missões, o XP e as estatísticas de sempre; com vários times de pé é empate. |
 | `/cosmeticos` (`/cosmeticosbw`) | nenhuma | Abre Cosméticos do Bed Wars. |
 | `/cosmeticos dar <jogador> <cosmetico>` | `muxe.cosmetics.admin` | Dá um cosmético de destruição de cama, para cosméticos de evento e premiações. |
 

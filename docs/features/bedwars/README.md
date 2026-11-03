@@ -199,7 +199,7 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | `/bedwars entrar <modo>` (`/bw`) | none | Moves the player to a room of that mode, while waiting. |
 | `/g <mensagem>` | none | Talks to everyone in the room, with `&6[G]` before the message. In team matches the plain chat reaches only the team. |
 | `/bedwars iniciar` | `muxe.bedwars.admin` | Starts the countdown at 10 seconds without the minimum players, for tests, showing the `10 segundos` title right away (a countdown already running at more than 10 seconds is shortened). A match started this way with a single team keeps going until that team is eliminated; with two or more teams it ends as usual, when one team is left. |
-| `/bedwars finalizar` | `muxe.bedwars.admin` | Ends the match being played right away, with no winner, for tests. |
+| `/bedwars finalizar` | `muxe.bedwars.admin` | Ends the match being played right away, for tests, as a real match ends: the team left standing wins (the only player of a forced match too), with the usual result, tops, mission summary, XP and stats; with several teams standing it is a draw. |
 | `/cosmeticos` (`/cosmeticosbw`) | none | Opens Cosméticos do Bed Wars. |
 | `/cosmeticos dar <jogador> <cosmetico>` | `muxe.cosmetics.admin` | Gives a bed destruction cosmetic, for event and award cosmetics. |
 
