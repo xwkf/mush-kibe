@@ -3,8 +3,11 @@ package br.com.muxe.minigame.bedwars.cosmetic.animation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 
+import br.com.muxe.core.bukkit.cosmetic.animation.Scene;
+import br.com.muxe.core.bukkit.cosmetic.animation.Timeline;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import org.junit.jupiter.api.Test;
 
@@ -60,6 +63,34 @@ class PaintVictoryTest {
 
         assertThat(stage.blocks).contains("10,26,3=WOOL").hasSizeBetween(2, 10);
         assertThat(stage.blocks).allSatisfy(block -> assertThat(block).contains(",26,").endsWith("=WOOL"));
+    }
+
+    @Test
+    void aBucketOverTheVoidFallsStraightThroughWithoutSplashing() {
+        RecordingStage stage = run(new RecordingStage(block -> false));
+
+        assertThat(stage.sounds).doesNotContain("random.anvil_land", "random.splash");
+        assertThat(stage.blocks).isEmpty();
+        assertThat(stage.actors).allMatch(actor -> actor.removed);
+        assertThat(stage.actors).filteredOn(actor -> actor.type.equals("ArmorStand")).hasSize(PaintVictory.BUCKETS)
+            .allSatisfy(bucket -> assertThat(bucket.position.y()).isLessThan(64 - 20));
+    }
+
+    @Test
+    void aBucketStopsOnTheFirstBlockItHitsEvenAboveTheWinner() {
+        RecordingStage stage = run(new RecordingStage(block -> block[1] <= 68));
+
+        assertThat(stage.sounds).contains("random.anvil_land");
+        assertThat(stage.blocks).isNotEmpty().allSatisfy(block -> assertThat(block).contains(",68,"));
+    }
+
+    private static RecordingStage run(RecordingStage stage) {
+        Timeline timeline = new Timeline();
+        new PaintVictory().script(new Scene(new Vec(0.5, 64, 0.5), new Vec(0, 0, 1), Optional.empty(), List.of()), stage, timeline, new Random(3));
+        for (int tick = 0; tick <= timeline.length(); tick++) {
+            timeline.run(tick);
+        }
+        return stage;
     }
 
     @Test

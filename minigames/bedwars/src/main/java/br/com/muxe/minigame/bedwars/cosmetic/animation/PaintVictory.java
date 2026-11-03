@@ -11,6 +11,7 @@ import br.com.muxe.core.bukkit.cosmetic.animation.Timeline;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalDouble;
 import java.util.random.RandomGenerator;
 import org.bukkit.Material;
 
@@ -21,6 +22,7 @@ public final class PaintVictory implements SceneAnimation {
     static final int FIRST_BUCKET = 2;
     static final int BUCKET_EVERY = 8;
     static final int FALL_TICKS = 22;
+    static final int VOID_TICKS = 40;
     static final double DROP = 12;
     static final double BUCKET_BELOW_GROUND = 1.44;
     static final double WOOL_BELOW_GROUND = 1.38;
@@ -61,8 +63,13 @@ public final class PaintVictory implements SceneAnimation {
         Vec right = new Vec(-forward.z(), 0, forward.x());
         for (int bucket = 0; bucket < BUCKETS; bucket++) {
             Vec spot = spot(origin, forward, right, random);
-            double ground = ground(stage, spot, origin.y());
-            bucket(stage, timeline, random, origin, new Vec(spot.x(), ground, spot.z()), FIRST_BUCKET + bucket * BUCKET_EVERY, bucket);
+            int start = FIRST_BUCKET + bucket * BUCKET_EVERY;
+            OptionalDouble ground = Ground.hit(stage::solid, spot.x(), origin.y() + DROP, spot.z(), (int) DROP + Ground.DEPTH);
+            if (ground.isPresent()) {
+                bucket(stage, timeline, random, origin, new Vec(spot.x(), ground.getAsDouble(), spot.z()), start, bucket);
+            } else {
+                lost(stage, timeline, random, new Vec(spot.x(), origin.y() - BUCKET_BELOW_GROUND, spot.z()), start);
+            }
         }
         timeline.lasts(LENGTH);
     }
@@ -83,14 +90,37 @@ public final class PaintVictory implements SceneAnimation {
         return spot;
     }
 
-    static double ground(Stage stage, Vec spot, double fallback) {
-        return Ground.surface(stage::solid, spot.x(), fallback, spot.z());
+    static double fallen(int tick) {
+        return falling(Math.min(tick, FALL_TICKS));
     }
 
-    static double fallen(int tick) {
+    static double falling(int tick) {
         double acceleration = 2 * DROP / (FALL_TICKS * (FALL_TICKS + 1.0));
-        int clamped = Math.min(Math.max(tick, 0), FALL_TICKS);
+        int clamped = Math.max(tick, 0);
         return acceleration * clamped * (clamped + 1) / 2;
+    }
+
+    private static void lost(Stage stage, Timeline timeline, RandomGenerator random, Vec below, int start) {
+        Actor[] box = new Actor[1];
+        timeline.at(start, () -> {
+            box[0] = stage.armorStand(below.add(0, DROP, 0), 0, StandStyle.HIDDEN);
+            box[0].equipSkull(Slot.HELMET, BUCKET);
+        });
+        timeline.repeat(start + 1, start + VOID_TICKS, 1, offset -> {
+            int tick = offset + 1;
+            Vec at = below.add(0, DROP - falling(tick), 0);
+            box[0].teleport(at, 0, 0);
+            if (tick % 2 == 0) {
+                trail(stage, random, at);
+            }
+        });
+        timeline.at(start + VOID_TICKS + 1, () -> box[0].remove());
+    }
+
+    private static void trail(Stage stage, RandomGenerator random, Vec at) {
+        for (double[] color : WOOL_COLORS) {
+            Kit.dust(stage, at.add(Kit.between(random, -0.25, 0.25), Kit.between(random, 1.65, 2.2), Kit.between(random, -0.25, 0.25)), color[0], color[1], color[2]);
+        }
     }
 
     private static void bucket(Stage stage, Timeline timeline, RandomGenerator random, Vec origin, Vec ground, int start, int index) {
@@ -105,9 +135,7 @@ public final class PaintVictory implements SceneAnimation {
             Vec at = landed.add(0, DROP - fallen(tick), 0);
             box[0].teleport(at, 0, 0);
             if (tick % 2 == 0) {
-                for (double[] color : WOOL_COLORS) {
-                    Kit.dust(stage, at.add(Kit.between(random, -0.25, 0.25), Kit.between(random, 1.65, 2.2), Kit.between(random, -0.25, 0.25)), color[0], color[1], color[2]);
-                }
+                trail(stage, random, at);
             }
         });
         int landing = start + FALL_TICKS;
