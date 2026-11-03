@@ -109,7 +109,7 @@ class ZombieApocalypseVictoryTest {
             assertThat(stage.alive()).isLessThanOrEqualTo(20);
         }
 
-        assertThat(stage.times).containsExactly(ZombieApocalypseVictory.NIGHT);
+        assertThat(stage.times).hasSize(Nightfall.TICKS + 1).startsWith(Nightfall.MIDDAY).endsWith(Nightfall.NIGHT);
         assertThat(most).isBetween(15L, 20L);
         assertThat(stage.actors).allSatisfy(actor -> assertThat(actor.removed()).isTrue());
         assertThat(stage.actors.stream().filter(actor -> actor.type.equals("Zombie")).count()).isGreaterThan(40);

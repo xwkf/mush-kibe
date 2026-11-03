@@ -18,7 +18,6 @@ import org.bukkit.Material;
 
 public final class NecromancerVictory implements SceneAnimation {
 
-    static final long NIGHT = 18000;
     static final int END = 200;
     static final int SKULLS = 3;
     static final StandStyle SKULL_STYLE = new StandStyle(true, true, false, false, true);
@@ -77,7 +76,7 @@ public final class NecromancerVictory implements SceneAnimation {
     @Override
     public void script(Scene scene, Stage stage, Timeline timeline, RandomGenerator random) {
         Show show = new Show(scene, stage, random, names(random));
-        timeline.at(0, () -> stage.time(NIGHT));
+        Nightfall.schedule(stage, timeline);
         timeline.repeat(0, END, 1, show::tick);
         timeline.lasts(END);
     }

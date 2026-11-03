@@ -19,7 +19,6 @@ import org.bukkit.Material;
 
 public final class HauntedVictory implements SceneAnimation {
 
-    static final long NIGHT = 18000;
     static final int END = 200;
     static final List<String> CANDY = List.of(
         "c8713eecbcf5b28e29fda7becb24def977b4e7b28d1785a3eb7b6e0590fd59aa",
@@ -101,7 +100,7 @@ public final class HauntedVictory implements SceneAnimation {
     @Override
     public void script(Scene scene, Stage stage, Timeline timeline, RandomGenerator random) {
         Show show = new Show(scene, stage, random);
-        timeline.at(0, () -> stage.time(NIGHT));
+        Nightfall.schedule(stage, timeline);
         timeline.repeat(0, END, 1, show::tick);
         timeline.lasts(END);
     }

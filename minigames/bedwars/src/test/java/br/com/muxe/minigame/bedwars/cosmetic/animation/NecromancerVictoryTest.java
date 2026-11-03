@@ -100,7 +100,7 @@ class NecromancerVictoryTest {
 
         Map<String, Long> sounds = stage.sounds.stream().collect(Collectors.groupingBy(sound -> sound, Collectors.counting()));
         List<FakeActor> labels = stage.actors.stream().filter(actor -> actor.watched.get(2) != null).toList();
-        assertThat(stage.times).containsExactly(NecromancerVictory.NIGHT);
+        assertThat(stage.times).hasSize(Nightfall.TICKS + 1).startsWith(Nightfall.MIDDAY).endsWith(Nightfall.NIGHT);
         assertThat(stage.actors.stream().filter(actor -> actor.type.equals("Player"))).hasSize(10);
         assertThat(stage.actors.stream().filter(actor -> actor.type.equals("ArmorStand"))).hasSize(13);
         assertThat(labels).hasSize(10).allSatisfy(label -> assertThat((String) label.watched.get(2)).startsWith(NecromancerVictory.GREY));

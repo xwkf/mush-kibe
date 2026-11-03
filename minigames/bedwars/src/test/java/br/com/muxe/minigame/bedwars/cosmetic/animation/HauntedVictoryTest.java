@@ -78,7 +78,7 @@ class HauntedVictoryTest {
     void theSkyTurnsToNightAtTheStartAndEveryActorIsGoneAtTheEnd() {
         RecordingStage stage = play(block -> block[1] < 27, 4);
 
-        assertThat(stage.times).containsExactly(HauntedVictory.NIGHT);
+        assertThat(stage.times).hasSize(Nightfall.TICKS + 1).startsWith(Nightfall.MIDDAY).endsWith(Nightfall.NIGHT);
         assertThat(stage.actors.stream().filter(actor -> actor.type.equals("Ghast"))).hasSize(2);
         assertThat(stage.actors).allSatisfy(actor -> assertThat(actor.removed()).isTrue());
         assertThat(stage.sounds.stream().filter("fireworks.launch"::equals).count()).isGreaterThanOrEqualTo(19);
