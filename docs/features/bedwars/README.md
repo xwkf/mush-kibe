@@ -188,7 +188,8 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | `/arena ...` | `muxe.minigame.setup` | Creates and sets up arenas, on the BedWars lobby only. See [arena setup](../../architecture/game-engine/README.md#arena-setup). |
 | `/bedwars entrar <modo>` (`/bw`) | none | Moves the player to a room of that mode, while waiting. |
 | `/g <mensagem>` | none | Talks to everyone in the room, with `&6[G]` before the message. In team matches the plain chat reaches only the team. |
-| `/bedwars iniciar` | `muxe.bedwars.admin` | Starts the countdown at 10 seconds without the minimum players, for tests. |
+| `/bedwars iniciar` | `muxe.bedwars.admin` | Starts the countdown at 10 seconds without the minimum players, for tests. A match started this way with a single team keeps going until that team is eliminated; with two or more teams it ends as usual, when one team is left. |
+| `/bedwars finalizar` | `muxe.bedwars.admin` | Ends the match being played right away, with no winner, for tests. |
 | `/cosmeticos` (`/cosmeticosbw`) | none | Opens Cosméticos do Bed Wars. |
 | `/cosmeticos dar <jogador> <cosmetico>` | `muxe.cosmetics.admin` | Gives a bed destruction cosmetic, for event and award cosmetics. |
 
@@ -197,7 +198,7 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | Permission | Default | Description |
 |---|---|---|
 | `muxe.minigame.setup` | op | Allows `/arena`. |
-| `muxe.bedwars.admin` | op | Allows `/bedwars iniciar`. |
+| `muxe.bedwars.admin` | op | Allows `/bedwars iniciar` and `/bedwars finalizar`. |
 | `muxe.cosmetics.admin` | op | Allows `/cosmeticos dar`. |
 | `muxe.bedwars.map-select` | op | Choosing the map in the mode menus (VIPs). Give it to the VIP groups. |
 | `muxe.cosmetic.all` | op | Owns every BedWars cosmetic. |

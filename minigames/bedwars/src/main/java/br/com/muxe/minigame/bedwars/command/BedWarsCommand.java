@@ -43,6 +43,12 @@ public final class BedWarsCommand {
         player.sendMessage(messages.get(rooms.forceStart(player) ? "forced-start" : "cannot-force-start"));
     }
 
+    @Subcommand("finalizar")
+    @Permission(ADMIN)
+    public void end(Player player) {
+        player.sendMessage(messages.get(rooms.forceEnd(player) ? "forced-end" : "cannot-force-end"));
+    }
+
     @Suggestions(MODES)
     public List<String> modes() {
         return rooms.modes();

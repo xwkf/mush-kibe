@@ -125,6 +125,69 @@ class RoomTest {
     }
 
     @Test
+    void aMatchForcedWithASinglePlayerKeepsGoingUntilThatPlayerIsEliminated() {
+        Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
+        UUID tadeu = join(room, "tadeu");
+        room.forceStart(10);
+        room.start(List.of(), NOW);
+        RoomPlayer player = room.player(tadeu).orElseThrow();
+
+        assertThat(room.isOver()).isFalse();
+        room.die(player, 5);
+        assertThat(room.isOver()).isFalse();
+
+        room.team(player.team()).breakBed(null);
+        room.respawned(player, NOW);
+        room.die(player, 5);
+        assertThat(room.isOver()).isTrue();
+        assertThat(room.winner()).isEmpty();
+    }
+
+    @Test
+    void aForcedMatchWithTwoPlayersIsWonByEliminatingTheOther() {
+        Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
+        UUID tadeu = join(room, "tadeu");
+        UUID other = join(room, "x572");
+        room.forceStart(10);
+        room.start(List.of(), NOW);
+        RoomPlayer loser = room.player(other).orElseThrow();
+
+        assertThat(room.isOver()).isFalse();
+        room.team(loser.team()).breakBed(null);
+        room.die(loser, 5);
+
+        assertThat(room.isOver()).isTrue();
+        assertThat(room.winner()).contains(room.player(tadeu).orElseThrow().team());
+    }
+
+    @Test
+    void staffCanOnlyEndAMatchThatIsBeingPlayed() {
+        Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
+        join(room, "tadeu");
+        assertThat(room.canForceEnd()).isFalse();
+
+        room.forceStart(10);
+        room.start(List.of(), NOW);
+        assertThat(room.canForceEnd()).isTrue();
+
+        room.end();
+        assertThat(room.canForceEnd()).isFalse();
+    }
+
+    @Test
+    void aMatchThatWasNotForcedEndsWhenOneTeamIsLeft() {
+        Room room = RoomFixtures.room("abc123", RoomFixtures.ONE_V_ONE, RoomFixtures.arena("1v1", "Slip", RED_BLUE));
+        join(room, "tadeu");
+        UUID other = join(room, "x572");
+        room.start(List.of(), NOW);
+        RoomPlayer loser = room.player(other).orElseThrow();
+        room.team(loser.team()).breakBed(null);
+        room.die(loser, 5);
+
+        assertThat(room.isOver()).isTrue();
+    }
+
+    @Test
     void staffCanForceAStartThatPlayersJoiningOrLeavingDoNotCancel() {
         Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
         assertThat(room.forceStart(10)).isFalse();

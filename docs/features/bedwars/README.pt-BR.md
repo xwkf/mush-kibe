@@ -188,7 +188,8 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 | `/arena ...` | `muxe.minigame.setup` | Cria e configura arenas, só no lobby do BedWars. Veja o [setup de arenas](../../architecture/game-engine/README.pt-BR.md#setup-de-arenas). |
 | `/bedwars entrar <modo>` (`/bw`) | nenhuma | Leva o jogador para uma sala desse modo, enquanto espera. |
 | `/g <mensagem>` | nenhuma | Fala com todos da sala, com `&6[G]` antes da mensagem. Nas partidas com time o chat normal chega só ao time. |
-| `/bedwars iniciar` | `muxe.bedwars.admin` | Começa a contagem em 10 segundos sem o mínimo de jogadores, para testes. |
+| `/bedwars iniciar` | `muxe.bedwars.admin` | Começa a contagem em 10 segundos sem o mínimo de jogadores, para testes. Uma partida iniciada assim com um time só continua até esse time ser eliminado; com dois times ou mais ela acaba como sempre, quando sobra um time. |
+| `/bedwars finalizar` | `muxe.bedwars.admin` | Encerra na hora a partida em andamento, sem vencedor, para testes. |
 | `/cosmeticos` (`/cosmeticosbw`) | nenhuma | Abre Cosméticos do Bed Wars. |
 | `/cosmeticos dar <jogador> <cosmetico>` | `muxe.cosmetics.admin` | Dá um cosmético de destruição de cama, para cosméticos de evento e premiações. |
 
@@ -197,7 +198,7 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 | Permissão | Padrão | Descrição |
 |---|---|---|
 | `muxe.minigame.setup` | op | Permite o `/arena`. |
-| `muxe.bedwars.admin` | op | Permite o `/bedwars iniciar`. |
+| `muxe.bedwars.admin` | op | Permite o `/bedwars iniciar` e o `/bedwars finalizar`. |
 | `muxe.cosmetics.admin` | op | Permite o `/cosmeticos dar`. |
 | `muxe.bedwars.map-select` | op | Escolher o mapa nos menus dos modos (VIPs). Dê aos grupos VIP. |
 | `muxe.cosmetic.all` | op | Possui todos os cosméticos do BedWars. |

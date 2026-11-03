@@ -46,6 +46,7 @@ public final class Room {
     private final Set<Long> placed = new HashSet<>();
     private Phase phase = Phase.WAITING;
     private boolean forced;
+    private int startingTeams;
     private int elapsed;
     private int idleSeconds;
     private UUID matchId;
@@ -181,6 +182,7 @@ public final class Room {
                 team.breakBed(null);
             }
         }
+        startingTeams = (int) teams.values().stream().filter(team -> !team.members().isEmpty()).count();
         phase = Phase.PLAYING;
         startedAt = now;
         elapsed = 0;
@@ -326,6 +328,15 @@ public final class Room {
 
     public List<TeamColor> standing() {
         return teams.keySet().stream().filter(color -> !status(color).isEliminated()).toList();
+    }
+
+    public boolean canForceEnd() {
+        return phase == Phase.PLAYING;
+    }
+
+    public boolean isOver() {
+        int left = standing().size();
+        return forced && startingTeams == 1 ? left == 0 : left <= 1;
     }
 
     public Optional<TeamColor> winner() {

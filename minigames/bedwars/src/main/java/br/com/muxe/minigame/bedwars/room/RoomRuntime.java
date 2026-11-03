@@ -751,9 +751,17 @@ public final class RoomRuntime {
                 broadcast(messages.get("team-eliminated", "team-color", Colors.translate(color.color()), "team", color.displayName()));
             }
         }
-        if (room.phase() == Room.Phase.PLAYING && room.standing().size() <= 1) {
+        if (room.phase() == Room.Phase.PLAYING && room.isOver()) {
             end(room.winner());
         }
+    }
+
+    boolean forceEnd() {
+        if (!room.canForceEnd()) {
+            return false;
+        }
+        end(Optional.empty());
+        return true;
     }
 
     private void end(Optional<TeamColor> winner) {

@@ -194,6 +194,10 @@ public final class RoomService {
         return roomOf(player.getUniqueId()).map(runtime -> runtime.room().forceStart(StartCountdown.WHEN_FULL)).orElse(false);
     }
 
+    public boolean forceEnd(Player player) {
+        return roomOf(player.getUniqueId()).map(RoomRuntime::forceEnd).orElse(false);
+    }
+
     public List<String> modes() {
         return schema.modes();
     }

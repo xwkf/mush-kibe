@@ -564,9 +564,12 @@ messages:
   unknown-mode: "&cModo inválido. Modos: &f{modes}&c."
   forced-start: "&aA partida vai começar."
   cannot-force-start: "&cVocê não está numa sala de espera."
+  forced-end: "&aPartida finalizada."
+  cannot-force-end: "&cVocê não está numa partida em andamento."
   bedwars-usage:
     - "&e/bedwars entrar <modo> &7- Entra numa sala do modo."
     - "&e/bedwars iniciar &7- Começa a partida sem esperar o mínimo."
+    - "&e/bedwars finalizar &7- Encerra a partida sem vencedor."
   inventory-full: "&cSeu inventário está cheio."
   trap-triggered: "&c&lARMADILHA! &cUm inimigo ativou uma armadilha da sua ilha."
   cosmetic-selected: "&aVocê selecionou &f{name}&a."
