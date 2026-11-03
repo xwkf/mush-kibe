@@ -5,7 +5,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-public record Scene(Vec origin, Vec facing, Optional<String> skin, List<UUID> riders) {
+public record Scene(Vec origin, Vec facing, Optional<String> skin, List<UUID> riders, Area area) {
+
+    public static final double REACH = 16;
 
     public Scene {
         Objects.requireNonNull(origin, "origin");
@@ -13,6 +15,11 @@ public record Scene(Vec origin, Vec facing, Optional<String> skin, List<UUID> ri
         facing = flat.length() == 0 ? new Vec(0, 0, 1) : flat;
         Objects.requireNonNull(skin, "skin");
         riders = List.copyOf(riders);
+        Objects.requireNonNull(area, "area");
+    }
+
+    public Scene(Vec origin, Vec facing, Optional<String> skin, List<UUID> riders) {
+        this(origin, facing, skin, riders, Area.around(origin, REACH));
     }
 
     public Scene(Vec origin, Vec facing, Optional<String> skin) {
