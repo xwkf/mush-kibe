@@ -283,10 +283,10 @@ scoreboard:
 
 holograms:
   shop:
-    - "{color}LOJA"
+    - "{color}&lLOJA"
     - "&7Clique para ver mais."
   shop-team:
-    - "{color}LOJA DA EQUIPE"
+    - "{color}&lLOJA DA EQUIPE"
     - "&7Clique para ver mais."
   upgrades:
     - "{color}MELHORIAS"
