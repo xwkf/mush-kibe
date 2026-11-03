@@ -1,6 +1,7 @@
 package br.com.muxe.minigame.bedwars.cosmetic.animation;
 
 import br.com.muxe.core.bukkit.cosmetic.animation.SceneAnimation;
+import br.com.muxe.minigame.bedwars.cosmetic.aura.Auras;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,10 @@ public final class SceneAnimations {
 
     public static SceneAnimations finalKills() {
         return new SceneAnimations(List.of(new GiftedFinalKill(), new GiftShowerFinalKill(), new BirdsFinalKill(), new BrainFreezeFinalKill()));
+    }
+
+    public static SceneAnimations auras() {
+        return new SceneAnimations(Auras.all().stream().<SceneAnimation>map(AuraAnimation::new).toList());
     }
 
     public Optional<SceneAnimation> find(String id) {

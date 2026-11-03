@@ -14,6 +14,7 @@ import br.com.muxe.core.common.server.ServerKind;
 import br.com.muxe.minigame.bedwars.arena.BedWarsSchema;
 import br.com.muxe.minigame.bedwars.command.BedWarsCommand;
 import br.com.muxe.minigame.bedwars.command.GlobalChatCommand;
+import br.com.muxe.minigame.bedwars.cosmetic.aura.AuraTask;
 import br.com.muxe.minigame.bedwars.hotbar.HotbarChoices;
 import br.com.muxe.minigame.bedwars.hotbar.HotbarDelivery;
 import br.com.muxe.minigame.bedwars.hotbar.HotbarModule;
@@ -80,6 +81,7 @@ public final class BedWarsBootstrap {
     private LobbyFeatures lobbyFeatures;
     private RoomPublisher publisher;
     private Bedbugs bedbugs;
+    private AuraTask auras;
 
     public BedWarsBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -193,6 +195,7 @@ public final class BedWarsBootstrap {
             preferences, tntTimers), plugin);
 
         InvisiblePlayers.start(plugin, rooms);
+        auras = AuraTask.start(plugin, rooms, cosmetics.auras());
         commands.register(new BedWarsCommand(rooms, messages));
         commands.register(new GlobalChatCommand(rooms));
 
@@ -206,6 +209,9 @@ public final class BedWarsBootstrap {
         }
         if (publisher != null) {
             publisher.stop();
+        }
+        if (auras != null) {
+            auras.stop();
         }
         if (bedbugs != null) {
             bedbugs.stop();

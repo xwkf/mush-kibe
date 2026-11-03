@@ -180,6 +180,20 @@ O jogador escolhe uma animação que toca quando ele quebra uma cama inimiga. Os
 - **Deserto:** o mapa todo vira deserto a partir do vencedor (a área do mapa, ou pelo menos 144 por 144 blocos em volta dele, como na prévia), em 162 ticks qualquer que seja o tamanho (pelo menos 128 colunas por tick): pedra e terra viram arenito em camadas ou argila, o topo vira areia ou areia vermelha, plantas e folhas somem, grama vira arbusto seco e nascem alguns cactos. Todo jogador vivo ganha um oásis (um lago, uma fonte de ouro, palmeiras e cana), construído 10 blocos à frente dele, na altura do chão dele, tanto em cima da ilha quanto do void; quando tem algo acima do chão ali (uma construção, uma árvore, o oásis de outro jogador) ele vira para os lados ou vai mais longe, até 48 blocos, e sem espaço livre nenhum fica bem na frente. Todo jogador vivo anda no próprio tapete voador, que só o W dele move, para onde ele olha, enquanto chovem blocos, barras e pepitas de ouro e maçãs douradas pelo mapa. Tudo é só pacote e volta ao normal no fim.
 - **Prévia:** o botão direito abre o mundo `victory-preview.world` (`previa_efeito_de_vitoria`, que precisa estar na raiz do servidor do lobby de BedWars). O jogador fica em `victory-preview.spawn` e vê `3...`, `2...`, `1...` com um segundo entre eles e o clique da contagem, depois o título `VITÓRIA` e o efeito. Quando acaba (ou na cama `Voltar ao Lobby` do slot 8, ou depois do `timeout`) o jogador volta para onde estava e a lista de efeitos abre de novo.
 
+### Aura
+
+`Aura` (slot 33 de `Cosméticos do Bed Wars`, uma esmeralda) lista as auras em `Aura ({page}/{pages})`, com o mesmo layout, ordem (as possuídas primeiro, depois o resto, cada grupo em ordem alfabética), seleção e regra do `Voltar` das outras listas: `Nenhuma` (barreira, slot 10), `Aleatório` (name tag, slot 11, cujo ícone passa pelas auras que o jogador possui), as auras a partir do slot 12, `Voltar` (slot 48, `Para Cosméticos do Bed Wars`) e `Selecionado: <nome>` (slot 49). São salvas na categoria `bedwars-aura`, então posse e seleção são separadas das outras categorias. As duas auras são prêmios de torneio (`availability: EVENT`, tag `&6Premiação de torneio`, cinco estrelas): quem não tem uma vê `Indisponível.` e ainda pode visualizá-la com o botão direito. Não são vendidas e `/cosmeticos dar` só dá cosméticos de destruição de cama, então por enquanto o jogador as possui por `muxe.cosmetic.all`.
+
+| Aura | Ícone | Partícula |
+|---|---|---|
+| `Liga Mestre` (`liga-mestre`) | `REDSTONE` | `FLAME` |
+| `Liga Diamante` (`liga-diamante`) | `DIAMOND` | `SPELL_WITCH` |
+
+- **Regra:** enquanto o jogador está jogando (sala em `PLAYING`, jogador vivo, fora do modo espectador) a aura fica sempre ligada, e a única coisa que a esconde é a poção de invisibilidade. Não há aura na sala de espera, para jogadores mortos ou eliminados (eles espectam) nem depois do fim da partida. Todos da sala a veem, o dono inclusive, e o custo é baixo na thread principal: uma partícula por dono por tick.
+- **Padrão** (`AuraPattern`, `AuraTrails`): a cada tick, por jogador com aura, uma partícula (quantidade 0, offsets 0, velocidade 1, longa distância). Se o jogador andou na horizontal desde o tick anterior, ela aparece nos pés, em `(x, y + 0.1, z)`. Senão é um ponto de uma hélice em volta do jogador, para um contador `k` que cresce 1 a cada tick, andando ou não (começando em 0 quando a aura passa a aparecer): ângulo `18° · k`, deslocamento `x = sin(ângulo)`, `z = -cos(ângulo)` (raio 1) e `y = 0.1 + ((k + 15) mod 60) / 30`. Assim ela sobe 1/30 de bloco por tick de 0,1 até cerca de 2,07 em três voltas (20 ticks por volta) e recomeça a cada 60 ticks. Só o movimento horizontal conta: pular ou cair parado mantém a hélice.
+- **Aleatório:** `Aleatório` sorteia uma aura possuída por jogador e por partida, no primeiro tick em que o jogador está jogando, e a mantém até ele sair da partida (`AuraCosmetics`, `AuraAssignments`); a partida seguinte sorteia de novo. `Nenhuma` não mostra nada, e uma aura escolhida que o jogador não possui nunca é usada.
+- **Prévia:** o botão direito abre o mundo `aura-preview.world` (`previa_aura`, que precisa estar na raiz do servidor do lobby de BedWars; sem ele a prévia responde `preview-only-lobby`). O jogador fica em `aura-preview.spawn` (10.5 19 21.5, yaw 0) com a cama `Voltar ao Lobby` no slot 8 e vê aquela aura em si mesmo, só em si mesmo, enquanto anda. Não há contagem nem título. Termina na cama, em `aura-preview.timeout` (`60s`) ou quando o jogador sai, e ele volta de onde estava e a lista de auras abre de novo. Reaproveita a prévia de cenas (`ScenePreview`) com uma `AuraAnimation` por aura.
+
 ### Lobby do BedWars
 
 O lobby do BedWars (grupo `bedwars-lobby`) roda o Muxe-Lobby e este plugin no modo lobby. O seletor de jogo principal, os NPCs de jogo e o `/jogar bedwars` levam para lá.
@@ -289,6 +303,9 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 | `final-kill-preview.*` | `previa_kill_final`, -3.5 24 2.5 olhando para leste, alvo 4 blocos à frente, `&eAcerte o jogador!` | Como `victory-preview`, com `target.distance` e `target.action-bar` no lugar da contagem. |
 | `end-titles.victory`, `end-titles.defeat` | `VITÓRIA` `&6` `&e` `&f`; `DERROTA` `&c` `&c` `&f` | Palavra, cor depois da varredura, cor da letra que varre, cor inicial e um `sound` opcional. |
 | `victory-preview.*` | `previa_efeito_de_vitoria`, -19.5 27 68.5, `3...` `2...` `1...` a cada 20 ticks, `60s`, `1s` | Mundo, spawn, títulos da contagem e ticks entre eles, tempo limite, espera depois do efeito, item de voltar e scoreboard da prévia de vitória. |
+| `cosmetics.aura.*` | `bedwars-aura`; 750, 900, 1300, 1750, 2000; `liga-mestre` e `liga-diamante` | Categoria, preços por estrelas e as duas auras, com os mesmos campos dos de cama. O id precisa bater com uma aura de `Auras` para ter efeito. |
+| `cosmetics.menus.categories.aura`, `cosmetics.menus.aura.*` | slot 33, esmeralda; `Aura ({page}/{pages})`, `Aleatório` como name tag | O botão da categoria e o que a lista de auras muda (o resto segue a lista de destruição de cama). |
+| `aura-preview.*` | `previa_aura`, 10.5 19 21.5 yaw 0, `60s`, `1s` | Mundo, spawn, tempo limite, item de voltar e scoreboard da prévia de aura. Não tem contagem. |
 | `preview.world` | `previa_quebra_de_cama` | Pasta do mundo da prévia na raiz do servidor. Sem ela a prévia fica desligada. |
 | `preview.spawn`, `preview.bed` | 6.5 11 21.5; pé 6 11 17, cabeceira 6 16 | Onde o jogador fica e a cama que ele quebra. |
 | `preview.timeout`, `preview.return-delay` | `120s`, `2s` | Tempo para quebrar a cama e espera depois da animação. |
@@ -329,6 +346,7 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 | `bedwars.quick_buy` | A compra rápida de cada jogador: os 21 ids de item em ordem (`''` numa posição vazia). Migração `V3__create_quick_buy.sql`. |
 | `bedwars.hotbar_layout` | O layout da hotbar de cada jogador: 9 textos, um por slot, cada um uma lista de entradas separadas por vírgula (`c:<id da categoria>` ou `i:<id do item>`, `''` num slot vazio). Migração `V5__create_hotbar_layout.sql`. |
 | `<server>/previa_quebra_de_cama/` | O mundo da prévia. Vai só para o lobby de BedWars, nunca para o repositório. |
+| `<server>/previa_aura/` | O mundo da prévia de aura. Vai só para o lobby de BedWars, nunca para o repositório. |
 
 Comandos e consultas em `br.com.muxe.minigame.bedwars.stats`: `RecordMatchCommand`, `ToggleFavouriteMapCommand`, `FindPlayerStatsQuery`, `FindTopQuery`, `FindFavouriteMapsQuery`.
 

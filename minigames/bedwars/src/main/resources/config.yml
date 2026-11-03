@@ -2366,6 +2366,29 @@ cosmetics:
           material: PACKED_ICE
         stars: 3
         availability: SALE
+  aura:
+    category: bedwars-aura
+    prices:
+      "1": 750
+      "2": 900
+      "3": 1300
+      "4": 1750
+      "5": 2000
+    cosmetics:
+      liga-mestre:
+        name: "Liga Mestre"
+        icon:
+          material: REDSTONE
+        stars: 5
+        tag: "&6Premiação de torneio"
+        availability: EVENT
+      liga-diamante:
+        name: "Liga Diamante"
+        icon:
+          material: DIAMOND
+        stars: 5
+        tag: "&6Premiação de torneio"
+        availability: EVENT
   menus:
     bedwars:
       title: "Menu do Bed Wars"
@@ -2479,6 +2502,19 @@ cosmetics:
             - "&7Selecionado: &a{selected}"
             - " "
             - "&eClique para ver mais."
+      aura:
+        slot: 33
+        item:
+          material: EMERALD
+          name: "&aAura"
+          lore:
+            - "&8{owned}/{total} ({percent}%)"
+            - " "
+            - "&7Customize a sua aura."
+            - " "
+            - "&7Selecionado: &a{selected}"
+            - " "
+            - "&eClique para ver mais."
       soon:
         "14":
           material: SKULL_ITEM
@@ -2530,17 +2566,6 @@ cosmetics:
             - "&7Selecionado: &aAleatório"
             - " "
             - "&eClique para ver mais."
-        "33":
-          material: EMERALD
-          name: "&aAura"
-          lore:
-            - "&80/2 (0%)"
-            - " "
-            - "&7Customize a sua aura."
-            - " "
-            - "&7Selecionado: &aAleatório"
-            - " "
-            - "&eClique para ver mais."
         "35":
           material: WOOL
           data: 7
@@ -2573,6 +2598,14 @@ cosmetics:
           - "&7aleatório que você possui"
     victory-effect:
       title: "Efeito de Vitória ({page}/{pages})"
+      random:
+        material: NAME_TAG
+        name: "&aAleatório"
+        lore:
+          - "&7Seleciona um cosmético"
+          - "&7aleatório que você possui"
+    aura:
+      title: "Aura ({page}/{pages})"
       random:
         material: NAME_TAG
         name: "&aAleatório"
@@ -2757,6 +2790,29 @@ final-kill-preview:
       - "&7Davi"
       - "&7Enzo"
       - "&7Arthur"
+  timeout: 60s
+  return-delay: 1s
+  back-item:
+    slot: 8
+    material: BED
+    name: "&aVoltar ao Lobby"
+  scoreboard:
+    title: "&b&lMUXE"
+    lines:
+      - ""
+      - "&fVisualizando:"
+      - "&e{name}"
+      - ""
+      - "&amuxe.com.br"
+
+aura-preview:
+  world: previa_aura
+  spawn:
+    x: 10.5
+    y: 19.0
+    z: 21.5
+    yaw: 0.0
+    pitch: 0.0
   timeout: 60s
   return-delay: 1s
   back-item:

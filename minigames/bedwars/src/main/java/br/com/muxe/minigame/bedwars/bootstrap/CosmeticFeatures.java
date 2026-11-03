@@ -15,6 +15,8 @@ import br.com.muxe.minigame.bedwars.cosmetic.BedBreakCosmetics;
 import br.com.muxe.minigame.bedwars.cosmetic.SceneCosmetics;
 import br.com.muxe.minigame.bedwars.cosmetic.animation.BedAnimations;
 import br.com.muxe.minigame.bedwars.cosmetic.animation.SceneAnimations;
+import br.com.muxe.minigame.bedwars.cosmetic.aura.AuraCosmetics;
+import br.com.muxe.minigame.bedwars.cosmetic.aura.Auras;
 import br.com.muxe.minigame.bedwars.cosmetic.catalog.CosmeticCatalog;
 import br.com.muxe.minigame.bedwars.cosmetic.command.CosmeticCommand;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.BedWarsMenuItem;
@@ -49,20 +51,23 @@ final class CosmeticFeatures {
 
     private static final String VICTORY_CATEGORY = "bedwars-vitoria";
     private static final String FINAL_KILL_CATEGORY = "bedwars-kill-final";
+    private static final String AURA_CATEGORY = "bedwars-aura";
 
     private final CosmeticMenus menus;
     private final BedBreakCosmetics bedBreaks;
     private final SceneCosmetics victories;
     private final SceneCosmetics finalKills;
+    private final AuraCosmetics auras;
     private final BedPreview preview;
     private final List<ScenePreview> scenePreviews;
 
-    private CosmeticFeatures(CosmeticMenus menus, BedBreakCosmetics bedBreaks, SceneCosmetics victories, SceneCosmetics finalKills, BedPreview preview,
+    private CosmeticFeatures(CosmeticMenus menus, BedBreakCosmetics bedBreaks, SceneCosmetics victories, SceneCosmetics finalKills, AuraCosmetics auras, BedPreview preview,
                              List<ScenePreview> scenePreviews) {
         this.menus = menus;
         this.bedBreaks = bedBreaks;
         this.victories = victories;
         this.finalKills = finalKills;
+        this.auras = auras;
         this.preview = preview;
         this.scenePreviews = List.copyOf(scenePreviews);
     }
@@ -83,6 +88,10 @@ final class CosmeticFeatures {
         CosmeticCatalog killCatalog = CosmeticCatalog.from(section(section, CosmeticMenuSettings.FINAL_KILL), "cosmetics", FINAL_KILL_CATEGORY,
             id -> killAnimations.find(id).isPresent());
         CosmeticProfiles killProfiles = profiles(plugin, core, killCatalog);
+        SceneAnimations auraAnimations = SceneAnimations.auras();
+        CosmeticCatalog auraCatalog = CosmeticCatalog.from(section(section, CosmeticMenuSettings.AURA), "cosmetics", AURA_CATEGORY,
+            id -> Auras.find(id).isPresent());
+        CosmeticProfiles auraProfiles = profiles(plugin, core, auraCatalog);
 
         BedPreview preview = null;
         List<ScenePreview> scenes = new ArrayList<>();
@@ -90,6 +99,7 @@ final class CosmeticFeatures {
         PreviewGate bedGate = onlyLobby;
         PreviewGate victoryGate = onlyLobby;
         PreviewGate killGate = onlyLobby;
+        PreviewGate auraGate = onlyLobby;
         if (lobby) {
             BedPreview started = new BedPreview(plugin, core.buildMode(), BlockMask.start(plugin), PreviewSettings.from(section(config, "preview")), animations, messages);
             if (started.start()) {
@@ -111,6 +121,13 @@ final class CosmeticFeatures {
                 scenes.add(killScene);
                 killGate = killScene;
             }
+            ScenePreview auraScene = new ScenePreview(plugin, core.buildMode(), ScenePreviewSettings.from(section(config, "aura-preview")), auraAnimations,
+                player -> {
+                }, Optional.empty(), busy, messages);
+            if (auraScene.start()) {
+                scenes.add(auraScene);
+                auraGate = auraScene;
+            }
         }
         List<CosmeticCategory> categories = new ArrayList<>();
         categories.add(CosmeticCategory.of(menuSettings.category(CosmeticMenuSettings.BED_DESTRUCTION), catalog, profiles, bedGate));
@@ -119,6 +136,9 @@ final class CosmeticFeatures {
         }
         if (menuSettings.categories().containsKey(CosmeticMenuSettings.VICTORY_EFFECT)) {
             categories.add(CosmeticCategory.of(menuSettings.category(CosmeticMenuSettings.VICTORY_EFFECT), victoryCatalog, victoryProfiles, victoryGate));
+        }
+        if (menuSettings.categories().containsKey(CosmeticMenuSettings.AURA)) {
+            categories.add(CosmeticCategory.of(menuSettings.category(CosmeticMenuSettings.AURA), auraCatalog, auraProfiles, auraGate));
         }
         CosmeticMenus menus = new CosmeticMenus(menuSettings, categories, core.commands(), core.mainThread(), messages, plugin.getLogger());
         if (lobby) {
@@ -132,7 +152,7 @@ final class CosmeticFeatures {
             new CosmeticProfileListener(profiles, plugin.getLogger())));
         return new CosmeticFeatures(menus, new BedBreakCosmetics(animator, animations, catalog, profiles),
             new SceneCosmetics(animator, victoryAnimations, victoryCatalog, victoryProfiles), new SceneCosmetics(animator, killAnimations, killCatalog, killProfiles),
-            preview, scenes);
+            new AuraCosmetics(auraCatalog, auraProfiles::of), preview, scenes);
     }
 
     private static CosmeticProfiles profiles(JavaPlugin plugin, MuxeCore core, CosmeticCatalog catalog) {
@@ -145,6 +165,10 @@ final class CosmeticFeatures {
 
     BedBreakCosmetics bedBreaks() {
         return bedBreaks;
+    }
+
+    AuraCosmetics auras() {
+        return auras;
     }
 
     void victory(Player winner, List<Player> viewers, Area area) {
