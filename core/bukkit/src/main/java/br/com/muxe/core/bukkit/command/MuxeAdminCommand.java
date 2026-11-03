@@ -10,6 +10,7 @@ import br.com.muxe.core.bukkit.command.framework.completion.SuggestionRegistry;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.core.common.messaging.channel.PacketTarget;
 import br.com.muxe.core.common.metrics.snapshot.MetricsSnapshot;
+import br.com.muxe.core.common.metrics.snapshot.SlowestTimers;
 import br.com.muxe.core.common.network.player.PlayerLocateRequest;
 import br.com.muxe.core.common.network.player.PlayerLocateResponse;
 import br.com.muxe.core.common.server.directory.ServerStatus;
@@ -22,6 +23,7 @@ import org.bukkit.command.CommandSender;
 public final class MuxeAdminCommand {
 
     public static final String PERMISSION = "muxe.admin";
+    public static final int LATENCY_LINES = 12;
 
     private final MuxeCore core;
 
@@ -71,6 +73,34 @@ public final class MuxeAdminCommand {
             "rejected", Long.toString(snapshot.counterTotal("muxe_packets_rejected_total")),
             "failures", Long.toString(snapshot.counterTotal("muxe_packets_handler_failures_total")),
             "tps", String.format(Locale.ROOT, "%.2f", snapshot.gaugeTotal("muxe_server_tps"))));
+    }
+
+    @Subcommand("latencia")
+    public void showLatency(CommandSender sender) {
+        MessageCatalog messages = core.messages();
+        MetricsSnapshot snapshot = core.metrics().snapshot();
+        sender.sendMessage(messages.get("admin.latency-pools",
+            "db-active", whole(snapshot.gaugeTotal("muxe_db_connections_active")),
+            "db-pending", whole(snapshot.gaugeTotal("muxe_db_connections_pending")),
+            "active", whole(snapshot.gaugeTotal("muxe_executor_tasks_active")),
+            "queued", whole(snapshot.gaugeTotal("muxe_executor_tasks_queued"))));
+        List<SlowestTimers.Line> slowest = SlowestTimers.of(snapshot, LATENCY_LINES);
+        if (slowest.isEmpty()) {
+            sender.sendMessage(messages.get("admin.latency-empty"));
+            return;
+        }
+        sender.sendMessage(messages.get("admin.latency-header"));
+        for (SlowestTimers.Line line : slowest) {
+            sender.sendMessage(messages.get("admin.latency-line",
+                "label", line.label(),
+                "count", Long.toString(line.count()),
+                "mean", String.format(Locale.ROOT, "%.1f", line.meanMillis()),
+                "max", String.format(Locale.ROOT, "%.1f", line.maxMillis())));
+        }
+    }
+
+    private static String whole(double value) {
+        return Long.toString(Math.round(value));
     }
 
     private static String rootMessage(Throwable error) {

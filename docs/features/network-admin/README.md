@@ -15,6 +15,7 @@ Staff commands to see the network from inside the game. Lives in `core:bukkit` (
 - `/muxe servers` lists the servers in the local server directory: id, group, kind and players.
 - `/muxe find <player>` sends a `player.locate_request` to the proxy and shows the answer. If the proxy does not answer within `messaging.request-timeout`, the reason is shown.
 - `/muxe metrics` shows totals of packets published, received, duplicated, rejected, handler failures and the current TPS.
+- `/muxe latencia` shows the database connections in use and waiting, the command and query handlers running and queued, and the 12 timers with the highest average since the server started, with count, average and maximum in milliseconds. It finds what makes the server slow to answer when the TPS is fine.
 
 ## Commands
 
@@ -23,6 +24,7 @@ Staff commands to see the network from inside the game. Lives in `core:bukkit` (
 | `/muxe servers` | Lists live servers. | `muxe.admin` |
 | `/muxe find <player>` | Shows which server a player is on. | `muxe.admin` |
 | `/muxe metrics` | Shows a summary of packet metrics and TPS. | `muxe.admin` |
+| `/muxe latencia` | Shows connection pools, queues and the slowest timers. | `muxe.admin` |
 
 `/muxe find` completes the names of online players with tab.
 

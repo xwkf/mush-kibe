@@ -15,6 +15,7 @@ Comandos da equipe para ver a rede de dentro do jogo. Fica no `core:bukkit` (`Mu
 - `/muxe servers` lista os servidores do diretório de servidores local: id, grupo, tipo e jogadores.
 - `/muxe find <player>` envia um `player.locate_request` para o proxy e mostra a resposta. Se o proxy não responder dentro de `messaging.request-timeout`, o motivo é mostrado.
 - `/muxe metrics` mostra os totais de pacotes publicados, recebidos, duplicados, rejeitados, as falhas de handler e o TPS atual.
+- `/muxe latencia` mostra as conexões do banco em uso e esperando, os handlers de comandos e consultas rodando e na fila, e os 12 timers com a maior média desde que o servidor ligou, com contagem, média e máximo em milissegundos. Serve para achar o que deixa o servidor lento para responder quando o TPS está normal.
 
 ## Comandos
 
@@ -23,6 +24,7 @@ Comandos da equipe para ver a rede de dentro do jogo. Fica no `core:bukkit` (`Mu
 | `/muxe servers` | Lista os servidores vivos. | `muxe.admin` |
 | `/muxe find <player>` | Mostra em qual servidor um jogador está. | `muxe.admin` |
 | `/muxe metrics` | Mostra um resumo das métricas de pacotes e o TPS. | `muxe.admin` |
+| `/muxe latencia` | Mostra os pools de conexão, as filas e os timers mais lentos. | `muxe.admin` |
 
 O `/muxe find` completa os nomes dos jogadores online com tab.
 
