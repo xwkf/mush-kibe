@@ -93,7 +93,7 @@ Pieces a game uses to run its rooms:
 | Class | What it does |
 |---|---|
 | `RoomCodes` | Room codes like the reference: 6 characters, digits and lowercase letters, starting with a digit (`2v7bss`), never repeated on the server. |
-| `TeamAssigner` | Splits the players of a room into the teams when the match starts. Parties (`PartyGroups`) stay together, the largest first; everyone else goes to the team with the fewest players, in join order. A party larger than a team spills into the next. |
+| `TeamAssigner` | Splits the players of a room into the teams when the match starts. Parties (`PartyGroups`) stay together, the largest first; then the players with a preferred `TeamColor` (the favourite colour of the game, optional) go to that team when the arena has it and it has seats, grouped by colour: when more want it than it has seats, a draw with the injected `RandomGenerator` picks who gets them and the others fall through; everyone else goes to the team with the fewest players, in join order. A party takes the colour most of its members prefer (the first on a tie) if that team is still empty, and is never split. A party larger than a team spills into the next. Without preferences the result is the join-order one. |
 | `PartyGroups` | The hook for the party system. `PartyGroups.NONE` until parties exist. |
 | `CountdownTitles` | The titles of the start countdown, by second, read from `countdown.titles`. |
 | `MatchWorld` | The match world of a game: one `muxe_<game>` world with its cells, plus a task that unloads chunks nobody is watching every 5 seconds (64 at most), keeping what matches changed. |

@@ -93,7 +93,7 @@ Peças que um jogo usa para rodar as suas salas:
 | Classe | O que faz |
 |---|---|
 | `RoomCodes` | Códigos de sala como os da referência: 6 caracteres, dígitos e letras minúsculas, começando com um dígito (`2v7bss`), nunca repetidos no servidor. |
-| `TeamAssigner` | Divide os jogadores de uma sala nos times quando a partida começa. As parties (`PartyGroups`) ficam juntas, as maiores primeiro; os outros vão para o time com menos jogadores, na ordem de entrada. Uma party maior que um time transborda para o próximo. |
+| `TeamAssigner` | Divide os jogadores de uma sala nos times quando a partida começa. As parties (`PartyGroups`) ficam juntas, as maiores primeiro; depois os jogadores com um `TeamColor` preferido (a cor preferida do jogo, opcional) vão para esse time quando a arena o tem e ele tem vagas, agrupados por cor: quando mais jogadores o querem do que há vagas, um sorteio com o `RandomGenerator` injetado decide quem fica com elas e os outros seguem adiante; os demais vão para o time com menos jogadores, na ordem de entrada. Uma party fica com a cor que a maioria dos membros prefere (a primeira num empate) se esse time ainda estiver vazio, e nunca é dividida. Uma party maior que um time transborda para o próximo. Sem preferências o resultado é o da ordem de entrada. |
 | `PartyGroups` | O gancho do sistema de parties. `PartyGroups.NONE` até as parties existirem. |
 | `CountdownTitles` | Os títulos da contagem para iniciar, por segundo, lidos de `countdown.titles`. |
 | `MatchWorld` | O mundo das partidas de um jogo: um mundo `muxe_<jogo>` com as células, mais uma tarefa que descarrega a cada 5 segundos os chunks que ninguém está vendo (64 no máximo), guardando o que as partidas mudaram. |
