@@ -2666,13 +2666,13 @@ victory-preview:
       - "&amuxe.com.br"
 
 final-kill-preview:
-  world: previa_efeito_de_vitoria
+  world: previa_kill_final
   spawn:
-    x: -19.5
-    y: 35.0
-    z: 68.5
-    yaw: -161.0
-    pitch: 2.0
+    x: -3.5
+    y: 24.0
+    z: 2.5
+    yaw: 270.0
+    pitch: 3.0
   target:
     distance: 4
     action-bar: "&eAcerte o jogador!"

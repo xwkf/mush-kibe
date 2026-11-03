@@ -151,7 +151,7 @@ Players pick an animation that plays when they break an enemy bed. The menus fol
 
 - **In the match:** when a player makes a final kill (not into the void), their selected final kill effect (or a random one they own) plays where the victim died, seen by the whole room.
 - **Presenteado:** a red, green and white star firework goes off on the victim and eight different presents pop out of them one every 2 ticks in eight directions, spinning about 8 blocks up and landing about 3 blocks away, each with a pop. They disappear about 4 seconds later.
-- **Preview:** right click opens `final-kill-preview.world` (the victory preview world) with a player 4 blocks ahead (`final-kill-preview.target.distance`) and `&eAcerte o jogador!` in the action bar. Hitting it removes it with the hurt sound and plays the effect there; then the player goes back and the list opens again.
+- **Preview:** right click opens `final-kill-preview.world` (`previa_kill_final`, in the server root of the BedWars lobby) with a player 4 blocks ahead (`final-kill-preview.target.distance`) and `&eAcerte o jogador!` in the action bar. Hitting it removes it with the hurt sound and plays the effect there; then the player goes back and the list opens again.
 
 ### Victory effects
 
@@ -264,7 +264,7 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | `cosmetics.menus.*` | the exports | Titles, slots, items and lore lines of the three menus. |
 | `cosmetics.victory-effect.*` | `bedwars-vitoria`; 300, 400, 500, 700, 800; the 22 effects | Category, prices by stars and victory effects, with the same fields as the bed ones (`stars: 0` hides the stars). |
 | `cosmetics.final-kill.*` | `bedwars-kill-final`; 750, 900, 1300, 1750, 2000; the 43 effects | Category, prices by stars and final kill effects. |
-| `final-kill-preview.*` | the victory preview world and spawn, target 4 blocks ahead, `&eAcerte o jogador!` | Like `victory-preview`, with `target.distance` and `target.action-bar` instead of a countdown. |
+| `final-kill-preview.*` | `previa_kill_final`, -3.5 24 2.5 facing east, target 4 blocks ahead, `&eAcerte o jogador!` | Like `victory-preview`, with `target.distance` and `target.action-bar` instead of a countdown. |
 | `end-titles.victory`, `end-titles.defeat` | `VITÓRIA` `&6` `&e` `&f`; `DERROTA` `&c` `&c` `&f` | Word, colour after the sweep, colour of the sweeping letter, starting colour and an optional `sound`. |
 | `victory-preview.*` | `previa_efeito_de_vitoria`, -19.5 35 68.5, `3...` `2...` `1...` every 20 ticks, `60s`, `1s` | World, spawn, countdown titles and ticks between them, timeout, wait after the effect, back item and scoreboard of the victory preview. |
 | `preview.world` | `previa_quebra_de_cama` | Folder of the preview world in the server root. Without it the preview is off. |

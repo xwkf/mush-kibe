@@ -3,6 +3,7 @@ package br.com.muxe.minigame.bedwars.cosmetic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 
+import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import br.com.muxe.minigame.bedwars.cosmetic.animation.SceneAnimations;
 import br.com.muxe.minigame.bedwars.cosmetic.catalog.Availability;
 import br.com.muxe.minigame.bedwars.cosmetic.catalog.BedCosmetic;
@@ -49,7 +50,11 @@ class FinalKillEffectTest {
 
         assertThat(preview.target()).isPresent();
         assertThat(preview.target().get().actionBar()).isEqualTo("&eAcerte o jogador!");
-        assertThat(preview.targetAt().distance(preview.origin())).isCloseTo(4, offset(1e-9));
+        assertThat(preview.world()).isEqualTo("previa_kill_final");
+        assertThat(preview.origin()).isEqualTo(new Vec(-3.5, 24, 2.5));
+        assertThat(preview.targetAt().x()).isCloseTo(0.5, offset(1e-9));
+        assertThat(preview.targetAt().y()).isCloseTo(24, offset(1e-9));
+        assertThat(preview.targetAt().z()).isCloseTo(2.5, offset(1e-9));
         assertThat(preview.countdown()).isEmpty();
     }
 }
