@@ -130,6 +130,16 @@ prompts.ask(player, Duration.ofSeconds(60), code -> apply(code), () -> cancelled
 - A próxima mensagem do jogador no chat vira a resposta e não aparece no chat. Digitar `cancelar` cancela; depois do tempo limite roda o callback de expiração. As respostas chegam na main thread.
 - A lista de espera é o `PendingPrompts` do `core:common`, testado com um `MutableClock`.
 
+### Perguntas na bigorna
+
+```java
+AnvilPrompts anvils = AnvilPrompts.start(plugin);
+anvils.ask(player, "Insira o usuário", nome -> procurar(nome));
+```
+
+- Abre uma bigorna funcionando (o `ContainerAnvil` do 1.8, sem precisar de bloco) com um papel com o nome do texto de exemplo. O jogador digita no campo de renomear e clica no slot de resultado; o texto sem cores chega ao callback na main thread, e a bigorna fecha.
+- Cliques em outros lugares são cancelados, e fechar a bigorna não deixa cair nada. Texto vazio ou igual ao de exemplo é ignorado (`AnvilText.typed`).
+
 ## Efeitos
 
 Pacote `br.com.muxe.core.bukkit.effect`.

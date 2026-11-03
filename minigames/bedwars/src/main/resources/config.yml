@@ -666,6 +666,30 @@ shop:
           - "&7de outro jogador!"
           - " "
           - "&eClique para ver mais."
+    import-prompt: "Insira o usuário"
+    import-title: "Importando compra rápida..."
+    cancel:
+      slot: 38
+      item:
+        material: STAINED_CLAY
+        data: 14
+        name: "&cCancelar"
+        lore:
+          - "&7Voltar para modo edição."
+          - " "
+          - "&eClique para selecionar."
+    confirm:
+      slot: 42
+      item:
+        material: STAINED_CLAY
+        data: 13
+        name: "&aConfirmar"
+        lore:
+          - "&7Confirme a importação"
+          - "&7da compra rápida de"
+          - "&7{player}."
+          - " "
+          - "&eClique para selecionar."
   cannot-afford: "&cVocê não tem {currency} o suficiente."
   can-afford: "&eClique para comprar."
   maxed: "&aVocê já tem o nível máximo."

@@ -3,6 +3,7 @@ package br.com.muxe.minigame.bedwars.shop;
 import br.com.muxe.core.bukkit.item.ItemBuilder;
 import br.com.muxe.core.bukkit.menu.Menu;
 import br.com.muxe.core.bukkit.menu.Page;
+import br.com.muxe.core.bukkit.prompt.AnvilPrompts;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.MenuSlot;
 import br.com.muxe.minigame.bedwars.quickbuy.domain.QuickBuy;
@@ -12,7 +13,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.Executor;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -27,12 +31,19 @@ public final class QuickBuyEditor {
     private final Settings settings;
     private final QuickBuys quickBuys;
     private final MessageCatalog messages;
+    private final AnvilPrompts anvils;
+    private final Executor mainThread;
+    private final Logger logger;
 
-    public QuickBuyEditor(ShopCatalog shop, Settings settings, QuickBuys quickBuys, MessageCatalog messages) {
+    public QuickBuyEditor(ShopCatalog shop, Settings settings, QuickBuys quickBuys, MessageCatalog messages, AnvilPrompts anvils, Executor mainThread,
+                          Logger logger) {
         this.shop = shop;
         this.settings = settings;
         this.quickBuys = quickBuys;
         this.messages = messages;
+        this.anvils = anvils;
+        this.mainThread = mainThread;
+        this.logger = logger;
     }
 
     public void open(Player player, Consumer<Player> back) {
@@ -55,7 +66,7 @@ public final class QuickBuyEditor {
             });
         }
         menu.button(settings.back().slot(), settings.back().item(), context -> back.accept(context.player()));
-        menu.button(settings.importButton().slot(), settings.importButton().item(), context -> context.player().sendMessage(messages.get("coming-soon")));
+        menu.button(settings.importButton().slot(), settings.importButton().item(), context -> askImport(context.player(), back));
         menu.build().open(player);
     }
 
@@ -82,6 +93,35 @@ public final class QuickBuyEditor {
             menu.button(settings.next().slot(), settings.next().item().replacing("page", Integer.toString(number + 1)),
                 context -> openPicker(context.player(), position, number + 1, back));
         }
+        menu.build().open(player);
+    }
+
+    private void askImport(Player player, Consumer<Player> back) {
+        anvils.ask(player, settings.importPrompt(), username -> quickBuys.find(username).whenCompleteAsync((found, error) -> {
+            if (!player.isOnline()) {
+                return;
+            }
+            if (error != null) {
+                logger.log(Level.WARNING, "Could not find the quick buy of " + username, error);
+                player.sendMessage(messages.get("cosmetic-failed"));
+                return;
+            }
+            openImport(player, username, found.orElse(QuickBuy.of(List.of())), back);
+        }, mainThread));
+    }
+
+    public void openImport(Player player, String username, QuickBuy imported, Consumer<Player> back) {
+        Menu.Builder menu = Menu.builder(settings.importTitle()).rows(settings.rows());
+        for (int position = 0; position < QuickBuy.SIZE; position++) {
+            Optional<ShopItem> item = imported.at(position).map(shop.items()::get);
+            menu.button(SLOTS.get(position), item.map(this::look)
+                .orElseGet(() -> ItemBuilder.of(Material.STAINED_GLASS_PANE, PANE_RED).name(shop.quickBuyTexts().emptyName())));
+        }
+        menu.button(settings.cancel().slot(), settings.cancel().item(), context -> open(context.player(), back));
+        menu.button(settings.confirm().slot(), settings.confirm().item().replacing("player", username), context -> {
+            quickBuys.change(context.player().getUniqueId(), imported);
+            open(context.player(), back);
+        });
         menu.build().open(player);
     }
 
@@ -117,7 +157,8 @@ public final class QuickBuyEditor {
     }
 
     public record Settings(String title, String pickerTitle, int rows, String name, String swap, String remove, String select,
-                           MenuSlot back, MenuSlot pickerBack, MenuSlot previous, MenuSlot next, MenuSlot importButton) {
+                           MenuSlot back, MenuSlot pickerBack, MenuSlot previous, MenuSlot next, MenuSlot importButton,
+                           String importPrompt, String importTitle, MenuSlot cancel, MenuSlot confirm) {
 
         public static Settings from(ConfigurationSection section) {
             return new Settings(
@@ -132,7 +173,11 @@ public final class QuickBuyEditor {
                 MenuSlot.from(section(section, "picker-back")),
                 MenuSlot.from(section(section, "previous")),
                 MenuSlot.from(section(section, "next")),
-                MenuSlot.from(section(section, "import"))
+                MenuSlot.from(section(section, "import")),
+                section.getString("import-prompt", "Insira o usuário"),
+                section.getString("import-title", "Importando compra rápida..."),
+                MenuSlot.from(section(section, "cancel")),
+                MenuSlot.from(section(section, "confirm"))
             );
         }
 

@@ -24,6 +24,19 @@ class QuickBuyEditorTest {
     }
 
     @Test
+    void importingAsksForThePlayerAndConfirmsWithTheirName() {
+        assertThat(settings.importPrompt()).isEqualTo("Insira o usuário");
+        assertThat(settings.importTitle()).isEqualTo("Importando compra rápida...");
+        assertThat(settings.cancel().slot()).isEqualTo(38);
+        assertThat(settings.cancel().item().name()).isEqualTo("§cCancelar");
+        assertThat(settings.cancel().item().lore()).containsExactly("§7Voltar para modo edição.", " ", "§eClique para selecionar.");
+        assertThat(settings.confirm().slot()).isEqualTo(42);
+        assertThat(settings.confirm().item().data()).isEqualTo((short) 13);
+        assertThat(settings.confirm().item().replacing("player", "testeadasdasd").lore()).containsExactly(
+            "§7Confirme a importação", "§7da compra rápida de", "§7testeadasdasd.", " ", "§eClique para selecionar.");
+    }
+
+    @Test
     void anItemInTheQuickBuyCanBeSwappedOrRemoved() {
         assertThat(QuickBuyEditor.slotLore(catalog.items().get("argila").editor().lore(), settings)).containsExactly(
             " ",

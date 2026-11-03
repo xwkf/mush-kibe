@@ -2,6 +2,7 @@ package br.com.muxe.minigame.bedwars.bootstrap;
 
 import br.com.muxe.core.bukkit.api.MuxeCore;
 import br.com.muxe.core.bukkit.config.PluginConfig;
+import br.com.muxe.core.bukkit.prompt.AnvilPrompts;
 import br.com.muxe.core.bukkit.command.framework.Commands;
 import br.com.muxe.core.bukkit.mission.config.MissionConfig;
 import br.com.muxe.core.bukkit.mission.menu.MissionMenus;
@@ -96,7 +97,7 @@ public final class BedWarsBootstrap {
         plugin.getServer().getPluginManager().registerEvents(quickBuys, plugin);
         plugin.getServer().getOnlinePlayers().forEach(player -> quickBuys.load(player.getUniqueId()));
         cosmetics.onQuickBuy(new QuickBuyEditor(shopCatalog, QuickBuyEditor.Settings.from(Objects.requireNonNull(config.getConfigurationSection("shop.quick-buy-editor"), "Missing configuration section shop.quick-buy-editor")), quickBuys,
-            messages));
+            messages, AnvilPrompts.start(plugin), core.mainThread(), plugin.getLogger()));
         ArenaSavedPacket.register(core.packetRegistry());
         ArenaStore arenas = new DatabaseArenaStore(GAME, core.commands(), core.queries());
         MuxeWorlds worlds = new MuxeWorlds(plugin);

@@ -130,6 +130,16 @@ prompts.ask(player, Duration.ofSeconds(60), code -> apply(code), () -> cancelled
 - The next chat message of the player is taken as the answer and never reaches the chat. Typing `cancelar` cancels; after the timeout the expired callback runs. Answers are delivered on the main thread.
 - The waiting list is `PendingPrompts` in `core:common`, tested with a `MutableClock`.
 
+### Anvil prompts
+
+```java
+AnvilPrompts anvils = AnvilPrompts.start(plugin);
+anvils.ask(player, "Insira o usuário", name -> lookUp(name));
+```
+
+- Opens a working anvil (1.8 `ContainerAnvil`, no block needed) with a paper named after the placeholder. The player types in the rename field and clicks the result slot; the text without colours reaches the callback on the main thread, and the anvil closes.
+- Clicks elsewhere are cancelled, and closing the anvil drops nothing. An empty text or the placeholder itself is ignored (`AnvilText.typed`).
+
 ## Effects
 
 Package `br.com.muxe.core.bukkit.effect`.

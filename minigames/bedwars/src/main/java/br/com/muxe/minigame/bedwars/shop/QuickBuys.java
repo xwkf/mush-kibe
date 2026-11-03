@@ -1,11 +1,14 @@
 package br.com.muxe.minigame.bedwars.shop;
 
 import br.com.muxe.core.bukkit.api.MuxeCore;
+import br.com.muxe.core.common.account.application.query.FindAccountByUsernameQuery;
 import br.com.muxe.minigame.bedwars.quickbuy.application.command.SaveQuickBuyCommand;
 import br.com.muxe.minigame.bedwars.quickbuy.application.query.FindQuickBuyQuery;
 import br.com.muxe.minigame.bedwars.quickbuy.domain.QuickBuy;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.logging.Level;
@@ -41,6 +44,13 @@ public final class QuickBuys implements Listener {
                 logger.log(Level.WARNING, "Could not save the quick buy of " + playerId, error);
             }
         });
+    }
+
+    public CompletableFuture<Optional<QuickBuy>> find(String username) {
+        return core.queries().ask(new FindAccountByUsernameQuery(username)).thenCompose(account -> account
+            .map(found -> core.queries().ask(new FindQuickBuyQuery(found.id()))
+                .thenApply(saved -> Optional.of(saved.orElse(defaults).known(exists))))
+            .orElseGet(() -> CompletableFuture.completedFuture(Optional.empty())));
     }
 
     public void load(UUID playerId) {
