@@ -75,6 +75,14 @@ public final class CosmeticIcons {
         return settings.random().lore(lore).glow(chosen);
     }
 
+    public List<ItemBuilder> randomFrames(CosmeticWallet wallet) {
+        ItemBuilder random = random(wallet);
+        return wallet.sorted(catalog).stream()
+            .filter(wallet::usable)
+            .map(cosmetic -> cosmetic.icon().name(random.name()).lore(random.lore()).glow(random.isGlowing()))
+            .toList();
+    }
+
     public ItemBuilder selected(CosmeticWallet wallet) {
         List<String> lore = switch (wallet.selected()) {
             case CosmeticWallet.RANDOM -> settings.random().lore();

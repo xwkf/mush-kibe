@@ -4,6 +4,8 @@ import br.com.muxe.core.bukkit.credit.CreditFormat;
 import br.com.muxe.core.bukkit.item.ItemBuilder;
 import br.com.muxe.core.bukkit.menu.ClickContext;
 import br.com.muxe.core.bukkit.menu.Menu;
+import br.com.muxe.core.bukkit.menu.MenuButton;
+import br.com.muxe.core.bukkit.menu.MenuClick;
 import br.com.muxe.core.bukkit.menu.Page;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.core.common.cosmetic.application.command.BuyCosmeticCommand;
@@ -33,6 +35,7 @@ import org.bukkit.entity.Player;
 public final class CosmeticMenus {
 
     private static final int SPECIAL_ENTRIES = 2;
+    static final int RANDOM_FRAME_TICKS = 10;
 
     private final CosmeticMenuSettings settings;
     private final Map<String, CosmeticCategory> categories = new LinkedHashMap<>();
@@ -116,17 +119,18 @@ public final class CosmeticMenus {
         CosmeticIcons icons = category.icons();
         CosmeticListSettings list = category.list();
         List<Entry> entries = new ArrayList<>();
-        entries.add(new Entry(icons.none(wallet), context -> choose(context, category, CosmeticWallet.NONE, icons.selectedName(wallet.selecting(CosmeticWallet.NONE)))));
-        entries.add(new Entry(icons.random(wallet), context -> choose(context, category, CosmeticWallet.RANDOM, icons.selectedName(wallet.selecting(CosmeticWallet.RANDOM)))));
+        entries.add(new Entry(icons.none(wallet), List.of(), context -> choose(context, category, CosmeticWallet.NONE, icons.selectedName(wallet.selecting(CosmeticWallet.NONE)))));
+        entries.add(new Entry(icons.random(wallet), icons.randomFrames(wallet), context -> choose(context, category, CosmeticWallet.RANDOM, icons.selectedName(wallet.selecting(CosmeticWallet.RANDOM)))));
         for (BedCosmetic cosmetic : wallet.sorted(category.catalog())) {
-            entries.add(new Entry(icons.cosmetic(cosmetic, wallet), context -> clicked(context, category, cosmetic)));
+            entries.add(new Entry(icons.cosmetic(cosmetic, wallet), List.of(), context -> clicked(context, category, cosmetic)));
         }
         Page<Entry> page = Page.of(entries, list.slots().size(), requested);
         String title = list.title().replace("{page}", Integer.toString(page.number())).replace("{pages}", Integer.toString(page.total()));
         Menu.Builder menu = Menu.builder(title).rows(list.rows());
         for (int index = 0; index < page.items().size(); index++) {
             Entry entry = page.items().get(index);
-            menu.button(list.slots().get(index), entry.icon(), entry.click()::accept);
+            MenuClick click = entry.click()::accept;
+            menu.button(list.slots().get(index), entry.frames().isEmpty() ? MenuButton.of(entry.icon(), click) : MenuButton.animated(entry.frames(), RANDOM_FRAME_TICKS, click));
         }
         int number = page.number();
         String key = category.key();
@@ -267,6 +271,6 @@ public final class CosmeticMenus {
         void preview(Player player, BedCosmetic cosmetic, Consumer<Player> back);
     }
 
-    private record Entry(ItemBuilder icon, Consumer<ClickContext> click) {
+    private record Entry(ItemBuilder icon, List<ItemBuilder> frames, Consumer<ClickContext> click) {
     }
 }

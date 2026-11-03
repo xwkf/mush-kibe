@@ -131,6 +131,25 @@ class CosmeticCatalogTest {
     }
 
     @Test
+    void theRandomItemCyclesThroughTheIconsOfTheCosmeticsThePlayerCanDraw() {
+        CosmeticWallet wallet = new CosmeticWallet(Set.of("tinta", "enderman", "tornado"), CosmeticWallet.RANDOM, 0, false);
+        ItemBuilder random = icons.random(wallet);
+
+        List<ItemBuilder> frames = icons.randomFrames(wallet);
+
+        assertThat(frames).extracting(ItemBuilder::material)
+            .containsExactly(catalog.find("enderman").orElseThrow().icon().material(), catalog.find("tinta").orElseThrow().icon().material());
+        assertThat(frames).extracting(ItemBuilder::skullTexture)
+            .containsExactly(catalog.find("enderman").orElseThrow().icon().skullTexture(), catalog.find("tinta").orElseThrow().icon().skullTexture());
+        assertThat(frames).allSatisfy(frame -> {
+            assertThat(frame.name()).isEqualTo(random.name());
+            assertThat(frame.lore()).isEqualTo(random.lore());
+            assertThat(frame.isGlowing()).isTrue();
+        });
+        assertThat(icons.randomFrames(CosmeticWallet.EMPTY)).isEmpty();
+    }
+
+    @Test
     void randomIsTheDefaultSelection() {
         ItemBuilder random = icons.random(CosmeticWallet.EMPTY);
 
