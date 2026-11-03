@@ -87,9 +87,7 @@ public final class DesertVictory implements SceneAnimation {
     static final double RIPPLE_PHASE = 0.846;
     static final int POND_RINGS = 3;
     static final int OASIS_MIN_DISTANCE = 10;
-    static final int OASIS_MAX_DISTANCE = 11;
     static final int OASIS_SEARCH = 48;
-    static final int OASIS_BELOW = 4;
     static final int OASIS_ABOVE = 12;
     static final int[] OASIS_TURNS = {0, 20, -20, 40, -40, 60, -60, 90, -90, 120, -120, 150, -150, 180};
     static final int OASIS_START_TICK = 22;
@@ -194,11 +192,7 @@ public final class DesertVictory implements SceneAnimation {
     }
 
     private static void scheduleOasis(Stage stage, Timeline timeline, RandomGenerator random, Drops drops, int originX, int originY, int originZ, Vec facing) {
-        int[] centre = oasisCentre(stage::solid, originX, originY, originZ, facing).orElseGet(() -> {
-            double angle = random.nextDouble() * 2 * Math.PI;
-            double distance = Kit.between(random, OASIS_MIN_DISTANCE, OASIS_MAX_DISTANCE);
-            return new int[] {originX + (int) Math.round(Math.cos(angle) * distance), originZ + (int) Math.round(Math.sin(angle) * distance)};
-        });
+        int[] centre = oasisCentre(stage::solid, originX, originY, originZ, facing).orElseGet(() -> oasisAhead(originX, originZ, facing));
         Oasis oasis = new Oasis(centre[0], originY, centre[1], random);
         for (int ring = 0; ring <= Oasis.RADIUS; ring++) {
             int current = ring;
@@ -236,6 +230,11 @@ public final class DesertVictory implements SceneAnimation {
         return Optional.empty();
     }
 
+    static int[] oasisAhead(int originX, int originZ, Vec facing) {
+        double heading = Math.atan2(facing.z(), facing.x());
+        return new int[] {originX + (int) Math.round(Math.cos(heading) * OASIS_MIN_DISTANCE), originZ + (int) Math.round(Math.sin(heading) * OASIS_MIN_DISTANCE)};
+    }
+
     static boolean oasisClear(Ground.Solid solid, int centreX, int originY, int centreZ) {
         return oasisClear(solid, centreX, originY, centreZ, new HashMap<>());
     }
@@ -258,7 +257,7 @@ public final class DesertVictory implements SceneAnimation {
     }
 
     private static boolean columnTaken(Ground.Solid solid, int x, int originY, int z) {
-        for (int y = originY - OASIS_BELOW; y <= originY + OASIS_ABOVE; y++) {
+        for (int y = originY; y <= originY + OASIS_ABOVE; y++) {
             if (solid.at(x, y, z)) {
                 return true;
             }

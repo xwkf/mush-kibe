@@ -360,27 +360,28 @@ class DesertVictoryTest {
     }
 
     @Test
-    void theOasisFloatsOverTheVoidRightAfterTheEdgeOfTheIslandTheWinnerFaces() {
+    void theOasisSitsTenBlocksAheadOfTheWinnerHalfOnTheIslandHalfOverTheVoid() {
         Ground.Solid island = (x, y, z) -> Math.abs(x) <= 5 && Math.abs(z) <= 5 && y < 64;
 
-        assertThat(DesertVictory.oasisCentre(island, 0, 64, 0, new Vec(0, 0, 1))).hasValueSatisfying(centre -> assertThat(centre).containsExactly(0, 14));
-        assertThat(DesertVictory.oasisCentre(island, 0, 64, 0, new Vec(-1, 0, 0))).hasValueSatisfying(centre -> assertThat(centre).containsExactly(-14, 0));
+        assertThat(DesertVictory.oasisCentre(island, 0, 64, 0, new Vec(0, 0, 1))).hasValueSatisfying(centre -> assertThat(centre).containsExactly(0, 10));
+        assertThat(DesertVictory.oasisCentre(island, 0, 64, 0, new Vec(-1, 0, 0))).hasValueSatisfying(centre -> assertThat(centre).containsExactly(-10, 0));
     }
 
     @Test
-    void whenTheWayAheadIsBuiltOverTheOasisTurnsToTheSide() {
-        Ground.Solid island = (x, y, z) -> Math.abs(x) <= 5 && z >= -5 && z <= 70 && y < 64 || Math.abs(x) <= 5 && z > 5 && y < 80;
+    void whenABuildingStandsAheadTheOasisTurnsToTheSide() {
+        Ground.Solid island = (x, y, z) -> Math.abs(x) <= 40 && Math.abs(z) <= 40 && y < 64 || Math.abs(x) <= 6 && z >= 4 && z <= 45 && y < 80;
 
         Optional<int[]> centre = DesertVictory.oasisCentre(island, 0, 64, 0, new Vec(0, 0, 1));
 
         assertThat(centre).isPresent();
-        assertThat(Math.abs(centre.get()[0])).isGreaterThanOrEqualTo(14);
+        assertThat(Math.abs(centre.get()[0])).isGreaterThanOrEqualTo(15);
         assertThat(DesertVictory.oasisClear(island, centre.get()[0], 64, centre.get()[1])).isTrue();
     }
 
     @Test
-    void withNoRoomAroundTheOasisFallsBackToItsUsualPlace() {
+    void withNoRoomAroundTheOasisStaysStraightAhead() {
         assertThat(DesertVictory.oasisCentre((x, y, z) -> true, 0, 64, 0, new Vec(0, 0, 1))).isEmpty();
+        assertThat(DesertVictory.oasisAhead(0, 0, new Vec(0, 0, 1))).containsExactly(0, 10);
     }
 
 }
