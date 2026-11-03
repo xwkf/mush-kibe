@@ -26,10 +26,10 @@ class BedAnimationsTest {
     }
 
     @Test
-    void fourteenRecordedAnimationsAreRegisteredByTheirCatalogIds() {
+    void fifteenRecordedAnimationsAreRegisteredByTheirCatalogIds() {
         assertThat(new BedAnimations().all()).extracting(BedAnimation::id).containsExactly(
             "ajudante-do-papai-noel", "avalanche", "coelhos", "passarinhos", "friaca", "fogos-de-artificio", "colheita-de-aboboras",
-            "apavorante", "deserto", "tinta", "bola-de-canhao", "enderman", "sal-na-ferida", "espiral-de-coelhos");
+            "apavorante", "deserto", "tinta", "bola-de-canhao", "enderman", "sal-na-ferida", "espiral-de-coelhos", "six-seven");
         assertThat(new BedAnimations().find("tinta")).containsInstanceOf(PaintAnimation.class);
         assertThat(new BedAnimations().find("raio")).isEmpty();
     }
@@ -56,6 +56,29 @@ class BedAnimationsTest {
         assertThat(RabbitSpiralAnimation.rise(35)).isCloseTo(33.25, offset(0.001));
         assertThat(RabbitSpiralAnimation.angle(BED, 1, 0) - RabbitSpiralAnimation.angle(BED, 0, 0)).isCloseTo(-30, offset(0.001));
         assertThat(RabbitSpiralAnimation.angle(BED, 1, 1) - RabbitSpiralAnimation.angle(BED, 1, 0)).isCloseTo(120, offset(0.001));
+    }
+
+    @Test
+    void sixAndSevenSeesawFasterUntilTheyMeetExplodeAndRainDown() {
+        RecordingStage stage = run(new SixSevenAnimation());
+
+        assertThat(stage.actors).filteredOn(actor -> SixSevenAnimation.SIX.equals(actor.watched.get(SixSevenAnimation.CUSTOM_NAME))).hasSize(1 + SixSevenAnimation.FOUNTAIN / 2);
+        assertThat(stage.actors).filteredOn(actor -> SixSevenAnimation.SEVEN.equals(actor.watched.get(SixSevenAnimation.CUSTOM_NAME))).hasSize(1 + SixSevenAnimation.FOUNTAIN / 2);
+        assertThat(stage.actors).filteredOn(actor -> (SixSevenAnimation.SIX + SixSevenAnimation.SEVEN).equals(actor.watched.get(SixSevenAnimation.CUSTOM_NAME))).hasSize(1);
+        assertThat(stage.actors).filteredOn(actor -> actor.type.equals("Firework")).hasSize(1);
+        assertThat(stage.sounds).filteredOn("note.pling"::equals).hasSize(SixSevenAnimation.BEATS.length + 1);
+        assertThat(stage.sounds).contains("game.neutral.hurt", "random.explode", "mob.chicken.plop");
+        assertThat(stage.particles).containsEntry("REDSTONE", SixSevenAnimation.DUST);
+        assertThat(stage.actors).filteredOn(actor -> actor.type.equals("ArmorStand") && SixSevenAnimation.SEVEN.equals(actor.watched.get(SixSevenAnimation.CUSTOM_NAME)))
+            .last().satisfies(label -> assertThat(label.position.y()).isEqualTo(FLOOR + 1.0));
+
+        assertThat(SixSevenAnimation.swingHeight(SixSevenAnimation.BEATS[1], true)).isCloseTo(SixSevenAnimation.SWING_TOP, offset(0.001));
+        assertThat(SixSevenAnimation.swingHeight(SixSevenAnimation.BEATS[1], false)).isCloseTo(SixSevenAnimation.SWING_BOTTOM, offset(0.001));
+        assertThat(SixSevenAnimation.swingHeight(SixSevenAnimation.BEATS[2], true)).isCloseTo(SixSevenAnimation.SWING_BOTTOM, offset(0.001));
+        assertThat(SixSevenAnimation.bedHeight(SixSevenAnimation.BEATS[3])).isEqualTo(0.625);
+        assertThat(SixSevenAnimation.bedHeight(SixSevenAnimation.BEATS[3] + 3)).isEqualTo(SixSevenAnimation.HOVER);
+        Vec left = SixSevenAnimation.left(BED, BREAKER);
+        assertThat(left.x()).isCloseTo(-1, offset(0.001));
     }
 
     @Test

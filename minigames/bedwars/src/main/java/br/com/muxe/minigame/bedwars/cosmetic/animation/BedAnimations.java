@@ -22,7 +22,8 @@ public final class BedAnimations {
         new CannonballAnimation(),
         new EndermanAnimation(),
         new SaltAnimation(),
-        new RabbitSpiralAnimation()
+        new RabbitSpiralAnimation(),
+        new SixSevenAnimation()
     );
 
     private final Map<String, BedAnimation> byId = new LinkedHashMap<>();
