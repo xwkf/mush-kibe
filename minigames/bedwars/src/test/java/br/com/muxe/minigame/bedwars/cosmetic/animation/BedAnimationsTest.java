@@ -26,12 +26,36 @@ class BedAnimationsTest {
     }
 
     @Test
-    void thirteenRecordedAnimationsAreRegisteredByTheirCatalogIds() {
+    void fourteenRecordedAnimationsAreRegisteredByTheirCatalogIds() {
         assertThat(new BedAnimations().all()).extracting(BedAnimation::id).containsExactly(
             "ajudante-do-papai-noel", "avalanche", "coelhos", "passarinhos", "friaca", "fogos-de-artificio", "colheita-de-aboboras",
-            "apavorante", "deserto", "tinta", "bola-de-canhao", "enderman", "sal-na-ferida");
+            "apavorante", "deserto", "tinta", "bola-de-canhao", "enderman", "sal-na-ferida", "espiral-de-coelhos");
         assertThat(new BedAnimations().find("tinta")).containsInstanceOf(PaintAnimation.class);
         assertThat(new BedAnimations().find("raio")).isEmpty();
+    }
+
+    @Test
+    void threeRabbitsCircleTheRisingBedAndDropEasterEggsFromTheirTrail() {
+        RecordingStage stage = run(new RabbitSpiralAnimation());
+
+        assertThat(stage.actors).filteredOn(actor -> actor.type.equals("Rabbit")).hasSize(3)
+            .extracting(actor -> actor.watched.get(RabbitSpiralAnimation.RABBIT_TYPE)).containsExactly((byte) 2, (byte) 1, (byte) 0);
+        assertThat(stage.actors).filteredOn(actor -> actor.type.equals("ArmorStand")).hasSize(3);
+        assertThat(stage.actors).filteredOn(actor -> actor.type.equals("Skull:" + RabbitSpiralAnimation.EGG))
+            .hasSize(RabbitSpiralAnimation.END - 1 - RabbitSpiralAnimation.TRAIL + 1);
+        assertThat(stage.particles).containsEntry("CLOUD", 3 * (RabbitSpiralAnimation.END - RabbitSpiralAnimation.TRAIL));
+        assertThat(stage.sounds).contains("mob.chicken.plop", "step.grass");
+        for (int tick = 0; tick < RabbitSpiralAnimation.END; tick++) {
+            for (int index = 0; index < 3; index++) {
+                Vec rabbit = RabbitSpiralAnimation.rabbitAt(BED, tick, index);
+                assertThat(Math.hypot(rabbit.x() - BED.middle().x(), rabbit.z() - BED.middle().z())).isCloseTo(2.0, offset(0.001));
+                assertThat(rabbit.y() - BED.middle().y()).isCloseTo(RabbitSpiralAnimation.rise(tick), offset(0.001));
+            }
+        }
+        assertThat(RabbitSpiralAnimation.rise(1)).isCloseTo(0.1, offset(0.001));
+        assertThat(RabbitSpiralAnimation.rise(35)).isCloseTo(33.25, offset(0.001));
+        assertThat(RabbitSpiralAnimation.angle(BED, 1, 0) - RabbitSpiralAnimation.angle(BED, 0, 0)).isCloseTo(-30, offset(0.001));
+        assertThat(RabbitSpiralAnimation.angle(BED, 1, 1) - RabbitSpiralAnimation.angle(BED, 1, 0)).isCloseTo(120, offset(0.001));
     }
 
     @Test

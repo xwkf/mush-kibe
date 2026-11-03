@@ -31,7 +31,7 @@ class CosmeticCatalogTest {
     @Test
     void theCatalogListsThirtyCosmeticsAndEveryAnimationHasAnEntry() {
         assertThat(catalog.all()).hasSize(30);
-        assertThat(catalog.all().stream().filter(BedCosmetic::animated)).hasSize(13);
+        assertThat(catalog.all().stream().filter(BedCosmetic::animated)).hasSize(14);
         ANIMATIONS.all().forEach(animation -> assertThat(catalog.find(animation.id())).as(animation.id()).isPresent());
         assertThat(catalog.price(catalog.find("tinta").orElseThrow())).isEqualTo(1_750);
         assertThat(catalog.price(catalog.find("sal-na-ferida").orElseThrow())).isEqualTo(750);

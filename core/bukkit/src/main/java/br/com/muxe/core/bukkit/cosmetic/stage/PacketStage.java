@@ -2,6 +2,7 @@ package br.com.muxe.core.bukkit.cosmetic.stage;
 
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
+import br.com.muxe.core.bukkit.item.ItemBuilder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -92,6 +93,13 @@ public final class PacketStage implements Stage, AutoCloseable {
     @Override
     public Actor item(Vec position, Material material, int data) {
         EntityItem item = new EntityItem(world, position.x(), position.y(), position.z(), CraftItemStack.asNMSCopy(new ItemStack(material, 1, (short) data)));
+        return object(item, new PacketPlayOutSpawnEntity(item, OBJECT_ITEM, 1), true);
+    }
+
+    @Override
+    public Actor skullItem(Vec position, String texture) {
+        ItemStack skull = ItemBuilder.skull().skullTexture(texture).build();
+        EntityItem item = new EntityItem(world, position.x(), position.y(), position.z(), CraftItemStack.asNMSCopy(skull));
         return object(item, new PacketPlayOutSpawnEntity(item, OBJECT_ITEM, 1), true);
     }
 

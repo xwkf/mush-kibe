@@ -42,6 +42,11 @@ final class RecordingStage implements Stage {
     }
 
     @Override
+    public Actor skullItem(Vec position, String texture) {
+        return add("Skull:" + texture, position);
+    }
+
+    @Override
     public Actor firework(Vec position, List<Burst> bursts) {
         return add("Firework", position);
     }

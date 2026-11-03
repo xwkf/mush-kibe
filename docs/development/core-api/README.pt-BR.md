@@ -517,7 +517,7 @@ Pacote `br.com.muxe.core.bukkit.credit`. O comportamento está em [Créditos e c
 Pacotes `br.com.muxe.core.bukkit.cosmetic.animation` (puro) e `br.com.muxe.core.bukkit.cosmetic.stage` (NMS).
 
 - Uma `BedAnimation` escreve um roteiro: com o `BedFrame` (pé, cabeceira, frente, direita), a posição de quem quebrou, um `Stage` e uma `Timeline`, ela agenda o que acontece em cada tick.
-- O `Stage` cria atores só de pacote (armor stands, mobs, falling blocks, itens, fogos, bolas de neve), manda partículas e sons e finge mudanças de bloco. O `Actor` move, equipa, posiciona, monta e remove.
+- O `Stage` cria atores só de pacote (armor stands, mobs, falling blocks, itens, cabeças soltas como item com textura de skin pelo `skullItem`, fogos, bolas de neve), manda partículas e sons e finge mudanças de bloco. O `Actor` move, equipa, posiciona, monta e remove.
 - `Timeline.at(tick, ação)` e `repeat(de, até, período, ação)` agendam passos; `lasts(ticks)` mantém a animação viva por mais tempo.
 - `AnimationPlayer.play(animação, mundo, cama, quebrador, espectadores, aoTerminar)` roda um passo por tick só para os espectadores e, no fim ou no `cancel()`, remove todos os atores e restaura todos os blocos fingidos.
 - `BedFrame.ofBlock(x, y, z, data)` monta o frame a partir de qualquer metade de uma cama 1.8.

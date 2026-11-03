@@ -515,7 +515,7 @@ Package `br.com.muxe.core.bukkit.credit`. Feature behaviour is in [Credits and c
 Packages `br.com.muxe.core.bukkit.cosmetic.animation` (pure) and `br.com.muxe.core.bukkit.cosmetic.stage` (NMS).
 
 - A `BedAnimation` writes a script: given the `BedFrame` (foot, head, forward, right), the breaker position, a `Stage` and a `Timeline`, it schedules what happens on each tick.
-- `Stage` spawns packet-only actors (armor stands, mobs, falling blocks, items, fireworks, snowballs), sends particles and sounds and fakes block changes. `Actor` moves, equips, poses, rides and removes them.
+- `Stage` spawns packet-only actors (armor stands, mobs, falling blocks, items, heads dropped as items with a skin texture through `skullItem`, fireworks, snowballs), sends particles and sounds and fakes block changes. `Actor` moves, equips, poses, rides and removes them.
 - `Timeline.at(tick, action)` and `repeat(from, until, period, action)` schedule steps; `lasts(ticks)` keeps the animation alive longer.
 - `AnimationPlayer.play(animation, world, bed, breaker, viewers, onFinish)` runs it one step per tick for the viewers only and, at the end or on `cancel()`, removes every actor and restores every faked block.
 - `BedFrame.ofBlock(x, y, z, data)` builds the frame from either half of a 1.8 bed.

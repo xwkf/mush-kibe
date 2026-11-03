@@ -13,6 +13,8 @@ public interface Stage {
 
     Actor item(Vec position, Material material, int data);
 
+    Actor skullItem(Vec position, String texture);
+
     Actor firework(Vec position, List<Burst> bursts);
 
     Actor snowball(Vec position, Vec velocity);

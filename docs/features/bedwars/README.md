@@ -123,7 +123,7 @@ Players pick an animation that plays when they break an enemy bed. The menus fol
   - `Incluso no ULTRA` cosmetics are owned by everyone with `muxe.cosmetic.ultra`.
   - Players with `muxe.cosmetic.all` (ops by default) own every cosmetic. The ones without an animation still show `Indisponível`.
   - In the preview, the bed disappears for the viewer as soon as it is hit and stays hidden until they go back: it is masked with a `BlockMask`, so the real bed the server resends after the hit never reaches the viewer.
-- 30 cosmetics are listed; 13 have an animation (Ajudante de Papai Noel, Avalanche, Coelhos, Passarinhos, Friaca, Fogos de Artifício, Colheita de Abóboras, Apavorante, Deserto, Tinta, Bola de Canhão, Enderman, Sal na Ferida). The other 17 show `Indisponível.` until their animation exists.
+- 30 cosmetics are listed; 14 have an animation (Ajudante de Papai Noel, Avalanche, Coelhos, Passarinhos, Friaca, Fogos de Artifício, Colheita de Abóboras, Apavorante, Deserto, Tinta, Bola de Canhão, Enderman, Sal na Ferida, Espiral de Coelhos). In Espiral de Coelhos the bed and a jack o'lantern rise faster and faster while three rabbits circle them two blocks away, leaving clouds and dropping easter egg heads that fall to the ground. The other 16 show `Indisponível.` until their animation exists.
 - Animations are drawn only with packets (armor stands, falling blocks, items, fireworks, particles, sounds and fake block changes), so the real world never changes. They are our own reproductions of the recorded behaviour, with original pixel sprites and community heads.
 
 **In a match** the breaker's selection plays at the broken bed for everyone in the room. `Aleatório` picks one of the player's owned animations; `Nenhuma` plays nothing.
