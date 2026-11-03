@@ -289,10 +289,10 @@ holograms:
     - "{color}&lLOJA DA EQUIPE"
     - "&7Clique para ver mais."
   upgrades:
-    - "{color}MELHORIAS"
+    - "{color}&lMELHORIAS"
     - "&7Clique para ver mais."
   upgrades-team:
-    - "{color}MELHORIAS DA EQUIPE"
+    - "{color}&lMELHORIAS DA EQUIPE"
     - "&7Clique para ver mais."
   diamond:
     - "&fNível &c{tier}"
