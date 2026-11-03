@@ -2676,6 +2676,16 @@ final-kill-preview:
   target:
     distance: 4
     action-bar: "&eAcerte o jogador!"
+    weapon: WOOD_SWORD
+    names:
+      - "&7Lucas"
+      - "&7Pedro"
+      - "&7Gabriel"
+      - "&7Noah"
+      - "&7Theo"
+      - "&7Davi"
+      - "&7Enzo"
+      - "&7Arthur"
   timeout: 60s
   return-delay: 1s
   back-item:

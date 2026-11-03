@@ -7,8 +7,10 @@ import br.com.muxe.core.bukkit.cosmetic.stage.AnimationPlayer;
 import br.com.muxe.core.bukkit.cosmetic.stage.AnimationPlayer.Playback;
 import br.com.muxe.core.bukkit.effect.SoundCue;
 import br.com.muxe.core.bukkit.item.ItemBuilder;
+import br.com.muxe.core.bukkit.nms.PlayerSkins;
 import br.com.muxe.core.bukkit.npc.Npc;
 import br.com.muxe.core.bukkit.npc.NpcService;
+import br.com.muxe.core.bukkit.npc.NpcSkin;
 import br.com.muxe.core.bukkit.scoreboard.Sidebar;
 import br.com.muxe.core.bukkit.text.ActionBar;
 import br.com.muxe.core.bukkit.text.Colors;
@@ -19,11 +21,13 @@ import br.com.muxe.minigame.bedwars.cosmetic.catalog.BedCosmetic;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenus.PreviewGate;
 import br.com.muxe.minigame.engine.world.server.VoidGenerator;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import org.bukkit.Difficulty;
@@ -71,6 +75,7 @@ public final class ScenePreview implements PreviewGate, Listener {
     private final Map<UUID, Session> sessions = new HashMap<>();
     private World world;
     private NpcService targets;
+    private final Map<String, String> targetNames = new HashMap<>();
 
     public ScenePreview(Plugin plugin, BuildMode buildMode, ScenePreviewSettings settings, SceneAnimations animations, Consumer<Player> onScene,
                         Optional<SoundCue> countdownSound, Predicate<Player> busyElsewhere, MessageCatalog messages) {
@@ -98,7 +103,7 @@ public final class ScenePreview implements PreviewGate, Listener {
         world.setGameRuleValue("doFireTick", "false");
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
         if (settings.target().isPresent()) {
-            targets = NpcService.start(plugin, npc -> List.of());
+            targets = NpcService.start(plugin, npc -> Optional.ofNullable(targetNames.get(npc.id())).map(List::of).orElse(List.of()));
             targets.visibleTo((viewer, npc) -> npc.id().equals(TARGET_PREFIX + viewer.getUniqueId()));
             targets.onClick(this::hit);
         }
@@ -164,7 +169,13 @@ public final class ScenePreview implements PreviewGate, Listener {
         Vec at = settings.targetAt();
         Location spot = new Location(world, at.x(), at.y(), at.z(), settings.yaw() + 180, 0);
         session.target = TARGET_PREFIX + session.viewer.getUniqueId();
-        targets.put(new Npc(session.target, spot, Optional.empty()));
+        targetNames.put(session.target, target.name(ThreadLocalRandom.current().nextInt()));
+        targets.put(new Npc(session.target, spot, skin(session.viewer)));
+        Material weapon = Material.matchMaterial(target.weapon());
+        if (weapon != null) {
+            session.viewer.getInventory().setItem(0, new ItemStack(weapon));
+            session.viewer.getInventory().setHeldItemSlot(0);
+        }
         String bar = Colors.translate(target.actionBar());
         session.tasks.add(plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
             if (session.target != null) {
@@ -173,12 +184,26 @@ public final class ScenePreview implements PreviewGate, Listener {
         }, 0L, TICKS_PER_SECOND));
     }
 
+    private Optional<NpcSkin> skin(Player viewer) {
+        List<Player> others = new ArrayList<>(plugin.getServer().getOnlinePlayers());
+        others.remove(viewer);
+        Collections.shuffle(others);
+        for (Player other : others) {
+            Optional<NpcSkin> skin = PlayerSkins.of(other);
+            if (skin.isPresent()) {
+                return skin;
+            }
+        }
+        return PlayerSkins.of(viewer);
+    }
+
     private void hit(Player player, Npc npc) {
         Session session = sessions.get(player.getUniqueId());
         if (session == null || session.playback != null || !npc.id().equals(session.target)) {
             return;
         }
         targets.remove(session.target);
+        targetNames.remove(session.target);
         session.target = null;
         ActionBar.send(player, "");
         player.playSound(npc.location(), Sound.HURT_FLESH, 1, 1);
@@ -277,6 +302,7 @@ public final class ScenePreview implements PreviewGate, Listener {
         session.cancel();
         if (session.target != null && targets != null) {
             targets.remove(session.target);
+            targetNames.remove(session.target);
         }
         Title.clear(viewer);
         viewer.teleport(session.from);

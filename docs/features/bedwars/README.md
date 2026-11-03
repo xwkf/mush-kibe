@@ -151,7 +151,7 @@ Players pick an animation that plays when they break an enemy bed. The menus fol
 
 - **In the match:** when a player makes a final kill (not into the void), their selected final kill effect (or a random one they own) plays where the victim died, seen by the whole room.
 - **Presenteado:** a red, green and white star firework goes off on the victim and eight different presents pop out of them one every 2 ticks in eight directions, spinning about 8 blocks up and landing about 3 blocks away, each with a pop. They disappear about 4 seconds later.
-- **Preview:** right click opens `final-kill-preview.world` (`previa_kill_final`, in the server root of the BedWars lobby) with a player 4 blocks ahead (`final-kill-preview.target.distance`) and `&eAcerte o jogador!` in the action bar. Hitting it removes it with the hurt sound and plays the effect there; then the player goes back and the list opens again.
+- **Preview:** right click opens `final-kill-preview.world` (`previa_kill_final`, in the server root of the BedWars lobby) with a wooden sword in hand (`target.weapon`) and a player 4 blocks ahead (`final-kill-preview.target.distance`), wearing the skin of another online player (the viewer's own when alone) and a grey nick drawn from `target.names`, with `&eAcerte o jogador!` in the action bar. Hitting it removes it with the hurt sound and plays the effect there; then the player goes back and the list opens again.
 
 ### Victory effects
 

@@ -14,6 +14,7 @@ import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenuSettings.CategoryM
 import br.com.muxe.minigame.bedwars.cosmetic.preview.ScenePreviewSettings;
 import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticWallet;
 import br.com.muxe.minigame.bedwars.room.RoomFixtures;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class FinalKillEffectTest {
@@ -56,5 +57,15 @@ class FinalKillEffectTest {
         assertThat(preview.targetAt().y()).isCloseTo(24, offset(1e-9));
         assertThat(preview.targetAt().z()).isCloseTo(2.5, offset(1e-9));
         assertThat(preview.countdown()).isEmpty();
+    }
+
+    @Test
+    void thePlayerGetsAWoodenSwordAndTheTargetHasAGreyNick() {
+        ScenePreviewSettings.Target target = ScenePreviewSettings.from(RoomFixtures.CONFIG.getConfigurationSection("final-kill-preview")).target().orElseThrow();
+
+        assertThat(target.weapon()).isEqualTo("WOOD_SWORD");
+        assertThat(target.names()).hasSize(8).allSatisfy(name -> assertThat(name).startsWith("&7"));
+        assertThat(target.name(-3)).isIn(target.names());
+        assertThat(new ScenePreviewSettings.Target(4, "", List.of(), "WOOD_SWORD").name(5)).isEqualTo("&7Jogador");
     }
 }

@@ -151,7 +151,7 @@ O jogador escolhe uma animação que toca quando ele quebra uma cama inimiga. Os
 
 - **Na partida:** quando um jogador faz uma kill final (fora do void), o seu efeito de kill final selecionado (ou um aleatório que ele tem) toca onde a vítima morreu, visto pela sala toda.
 - **Presenteado:** um fogo em estrela vermelho, verde e branco estoura na vítima e oito presentes diferentes saem dela um a cada 2 ticks em oito direções, girando uns 8 blocos para cima e caindo a uns 3 blocos, cada um com um estalo. Eles somem uns 4 segundos depois.
-- **Prévia:** o botão direito abre `final-kill-preview.world` (`previa_kill_final`, na raiz do servidor do lobby de BedWars) com um jogador 4 blocos à frente (`final-kill-preview.target.distance`) e `&eAcerte o jogador!` na barra de ação. Bater nele o remove com o som de dano e toca o efeito ali; depois o jogador volta e a lista abre de novo.
+- **Prévia:** o botão direito abre `final-kill-preview.world` (`previa_kill_final`, na raiz do servidor do lobby de BedWars) com uma espada de madeira na mão (`target.weapon`) e um jogador 4 blocos à frente (`final-kill-preview.target.distance`), com a skin de outro jogador online (a do próprio jogador quando está sozinho) e um nick cinza sorteado de `target.names`, e `&eAcerte o jogador!` na barra de ação. Bater nele o remove com o som de dano e toca o efeito ali; depois o jogador volta e a lista abre de novo.
 
 ### Efeitos de vitória
 

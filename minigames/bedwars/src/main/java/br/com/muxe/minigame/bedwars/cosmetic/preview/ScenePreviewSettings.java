@@ -50,7 +50,8 @@ public record ScenePreviewSettings(
             scoreboard.getString("title", "&b&lMUXE"),
             scoreboard.getStringList("lines"),
             Optional.ofNullable(section.getConfigurationSection("target"))
-                .map(target -> new Target(target.getDouble("distance", 4), target.getString("action-bar", "&eAcerte o jogador!")))
+                .map(target -> new Target(target.getDouble("distance", 4), target.getString("action-bar", "&eAcerte o jogador!"),
+                    target.getStringList("names"), target.getString("weapon", "WOOD_SWORD")))
         );
     }
 
@@ -80,7 +81,17 @@ public record ScenePreviewSettings(
         return lines.stream().map(line -> line.replace("{name}", name)).toList();
     }
 
-    public record Target(double distance, String actionBar) {
+    public record Target(double distance, String actionBar, List<String> names, String weapon) {
+
+        public static final String DEFAULT_NAME = "&7Jogador";
+
+        public Target {
+            names = List.copyOf(names);
+        }
+
+        public String name(int roll) {
+            return names.isEmpty() ? DEFAULT_NAME : names.get(Math.floorMod(roll, names.size()));
+        }
     }
 
     private static ConfigurationSection section(ConfigurationSection parent, String path) {
