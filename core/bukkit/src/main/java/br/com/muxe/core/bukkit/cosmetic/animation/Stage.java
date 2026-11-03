@@ -32,6 +32,10 @@ public interface Stage {
 
     void time(long dayTime);
 
+    BlockType type(int x, int y, int z);
+
+    void blocks(List<BlockChange> changes);
+
     Mount mount(Vec seat, float yaw, List<UUID> riders);
 
     void give(UUID player, int slot, Material material, String name, Consumer<Click> onClick);
@@ -117,6 +121,12 @@ public interface Stage {
         public Pose withRightArm(Vec value) {
             return new Pose(head, body, leftArm, value, leftLeg, rightLeg);
         }
+    }
+
+    record BlockType(Material material, int data) {
+    }
+
+    record BlockChange(int x, int y, int z, Material material, int data) {
     }
 
     record Burst(int type, List<Integer> colors, List<Integer> fades, boolean flicker, boolean trail) {

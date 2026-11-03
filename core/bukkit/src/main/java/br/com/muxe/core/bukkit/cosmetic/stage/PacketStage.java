@@ -7,17 +7,21 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockPosition;
+import net.minecraft.server.v1_8_R3.ChunkCoordIntPair;
 import net.minecraft.server.v1_8_R3.Entity;
 import net.minecraft.server.v1_8_R3.EntityArmorStand;
 import net.minecraft.server.v1_8_R3.EntityFallingBlock;
@@ -35,6 +39,9 @@ import net.minecraft.server.v1_8_R3.IBlockData;
 import net.minecraft.server.v1_8_R3.Packet;
 import net.minecraft.server.v1_8_R3.PacketPlayOutBlockChange;
 import net.minecraft.server.v1_8_R3.PacketPlayOutEntityMetadata;
+import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk;
+import net.minecraft.server.v1_8_R3.PacketPlayOutMultiBlockChange;
+import net.minecraft.server.v1_8_R3.PacketPlayOutMultiBlockChange.MultiBlockChangeInfo;
 import net.minecraft.server.v1_8_R3.PacketPlayOutNamedEntitySpawn;
 import net.minecraft.server.v1_8_R3.PacketPlayOutNamedSoundEffect;
 import net.minecraft.server.v1_8_R3.PacketPlayOutPlayerInfo;
@@ -68,6 +75,10 @@ public final class PacketStage implements Stage, AutoCloseable {
     private static final int SKIN_LAYERS = 10;
     private static final int TAB_LIST_TICKS = 40;
     private static final String TEXTURES = "textures";
+    private static final int WORLD_HEIGHT = 256;
+    private static final int FULL_CHUNK = 65535;
+    private static final Field MULTI_BLOCK_CHUNK = field(ChunkCoordIntPair.class);
+    private static final Field MULTI_BLOCK_INFOS = field(MultiBlockChangeInfo[].class);
 
     private final WorldServer world;
     private final Supplier<Collection<Player>> viewers;
@@ -78,6 +89,7 @@ public final class PacketStage implements Stage, AutoCloseable {
     private final List<Seats> mounts = new ArrayList<>();
     private final Map<UUID, Integer> tools = new LinkedHashMap<>();
     private final Map<EntityPlayer, Integer> listed = new LinkedHashMap<>();
+    private final Set<ChunkCoordIntPair> bulkChunks = new LinkedHashSet<>();
     private boolean closed;
 
     public PacketStage(World world, Supplier<Collection<Player>> viewers, MountGuard guard) {
@@ -180,6 +192,49 @@ public final class PacketStage implements Stage, AutoCloseable {
         PacketPlayOutBlockChange packet = new PacketPlayOutBlockChange(world, position);
         packet.block = state(material, data);
         send(packet);
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public BlockType type(int x, int y, int z) {
+        if (y < 0 || y >= WORLD_HEIGHT || !world.getWorld().isChunkLoaded(x >> 4, z >> 4)) {
+            return new BlockType(Material.AIR, 0);
+        }
+        IBlockData state = world.getType(new BlockPosition(x, y, z));
+        Block block = state.getBlock();
+        Material material = Material.getMaterial(Block.getId(block));
+        return new BlockType(material == null ? Material.AIR : material, block.toLegacyData(state));
+    }
+
+    @Override
+    public void blocks(List<BlockChange> changes) {
+        Map<ChunkCoordIntPair, List<BlockChange>> byChunk = new LinkedHashMap<>();
+        for (BlockChange change : changes) {
+            if (change.y() >= 0 && change.y() < WORLD_HEIGHT && world.getWorld().isChunkLoaded(change.x() >> 4, change.z() >> 4)) {
+                byChunk.computeIfAbsent(new ChunkCoordIntPair(change.x() >> 4, change.z() >> 4), key -> new ArrayList<>()).add(change);
+            }
+        }
+        byChunk.forEach((chunk, inChunk) -> {
+            bulkChunks.add(chunk);
+            PacketPlayOutMultiBlockChange packet = new PacketPlayOutMultiBlockChange();
+            MultiBlockChangeInfo[] infos = new MultiBlockChangeInfo[inChunk.size()];
+            for (int index = 0; index < infos.length; index++) {
+                BlockChange change = inChunk.get(index);
+                short position = (short) ((change.x() & 15) << 12 | (change.z() & 15) << 8 | change.y());
+                infos[index] = packet.new MultiBlockChangeInfo(position, state(change.material(), change.data()));
+            }
+            if (MULTI_BLOCK_CHUNK != null && MULTI_BLOCK_INFOS != null) {
+                try {
+                    MULTI_BLOCK_CHUNK.set(packet, chunk);
+                    MULTI_BLOCK_INFOS.set(packet, infos);
+                    send(packet);
+                } catch (IllegalAccessException exception) {
+                    inChunk.forEach(change -> block(change.x(), change.y(), change.z(), change.material(), change.data()));
+                }
+            } else {
+                inChunk.forEach(change -> block(change.x(), change.y(), change.z(), change.material(), change.data()));
+            }
+        });
     }
 
     @Override
@@ -301,6 +356,12 @@ public final class PacketStage implements Stage, AutoCloseable {
         for (BlockPosition position : changed.keySet()) {
             send(new PacketPlayOutBlockChange(world, position));
         }
+        for (ChunkCoordIntPair chunk : bulkChunks) {
+            if (world.getWorld().isChunkLoaded(chunk.x, chunk.z)) {
+                send(new PacketPlayOutMapChunk(world.getChunkAt(chunk.x, chunk.z), true, FULL_CHUNK));
+            }
+        }
+        bulkChunks.clear();
         listed.keySet().forEach(body -> send(new PacketPlayOutPlayerInfo(PacketPlayOutPlayerInfo.EnumPlayerInfoAction.REMOVE_PLAYER, body)));
         listed.clear();
         mounts.forEach(Seats::remove);
@@ -347,6 +408,16 @@ public final class PacketStage implements Stage, AutoCloseable {
         }
         actors.add(actor);
         return actor;
+    }
+
+    private static Field field(Class<?> type) {
+        for (Field candidate : PacketPlayOutMultiBlockChange.class.getDeclaredFields()) {
+            if (candidate.getType() == type) {
+                candidate.setAccessible(true);
+                return candidate;
+            }
+        }
+        return null;
     }
 
     @SuppressWarnings("deprecation")
