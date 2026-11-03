@@ -107,6 +107,8 @@ public final class MuxeAdminCommand {
                 "player", player.getName(),
                 "ready", report.readyMillis().isPresent() ? Long.toString(report.readyMillis().getAsLong()) : "?",
                 "total", Integer.toString(report.total()),
+                "kb", Long.toString(report.kilobytes()),
+                "wait", Long.toString(report.slowestWriteMillis()),
                 "busiest", report.busiest(JOIN_PACKET_KINDS).stream().map(entry -> entry.getKey() + " " + entry.getValue()).collect(Collectors.joining(", ")))))));
         sender.sendMessage(messages.get("admin.latency-pools",
             "db-active", whole(snapshot.gaugeTotal("muxe_db_connections_active")),

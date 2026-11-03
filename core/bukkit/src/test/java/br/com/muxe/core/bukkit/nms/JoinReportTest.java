@@ -10,16 +10,24 @@ class JoinReportTest {
 
     @Test
     void addsUpEveryPacketSent() {
-        JoinReport report = new JoinReport(OptionalLong.of(320), Map.of("MapChunkBulk", 40, "SpawnEntityLiving", 210, "KeepAlive", 1));
+        JoinReport report = new JoinReport(OptionalLong.of(320), Map.of("MapChunkBulk", 40, "SpawnEntityLiving", 210, "KeepAlive", 1), 0, 0);
 
         assertThat(report.total()).isEqualTo(251);
     }
 
     @Test
     void listsTheMostSentKindsFirst() {
-        JoinReport report = new JoinReport(OptionalLong.empty(), Map.of("MapChunkBulk", 40, "SpawnEntityLiving", 210, "KeepAlive", 1, "EntityMetadata", 40));
+        JoinReport report = new JoinReport(OptionalLong.empty(), Map.of("MapChunkBulk", 40, "SpawnEntityLiving", 210, "KeepAlive", 1, "EntityMetadata", 40), 0, 0);
 
         assertThat(report.busiest(3)).containsExactly(Map.entry("SpawnEntityLiving", 210), Map.entry("EntityMetadata", 40), Map.entry("MapChunkBulk", 40));
+    }
+
+    @Test
+    void bytesAreShownInWholeKilobytes() {
+        JoinReport report = new JoinReport(OptionalLong.empty(), Map.of(), 3_276_800, 4_100);
+
+        assertThat(report.kilobytes()).isEqualTo(3_200);
+        assertThat(report.slowestWriteMillis()).isEqualTo(4_100);
     }
 
     @Test

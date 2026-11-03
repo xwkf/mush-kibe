@@ -22,7 +22,7 @@ http://<metrics.host>:<metrics.port>/metrics
 
 Toda amostra carrega os labels `server` e `group` do processo, então um único Prometheus pode coletar a rede inteira.
 
-`/muxe metrics` mostra um resumo curto dentro do jogo. `/muxe latencia` mostra o ping de cada jogador do servidor, quanto tempo o jogo dele levou para responder depois de entrar (também no timer `muxe_player_join_ready_seconds`) e os pacotes enviados nos primeiros 10 segundos, as conexões do banco em uso e esperando, os handlers de comandos e consultas rodando e na fila, e os 12 timers com a maior média desde que o servidor ligou (handlers, espera na fila dos executores, latência dos pacotes), cada um com a contagem, a média e o máximo em milissegundos.
+`/muxe metrics` mostra um resumo curto dentro do jogo. `/muxe latencia` mostra o ping de cada jogador do servidor, quanto tempo o jogo dele levou para responder depois de entrar (também no timer `muxe_player_join_ready_seconds`) e os pacotes e kilobytes enviados nos primeiros 10 segundos, com o maior tempo que um pacote esperou para sair do servidor, as conexões do banco em uso e esperando, os handlers de comandos e consultas rodando e na fila, e os 12 timers com a maior média desde que o servidor ligou (handlers, espera na fila dos executores, latência dos pacotes), cada um com a contagem, a média e o máximo em milissegundos.
 
 ## Instrumentos
 

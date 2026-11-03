@@ -2,9 +2,11 @@ package br.com.muxe.core.bukkit.nms;
 
 import br.com.muxe.core.common.metrics.MetricRegistry;
 import br.com.muxe.core.common.metrics.instrument.Timer;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import java.lang.reflect.Field;
 import java.time.Duration;
@@ -14,6 +16,7 @@ import java.util.OptionalLong;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -28,6 +31,7 @@ public final class JoinTraffic implements Listener {
 
     public static final Duration WINDOW = Duration.ofSeconds(10);
     private static final String HANDLER = "muxe_join_traffic";
+    private static final String BYTES_HANDLER = "muxe_join_bytes";
     private static final String MINECRAFT_HANDLER = "packet_handler";
     private static final long TICKS_PER_SECOND = 20L;
 
@@ -73,6 +77,7 @@ public final class JoinTraffic implements Listener {
         channel(player).ifPresent(found -> found.eventLoop().execute(() -> {
             if (found.pipeline().get(HANDLER) == null && found.pipeline().get(MINECRAFT_HANDLER) != null) {
                 found.pipeline().addBefore(MINECRAFT_HANDLER, HANDLER, current);
+                found.pipeline().addFirst(BYTES_HANDLER, current.wire());
             }
         }));
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> finish(player, current), WINDOW.toSeconds() * TICKS_PER_SECOND);
@@ -99,6 +104,9 @@ public final class JoinTraffic implements Listener {
             if (found.pipeline().get(HANDLER) != null) {
                 found.pipeline().remove(HANDLER);
             }
+            if (found.pipeline().get(BYTES_HANDLER) != null) {
+                found.pipeline().remove(BYTES_HANDLER);
+            }
         }));
     }
 
@@ -114,6 +122,8 @@ public final class JoinTraffic implements Listener {
 
         private final long joinedAt;
         private final Map<String, Integer> sent = new ConcurrentHashMap<>();
+        private final AtomicLong bytes = new AtomicLong();
+        private final AtomicLong slowestWrite = new AtomicLong();
         private volatile long readyNanos = -1;
 
         private Counting(long joinedAt) {
@@ -135,9 +145,26 @@ public final class JoinTraffic implements Listener {
             super.channelRead(context, message);
         }
 
+        private ChannelOutboundHandlerAdapter wire() {
+            return new ChannelOutboundHandlerAdapter() {
+                @Override
+                public void write(ChannelHandlerContext context, Object message, ChannelPromise promise) throws Exception {
+                    if (message instanceof ByteBuf buffer) {
+                        bytes.addAndGet(buffer.readableBytes());
+                        if (!promise.isVoid()) {
+                            long queuedAt = System.nanoTime();
+                            promise.addListener(done -> slowestWrite.accumulateAndGet(System.nanoTime() - queuedAt, Math::max));
+                        }
+                    }
+                    super.write(context, message, promise);
+                }
+            };
+        }
+
         private JoinReport report() {
             long ready = readyNanos;
-            return new JoinReport(ready < 0 ? OptionalLong.empty() : OptionalLong.of(TimeUnit.NANOSECONDS.toMillis(ready)), sent);
+            return new JoinReport(ready < 0 ? OptionalLong.empty() : OptionalLong.of(TimeUnit.NANOSECONDS.toMillis(ready)), sent,
+                bytes.get(), TimeUnit.NANOSECONDS.toMillis(slowestWrite.get()));
         }
     }
 }

@@ -5,10 +5,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 
-public record JoinReport(OptionalLong readyMillis, Map<String, Integer> sent) {
+public record JoinReport(OptionalLong readyMillis, Map<String, Integer> sent, long bytes, long slowestWriteMillis) {
 
     public JoinReport {
         sent = Map.copyOf(sent);
+    }
+
+    public long kilobytes() {
+        return Math.round(bytes / 1024.0);
     }
 
     public int total() {
