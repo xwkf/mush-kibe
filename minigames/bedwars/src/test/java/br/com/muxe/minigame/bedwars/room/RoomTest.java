@@ -161,6 +161,19 @@ class RoomTest {
     }
 
     @Test
+    void emptyTeamsLoseTheirBedButKeepTheirIslandWithForgesAndNpcs() {
+        Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
+        UUID tadeu = join(room, "tadeu");
+        room.forceStart(10);
+        room.start(List.of(), NOW);
+        TeamColor own = room.player(tadeu).orElseThrow().team();
+
+        assertThat(room.islands()).containsExactlyInAnyOrderElementsOf(EIGHT);
+        assertThat(EIGHT).filteredOn(color -> color != own).allSatisfy(color -> assertThat(room.team(color).bedAlive()).isFalse());
+        assertThat(room.team(own).bedAlive()).isTrue();
+    }
+
+    @Test
     void staffCanOnlyEndAMatchThatIsBeingPlayed() {
         Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
         join(room, "tadeu");

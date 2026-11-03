@@ -330,6 +330,10 @@ public final class Room {
         return teams.keySet().stream().filter(color -> !status(color).isEliminated()).toList();
     }
 
+    public List<TeamColor> islands() {
+        return List.copyOf(teams.keySet());
+    }
+
     public boolean canForceEnd() {
         return phase == Phase.PLAYING;
     }

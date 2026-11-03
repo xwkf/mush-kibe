@@ -257,17 +257,17 @@ public final class RoomRuntime {
         missions = new MissionTracker(core, BedWarsBootstrap.GAME, service.missions(), "room " + room.code(), service.plugin().getLogger());
         missions.begin(room.players().stream().map(RoomPlayer::id).toList());
         for (Map.Entry<TeamColor, RoomTeam> entry : room.teams().entrySet()) {
-            TeamBase base = room.arena().teams().get(entry.getKey());
-            boolean occupied = !entry.getValue().members().isEmpty();
-            if (!occupied) {
+            if (entry.getValue().members().isEmpty()) {
                 removeBed(entry.getKey());
-                continue;
             }
-            base.iron().forEach(point -> forges.island(entry.getKey(), location(point), Material.IRON_INGOT, settings.forges().iron(room.mode().teamSize()),
+        }
+        for (TeamColor color : room.islands()) {
+            TeamBase base = room.arena().teams().get(color);
+            base.iron().forEach(point -> forges.island(color, location(point), Material.IRON_INGOT, settings.forges().iron(room.mode().teamSize()),
                 layout(point, base.spawn())));
-            base.gold().forEach(point -> forges.island(entry.getKey(), location(point), Material.GOLD_INGOT, settings.forges().gold()));
-            spawnNpc(entry.getKey(), "loja", base.shop(), room.mode().teamSize() > 1 ? settings.holograms().shopTeam() : settings.holograms().shop());
-            spawnNpc(entry.getKey(), "melhorias", base.upgrades(), room.mode().teamSize() > 1 ? settings.holograms().upgradesTeam() : settings.holograms().upgrades());
+            base.gold().forEach(point -> forges.island(color, location(point), Material.GOLD_INGOT, settings.forges().gold()));
+            spawnNpc(color, "loja", base.shop(), room.mode().teamSize() > 1 ? settings.holograms().shopTeam() : settings.holograms().shop());
+            spawnNpc(color, "melhorias", base.upgrades(), room.mode().teamSize() > 1 ? settings.holograms().upgradesTeam() : settings.holograms().upgrades());
         }
         room.arena().diamonds().forEach(point -> forges.shared(location(point), Material.DIAMOND));
         room.arena().emeralds().forEach(point -> forges.shared(location(point), Material.EMERALD));
