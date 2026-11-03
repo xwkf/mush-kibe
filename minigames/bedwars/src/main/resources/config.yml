@@ -1733,6 +1733,362 @@ cosmetics:
       description:
         - "&7Comemore a sua destruição"
         - "&7de cama com balões!"
+  final-kill:
+    category: bedwars-kill-final
+    prices:
+      "1": 750
+      "2": 900
+      "3": 1300
+      "4": 1750
+      "5": 2000
+    cosmetics:
+      presenteado:
+        name: "Presenteado"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: 28893da6c340975c37c9b990d3dc8a8944c5a62cb1034ace3add66980a59344
+        stars: 3
+        tag: "&cNatal 2025"
+        availability: EVENT
+      presentes:
+        name: "Presentes"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: 103416095268d93265c4cfc219415335fcaa72a51bb1ebca3cefc5cb302e1941
+        stars: 5
+        tag: "&cNatal 2024"
+        description:
+          - "&7Faça chover presentes!"
+        availability: EVENT
+      passarinhos:
+        name: "Passarinhos"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: f17b1bd369110c5bd651ba8361d926b8543d3e34b1807ee3149faaf396426850
+        stars: 4
+        tag: "&dCarnaval 2024"
+        availability: EVENT
+      brain-freeze:
+        name: "Brain Freeze"
+        icon:
+          material: ICE
+        stars: 5
+        tag: "&cNatal 2023"
+        description:
+          - "&7Congele a cabeça de"
+          - "&7seus inimigos!"
+        availability: EVENT
+      fogos-de-artificio:
+        name: "Fogos de Artifício"
+        icon:
+          material: FIREWORK
+        stars: 1
+        description:
+          - "&7Solta fogos de artifício"
+        availability: ULTRA
+      raio:
+        name: "Raio"
+        icon:
+          material: WOOD_AXE
+        stars: 2
+        description:
+          - "&7Invoque o poder do Thor"
+        availability: ULTRA
+      colheita-de-aboboras:
+        name: "Colheita de Abóboras"
+        icon:
+          material: JACK_O_LANTERN
+        stars: 2
+        tag: "&6Halloween 2026"
+        availability: SALE
+      apavorante:
+        name: "Apavorante"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: c11de96c3e7b52fa5e4c794b4be14a05fc67694ca5eff9c9eb8baac672d21c09
+        stars: 3
+        tag: "&6Halloween 2026"
+        availability: SALE
+      deserto:
+        name: "Deserto"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: d4b3ea5cb6b6f046e326621ca11ffb7d6aec22d66c0d81e5039b19ee4400309f
+        stars: 4
+        description:
+          - "&7Cuidado onde pisa..."
+        availability: SALE
+      tinta:
+        name: "Tinta"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: 8ee7b4a3202b5b59edac14977b318890a4c775f11d4bee05348b1a6cb9429f1b
+        stars: 2
+        description:
+          - "&7Hora de pintar!"
+        availability: SALE
+      garota-magica:
+        name: "Garota Mágica"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: a64c1490c1254807b7e3fe7b3a5a3b3f15cc699ab3872cc02968e9712570ef99
+        stars: 5
+        description:
+          - "&7Em nome das estrelas,"
+          - "&7seus inimigos serão"
+          - "&7punidos!"
+        availability: SALE
+      anoitecer:
+        name: "Anoitecer"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: d6cd9fc319e14176dba72cf9e83030e538f5499235e0cf2531959eaa2e31dbcb
+        stars: 3
+        description:
+          - "&7Shhh... a coruja já"
+          - "&7escolheu sua próxima"
+          - "&7presa."
+        availability: SALE
+      encantado:
+        name: "Encantado"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: 2278b4061f63755ba5a85c1d2491c261d6bd4a5d0536a17bdad934570f3cbfee
+        stars: 3
+        description:
+          - "&7Onde um guerreiro caiu,"
+          - "&7agora brotam cogumelos..."
+          - "&7a floresta não desperdiça"
+          - "&7nada."
+        availability: SALE
+      incendiar:
+        name: "Incendiar"
+        icon:
+          material: FLINT_AND_STEEL
+        stars: 5
+        tag: "&aAniversário 2026"
+        availability: EVENT
+      afogar:
+        name: "Afogar"
+        icon:
+          material: WATER_BUCKET
+        stars: 5
+        tag: "&aAniversário 2026"
+        availability: EVENT
+      six-seven:
+        name: "Six Seven"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: dc07ce7fad3223dd0f1b05024a09a60c590883c32556332c8d4c7c13e0d60fe2
+        stars: 5
+        availability: EVENT
+      toque-de-midas:
+        name: "Toque de Midas"
+        icon:
+          material: GOLD_BLOCK
+        stars: 5
+        tag: "&6Premiação de torneio"
+        availability: EVENT
+      fantasmas:
+        name: "Fantasmas"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: c11de96c3e7b52fa5e4c794b4be14a05fc67694ca5eff9c9eb8baac672d21c09
+        stars: 3
+        tag: "&6Halloween 2025"
+        availability: EVENT
+      colmeia:
+        name: "Colmeia"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: 2c680149ad17e46fbbf7606b284cc83a03b1a67cd8a52717b44bfa3ad5914f14
+        stars: 5
+        availability: SALE
+      moedas:
+        name: "Moedas"
+        icon:
+          material: DOUBLE_PLANT
+        stars: 2
+        availability: SALE
+      biscoitos-e-leite:
+        name: "Biscoitos e Leite"
+        icon:
+          material: COOKIE
+        stars: 2
+        availability: SALE
+      esqueleto-amaldicoado:
+        name: "Esqueleto Amaldiçoado"
+        icon:
+          material: SKULL_ITEM
+          data: 1
+        stars: 2
+        availability: SALE
+      festa-disco:
+        name: "Festa Disco"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: 99bf4dd7dd1926968b185aa197a41e16c417dc0aa3aac6c42e39444de165f415
+        stars: 4
+        availability: SALE
+      dragoes-chineses:
+        name: "Dragões Chineses"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: f6dc0314b923a5a9962a09909597dd4cbc231f24952c4ab999479ca5cae0ac1c
+        stars: 3
+        availability: SALE
+      portal-do-fim:
+        name: "Portal do Fim"
+        icon:
+          material: EYE_OF_ENDER
+        stars: 2
+        availability: SALE
+      jardim-florido:
+        name: "Jardim Florido"
+        icon:
+          material: RED_ROSE
+          data: 7
+        stars: 2
+        availability: SALE
+      quebrado:
+        name: "Quebrado"
+        icon:
+          material: STAINED_GLASS
+          data: 11
+        stars: 2
+        availability: SALE
+      explosao-de-melancia:
+        name: "Explosão de Melancia"
+        icon:
+          material: MELON
+        stars: 2
+        availability: SALE
+      pinguins-na-neve:
+        name: "Pinguins na Neve"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: b6b7aa1d3aff5b9ef6c18a912983d69b2e1ffe62387a44d1f45a724bf635e035
+        stars: 3
+        availability: SALE
+      explosao-de-abobora:
+        name: "Explosão de Abóbora"
+        icon:
+          material: PUMPKIN
+        stars: 2
+        availability: SALE
+      arco-iris:
+        name: "Arco-Íris"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: 9060d1220b268d74b181b3d6a6d1a7a9d40452759507b0f82a578ae2b0e545e1
+        stars: 3
+        availability: SALE
+      redstone:
+        name: "Redstone"
+        icon:
+          material: REDSTONE_BLOCK
+        stars: 1
+        availability: SALE
+      lula-explosiva:
+        name: "Lula Explosiva"
+        icon:
+          material: INK_SACK
+        stars: 4
+        availability: SALE
+      galatico:
+        name: "Galático"
+        icon:
+          material: NETHER_STAR
+          glow: true
+        stars: 2
+        availability: SALE
+      explosao-de-tnt:
+        name: "Explosão de TNT"
+        icon:
+          material: TNT
+        stars: 2
+        availability: SALE
+      cacador-de-recompensas:
+        name: "Caçador de Recompensas"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: 1b7a1c5da1d362fa357db9889fa6a06a6032e24508481daca914e762660b948
+        stars: 3
+        availability: SALE
+      passe-de-magica:
+        name: "Passe de Mágica"
+        icon:
+          material: STICK
+        stars: 4
+        availability: SALE
+      decolando:
+        name: "Decolando"
+        icon:
+          material: BEACON
+        stars: 5
+        availability: SALE
+      vanilla:
+        name: "Vanilla"
+        icon:
+          material: WORKBENCH
+        stars: 3
+        availability: SALE
+      embrulhado:
+        name: "Embrulhado"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: 3aa03f817341caa56fbfc6d3f2811adb989b611781162c12af4c58af18c53c72
+        stars: 5
+        tag: "&aAniversário 2025"
+        availability: EVENT
+      esqueletico:
+        name: "Esquelético"
+        icon:
+          material: BONE
+        stars: 4
+        description:
+          - "&7Transforme seus inimigos"
+          - "&7em pó!"
+        availability: EVENT
+      decapitado:
+        name: "Decapitado"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+        stars: 5
+        tag: "&6Premiação de torneio"
+        description:
+          - "&7Envie a cabeça de seus"
+          - "&7inimigos para o além!"
+        availability: EVENT
+      eletrizante:
+        name: "Eletrizante"
+        icon:
+          material: SKULL_ITEM
+        stars: 5
+        tag: "&6Premiação mensal"
+        description:
+          - "&7Deixe seus inimigos"
+          - "&7chocados!"
+        availability: EVENT
   victory-effect:
     category: bedwars-vitoria
     prices:
@@ -2024,6 +2380,20 @@ cosmetics:
             - "&7Selecionado: &a{selected}"
             - " "
             - "&eClique para ver mais."
+      final-kill:
+        slot: 12
+        item:
+          material: DIAMOND_SWORD
+          name: "&aKill Final"
+          lore:
+            - "&8{owned}/{total} ({percent}%)"
+            - " "
+            - "&7Customize a sua animação"
+            - "&7de kill final!"
+            - " "
+            - "&7Selecionado: &a{selected}"
+            - " "
+            - "&eClique para ver mais."
       victory-effect:
         slot: 16
         item:
@@ -2039,18 +2409,6 @@ cosmetics:
             - " "
             - "&eClique para ver mais."
       soon:
-        "12":
-          material: DIAMOND_SWORD
-          name: "&aKill Final"
-          lore:
-            - "&80/43 (0%)"
-            - " "
-            - "&7Customize a sua animação"
-            - "&7de kill final!"
-            - " "
-            - "&7Selecionado: &aAleatório"
-            - " "
-            - "&eClique para ver mais."
         "14":
           material: SKULL_ITEM
           data: 3
@@ -2132,6 +2490,16 @@ cosmetics:
           name: "&aVoltar"
           lore:
             - "&7Para Menu do Bed Wars"
+    final-kill:
+      title: "Kill Final ({page}/{pages})"
+      random:
+        material: SKULL_ITEM
+        data: 3
+        skull-texture: 103416095268d93265c4cfc219415335fcaa72a51bb1ebca3cefc5cb302e1941
+        name: "&aAleatório"
+        lore:
+          - "&7Seleciona um cosmético"
+          - "&7aleatório que você possui"
     victory-effect:
       title: "Efeito de Vitória ({page}/{pages})"
       random:
@@ -2282,6 +2650,32 @@ victory-preview:
     - "&a2..."
     - "&a1..."
   countdown-ticks: 20
+  timeout: 60s
+  return-delay: 1s
+  back-item:
+    slot: 8
+    material: BED
+    name: "&aVoltar ao Lobby"
+  scoreboard:
+    title: "&b&lMUXE"
+    lines:
+      - ""
+      - "&fVisualizando:"
+      - "&e{name}"
+      - ""
+      - "&amuxe.com.br"
+
+final-kill-preview:
+  world: previa_efeito_de_vitoria
+  spawn:
+    x: -19.5
+    y: 35.0
+    z: 68.5
+    yaw: -161.0
+    pitch: 2.0
+  target:
+    distance: 4
+    action-bar: "&eAcerte o jogador!"
   timeout: 60s
   return-delay: 1s
   back-item:

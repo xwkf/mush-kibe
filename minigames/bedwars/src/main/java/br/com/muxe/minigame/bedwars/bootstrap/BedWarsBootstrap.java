@@ -153,7 +153,8 @@ public final class BedWarsBootstrap {
         rooms.start();
         engine.track(rooms::activeMatches, () -> catalog.all().size());
         rooms.onBedBreak(cosmetics.bedBreaks());
-        rooms.onVictory(cosmetics.victories());
+        rooms.onVictory(cosmetics::victory);
+        rooms.onFinalKill(cosmetics::finalKill);
         rooms.endTitles(titles);
         ShopService shop = new ShopService(
             shopCatalog,

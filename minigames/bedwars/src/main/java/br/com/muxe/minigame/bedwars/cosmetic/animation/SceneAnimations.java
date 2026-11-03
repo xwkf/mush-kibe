@@ -18,6 +18,10 @@ public final class SceneAnimations {
         return new SceneAnimations(List.of(new ChristmasGiftsVictory()));
     }
 
+    public static SceneAnimations finalKills() {
+        return new SceneAnimations(List.of(new GiftedFinalKill()));
+    }
+
     public Optional<SceneAnimation> find(String id) {
         return Optional.ofNullable(byId.get(id));
     }

@@ -72,6 +72,8 @@ public final class RoomService {
     };
     private VictoryHandler victories = (winner, viewers) -> {
     };
+    private FinalKillHandler finalKills = (killer, at, viewers) -> {
+    };
     private EndTitles endTitles;
     private BedBreakHandler bedBreaks = (breaker, world, bed, viewers) -> {
     };
@@ -139,6 +141,14 @@ public final class RoomService {
 
     VictoryHandler victories() {
         return victories;
+    }
+
+    public void onFinalKill(FinalKillHandler handler) {
+        this.finalKills = handler;
+    }
+
+    FinalKillHandler finalKills() {
+        return finalKills;
     }
 
     public void endTitles(EndTitles titles) {
@@ -485,6 +495,12 @@ public final class RoomService {
     public interface VictoryHandler {
 
         void won(Player winner, List<Player> viewers);
+    }
+
+    @FunctionalInterface
+    public interface FinalKillHandler {
+
+        void killed(Player killer, Location at, List<Player> viewers);
     }
 
     @FunctionalInterface

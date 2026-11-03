@@ -145,6 +145,14 @@ O jogador escolhe uma animação que toca quando ele quebra uma cama inimiga. Os
 3. Ao bater na cama, ela some só para esse jogador e a animação toca só para ele.
 4. `preview.return-delay` depois do fim da animação (2 s), ou depois de `preview.timeout` sem quebrar a cama (2 min), o jogador volta para onde estava, com os itens do lobby, e o menu de cosméticos reabre na página em que ele estava. Sair do servidor durante a prévia não abre nada.
 
+### Efeitos de kill final
+
+`Kill Final` (slot 12 de `Cosméticos do Bed Wars`) lista os 43 efeitos de kill final dos exports em `Kill Final ({page}/{pages})`, duas páginas, na categoria `bedwars-kill-final`, com as mesmas regras das outras categorias. Só o `Presenteado` tem animação.
+
+- **Na partida:** quando um jogador faz uma kill final (fora do void), o seu efeito de kill final selecionado (ou um aleatório que ele tem) toca onde a vítima morreu, visto pela sala toda.
+- **Presenteado:** um fogo em estrela vermelho, verde e branco estoura na vítima e oito presentes diferentes saem dela um a cada 2 ticks em oito direções, girando uns 8 blocos para cima e caindo a uns 3 blocos, cada um com um estalo. Eles somem uns 4 segundos depois.
+- **Prévia:** o botão direito abre `final-kill-preview.world` (o mundo da prévia de vitória) com um jogador 4 blocos à frente (`final-kill-preview.target.distance`) e `&eAcerte o jogador!` na barra de ação. Bater nele o remove com o som de dano e toca o efeito ali; depois o jogador volta e a lista abre de novo.
+
 ### Efeitos de vitória
 
 `Efeito de Vitória` (slot 16 de `Cosméticos do Bed Wars`) lista os 22 efeitos de vitória do export em `Efeito de Vitória ({page}/{pages})`, com o mesmo layout, ordem, compra e seleção da lista de destruição de cama. Eles ficam na categoria `bedwars-vitoria`, então a posse e a seleção são separadas das de cama; os créditos são os mesmos. Só o `Feliz Natal` tem animação; os outros respondem `cosmetic-unavailable` como um cosmético de cama sem animação.
@@ -255,6 +263,8 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 | `cosmetics.bed-destruction.<id>` | os 30 cosméticos | `name`, `icon` (item), `stars`, `tag`, `availability` (`SALE`, `ULTRA`, `EVENT`) e `description`. O id precisa ser o de uma animação para ter animação. |
 | `cosmetics.menus.*` | os exports | Títulos, slots, itens e linhas de lore dos três menus. |
 | `cosmetics.victory-effect.*` | `bedwars-vitoria`; 300, 400, 500, 700, 800; os 22 efeitos | Categoria, preços por estrelas e efeitos de vitória, com os mesmos campos dos de cama (`stars: 0` esconde as estrelas). |
+| `cosmetics.final-kill.*` | `bedwars-kill-final`; 750, 900, 1300, 1750, 2000; os 43 efeitos | Categoria, preços por estrelas e efeitos de kill final. |
+| `final-kill-preview.*` | o mundo e o spawn da prévia de vitória, alvo 4 blocos à frente, `&eAcerte o jogador!` | Como `victory-preview`, com `target.distance` e `target.action-bar` no lugar da contagem. |
 | `end-titles.victory`, `end-titles.defeat` | `VITÓRIA` `&6` `&e` `&f`; `DERROTA` `&c` `&c` `&f` | Palavra, cor depois da varredura, cor da letra que varre, cor inicial e um `sound` opcional. |
 | `victory-preview.*` | `previa_efeito_de_vitoria`, -19.5 35 68.5, `3...` `2...` `1...` a cada 20 ticks, `60s`, `1s` | Mundo, spawn, títulos da contagem e ticks entre eles, tempo limite, espera depois do efeito, item de voltar e scoreboard da prévia de vitória. |
 | `preview.world` | `previa_quebra_de_cama` | Pasta do mundo da prévia na raiz do servidor. Sem ela a prévia fica desligada. |

@@ -338,6 +338,10 @@ public final class RoomRuntime {
             key = finalKill ? "final-death" : "death";
         }
         broadcast(messages.get(key, "victim", victimName, "killer", killer.map(this::coloredName).orElse("")));
+        if (finalKill && !voidDeath) {
+            Location at = victim.getLocation();
+            killer.map(credited -> Bukkit.getPlayer(credited.id())).ifPresent(killerPlayer -> service.finalKills().killed(killerPlayer, at, online()));
+        }
         Map<Material, Integer> loot = resources(victim);
         BedbugHit bedbug = bedbugHits.remove(dead.id());
         killer.ifPresent(credited -> {

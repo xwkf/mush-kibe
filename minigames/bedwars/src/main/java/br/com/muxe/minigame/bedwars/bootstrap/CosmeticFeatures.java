@@ -9,7 +9,7 @@ import br.com.muxe.core.bukkit.permission.command.Replies;
 import br.com.muxe.core.bukkit.permission.command.TargetLookup;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.minigame.bedwars.cosmetic.BedBreakCosmetics;
-import br.com.muxe.minigame.bedwars.cosmetic.VictoryCosmetics;
+import br.com.muxe.minigame.bedwars.cosmetic.SceneCosmetics;
 import br.com.muxe.minigame.bedwars.cosmetic.animation.BedAnimations;
 import br.com.muxe.minigame.bedwars.cosmetic.animation.SceneAnimations;
 import br.com.muxe.minigame.bedwars.cosmetic.catalog.CosmeticCatalog;
@@ -34,6 +34,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
+import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -42,19 +44,23 @@ import org.bukkit.plugin.java.JavaPlugin;
 final class CosmeticFeatures {
 
     private static final String VICTORY_CATEGORY = "bedwars-vitoria";
+    private static final String FINAL_KILL_CATEGORY = "bedwars-kill-final";
 
     private final CosmeticMenus menus;
     private final BedBreakCosmetics bedBreaks;
-    private final VictoryCosmetics victories;
+    private final SceneCosmetics victories;
+    private final SceneCosmetics finalKills;
     private final BedPreview preview;
-    private final ScenePreview victoryPreview;
+    private final List<ScenePreview> scenePreviews;
 
-    private CosmeticFeatures(CosmeticMenus menus, BedBreakCosmetics bedBreaks, VictoryCosmetics victories, BedPreview preview, ScenePreview victoryPreview) {
+    private CosmeticFeatures(CosmeticMenus menus, BedBreakCosmetics bedBreaks, SceneCosmetics victories, SceneCosmetics finalKills, BedPreview preview,
+                             List<ScenePreview> scenePreviews) {
         this.menus = menus;
         this.bedBreaks = bedBreaks;
         this.victories = victories;
+        this.finalKills = finalKills;
         this.preview = preview;
-        this.victoryPreview = victoryPreview;
+        this.scenePreviews = List.copyOf(scenePreviews);
     }
 
     static CosmeticFeatures start(JavaPlugin plugin, MuxeCore core, FileConfiguration config, MessageCatalog messages, Commands commands, boolean lobby, EndTitles titles) {
@@ -69,12 +75,17 @@ final class CosmeticFeatures {
         CosmeticCatalog victoryCatalog = CosmeticCatalog.from(section(section, CosmeticMenuSettings.VICTORY_EFFECT), "cosmetics", VICTORY_CATEGORY,
             id -> victoryAnimations.find(id).isPresent());
         CosmeticProfiles victoryProfiles = profiles(plugin, core, victoryCatalog);
+        SceneAnimations killAnimations = SceneAnimations.finalKills();
+        CosmeticCatalog killCatalog = CosmeticCatalog.from(section(section, CosmeticMenuSettings.FINAL_KILL), "cosmetics", FINAL_KILL_CATEGORY,
+            id -> killAnimations.find(id).isPresent());
+        CosmeticProfiles killProfiles = profiles(plugin, core, killCatalog);
 
         BedPreview preview = null;
-        ScenePreview victoryPreview = null;
+        List<ScenePreview> scenes = new ArrayList<>();
         PreviewGate onlyLobby = (player, cosmetic, back) -> player.sendMessage(messages.get("preview-only-lobby"));
         PreviewGate bedGate = onlyLobby;
         PreviewGate victoryGate = onlyLobby;
+        PreviewGate killGate = onlyLobby;
         if (lobby) {
             BedPreview started = new BedPreview(plugin, core.buildMode(), BlockMask.start(plugin), PreviewSettings.from(section(config, "preview")), animations, messages);
             if (started.start()) {
@@ -82,15 +93,26 @@ final class CosmeticFeatures {
                 bedGate = started;
             }
             BedPreview bedPreview = preview;
-            ScenePreview scene = new ScenePreview(plugin, core.buildMode(), ScenePreviewSettings.from(section(config, "victory-preview")), victoryAnimations, titles::victory,
-                MatchSounds.from(config.getConfigurationSection("sounds")).countdown(), player -> bedPreview != null && bedPreview.previewing(player), messages);
-            if (scene.start()) {
-                victoryPreview = scene;
-                victoryGate = scene;
+            Predicate<Player> busy = player -> bedPreview != null && bedPreview.previewing(player) || scenes.stream().anyMatch(scene -> scene.previewing(player));
+            ScenePreview victoryScene = new ScenePreview(plugin, core.buildMode(), ScenePreviewSettings.from(section(config, "victory-preview")), victoryAnimations,
+                titles::victory, MatchSounds.from(config.getConfigurationSection("sounds")).countdown(), busy, messages);
+            if (victoryScene.start()) {
+                scenes.add(victoryScene);
+                victoryGate = victoryScene;
+            }
+            ScenePreview killScene = new ScenePreview(plugin, core.buildMode(), ScenePreviewSettings.from(section(config, "final-kill-preview")), killAnimations,
+                player -> {
+                }, Optional.empty(), busy, messages);
+            if (killScene.start()) {
+                scenes.add(killScene);
+                killGate = killScene;
             }
         }
         List<CosmeticCategory> categories = new ArrayList<>();
         categories.add(CosmeticCategory.of(menuSettings.category(CosmeticMenuSettings.BED_DESTRUCTION), catalog, profiles, bedGate));
+        if (menuSettings.categories().containsKey(CosmeticMenuSettings.FINAL_KILL)) {
+            categories.add(CosmeticCategory.of(menuSettings.category(CosmeticMenuSettings.FINAL_KILL), killCatalog, killProfiles, killGate));
+        }
         if (menuSettings.categories().containsKey(CosmeticMenuSettings.VICTORY_EFFECT)) {
             categories.add(CosmeticCategory.of(menuSettings.category(CosmeticMenuSettings.VICTORY_EFFECT), victoryCatalog, victoryProfiles, victoryGate));
         }
@@ -105,7 +127,8 @@ final class CosmeticFeatures {
         commands.register(new CosmeticCommand(catalog, menus, core.commands(), targets, new Replies(core.mainThread(), messages, plugin.getLogger()),
             new CosmeticProfileListener(profiles, plugin.getLogger())));
         return new CosmeticFeatures(menus, new BedBreakCosmetics(animator, animations, catalog, profiles),
-            new VictoryCosmetics(animator, victoryAnimations, victoryCatalog, victoryProfiles), preview, victoryPreview);
+            new SceneCosmetics(animator, victoryAnimations, victoryCatalog, victoryProfiles), new SceneCosmetics(animator, killAnimations, killCatalog, killProfiles),
+            preview, scenes);
     }
 
     private static CosmeticProfiles profiles(JavaPlugin plugin, MuxeCore core, CosmeticCatalog catalog) {
@@ -120,8 +143,12 @@ final class CosmeticFeatures {
         return bedBreaks;
     }
 
-    VictoryCosmetics victories() {
-        return victories;
+    void victory(Player winner, List<Player> viewers) {
+        victories.play(winner, winner.getLocation(), viewers);
+    }
+
+    void finalKill(Player killer, Location at, List<Player> viewers) {
+        finalKills.play(killer, at, viewers);
     }
 
     void openMenu(Player player) {
@@ -141,16 +168,14 @@ final class CosmeticFeatures {
     }
 
     boolean previewing(Player player) {
-        return preview != null && preview.previewing(player) || victoryPreview != null && victoryPreview.previewing(player);
+        return preview != null && preview.previewing(player) || scenePreviews.stream().anyMatch(scene -> scene.previewing(player));
     }
 
     void stop() {
         if (preview != null) {
             preview.stop();
         }
-        if (victoryPreview != null) {
-            victoryPreview.stop();
-        }
+        scenePreviews.forEach(ScenePreview::stop);
     }
 
     private static ConfigurationSection section(ConfigurationSection parent, String path) {

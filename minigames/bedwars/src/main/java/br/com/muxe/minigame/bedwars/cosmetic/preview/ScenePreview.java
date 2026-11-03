@@ -2,11 +2,15 @@ package br.com.muxe.minigame.bedwars.cosmetic.preview;
 
 import br.com.muxe.core.bukkit.buildmode.BuildMode;
 import br.com.muxe.core.bukkit.cosmetic.animation.SceneAnimation;
+import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import br.com.muxe.core.bukkit.cosmetic.stage.AnimationPlayer;
 import br.com.muxe.core.bukkit.cosmetic.stage.AnimationPlayer.Playback;
 import br.com.muxe.core.bukkit.effect.SoundCue;
 import br.com.muxe.core.bukkit.item.ItemBuilder;
+import br.com.muxe.core.bukkit.npc.Npc;
+import br.com.muxe.core.bukkit.npc.NpcService;
 import br.com.muxe.core.bukkit.scoreboard.Sidebar;
+import br.com.muxe.core.bukkit.text.ActionBar;
 import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.core.bukkit.text.Title;
@@ -26,6 +30,7 @@ import org.bukkit.Difficulty;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.bukkit.entity.Player;
@@ -52,6 +57,7 @@ public final class ScenePreview implements PreviewGate, Listener {
     private static final long TICKS_PER_SECOND = 20;
     private static final int COUNTDOWN_STAY = 40;
     private static final String SUBTITLE = " ";
+    private static final String TARGET_PREFIX = "previa-alvo:";
 
     private final Plugin plugin;
     private final BuildMode buildMode;
@@ -64,6 +70,7 @@ public final class ScenePreview implements PreviewGate, Listener {
     private final MessageCatalog messages;
     private final Map<UUID, Session> sessions = new HashMap<>();
     private World world;
+    private NpcService targets;
 
     public ScenePreview(Plugin plugin, BuildMode buildMode, ScenePreviewSettings settings, SceneAnimations animations, Consumer<Player> onScene,
                         Optional<SoundCue> countdownSound, Predicate<Player> busyElsewhere, MessageCatalog messages) {
@@ -90,11 +97,19 @@ public final class ScenePreview implements PreviewGate, Listener {
         world.setGameRuleValue("doMobSpawning", "false");
         world.setGameRuleValue("doFireTick", "false");
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
+        if (settings.target().isPresent()) {
+            targets = NpcService.start(plugin, npc -> List.of());
+            targets.visibleTo((viewer, npc) -> npc.id().equals(TARGET_PREFIX + viewer.getUniqueId()));
+            targets.onClick(this::hit);
+        }
         return true;
     }
 
     public void stop() {
         List.copyOf(sessions.keySet()).forEach(id -> Optional.ofNullable(plugin.getServer().getPlayer(id)).ifPresent(viewer -> finish(viewer, false)));
+        if (targets != null) {
+            targets.stop();
+        }
     }
 
     public boolean previewing(Player viewer) {
@@ -112,7 +127,7 @@ public final class ScenePreview implements PreviewGate, Listener {
             viewer.sendMessage(messages.get("preview-busy"));
             return;
         }
-        Session session = new Session(viewer, back);
+        Session session = new Session(viewer, back, animation.get());
         sessions.put(viewer.getUniqueId(), session);
         viewer.getInventory().clear();
         viewer.getInventory().setArmorContents(new ItemStack[4]);
@@ -131,6 +146,10 @@ public final class ScenePreview implements PreviewGate, Listener {
         sidebar.title(settings.title());
         sidebar.lines(settings.lines(cosmetic.name()));
         session.timeout = plugin.getServer().getScheduler().runTaskLater(plugin, () -> finish(viewer, true), settings.timeout().toSeconds() * TICKS_PER_SECOND);
+        if (settings.target().isPresent() && targets != null) {
+            placeTarget(session, settings.target().get());
+            return;
+        }
         for (int index = 0; index < settings.countdown().size(); index++) {
             String text = Colors.translate(settings.countdown().get(index));
             session.tasks.add(plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
@@ -138,16 +157,41 @@ public final class ScenePreview implements PreviewGate, Listener {
                 countdownSound.ifPresent(cue -> cue.play(viewer));
             }, (long) index * settings.countdownTicks()));
         }
-        session.tasks.add(plugin.getServer().getScheduler().runTaskLater(plugin, () -> play(session, animation.get()), Math.max(1, settings.sceneStart())));
+        session.tasks.add(plugin.getServer().getScheduler().runTaskLater(plugin, () -> play(session, settings.origin()), Math.max(1, settings.sceneStart())));
     }
 
-    private void play(Session session, SceneAnimation animation) {
+    private void placeTarget(Session session, ScenePreviewSettings.Target target) {
+        Vec at = settings.targetAt();
+        Location spot = new Location(world, at.x(), at.y(), at.z(), settings.yaw() + 180, 0);
+        session.target = TARGET_PREFIX + session.viewer.getUniqueId();
+        targets.put(new Npc(session.target, spot, Optional.empty()));
+        String bar = Colors.translate(target.actionBar());
+        session.tasks.add(plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
+            if (session.target != null) {
+                ActionBar.send(session.viewer, bar);
+            }
+        }, 0L, TICKS_PER_SECOND));
+    }
+
+    private void hit(Player player, Npc npc) {
+        Session session = sessions.get(player.getUniqueId());
+        if (session == null || session.playback != null || !npc.id().equals(session.target)) {
+            return;
+        }
+        targets.remove(session.target);
+        session.target = null;
+        ActionBar.send(player, "");
+        player.playSound(npc.location(), Sound.HURT_FLESH, 1, 1);
+        play(session, settings.targetAt());
+    }
+
+    private void play(Session session, Vec origin) {
         Player viewer = session.viewer;
         if (!previewing(viewer)) {
             return;
         }
         onScene.accept(viewer);
-        session.playback = animator.play(animation, world, settings.origin(), settings.facing(), () -> List.of(viewer), () ->
+        session.playback = animator.play(session.animation, world, origin, settings.facing(), () -> List.of(viewer), () ->
             session.tasks.add(plugin.getServer().getScheduler().runTaskLater(plugin, () -> finish(viewer, true), Math.max(1, settings.returnDelay().toMillis() / 50))));
     }
 
@@ -231,6 +275,9 @@ public final class ScenePreview implements PreviewGate, Listener {
             return;
         }
         session.cancel();
+        if (session.target != null && targets != null) {
+            targets.remove(session.target);
+        }
         Title.clear(viewer);
         viewer.teleport(session.from);
         viewer.getInventory().setContents(session.contents);
@@ -253,6 +300,7 @@ public final class ScenePreview implements PreviewGate, Listener {
 
         private final Player viewer;
         private final Consumer<Player> back;
+        private final SceneAnimation animation;
         private final Location from;
         private final ItemStack[] contents;
         private final ItemStack[] armor;
@@ -263,10 +311,12 @@ public final class ScenePreview implements PreviewGate, Listener {
         private final List<BukkitTask> tasks = new ArrayList<>();
         private BukkitTask timeout;
         private Playback playback;
+        private String target;
 
-        Session(Player viewer, Consumer<Player> back) {
+        Session(Player viewer, Consumer<Player> back, SceneAnimation animation) {
             this.viewer = viewer;
             this.back = back;
+            this.animation = animation;
             this.from = viewer.getLocation();
             this.contents = viewer.getInventory().getContents();
             this.armor = viewer.getInventory().getArmorContents();

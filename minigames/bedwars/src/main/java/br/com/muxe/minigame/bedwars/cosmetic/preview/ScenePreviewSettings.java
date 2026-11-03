@@ -6,6 +6,7 @@ import br.com.muxe.minigame.bedwars.settings.BedWarsSettings.HotbarItem;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import org.bukkit.configuration.ConfigurationSection;
 
 public record ScenePreviewSettings(
@@ -21,7 +22,8 @@ public record ScenePreviewSettings(
     Duration returnDelay,
     HotbarItem back,
     String title,
-    List<String> lines
+    List<String> lines,
+    Optional<Target> target
 ) {
 
     public ScenePreviewSettings {
@@ -46,12 +48,19 @@ public record ScenePreviewSettings(
             DurationParser.parse(section.getString("return-delay", "1s")),
             new HotbarItem(back.getInt("slot"), back.getString("material"), back.getString("name")),
             scoreboard.getString("title", "&b&lMUXE"),
-            scoreboard.getStringList("lines")
+            scoreboard.getStringList("lines"),
+            Optional.ofNullable(section.getConfigurationSection("target"))
+                .map(target -> new Target(target.getDouble("distance", 4), target.getString("action-bar", "&eAcerte o jogador!")))
         );
     }
 
     public Vec origin() {
         return new Vec(x, y, z);
+    }
+
+    public Vec targetAt() {
+        double distance = target.map(Target::distance).orElse(0.0);
+        return origin().add(facing().multiply(distance));
     }
 
     public Vec facing() {
@@ -69,6 +78,9 @@ public record ScenePreviewSettings(
 
     public List<String> lines(String name) {
         return lines.stream().map(line -> line.replace("{name}", name)).toList();
+    }
+
+    public record Target(double distance, String actionBar) {
     }
 
     private static ConfigurationSection section(ConfigurationSection parent, String path) {
