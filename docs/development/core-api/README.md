@@ -540,6 +540,7 @@ Packages `br.com.muxe.core.bukkit.cosmetic.animation` (pure) and `br.com.muxe.co
 - `Stage` spawns packet-only actors (armor stands, mobs, falling blocks, items, heads dropped as items with a skin texture through `skullItem`, fireworks, snowballs), sends particles and sounds and fakes block changes. `Actor` moves, equips, poses, rides and removes them.
 - `Timeline.at(tick, action)` and `repeat(from, until, period, action)` schedule steps; `lasts(ticks)` keeps the animation alive longer.
 - `AnimationPlayer.play(animation, world, bed, breaker, viewers, onFinish)` runs it one step per tick for the viewers only and, at the end or on `cancel()`, removes every actor and restores every faked block.
+- A `SceneAnimation` is the same without a bed: its script gets an origin and a horizontal facing, and `AnimationPlayer.play(animation, world, origin, facing, viewers, onFinish)` runs it. BedWars victory effects use it.
 - `BedFrame.ofBlock(x, y, z, data)` builds the frame from either half of a 1.8 bed.
 - Animations are tested without a server with a recording `Stage`, as `BedAnimationsTest` does in BedWars.
 

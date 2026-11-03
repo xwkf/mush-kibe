@@ -2,10 +2,12 @@ package br.com.muxe.core.bukkit.cosmetic.stage;
 
 import br.com.muxe.core.bukkit.cosmetic.animation.BedAnimation;
 import br.com.muxe.core.bukkit.cosmetic.animation.BedFrame;
+import br.com.muxe.core.bukkit.cosmetic.animation.SceneAnimation;
 import br.com.muxe.core.bukkit.cosmetic.animation.Timeline;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import java.util.Collection;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import org.bukkit.World;
@@ -22,15 +24,25 @@ public final class AnimationPlayer {
     }
 
     public Playback play(BedAnimation animation, World world, BedFrame bed, Vec breaker, Supplier<Collection<Player>> viewers, Runnable onFinish) {
+        return run(animation.id(), world, viewers, onFinish,
+            (stage, timeline) -> animation.script(bed, breaker, stage, timeline, ThreadLocalRandom.current()));
+    }
+
+    public Playback play(SceneAnimation animation, World world, Vec origin, Vec facing, Supplier<Collection<Player>> viewers, Runnable onFinish) {
+        return run(animation.id(), world, viewers, onFinish,
+            (stage, timeline) -> animation.script(origin, facing, stage, timeline, ThreadLocalRandom.current()));
+    }
+
+    private Playback run(String id, World world, Supplier<Collection<Player>> viewers, Runnable onFinish, BiConsumer<PacketStage, Timeline> script) {
         PacketStage stage = new PacketStage(world, viewers);
         Timeline timeline = new Timeline();
-        animation.script(bed, breaker, stage, timeline, ThreadLocalRandom.current());
+        script.accept(stage, timeline);
         Playback playback = new Playback(stage, onFinish);
         playback.task = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
             try {
                 timeline.run(playback.tick);
             } catch (RuntimeException exception) {
-                plugin.getLogger().log(Level.WARNING, "Bed animation " + animation.id() + " failed", exception);
+                plugin.getLogger().log(Level.WARNING, "Animation " + id + " failed", exception);
                 playback.finish();
                 return;
             }
