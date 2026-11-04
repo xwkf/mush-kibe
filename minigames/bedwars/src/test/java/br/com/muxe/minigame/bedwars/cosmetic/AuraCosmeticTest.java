@@ -172,7 +172,7 @@ class AuraCosmeticTest {
 
         assertThat(preview.world()).isEqualTo("previa_aura");
         assertThat(preview.origin()).isEqualTo(new Vec(10.5, 19, 21.5));
-        assertThat(preview.yaw()).isZero();
+        assertThat(preview.yaw()).isEqualTo(180f);
         assertThat(preview.countdown()).isEmpty();
         assertThat(preview.sceneStart()).isZero();
         assertThat(preview.target()).isEmpty();

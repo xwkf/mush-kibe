@@ -3069,7 +3069,7 @@ aura-preview:
     x: 10.5
     y: 19.0
     z: 21.5
-    yaw: 0.0
+    yaw: 180
     pitch: 0.0
   timeout: 60s
   return-delay: 1s
