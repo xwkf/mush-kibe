@@ -25,6 +25,7 @@ build/servers/
 ├── proxy/plugins/    muxe-core-proxy.jar
 ├── auth/plugins/     muxe-core-bukkit.jar  muxe-auth.jar
 ├── lobby/plugins/    muxe-core-bukkit.jar  muxe-lobby.jar
+├── afk/plugins/      muxe-core-bukkit.jar  muxe-afk.jar
 ├── skywars/plugins/  muxe-core-bukkit.jar  muxe-skywars.jar
 └── bedwars/plugins/  muxe-core-bukkit.jar  muxe-bedwars.jar
 ```
@@ -35,7 +36,7 @@ Cada pasta tem exatamente os jars daquele servidor: copie o conteúdo para a pas
 |---|---|
 | `./gradlew build` | Tudo: compila, testa, confere as regras e monta todos os servidores. |
 | `./gradlew assembleServers` | Monta a pasta de todos os servidores, sem rodar os testes. |
-| `./gradlew assembleLobbyServer` | Monta um único servidor. Existe uma task por servidor: `assembleProxyServer`, `assembleAuthServer`, `assembleSkywarsServer`, `assembleBedwarsServer`. |
+| `./gradlew assembleLobbyServer` | Monta um único servidor. Existe uma task por servidor: `assembleProxyServer`, `assembleAuthServer`, `assembleAfkServer`, `assembleSkywarsServer`, `assembleBedwarsServer`. |
 | `./gradlew :servers:auth:test` | Roda os testes de um único módulo. |
 
 ## Módulos
@@ -49,7 +50,8 @@ muxe/
 │   └── proxy/            o plugin do Velocity
 ├── servers/
 │   ├── auth/             Muxe-Auth, o servidor de autenticação
-│   └── lobby/            Muxe-Lobby, o lobby principal
+│   ├── lobby/            Muxe-Lobby, o lobby principal
+│   └── afk/              Muxe-AFK, o servidor AFK
 └── minigames/
     ├── engine/           partidas, arenas e modos, compartilhados por todos os jogos
     ├── skywars/          Muxe-SkyWars
@@ -63,10 +65,11 @@ muxe/
 | `core:proxy` | Plugin Velocity | Inicia o core no Velocity, roteia os jogadores e protege a autenticação. | `muxe-core-proxy.jar` |
 | `servers:auth` | Plugin Spigot | Registro e login. | `muxe-auth.jar` |
 | `servers:lobby` | Plugin Spigot | O lobby principal. | `muxe-lobby.jar` |
+| `servers:afk` | Plugin Spigot | O [servidor AFK](../features/afk/README.pt-BR.md). | `muxe-afk.jar` |
 | `minigames:engine` | Biblioteca que usa a API do Spigot | O [motor de jogo](../architecture/game-engine/README.pt-BR.md). | Dentro do jar de cada jogo |
 | `minigames:skywars`, `minigames:bedwars` | Plugin Spigot | Um jogo cada. | `muxe-skywars.jar`, `muxe-bedwars.jar` |
 
-Os pacotes seguem o módulo: `br.com.muxe.core.common`, `br.com.muxe.core.bukkit`, `br.com.muxe.core.proxy`, `br.com.muxe.auth`, `br.com.muxe.lobby`, `br.com.muxe.minigame.engine`, `br.com.muxe.minigame.skywars`...
+Os pacotes seguem o módulo: `br.com.muxe.core.common`, `br.com.muxe.core.bukkit`, `br.com.muxe.core.proxy`, `br.com.muxe.auth`, `br.com.muxe.lobby`, `br.com.muxe.afk`, `br.com.muxe.minigame.engine`, `br.com.muxe.minigame.skywars`...
 
 ## Servidores
 
@@ -173,6 +176,7 @@ export MUXE_MESSAGING_SECRET=...
 | `proxy` | Velocity 4.3 | `server.id: proxy-1`, `kind: PROXY` |
 | `auth` | Um fork do Spigot 1.8.8 com Java 25 | `server.id: auth-1`, `group: auth`, `kind: AUTH` |
 | `lobby` | Um fork do Spigot 1.8.8 com Java 25 | `server.id: lobby-1`, `group: lobby`, `kind: LOBBY` |
+| `afk` | Um fork do Spigot 1.8.8 com Java 25 | `server.id: afk-1`, `group: afk`, `kind: AFK` |
 | `skywars` | Um fork do Spigot 1.8.8 com Java 25 | `server.id: skywars-1`, `group: skywars`, `kind: MINIGAME` |
 
 - O `server.id` precisa ser igual ao nome do servidor no `velocity.toml`.
@@ -180,7 +184,7 @@ export MUXE_MESSAGING_SECRET=...
 - No `velocity.toml`: `player-info-forwarding-mode = "legacy"` (servidores 1.8 não suportam o modern forwarding) e `online-mode = false`. Jogadores premium são colocados em modo online individualmente pela Muxe, como descrito em [Autenticação](../features/authentication/README.pt-BR.md).
 - Em cada `spigot.yml`: `settings.bungeecord: true`. No servidor de autenticação, defina também `commands.log: false`, para que as senhas nunca cheguem ao console.
 - Em todo servidor Spigot, desligue as dimensões extras e a proteção do spawn: `allow-nether=false` e `spawn-protection=0` no `server.properties`, e `settings.allow-end: false` no `bukkit.yml`. Os servidores do Muxe usam um mundo só.
-- No lobby, chame o mundo de `lobby` com `level-name=lobby` no `server.properties`, e não de `world`, o padrão.
+- No lobby, chame o mundo de `lobby` com `level-name=lobby` no `server.properties`, e não de `world`, o padrão. No servidor AFK, chame-o de `afk` (`level-name=afk`).
 - Copie `build/servers/<name>/plugins/*` para a pasta `plugins` de cada servidor.
 
 ### 4. Inicie tudo

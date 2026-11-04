@@ -25,6 +25,7 @@ build/servers/
 ├── proxy/plugins/    muxe-core-proxy.jar
 ├── auth/plugins/     muxe-core-bukkit.jar  muxe-auth.jar
 ├── lobby/plugins/    muxe-core-bukkit.jar  muxe-lobby.jar
+├── afk/plugins/      muxe-core-bukkit.jar  muxe-afk.jar
 ├── skywars/plugins/  muxe-core-bukkit.jar  muxe-skywars.jar
 └── bedwars/plugins/  muxe-core-bukkit.jar  muxe-bedwars.jar
 ```
@@ -35,7 +36,7 @@ Each folder holds exactly the jars of that server: copy its contents into the se
 |---|---|
 | `./gradlew build` | Everything: compile, test, check rules and assemble every server. |
 | `./gradlew assembleServers` | Assembles every server folder, without running tests. |
-| `./gradlew assembleLobbyServer` | Assembles a single server. There is one task per server: `assembleProxyServer`, `assembleAuthServer`, `assembleSkywarsServer`, `assembleBedwarsServer`. |
+| `./gradlew assembleLobbyServer` | Assembles a single server. There is one task per server: `assembleProxyServer`, `assembleAuthServer`, `assembleAfkServer`, `assembleSkywarsServer`, `assembleBedwarsServer`. |
 | `./gradlew :servers:auth:test` | Runs the tests of a single module. |
 
 ## Modules
@@ -49,7 +50,8 @@ muxe/
 │   └── proxy/            the Velocity plugin
 ├── servers/
 │   ├── auth/             Muxe-Auth, the authentication server
-│   └── lobby/            Muxe-Lobby, the main lobby
+│   ├── lobby/            Muxe-Lobby, the main lobby
+│   └── afk/              Muxe-AFK, the AFK server
 └── minigames/
     ├── engine/           matches, arenas and modes, shared by every game
     ├── skywars/          Muxe-SkyWars
@@ -63,10 +65,11 @@ muxe/
 | `core:proxy` | Velocity plugin | Boots the core on Velocity, routes players and guards authentication. | `muxe-core-proxy.jar` |
 | `servers:auth` | Spigot plugin | Registration and login. | `muxe-auth.jar` |
 | `servers:lobby` | Spigot plugin | The main lobby. | `muxe-lobby.jar` |
+| `servers:afk` | Spigot plugin | The [AFK server](../features/afk/README.md). | `muxe-afk.jar` |
 | `minigames:engine` | Library that uses the Spigot API | The [game engine](../architecture/game-engine/README.md). | Inside each game's jar |
 | `minigames:skywars`, `minigames:bedwars` | Spigot plugin | One game each. | `muxe-skywars.jar`, `muxe-bedwars.jar` |
 
-Packages follow the module: `br.com.muxe.core.common`, `br.com.muxe.core.bukkit`, `br.com.muxe.core.proxy`, `br.com.muxe.auth`, `br.com.muxe.lobby`, `br.com.muxe.minigame.engine`, `br.com.muxe.minigame.skywars`...
+Packages follow the module: `br.com.muxe.core.common`, `br.com.muxe.core.bukkit`, `br.com.muxe.core.proxy`, `br.com.muxe.auth`, `br.com.muxe.lobby`, `br.com.muxe.afk`, `br.com.muxe.minigame.engine`, `br.com.muxe.minigame.skywars`...
 
 ## Servers
 
@@ -173,6 +176,7 @@ export MUXE_MESSAGING_SECRET=...
 | `proxy` | Velocity 4.3 | `server.id: proxy-1`, `kind: PROXY` |
 | `auth` | A Spigot 1.8.8 fork on Java 25 | `server.id: auth-1`, `group: auth`, `kind: AUTH` |
 | `lobby` | A Spigot 1.8.8 fork on Java 25 | `server.id: lobby-1`, `group: lobby`, `kind: LOBBY` |
+| `afk` | A Spigot 1.8.8 fork on Java 25 | `server.id: afk-1`, `group: afk`, `kind: AFK` |
 | `skywars` | A Spigot 1.8.8 fork on Java 25 | `server.id: skywars-1`, `group: skywars`, `kind: MINIGAME` |
 
 - The `server.id` must equal the server name in `velocity.toml`.
@@ -180,7 +184,7 @@ export MUXE_MESSAGING_SECRET=...
 - In `velocity.toml`: `player-info-forwarding-mode = "legacy"` (1.8 servers do not support modern forwarding) and `online-mode = false`. Premium players are switched to online mode individually by Muxe, as described in [Authentication](../features/authentication/README.md).
 - In each `spigot.yml`: `settings.bungeecord: true`. On the auth server also set `commands.log: false` so passwords never reach the console.
 - On every Spigot server, turn off the extra dimensions and the spawn protection: `allow-nether=false` and `spawn-protection=0` in `server.properties`, and `settings.allow-end: false` in `bukkit.yml`. Muxe servers only use one world.
-- On the lobby, name the world `lobby` with `level-name=lobby` in `server.properties`, not the default `world`.
+- On the lobby, name the world `lobby` with `level-name=lobby` in `server.properties`, not the default `world`. On the AFK server, name it `afk` (`level-name=afk`).
 - Copy `build/servers/<name>/plugins/*` into each server's `plugins` folder.
 
 ### 4. Start everything

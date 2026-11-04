@@ -83,6 +83,7 @@ None. The gate lives in the proxy's memory.
 
 - [Authentication](../authentication/README.md) publishes `auth.authenticated`.
 - [Lobby](../lobby/README.md) publishes `player.connect` for `/jogar`.
+- The [AFK server](../afk/README.md) feature publishes `player.connect` to send idle lobby players to the `afk` group and back to the server they came from.
 
 ## Acceptance criteria
 

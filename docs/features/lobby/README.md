@@ -104,6 +104,10 @@ Every slime block (`launch-pad.block`) in a lobby is a launch pad, with no setup
 - `/build off` returns to Adventure. Muxe-Core gives the hotbar back (with the current visibility dye) and the lobby lets players with `muxe.lobby.fly` fly again (`FlightBuildHook`).
 - Build mode follows the player to the other servers: moving to another lobby keeps it on. Hotbar actions do nothing while it is on.
 
+### AFK
+
+A player who is not VIP and stands still for 5 minutes is moved to the AFK server and comes back here as soon as they move. See [AFK server](../afk/README.md).
+
 ## Commands
 
 | Command | Description | Permission |
@@ -112,7 +116,8 @@ Every slime block (`launch-pad.block`) in a lobby is a launch pad, with no setup
 | `/setspawn` (`/setlobby`) | Saves the current position as the spawn of this lobby. | `muxe.lobby.setspawn` |
 | `/fly` (`/voar`) | Turns flight on or off. | `muxe.lobby.fly` |
 | `/lobbyconfig ver\|definir\|adicionar\|remover\|local\|recarregar ...` | Views and changes the lobby `config.yml` in game; see [Changing the configuration in game](#changing-the-configuration-in-game). | `muxe.admin.config` |
-| `/build <on\|off>` | Turns build mode on or off on any server; without an argument it toggles. Provided by Muxe-Core. | `muxe.build` |
+| `/build <on\|off>` | Turns build mode on or off on any server; without an argument it toggles. Provided by Muxe-Core. | `muxe.afk.bypass` | Never sent to the [AFK server](../afk/README.md) for standing still. Seeded on `vip`. | op |
+| `muxe.build` |
 
 `/jogar` completes the configured games with tab.
 
@@ -150,6 +155,7 @@ The join greeting is Muxe-Core configuration: `/coreconfig definir join-greeting
 | `play.games` | `skywars`, `bedwars` | Groups allowed in `/jogar`. |
 | `protection.void-level` | `0` | Y below which players in the lobby's own worlds are sent back to spawn. |
 | `arrival.fly-height` | `5` | Blocks above the spawn for players with `muxe.lobby.fly`. |
+| `afk.enabled`, `afk.idle-after`, `afk.server-group`, `afk.check-interval`, `afk.origin-ttl` | `true`, `5m`, `afk`, `1s`, `12h` | The AFK watch; see [AFK server](../afk/README.md#configuration). |
 | `launch-pad.enabled` | `true` | Turns the launch pads on. |
 | `launch-pad.block` | `SLIME_BLOCK` | Block (a 1.8 `Material` name) that works as a launch pad. |
 | `launch-pad.distance`, `launch-pad.height` | `20`, `5` | Blocks forward and up a launch reaches. |
@@ -196,6 +202,7 @@ The Spigot server metrics of Muxe-Core. The visibility metrics moved with it and
 - [Network routing](../network-routing/README.md) brings players here after login and moves them to other lobbies and games.
 - The [Core API](../../development/core-api/README.md) provides the boss bar and the scoreboard.
 - The [Hotbar](../hotbar/README.md), with its menus and the player visibility, comes from Muxe-Core.
+- The [AFK server](../afk/README.md) receives the players who stand still here.
 - [NPCs and holograms](../npcs-and-holograms/README.md) and the [Shop](../shop/README.md) come from Muxe-Core and are placed in the lobby by command.
 - The [Parkour](../parkour/README.md) comes from Muxe-Core; staff mark its points in the lobby by command.
 

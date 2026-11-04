@@ -215,6 +215,7 @@ Examples:
 | `muxe.permissions.manage` | `/permissao`. | op |
 | `muxe.permissions.editor` | `/editor`. | op |
 | `muxe.tag.<id>` | Owning the tag `<id>`. Rank tags come with the rank; decorative tags are given with `/tag dar`. | |
+| `muxe.afk.bypass` | Never being sent to the [AFK server](../afk/README.md) for standing still in a lobby. Seeded on `vip`. | |
 | `muxe.medal.<id>` | Owning the medal `<id>`. Seeded on `vip` and `ultra` (see [Medals](#medals)); other medals are given with `/medalha dar`. | |
 | `group.<id>` | Holding the rank `<id>`. | |
 | `*` | Everything. Seeded on `admin`, so Admin has every permission above. | |
@@ -299,7 +300,7 @@ All in `messages` of `plugins/Muxe-Core/config.yml`:
 | `core.player_medals` | The medal each player selected (`player_id`, `medal_id`, `updated_at`). |
 | `core.perm_actions` | Every change: `at`, `actor`, `description`. |
 
-Created by the core migration `V8__create_permissions.sql`, which also seeds the ranks, tags and tracks above. `V10__seed_staff_permissions.sql` gives `mod` (and, by inheritance, every rank above) `muxe.account.others` and `muxe.account.staff`. `V11__create_medals.sql` creates the medal tables, seeds the 31 medals and gives `vip` and `ultra` their medals. `V12__grant_lobby_fly_to_vip.sql` gives `vip` (and every rank above) `muxe.lobby.fly`, the lobby's `/fly`. Read with `LoadPermissionDataQuery` and `FindPermissionUserQuery`; changed with `ApplyPermissionChangesCommand`, `AddUserNodeCommand`, `RemoveUserNodeCommand`, `SelectTagCommand` and `SelectMedalCommand`.
+Created by the core migration `V8__create_permissions.sql`, which also seeds the ranks, tags and tracks above. `V10__seed_staff_permissions.sql` gives `mod` (and, by inheritance, every rank above) `muxe.account.others` and `muxe.account.staff`. `V11__create_medals.sql` creates the medal tables, seeds the 31 medals and gives `vip` and `ultra` their medals. `V12__grant_lobby_fly_to_vip.sql` gives `vip` (and every rank above) `muxe.lobby.fly`, the lobby's `/fly`. `V17__grant_afk_bypass_to_vip.sql` gives `vip` (and every rank above) `muxe.afk.bypass`, so VIPs are never sent to the [AFK server](../afk/README.md). Read with `LoadPermissionDataQuery` and `FindPermissionUserQuery`; changed with `ApplyPermissionChangesCommand`, `AddUserNodeCommand`, `RemoveUserNodeCommand`, `SelectTagCommand` and `SelectMedalCommand`.
 
 ## Metrics
 

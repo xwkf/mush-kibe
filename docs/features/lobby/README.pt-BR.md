@@ -104,6 +104,10 @@ O `/build` vem do Muxe-Core e funciona em todos os servidores, como descrito na 
 - `/build off` volta para o Aventura. O Muxe-Core devolve a hotbar (com o corante de visibilidade atual) e o lobby deixa quem tem `muxe.lobby.fly` voar de novo (`FlightBuildHook`).
 - O modo construção acompanha o jogador nos outros servidores: ir para outro lobby mantém o modo ligado. As ações da hotbar não fazem nada enquanto ele estiver ligado.
 
+### AFK
+
+Um jogador que não é VIP e fica parado por 5 minutos é levado ao servidor AFK e volta para cá assim que se move. Veja [Servidor AFK](../afk/README.pt-BR.md).
+
 ## Comandos
 
 | Comando | Descrição | Permissão |
@@ -112,7 +116,8 @@ O `/build` vem do Muxe-Core e funciona em todos os servidores, como descrito na 
 | `/setspawn` (`/setlobby`) | Salva a posição atual como spawn deste lobby. | `muxe.lobby.setspawn` |
 | `/fly` (`/voar`) | Liga ou desliga o voo. | `muxe.lobby.fly` |
 | `/lobbyconfig ver\|definir\|adicionar\|remover\|local\|recarregar ...` | Vê e altera o `config.yml` do lobby dentro do jogo; veja [Alterando a configuração no jogo](#alterando-a-configuração-no-jogo). | `muxe.admin.config` |
-| `/build <on\|off>` | Liga ou desliga o modo construção em qualquer servidor; sem argumento, alterna. Vem do Muxe-Core. | `muxe.build` |
+| `/build <on\|off>` | Liga ou desliga o modo construção em qualquer servidor; sem argumento, alterna. Vem do Muxe-Core. | `muxe.afk.bypass` | Nunca ser enviado ao [servidor AFK](../afk/README.pt-BR.md) por ficar parado. Semeada no `vip`. | op |
+| `muxe.build` |
 
 O `/jogar` completa os jogos configurados com tab.
 
@@ -150,6 +155,7 @@ A saudação de entrada é configuração do Muxe-Core: `/coreconfig definir joi
 | `play.games` | `skywars`, `bedwars` | Grupos permitidos no `/jogar`. |
 | `protection.void-level` | `0` | Altura abaixo da qual o jogador num dos mundos do lobby volta ao spawn. |
 | `arrival.fly-height` | `5` | Blocos acima do spawn para quem tem `muxe.lobby.fly`. |
+| `afk.enabled`, `afk.idle-after`, `afk.server-group`, `afk.check-interval`, `afk.origin-ttl` | `true`, `5m`, `afk`, `1s`, `12h` | A vigia de AFK; veja [Servidor AFK](../afk/README.pt-BR.md#configuração). |
 | `launch-pad.enabled` | `true` | Liga as plataformas de lançamento. |
 | `launch-pad.block` | `SLIME_BLOCK` | Bloco (nome de `Material` do 1.8) que funciona como plataforma de lançamento. |
 | `launch-pad.distance`, `launch-pad.height` | `20`, `5` | Blocos para a frente e para cima que um lançamento alcança. |
@@ -196,6 +202,7 @@ As métricas de servidor Spigot do Muxe-Core. As métricas de visibilidade foram
 - O [Roteamento da rede](../network-routing/README.pt-BR.md) traz os jogadores para cá depois do login e os move para outros lobbys e jogos.
 - A [API do core](../../development/core-api/README.pt-BR.md) fornece a boss bar e a scoreboard.
 - A [Hotbar](../hotbar/README.pt-BR.md), com os seus menus e a visibilidade dos jogadores, vem do Muxe-Core.
+- O [Servidor AFK](../afk/README.pt-BR.md) recebe os jogadores que ficam parados aqui.
 - [NPCs e hologramas](../npcs-and-holograms/README.pt-BR.md) e a [Loja](../shop/README.pt-BR.md) vêm do Muxe-Core e são colocados no lobby por comando.
 - O [Parkour](../parkour/README.pt-BR.md) vem do Muxe-Core; a equipe marca os pontos dele no lobby por comando.
 

@@ -83,6 +83,7 @@ Não se aplica. A passagem fica na memória do proxy.
 
 - A [Autenticação](../authentication/README.pt-BR.md) publica `auth.authenticated`.
 - O [Lobby](../lobby/README.pt-BR.md) publica `player.connect` para o `/jogar`.
+- O [Servidor AFK](../afk/README.pt-BR.md) publica `player.connect` para levar os jogadores parados nos lobbies ao grupo `afk` e de volta ao servidor de onde vieram.
 
 ## Critérios de aceitação
 

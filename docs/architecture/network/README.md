@@ -21,6 +21,7 @@ How the Muxe network is split into servers and how players move between them.
 | `auth` | `AUTH` | Where every player starts. `/register` or `/login`, then the player is sent to a lobby. |
 | `lobby` | `LOBBY` | The main lobby, where players choose a game with `/jogar`. |
 | `skywars`, `bedwars`, … | `MINIGAME` | One game per server. Each server runs many matches of the same game. |
+| `afk` | `AFK` | Where non-VIP players idle in a lobby wait until they move. See [AFK server](../../features/afk/README.md). |
 
 Every process connects to the shared infrastructure:
 
@@ -37,7 +38,7 @@ Each process has a `ServerIdentity`, read from its `config.yml`:
 |---|---|---|
 | `server.id` | `lobby-2` | Unique in the network, equal to the server name in `velocity.toml`. |
 | `server.group` | `lobby` | Servers that run the same thing share a group. |
-| `server.kind` | `LOBBY` | `PROXY`, `AUTH`, `LOBBY` or `MINIGAME`. |
+| `server.kind` | `LOBBY` | `PROXY`, `AUTH`, `LOBBY`, `MINIGAME` or `AFK`. |
 
 ## Discovery: the server directory
 

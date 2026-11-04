@@ -34,6 +34,7 @@ Tudo sobre a Muxe está documentado aqui, em inglês e português. As regras de 
 - [Roteamento da rede](features/network-routing/README.pt-BR.md): como o proxy escolhe servidores, o `/lobby` e a barreira de acesso.
 - [Administração da rede](features/network-admin/README.pt-BR.md): comandos `/muxe` para a equipe.
 - [Lobby](features/lobby/README.pt-BR.md): spawn, voo, proteção, scoreboard, boss bar e `/jogar`.
+- [Servidor AFK](features/afk/README.pt-BR.md): jogadores não VIP parados por 5 minutos em um lobby esperam no servidor AFK, sem chat, e voltam ao seu servidor quando se movem.
 - [Hotbar](features/hotbar/README.pt-BR.md): a hotbar dos lobbys, do Muxe-Core, com o seletor de jogo, o perfil, o seletor de lobby e a visibilidade dos jogadores.
 - [NPCs e hologramas](features/npcs-and-holograms/README.pt-BR.md): NPCs e hologramas de texto colocados por comando e compartilhados pelo grupo de servidores.
 - [Cabeças de redes sociais](features/social-heads/README.pt-BR.md): uma cabeça de jogador que passa pelas redes sociais da rede e envia o link no clique, compartilhada pelo grupo de servidores.
