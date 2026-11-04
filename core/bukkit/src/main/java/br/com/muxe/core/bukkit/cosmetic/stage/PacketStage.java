@@ -35,6 +35,7 @@ import net.minecraft.server.v1_8_R3.EntityLightning;
 import net.minecraft.server.v1_8_R3.EntityLiving;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.EntitySnowball;
+import net.minecraft.server.v1_8_R3.EntityTNTPrimed;
 import net.minecraft.server.v1_8_R3.EntityTypes;
 import net.minecraft.server.v1_8_R3.EnumParticle;
 import net.minecraft.server.v1_8_R3.IBlockData;
@@ -77,6 +78,7 @@ public final class PacketStage implements Stage, AutoCloseable {
     private static final int OBJECT_FALLING_BLOCK = 70;
     private static final int OBJECT_FIREWORK = 76;
     private static final int OBJECT_SNOWBALL = 61;
+    private static final int OBJECT_PRIMED_TNT = 50;
     private static final int OBJECT_FISHING_HOOK = 90;
     private static final int SKIN_LAYERS = 10;
     private static final int TAB_LIST_TICKS = 40;
@@ -177,6 +179,15 @@ public final class PacketStage implements Stage, AutoCloseable {
     public Actor snowball(Vec position, Vec velocity) {
         EntitySnowball snowball = new EntitySnowball(world, position.x(), position.y(), position.z());
         Actor actor = object(snowball, new PacketPlayOutSpawnEntity(snowball, OBJECT_SNOWBALL), false);
+        actor.velocity(velocity);
+        return actor;
+    }
+
+    @Override
+    public Actor tnt(Vec position, Vec velocity) {
+        EntityTNTPrimed tnt = new EntityTNTPrimed(world);
+        tnt.setPosition(position.x(), position.y(), position.z());
+        Actor actor = object(tnt, new PacketPlayOutSpawnEntity(tnt, OBJECT_PRIMED_TNT), false);
         actor.velocity(velocity);
         return actor;
     }

@@ -22,6 +22,8 @@ public interface Stage {
 
     Actor snowball(Vec position, Vec velocity);
 
+    Actor tnt(Vec position, Vec velocity);
+
     boolean solid(int x, int y, int z);
 
     void particle(String type, Vec position, int count, Vec spread, double speed, int... data);

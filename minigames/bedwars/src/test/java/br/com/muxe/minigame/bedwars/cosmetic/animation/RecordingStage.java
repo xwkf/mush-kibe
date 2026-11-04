@@ -76,6 +76,13 @@ final class RecordingStage implements Stage {
     }
 
     @Override
+    public Actor tnt(Vec position, Vec velocity) {
+        FakeActor tnt = add("PrimedTnt", position);
+        tnt.velocity(velocity);
+        return tnt;
+    }
+
+    @Override
     public boolean solid(int x, int y, int z) {
         return solid.test(new int[] {x, y, z});
     }
