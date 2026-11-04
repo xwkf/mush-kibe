@@ -32,6 +32,7 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import org.bukkit.Difficulty;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -67,7 +68,7 @@ public final class ScenePreview implements PreviewGate, Listener {
 
     private final Plugin plugin;
     private final BuildMode buildMode;
-    private final ScenePreviewSettings settings;
+    private final Supplier<ScenePreviewSettings> settings;
     private final SceneAnimations animations;
     private final Consumer<Player> onScene;
     private final Optional<SoundCue> countdownSound;
@@ -75,11 +76,12 @@ public final class ScenePreview implements PreviewGate, Listener {
     private final AnimationPlayer animator;
     private final MessageCatalog messages;
     private final Map<UUID, Session> sessions = new HashMap<>();
-    private World world;
+    private Stage stage;
+    private boolean listening;
     private NpcService targets;
     private final Map<String, String> targetNames = new HashMap<>();
 
-    public ScenePreview(Plugin plugin, BuildMode buildMode, ScenePreviewSettings settings, SceneAnimations animations, Consumer<Player> onScene,
+    public ScenePreview(Plugin plugin, BuildMode buildMode, Supplier<ScenePreviewSettings> settings, SceneAnimations animations, Consumer<Player> onScene,
                         Optional<SoundCue> countdownSound, Predicate<Player> busyElsewhere, MessageCatalog messages) {
         this.plugin = plugin;
         this.buildMode = buildMode;
@@ -93,23 +95,41 @@ public final class ScenePreview implements PreviewGate, Listener {
     }
 
     public boolean start() {
-        if (!plugin.getServer().getWorldContainer().toPath().resolve(settings.world()).toFile().isDirectory()) {
-            plugin.getLogger().warning("The preview is off: there is no world folder named " + settings.world());
+        return open();
+    }
+
+    public boolean refresh() {
+        return open();
+    }
+
+    private boolean open() {
+        ScenePreviewSettings next = settings.get();
+        if (!plugin.getServer().getWorldContainer().toPath().resolve(next.world()).toFile().isDirectory()) {
+            plugin.getLogger().warning("The preview is off: there is no world folder named " + next.world());
             return false;
         }
-        world = new WorldCreator(settings.world()).generator(new VoidGenerator()).generateStructures(false).createWorld();
-        world.setAutoSave(false);
-        world.setKeepSpawnInMemory(true);
-        world.setDifficulty(Difficulty.PEACEFUL);
-        world.setGameRuleValue("doMobSpawning", "false");
-        world.setGameRuleValue("doFireTick", "false");
-        plugin.getServer().getPluginManager().registerEvents(this, plugin);
-        if (settings.target().isPresent()) {
+        World world = stage != null && stage.world().getName().equals(next.world()) ? stage.world() : load(next.world());
+        stage = new Stage(next, world);
+        if (!listening) {
+            plugin.getServer().getPluginManager().registerEvents(this, plugin);
+            listening = true;
+        }
+        if (next.target().isPresent() && targets == null) {
             targets = NpcService.start(plugin, npc -> Optional.ofNullable(targetNames.get(npc.id())).map(List::of).orElse(List.of()));
             targets.visibleTo((viewer, npc) -> npc.id().equals(TARGET_PREFIX + viewer.getUniqueId()));
             targets.onClick(this::hit);
         }
         return true;
+    }
+
+    private World load(String name) {
+        World world = new WorldCreator(name).generator(new VoidGenerator()).generateStructures(false).createWorld();
+        world.setAutoSave(false);
+        world.setKeepSpawnInMemory(true);
+        world.setDifficulty(Difficulty.PEACEFUL);
+        world.setGameRuleValue("doMobSpawning", "false");
+        world.setGameRuleValue("doFireTick", "false");
+        return world;
     }
 
     public void stop() {
@@ -125,25 +145,28 @@ public final class ScenePreview implements PreviewGate, Listener {
 
     @Override
     public void preview(Player viewer, BedCosmetic cosmetic, Consumer<Player> back) {
+        Stage active = stage;
         Optional<SceneAnimation> animation = animations.find(cosmetic.id());
-        if (world == null || animation.isEmpty()) {
-            viewer.sendMessage(messages.get(world == null ? "preview-only-lobby" : "cosmetic-no-preview"));
+        if (active == null || animation.isEmpty()) {
+            viewer.sendMessage(messages.get(active == null ? "preview-only-lobby" : "cosmetic-no-preview"));
             return;
         }
         if (previewing(viewer) || busyElsewhere.test(viewer)) {
             viewer.sendMessage(messages.get("preview-busy"));
             return;
         }
-        Session session = new Session(viewer, back, animation.get());
+        ScenePreviewSettings config = active.settings();
+        World world = active.world();
+        Session session = new Session(viewer, back, animation.get(), active);
         sessions.put(viewer.getUniqueId(), session);
         viewer.getInventory().clear();
         viewer.getInventory().setArmorContents(new ItemStack[4]);
-        viewer.getInventory().setItem(settings.back().slot(), backItem());
+        viewer.getInventory().setItem(config.back().slot(), backItem(config));
         buildMode.releaseGameMode(viewer);
         viewer.setGameMode(GameMode.ADVENTURE);
         viewer.setAllowFlight(false);
-        Vec spawn = SceneCosmetics.onGround(world, new Location(world, settings.x(), settings.y(), settings.z()));
-        viewer.teleport(new Location(world, spawn.x(), spawn.y(), spawn.z(), settings.yaw(), settings.pitch()));
+        Vec spawn = SceneCosmetics.onGround(world, new Location(world, config.x(), config.y(), config.z()));
+        viewer.teleport(new Location(world, spawn.x(), spawn.y(), spawn.z(), config.yaw(), config.pitch()));
         for (Session other : sessions.values()) {
             if (other != session) {
                 session.hide(other.viewer);
@@ -151,28 +174,30 @@ public final class ScenePreview implements PreviewGate, Listener {
             }
         }
         Sidebar sidebar = Sidebar.create(viewer);
-        sidebar.title(settings.title());
-        sidebar.lines(settings.lines(cosmetic.name()));
-        session.timeout = plugin.getServer().getScheduler().runTaskLater(plugin, () -> finish(viewer, true), settings.timeout().toSeconds() * TICKS_PER_SECOND);
-        if (settings.target().isPresent() && targets != null) {
-            placeTarget(session, settings.target().get());
+        sidebar.title(config.title());
+        sidebar.lines(config.lines(cosmetic.name()));
+        session.timeout = plugin.getServer().getScheduler().runTaskLater(plugin, () -> finish(viewer, true), config.timeout().toSeconds() * TICKS_PER_SECOND);
+        if (config.target().isPresent() && targets != null) {
+            placeTarget(session, config.target().get());
             return;
         }
-        for (int index = 0; index < settings.countdown().size(); index++) {
-            String text = Colors.translate(settings.countdown().get(index));
+        for (int index = 0; index < config.countdown().size(); index++) {
+            String text = Colors.translate(config.countdown().get(index));
             session.tasks.add(plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                 Title.builder().title(text).subtitle(SUBTITLE).timings(0, COUNTDOWN_STAY, 0).build().send(viewer);
                 countdownSound.ifPresent(cue -> cue.play(viewer));
-            }, (long) index * settings.countdownTicks()));
+            }, (long) index * config.countdownTicks()));
         }
         session.tasks.add(plugin.getServer().getScheduler().runTaskLater(plugin, () -> play(session, SceneCosmetics.onGround(world, viewer.getLocation()),
-            SceneCosmetics.facing(viewer.getLocation()), Optional.empty(), List.of(viewer.getUniqueId())), Math.max(1, settings.sceneStart())));
+            SceneCosmetics.facing(viewer.getLocation()), Optional.empty(), List.of(viewer.getUniqueId())), Math.max(1, config.sceneStart())));
     }
 
     private void placeTarget(Session session, ScenePreviewSettings.Target target) {
-        Vec ahead = settings.targetAt();
+        ScenePreviewSettings config = session.stage.settings();
+        World world = session.stage.world();
+        Vec ahead = config.targetAt();
         Vec at = SceneCosmetics.onGround(world, new Location(world, ahead.x(), ahead.y(), ahead.z()));
-        Location spot = new Location(world, at.x(), at.y(), at.z(), settings.yaw() + 180, 0);
+        Location spot = new Location(world, at.x(), at.y(), at.z(), config.yaw() + 180, 0);
         session.target = TARGET_PREFIX + session.viewer.getUniqueId();
         targetNames.put(session.target, target.name(ThreadLocalRandom.current().nextInt()));
         session.targetSkin = skin(session.viewer);
@@ -213,7 +238,7 @@ public final class ScenePreview implements PreviewGate, Listener {
         session.target = null;
         ActionBar.send(player, "");
         player.playSound(npc.location(), Sound.HURT_FLESH, 1, 1);
-        play(session, SceneCosmetics.onGround(world, npc.location()), SceneCosmetics.away(player.getLocation(), npc.location()), session.targetSkin.map(NpcSkin::value), List.of());
+        play(session, SceneCosmetics.onGround(session.stage.world(), npc.location()), SceneCosmetics.away(player.getLocation(), npc.location()), session.targetSkin.map(NpcSkin::value), List.of());
     }
 
     private void play(Session session, Vec origin, Vec facing, Optional<String> skin, List<UUID> riders) {
@@ -222,24 +247,25 @@ public final class ScenePreview implements PreviewGate, Listener {
             return;
         }
         onScene.accept(viewer);
-        session.playback = animator.play(session.animation, world, new Scene(origin, facing, skin, riders), () -> List.of(viewer), () ->
-            session.tasks.add(plugin.getServer().getScheduler().runTaskLater(plugin, () -> finish(viewer, true), Math.max(1, settings.returnDelay().toMillis() / 50))));
+        session.playback = animator.play(session.animation, session.stage.world(), new Scene(origin, facing, skin, riders), () -> List.of(viewer), () ->
+            session.tasks.add(plugin.getServer().getScheduler().runTaskLater(plugin, () -> finish(viewer, true), Math.max(1, session.stage.settings().returnDelay().toMillis() / 50))));
     }
 
-    private ItemStack backItem() {
-        Material material = Material.matchMaterial(settings.back().material());
-        return ItemBuilder.of(material == null ? Material.BED : material).name(settings.back().name()).build();
+    private ItemStack backItem(ScenePreviewSettings config) {
+        Material material = Material.matchMaterial(config.back().material());
+        return ItemBuilder.of(material == null ? Material.BED : material).name(config.back().name()).build();
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onInteract(PlayerInteractEvent event) {
-        if (!previewing(event.getPlayer())) {
+        Session session = sessions.get(event.getPlayer().getUniqueId());
+        if (session == null) {
             return;
         }
         event.setCancelled(true);
         Action action = event.getAction();
         boolean rightClick = action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK;
-        if (settings.goesBack(rightClick, event.getPlayer().getInventory().getHeldItemSlot())) {
+        if (session.stage.settings().goesBack(rightClick, event.getPlayer().getInventory().getHeldItemSlot())) {
             finish(event.getPlayer(), true);
         }
     }
@@ -328,11 +354,15 @@ public final class ScenePreview implements PreviewGate, Listener {
         }
     }
 
+    private record Stage(ScenePreviewSettings settings, World world) {
+    }
+
     private static final class Session {
 
         private final Player viewer;
         private final Consumer<Player> back;
         private final SceneAnimation animation;
+        private final Stage stage;
         private final Location from;
         private final ItemStack[] contents;
         private final ItemStack[] armor;
@@ -346,10 +376,11 @@ public final class ScenePreview implements PreviewGate, Listener {
         private String target;
         private Optional<NpcSkin> targetSkin = Optional.empty();
 
-        Session(Player viewer, Consumer<Player> back, SceneAnimation animation) {
+        Session(Player viewer, Consumer<Player> back, SceneAnimation animation, Stage stage) {
             this.viewer = viewer;
             this.back = back;
             this.animation = animation;
+            this.stage = stage;
             this.from = viewer.getLocation();
             this.contents = viewer.getInventory().getContents();
             this.armor = viewer.getInventory().getArmorContents();

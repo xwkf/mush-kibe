@@ -165,6 +165,33 @@ Players pick an animation that plays when they break an enemy bed. The menus fol
 3. Left-clicking the bed hides it for that player only and plays the animation for that player only.
 4. `preview.return-delay` after the animation ends (2 s), or after `preview.timeout` without breaking the bed (2 min), the player goes back to where they were, with their lobby items, and the cosmetics menu reopens on the page they were on. Leaving the server during the preview opens nothing.
 
+### Setting up the previews in game
+
+Staff place the four previews from inside the BedWars lobby with `/bwconfig previa <tipo> <ação> [valor]` (permission `muxe.admin.config`), without editing `config.yml`. The world folders must already be in the server root.
+
+| `<tipo>` | Section | World folder |
+|---|---|---|
+| `cama` | `preview` | `previa_quebra_de_cama` |
+| `vitoria` | `victory-preview` | `previa_efeito_de_vitoria` |
+| `kill-final` | `final-kill-preview` | `previa_kill_final` |
+| `aura` | `aura-preview` | `previa_aura` |
+
+| Command | Writes |
+|---|---|
+| `previa <tipo> spawn [--centro]` | `<section>.world` with the world you are in and `<section>.spawn` (`x`, `y`, `z`, `yaw`, `pitch`) with where you stand: coordinates in hundredths, angles in tenths; `--centro` puts `x` and `z` in the middle of the block. |
+| `previa cama cama` | `preview.bed.foot` and `preview.bed.head` from the bed block you are looking at (up to 6 blocks away). Either half can be the one you look at: the other is found from the block data. If it is not a bed, nothing changes and the answer says to look at one. |
+| `previa kill-final distancia <n>` | `final-kill-preview.target.distance`, how many blocks ahead the target stands (above 0, up to 64; `4,5` is accepted). |
+| `previa <tipo> tempo <duração>` | `<section>.timeout`, such as `60s` or `2m` (at least `1s`). |
+
+Every shortcut saves the file and applies the change live: each preview reads its settings through a `LiveValue` that the change swaps, and loads the new world when it differs. A player who is already in a preview keeps the settings and the world they started with and the next one gets the new ones; a bed that a viewer broke is put back in the world it was taken from. If the new world folder does not exist the answer says so and the preview keeps the previous settings until the folder is there and `/bwconfig recarregar` is used. On the match servers, where the previews do not exist, the shortcuts only save and the answer says the change applies after a restart. The generic subcommands reach the other keys of the same sections (`/bwconfig definir victory-preview.countdown-ticks 15`, `/bwconfig ver aura-preview`).
+
+```text
+/bwconfig previa kill-final spawn
+/bwconfig previa cama cama
+/bwconfig previa kill-final distancia 5
+/bwconfig previa aura tempo 90s
+```
+
 ### Final kill effects
 
 `Kill Final` (slot 12 of `Cosméticos do Bed Wars`) lists the 43 final kill effects of the exports in `Kill Final ({page}/{pages})`, two pages, under the category `bedwars-kill-final`, with the same rules as the other categories. `Presenteado`, `Presentes`, `Passarinhos` and `Brain Freeze` have an animation. Every scene effect (victory and final kill) starts on the ground below where it happened (`Ground.surface`, up to 32 blocks down), so it plays the same on any map and at any height; a final kill effect also knows the hit direction (from the killer to the victim) and the victim's skin.
@@ -314,6 +341,8 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | `/bedwars finalizar` | `muxe.bedwars.admin` | Ends the match being played right away, for tests, as a real match ends: the team left standing wins (the only player of a forced match too), with the usual result, tops, mission summary, XP and stats; with several teams standing it is a draw. |
 | `/cosmeticos` (`/cosmeticosbw`) | none | Opens Cosméticos do Bed Wars. |
 | `/cosmeticos dar <jogador> <cosmetico>` | `muxe.cosmetics.admin` | Gives a bed destruction cosmetic, for event and award cosmetics. |
+| `/bwconfig ver\|definir\|adicionar\|remover\|local\|recarregar ...` | `muxe.admin.config` | Views and changes any key of this plugin's `config.yml` in game, applying it live where a component supports it. See the [configuration editor](../../development/core-api/README.md#configuration-editor). |
+| `/bwconfig previa <tipo> <ação> [valor]` | `muxe.admin.config` | Sets up the cosmetic previews from the world, live. See [Setting up the previews in game](#setting-up-the-previews-in-game). |
 
 ## Permissions
 
@@ -322,6 +351,7 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | `muxe.minigame.setup` | op | Allows `/arena`. |
 | `muxe.bedwars.admin` | op | Allows `/bedwars iniciar` and `/bedwars finalizar`. |
 | `muxe.cosmetics.admin` | op | Allows `/cosmeticos dar`. |
+| `muxe.admin.config` | op | Allows `/bwconfig`, and also `/lobbyconfig` and `/coreconfig`. Declared by Muxe-Core. |
 | `muxe.bedwars.map-select` | op | Choosing the map in the mode menus (VIPs). Give it to the VIP groups. |
 | `muxe.cosmetic.all` | op | Owns every BedWars cosmetic. |
 | `muxe.cosmetic.vip` | false | Owns the `Incluso no VIP` cosmetics (the pine and eucalyptus woods). Give it to the `vip` group; the groups above inherit it. |
@@ -383,6 +413,7 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | `preview.timeout`, `preview.return-delay` | `120s`, `2s` | Time to break the bed and wait after the animation. |
 | `preview.back-item` | slot 8 (the 9th), `BED`, `&aVoltar ao Lobby` | The item that ends the preview. The slot counts from 0. |
 | `preview.action-bar`, `preview.scoreboard` | `&eQuebre a cama!`, MUXE / Visualizando | Preview texts; `{name}` is the cosmetic. |
+| `messages.preview-config-*` | the answers of `/bwconfig previa` | Texts of the preview shortcuts; the generic answers are `messages.config.*` in Muxe-Core. |
 | `lobby.menu-item` | slot 3, emerald | Menu do Bed Wars item on the BedWars lobby. |
 | `levels.badges`, `levels.rainbow` | the level list | Badge of each level range; from `rainbow.from` (1000) the digits take the rainbow colours. |
 | `lobby.npcs.<id>` | the exports | `action` (a mode id, `duelos` or `nenhuma`), `location`, signed `skin`, `players` (modes counted in `{players}`) and `lines`; `{blink}` takes the next colour of `lobby.blink-colors` every 0.5 s. |
@@ -452,7 +483,9 @@ Commands and queries in `br.com.muxe.minigame.bedwars.stats`: `RecordMatchComman
 - [ ] A full match checked in game.
 - [ ] The hotbar editor and the placement of purchases checked in game.
 - [ ] Lobby NPCs, menus, matchmaking, map choice and tops checked in game.
+- [x] The preview shortcuts write the right keys, find both halves of a bed from either one, refuse bad values and apply live while running sessions keep their settings (`PreviewEditsTest`, `BedBlocksTest`, `BedWarsConfigCommandTest`).
 - [ ] Every animation and the preview checked in game.
+- [ ] `/bwconfig previa` checked in game on the lobby.
 - [ ] The kill messages in a real match and the wood types in the shop checked in game.
 
 ## Failures and recovery

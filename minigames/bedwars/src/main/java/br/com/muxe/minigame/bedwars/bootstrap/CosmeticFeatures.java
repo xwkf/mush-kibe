@@ -2,8 +2,10 @@ package br.com.muxe.minigame.bedwars.bootstrap;
 
 import br.com.muxe.core.bukkit.api.MuxeCore;
 import br.com.muxe.core.bukkit.command.framework.Commands;
+import br.com.muxe.core.bukkit.config.edit.ConfigReloads;
 import br.com.muxe.core.bukkit.cosmetic.animation.Area;
 import br.com.muxe.core.bukkit.cosmetic.stage.AnimationPlayer;
+import br.com.muxe.core.bukkit.effect.SoundCue;
 import br.com.muxe.core.bukkit.mission.menu.MissionMenus;
 import br.com.muxe.core.bukkit.nms.BlockMask;
 import br.com.muxe.core.bukkit.nms.PlayerSkins;
@@ -12,6 +14,7 @@ import br.com.muxe.core.bukkit.permission.command.Replies;
 import br.com.muxe.core.bukkit.permission.command.TargetLookup;
 import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
+import br.com.muxe.core.common.config.live.LiveValue;
 import br.com.muxe.minigame.bedwars.cosmetic.BedBreakCosmetics;
 import br.com.muxe.minigame.bedwars.cosmetic.SceneCosmetics;
 import br.com.muxe.minigame.bedwars.cosmetic.animation.BedAnimations;
@@ -34,6 +37,7 @@ import br.com.muxe.minigame.bedwars.cosmetic.preview.BedPreview;
 import br.com.muxe.minigame.bedwars.cosmetic.preview.PreviewSettings;
 import br.com.muxe.minigame.bedwars.cosmetic.preview.ScenePreview;
 import br.com.muxe.minigame.bedwars.cosmetic.preview.ScenePreviewSettings;
+import br.com.muxe.minigame.bedwars.cosmetic.preview.config.PreviewKind;
 import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticProfileListener;
 import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticProfiles;
 import br.com.muxe.minigame.bedwars.cosmetic.wood.WoodTypes;
@@ -47,6 +51,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
@@ -88,7 +93,8 @@ final class CosmeticFeatures {
         this.scenePreviews = List.copyOf(scenePreviews);
     }
 
-    static CosmeticFeatures start(JavaPlugin plugin, MuxeCore core, FileConfiguration config, MessageCatalog messages, Commands commands, boolean lobby, EndTitles titles) {
+    static CosmeticFeatures start(JavaPlugin plugin, MuxeCore core, FileConfiguration config, MessageCatalog messages, Commands commands, boolean lobby, EndTitles titles,
+                                  ConfigReloads reloads) {
         ConfigurationSection section = section(config, "cosmetics");
         CosmeticMenuSettings menuSettings = CosmeticMenuSettings.from(section(section, "menus"));
         AnimationPlayer animator = new AnimationPlayer(plugin);
@@ -125,33 +131,22 @@ final class CosmeticFeatures {
         PreviewGate withoutPreview = (player, cosmetic, back) -> {
         };
         if (lobby) {
-            BedPreview started = new BedPreview(plugin, core.buildMode(), BlockMask.start(plugin), PreviewSettings.from(section(config, "preview")), animations, messages);
-            if (started.start()) {
-                preview = started;
-                bedGate = started;
-            }
-            BedPreview bedPreview = preview;
-            Predicate<Player> busy = player -> bedPreview != null && bedPreview.previewing(player) || scenes.stream().anyMatch(scene -> scene.previewing(player));
-            ScenePreview victoryScene = new ScenePreview(plugin, core.buildMode(), ScenePreviewSettings.from(section(config, "victory-preview")), victoryAnimations,
-                titles::victory, MatchSounds.from(config.getConfigurationSection("sounds")).countdown(), busy, messages);
-            if (victoryScene.start()) {
-                scenes.add(victoryScene);
-                victoryGate = victoryScene;
-            }
-            ScenePreview killScene = new ScenePreview(plugin, core.buildMode(), ScenePreviewSettings.from(section(config, "final-kill-preview")), killAnimations,
-                player -> {
-                }, Optional.empty(), busy, messages);
-            if (killScene.start()) {
-                scenes.add(killScene);
-                killGate = killScene;
-            }
-            ScenePreview auraScene = new ScenePreview(plugin, core.buildMode(), ScenePreviewSettings.from(section(config, "aura-preview")), auraAnimations,
-                player -> {
-                }, Optional.empty(), busy, messages);
-            if (auraScene.start()) {
-                scenes.add(auraScene);
-                auraGate = auraScene;
-            }
+            LiveValue<PreviewSettings> bedSettings = new LiveValue<>(PreviewSettings.from(section(config, "preview")));
+            BedPreview started = new BedPreview(plugin, core.buildMode(), BlockMask.start(plugin), bedSettings, animations, messages);
+            started.start();
+            preview = started;
+            bedGate = started;
+            reloads.register("preview", PreviewKind.BED.section(), root -> {
+                bedSettings.reload(() -> PreviewSettings.from(section(root, PreviewKind.BED.section())));
+                requireOpen(started.refresh(), bedSettings.get().world());
+            });
+            Predicate<Player> busy = player -> started.previewing(player) || scenes.stream().anyMatch(scene -> scene.previewing(player));
+            victoryGate = scenePreview(plugin, core, config, reloads, PreviewKind.VICTORY, victoryAnimations, titles::victory,
+                MatchSounds.from(config.getConfigurationSection("sounds")).countdown(), busy, messages, scenes);
+            killGate = scenePreview(plugin, core, config, reloads, PreviewKind.FINAL_KILL, killAnimations, player -> {
+            }, Optional.empty(), busy, messages, scenes);
+            auraGate = scenePreview(plugin, core, config, reloads, PreviewKind.AURA, auraAnimations, player -> {
+            }, Optional.empty(), busy, messages, scenes);
         }
         List<CosmeticCategory> categories = new ArrayList<>();
         categories.add(CosmeticCategory.of(menuSettings.category(CosmeticMenuSettings.BED_DESTRUCTION), catalog, profiles, bedGate));
@@ -188,7 +183,28 @@ final class CosmeticFeatures {
             new WoodTypes(woodCatalog, woodProfiles::of), preview, scenes);
     }
 
-    private static CosmeticProfiles profiles(JavaPlugin plugin, MuxeCore core, CosmeticCatalog catalog) {
+    private static ScenePreview scenePreview(JavaPlugin plugin, MuxeCore core, FileConfiguration config, ConfigReloads reloads, PreviewKind kind, SceneAnimations animations,
+                                             Consumer<Player> onScene, Optional<SoundCue> countdownSound, Predicate<Player> busy, MessageCatalog messages,
+                                             List<ScenePreview> scenes) {
+        LiveValue<ScenePreviewSettings> settings = new LiveValue<>(ScenePreviewSettings.from(section(config, kind.section())));
+        ScenePreview scene = new ScenePreview(plugin, core.buildMode(), settings, animations, onScene, countdownSound, busy, messages);
+        scene.start();
+        scenes.add(scene);
+        reloads.register(kind.section(), kind.section(), root -> {
+            settings.reload(() -> ScenePreviewSettings.from(section(root, kind.section())));
+            requireOpen(scene.refresh(), settings.get().world());
+        });
+        return scene;
+    }
+
+    private static void requireOpen(boolean opened, String world) {
+        if (!opened) {
+            throw new IllegalStateException("there is no world folder named " + world);
+        }
+    }
+
+    private static CosmeticProfiles profiles(
+JavaPlugin plugin, MuxeCore core, CosmeticCatalog catalog) {
         CosmeticProfiles profiles = new CosmeticProfiles(core.queries(), core.mainThread(), catalog, id -> plugin.getServer().getPlayer(id) != null);
         CosmeticProfileListener listener = new CosmeticProfileListener(profiles, plugin.getLogger());
         plugin.getServer().getPluginManager().registerEvents(listener, plugin);

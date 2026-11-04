@@ -1,8 +1,13 @@
 package br.com.muxe.minigame.bedwars.bootstrap;
 
 import br.com.muxe.core.bukkit.api.MuxeCore;
+import br.com.muxe.core.bukkit.command.config.ConfigPathSuggestions;
+import br.com.muxe.core.bukkit.command.config.ConfigReplies;
 import br.com.muxe.core.bukkit.command.framework.Commands;
 import br.com.muxe.core.bukkit.config.PluginConfig;
+import br.com.muxe.core.bukkit.config.edit.ConfigEditor;
+import br.com.muxe.core.bukkit.config.edit.ConfigReloads;
+import br.com.muxe.core.bukkit.config.edit.PluginConfigStore;
 import br.com.muxe.core.bukkit.mission.config.MissionConfig;
 import br.com.muxe.core.bukkit.mission.menu.MissionMenus;
 import br.com.muxe.core.bukkit.prompt.AnvilPrompts;
@@ -13,6 +18,7 @@ import br.com.muxe.core.common.mission.domain.Mission;
 import br.com.muxe.core.common.server.ServerKind;
 import br.com.muxe.minigame.bedwars.arena.BedWarsSchema;
 import br.com.muxe.minigame.bedwars.command.BedWarsCommand;
+import br.com.muxe.minigame.bedwars.command.BedWarsConfigCommand;
 import br.com.muxe.minigame.bedwars.command.GlobalChatCommand;
 import br.com.muxe.minigame.bedwars.cosmetic.aura.AuraTask;
 import br.com.muxe.minigame.bedwars.hotbar.HotbarChoices;
@@ -114,7 +120,11 @@ public final class BedWarsBootstrap {
             (playerId, completed, at) -> missionXp.addXp(playerId, completed.stream().mapToLong(Mission::xp).sum(), at, STATS_ZONE));
         MissionMenus missionMenus = new MissionMenus(GAME, missions, core.queries(), core.mainThread(), core.clock(), MissionModule.ZONE, plugin.getLogger());
         EndTitles titles = EndTitles.from(plugin, config.getConfigurationSection("end-titles"));
-        cosmetics = CosmeticFeatures.start(plugin, core, config, messages, commands, lobby, titles);
+        ConfigReloads reloads = new ConfigReloads();
+        ConfigEditor configEditor = new ConfigEditor(new PluginConfigStore(plugin, core.async()), reloads);
+        ConfigPathSuggestions.register(commands, configEditor);
+        commands.register(new BedWarsConfigCommand(configEditor, new ConfigReplies(messages)));
+        cosmetics = CosmeticFeatures.start(plugin, core, config, messages, commands, lobby, titles, reloads);
         cosmetics.onMissions(missionMenus);
         ShopCatalog shopCatalog = ShopCatalog.from(Objects.requireNonNull(config.getConfigurationSection("shop"), "Missing configuration section shop"));
         QuickBuys quickBuys = new QuickBuys(core, plugin.getLogger(), QuickBuy.of(shopCatalog.quickBuy()), shopCatalog.items()::containsKey);

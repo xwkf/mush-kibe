@@ -165,6 +165,33 @@ O jogador escolhe uma animação que toca quando ele quebra uma cama inimiga. Os
 3. Ao bater na cama, ela some só para esse jogador e a animação toca só para ele.
 4. `preview.return-delay` depois do fim da animação (2 s), ou depois de `preview.timeout` sem quebrar a cama (2 min), o jogador volta para onde estava, com os itens do lobby, e o menu de cosméticos reabre na página em que ele estava. Sair do servidor durante a prévia não abre nada.
 
+### Montando as prévias no jogo
+
+A equipe posiciona as quatro prévias de dentro do lobby de BedWars com `/bwconfig previa <tipo> <ação> [valor]` (permissão `muxe.admin.config`), sem editar o `config.yml`. As pastas dos mundos já precisam estar na raiz do servidor.
+
+| `<tipo>` | Seção | Pasta do mundo |
+|---|---|---|
+| `cama` | `preview` | `previa_quebra_de_cama` |
+| `vitoria` | `victory-preview` | `previa_efeito_de_vitoria` |
+| `kill-final` | `final-kill-preview` | `previa_kill_final` |
+| `aura` | `aura-preview` | `previa_aura` |
+
+| Comando | Grava |
+|---|---|
+| `previa <tipo> spawn [--centro]` | `<seção>.world` com o mundo em que você está e `<seção>.spawn` (`x`, `y`, `z`, `yaw`, `pitch`) com onde você está: coordenadas em centésimos, ângulos em décimos; `--centro` põe `x` e `z` no meio do bloco. |
+| `previa cama cama` | `preview.bed.foot` e `preview.bed.head` a partir do bloco de cama para o qual você olha (até 6 blocos). Qualquer metade pode ser a que você olha: a outra é achada pelos dados do bloco. Se não for uma cama, nada muda e a resposta pede para olhar para uma. |
+| `previa kill-final distancia <n>` | `final-kill-preview.target.distance`, quantos blocos à frente o alvo fica (acima de 0, até 64; `4,5` é aceito). |
+| `previa <tipo> tempo <duração>` | `<seção>.timeout`, como `60s` ou `2m` (no mínimo `1s`). |
+
+Cada atalho salva o arquivo e aplica a mudança ao vivo: cada prévia lê as suas configurações por um `LiveValue` que a mudança troca, e carrega o novo mundo quando ele é diferente. Um jogador que já está numa prévia mantém as configurações e o mundo com que começou e o próximo recebe os novos; uma cama que um espectador quebrou é recolocada no mundo de onde foi tirada. Se a pasta do novo mundo não existir, a resposta avisa e a prévia mantém as configurações anteriores até a pasta existir e o `/bwconfig recarregar` ser usado. Nos servidores de partida, onde as prévias não existem, os atalhos só salvam e a resposta diz que a mudança vale depois de reiniciar. Os subcomandos genéricos alcançam as outras chaves das mesmas seções (`/bwconfig definir victory-preview.countdown-ticks 15`, `/bwconfig ver aura-preview`).
+
+```text
+/bwconfig previa kill-final spawn
+/bwconfig previa cama cama
+/bwconfig previa kill-final distancia 5
+/bwconfig previa aura tempo 90s
+```
+
 ### Efeitos de kill final
 
 `Kill Final` (slot 12 de `Cosméticos do Bed Wars`) lista os 43 efeitos de kill final dos exports em `Kill Final ({page}/{pages})`, duas páginas, na categoria `bedwars-kill-final`, com as mesmas regras das outras categorias. `Presenteado`, `Presentes`, `Passarinhos` e `Brain Freeze` têm animação. Todo efeito de cena (vitória e kill final) começa no chão abaixo de onde aconteceu (`Ground.surface`, até 32 blocos para baixo), então toca igual em qualquer mapa e em qualquer altura; um efeito de kill final também sabe a direção do golpe (de quem matou para a vítima) e a skin da vítima.
@@ -314,6 +341,8 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 | `/bedwars finalizar` | `muxe.bedwars.admin` | Encerra na hora a partida em andamento, para testes, como uma partida de verdade termina: o time que sobrou vence (o único jogador de uma partida forçada também), com o resultado, os tops, o resumo das missões, o XP e as estatísticas de sempre; com vários times de pé é empate. |
 | `/cosmeticos` (`/cosmeticosbw`) | nenhuma | Abre Cosméticos do Bed Wars. |
 | `/cosmeticos dar <jogador> <cosmetico>` | `muxe.cosmetics.admin` | Dá um cosmético de destruição de cama, para cosméticos de evento e premiações. |
+| `/bwconfig ver\|definir\|adicionar\|remover\|local\|recarregar ...` | `muxe.admin.config` | Vê e altera qualquer chave do `config.yml` deste plugin dentro do jogo, aplicando ao vivo onde um componente permite. Veja o [editor de configuração](../../development/core-api/README.pt-BR.md#editor-de-configuração). |
+| `/bwconfig previa <tipo> <ação> [valor]` | `muxe.admin.config` | Monta as prévias dos cosméticos pelo próprio mundo, ao vivo. Veja [Montando as prévias no jogo](#montando-as-prévias-no-jogo). |
 
 ## Permissões
 
@@ -322,6 +351,7 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 | `muxe.minigame.setup` | op | Permite o `/arena`. |
 | `muxe.bedwars.admin` | op | Permite o `/bedwars iniciar` e o `/bedwars finalizar`. |
 | `muxe.cosmetics.admin` | op | Permite o `/cosmeticos dar`. |
+| `muxe.admin.config` | op | Permite o `/bwconfig`, e também o `/lobbyconfig` e o `/coreconfig`. Declarada pelo Muxe-Core. |
 | `muxe.bedwars.map-select` | op | Escolher o mapa nos menus dos modos (VIPs). Dê aos grupos VIP. |
 | `muxe.cosmetic.all` | op | Possui todos os cosméticos do BedWars. |
 | `muxe.cosmetic.vip` | false | Possui os cosméticos `Incluso no VIP` (as madeiras de pinheiro e eucalipto). Dê ao grupo `vip`; os grupos acima herdam. |
@@ -383,6 +413,7 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 | `preview.timeout`, `preview.return-delay` | `120s`, `2s` | Tempo para quebrar a cama e espera depois da animação. |
 | `preview.back-item` | slot 8 (o 9º), `BED`, `&aVoltar ao Lobby` | O item que encerra a prévia. O slot conta a partir de 0. |
 | `preview.action-bar`, `preview.scoreboard` | `&eQuebre a cama!`, MUXE / Visualizando | Textos da prévia; `{name}` é o cosmético. |
+| `messages.preview-config-*` | as respostas do `/bwconfig previa` | Textos dos atalhos das prévias; as respostas genéricas são `messages.config.*` no Muxe-Core. |
 | `lobby.menu-item` | slot 3, esmeralda | Item Menu do Bed Wars no lobby de BedWars. |
 | `levels.badges`, `levels.rainbow` | a lista de níveis | Insígnia de cada faixa de nível; a partir de `rainbow.from` (1000) os dígitos ganham as cores do arco-íris. |
 | `lobby.npcs.<id>` | os exports | `action` (um id de modo, `duelos` ou `nenhuma`), `location`, `skin` assinada, `players` (modos contados em `{players}`) e `lines`; `{blink}` pega a próxima cor de `lobby.blink-colors` a cada 0,5 s. |
@@ -452,7 +483,9 @@ Comandos e consultas em `br.com.muxe.minigame.bedwars.stats`: `RecordMatchComman
 - [ ] Uma partida completa conferida no jogo.
 - [ ] O editor de hotbar e a colocação das compras conferidos no jogo.
 - [ ] NPCs, menus, matchmaking, escolha de mapa e tops do lobby conferidos no jogo.
+- [x] Os atalhos das prévias gravam as chaves certas, acham as duas metades de uma cama por qualquer uma, recusam valores ruins e aplicam ao vivo enquanto as sessões em andamento mantêm as suas configurações (`PreviewEditsTest`, `BedBlocksTest`, `BedWarsConfigCommandTest`).
 - [ ] Todas as animações e a prévia conferidas no jogo.
+- [ ] `/bwconfig previa` conferido no jogo, no lobby.
 - [ ] As mensagens de kill numa partida de verdade e os tipos de madeira na loja conferidos no jogo.
 
 ## Falhas e recuperação
