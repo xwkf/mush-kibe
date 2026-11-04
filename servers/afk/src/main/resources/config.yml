@@ -1,0 +1,19 @@
+spawn:
+  world: afk
+  x: 8.5
+  y: 63.0
+  z: 8.5
+  yaw: 0.0
+  pitch: 0.0
+
+return:
+  fallback-group: lobby
+  arrival-grace: 1s
+  retry-after: 5s
+
+messages:
+  title: "&c&lVOCÊ ESTÁ AFK"
+  subtitle: "&7Mova-se para voltar ao lobby."
+  arrived:
+    - "&c&lVOCÊ ESTÁ AFK!"
+    - "&7Mova-se para voltar ao lobby."

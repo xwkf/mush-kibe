@@ -1,0 +1,7 @@
+name: Muxe-AFK
+version: '${version}'
+main: br.com.muxe.afk.MuxeAfkPlugin
+author: Muxe
+description: Server where players who stood still in a lobby wait until they move.
+depend:
+  - Muxe-Core

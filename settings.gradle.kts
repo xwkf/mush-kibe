@@ -32,6 +32,7 @@ include(":core:proxy")
 
 include(":servers:auth")
 include(":servers:lobby")
+include(":servers:afk")
 
 include(":minigames:engine")
 include(":minigames:skywars")
