@@ -1,5 +1,6 @@
 package br.com.muxe.core.bukkit.cosmetic.stage;
 
+import br.com.muxe.core.bukkit.cosmetic.animation.SignedSkin;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import br.com.muxe.core.bukkit.item.ItemBuilder;
@@ -312,13 +313,23 @@ public final class PacketStage implements Stage, AutoCloseable {
 
     @Override
     public Actor player(Vec position, float yaw) {
-        GameProfile profile = new GameProfile(UUID.randomUUID(), FakePlayers.name(ThreadLocalRandom.current()));
         Set<UUID> watching = viewers.get().stream().map(Player::getUniqueId).collect(Collectors.toSet());
         List<UUID> online = Bukkit.getOnlinePlayers().stream()
             .filter(other -> !((CraftPlayer) other).getProfile().getProperties().get(TEXTURES).isEmpty())
             .map(Player::getUniqueId).toList();
-        FakePlayers.skinOwner(online, watching, ThreadLocalRandom.current()).map(Bukkit::getPlayer)
-            .ifPresent(owner -> profile.getProperties().put(TEXTURES, ((CraftPlayer) owner).getProfile().getProperties().get(TEXTURES).iterator().next()));
+        Optional<Property> skin = FakePlayers.skinOwner(online, watching, ThreadLocalRandom.current()).map(Bukkit::getPlayer)
+            .map(owner -> ((CraftPlayer) owner).getProfile().getProperties().get(TEXTURES).iterator().next());
+        return fakePlayer(position, yaw, skin);
+    }
+
+    @Override
+    public Actor player(Vec position, float yaw, SignedSkin skin) {
+        return fakePlayer(position, yaw, Optional.of(new Property(TEXTURES, skin.value(), skin.signature())));
+    }
+
+    private Actor fakePlayer(Vec position, float yaw, Optional<Property> skin) {
+        GameProfile profile = new GameProfile(UUID.randomUUID(), FakePlayers.name(ThreadLocalRandom.current()));
+        skin.ifPresent(texture -> profile.getProperties().put(TEXTURES, texture));
         hideName(profile.getName());
         EntityPlayer body = new EntityPlayer(MinecraftServer.getServer(), world, profile, new PlayerInteractManager(world));
         body.setLocation(position.x(), position.y(), position.z(), yaw, 0);

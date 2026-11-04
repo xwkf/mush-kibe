@@ -50,6 +50,8 @@ public interface Stage {
 
     Actor player(Vec position, float yaw);
 
+    Actor player(Vec position, float yaw, SignedSkin skin);
+
     void lightning(Vec position);
 
     interface Actor {
