@@ -328,7 +328,7 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 - Todo fim de partida salva, para cada jogador que jogou, partidas, camas quebradas e perdidas, kills, mortes, assistências, kills finais, mortes finais, assistências finais, vitórias, derrotas, winstreak e XP, por modo e em `geral`, no dia, na semana (segunda a domingo), no mês e no total, no fuso de São Paulo.
 - Uma assistência vai para cada outro inimigo que bateu na vítima nos últimos 15 segundos. O XP de kill, kill final e cama vem de `xp-rewards`; no fim cada jogador também ganha o XP por minuto, por companheiro e por vitória.
 - O winstreak cresce a cada vitória e volta a 0 numa derrota; um empate o mantém. O maior winstreak nunca diminui.
-- O nível vem do XP total: 5000 por nível até o 9, 10000 do 10 ao 19 e mais 5000 a cada 10 níveis. A insígnia segue a lista de níveis (`&7[0✫]`, `&a[10✶]`... `&4[100❤]`... arco-íris a partir do 1000).
+- O nível vem do XP total e começa em 1 (0 XP é nível 1): sair de cada nível custa 5000 até o nível 9, 10000 do 10 ao 19 e mais 5000 a cada 10 níveis, então o nível 10 pede 45000 XP. A insígnia segue a lista de níveis (`&7[1✫]`, `&a[10✶]`... `&4[100❤]`... arco-íris a partir do 1000).
 
 ## Comandos
 

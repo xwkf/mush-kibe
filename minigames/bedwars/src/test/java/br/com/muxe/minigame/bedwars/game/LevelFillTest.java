@@ -12,9 +12,9 @@ class LevelFillTest {
         Levels.Progress halfway = Levels.progress(2_500);
         Levels.Progress nextLevel = Levels.progress(5_000);
 
-        assertThat(halfway.level()).isZero();
+        assertThat(halfway.level()).isEqualTo(1);
         assertThat(halfway.fill()).isCloseTo(0.5f, within(1e-6f));
-        assertThat(nextLevel.level()).isEqualTo(1);
+        assertThat(nextLevel.level()).isEqualTo(2);
         assertThat(nextLevel.fill()).isZero();
     }
 

@@ -77,11 +77,17 @@ class GameRulesTest {
         assertThat(Levels.costOf(10)).isEqualTo(10_000);
         assertThat(Levels.costOf(19)).isEqualTo(10_000);
         assertThat(Levels.costOf(20)).isEqualTo(15_000);
-        assertThat(Levels.progress(0)).isEqualTo(new Levels.Progress(0, 0, 5_000));
         assertThat(Levels.progress(0).compactNeeded()).isEqualTo("5k");
-        assertThat(Levels.progress(45_000 + 250)).isEqualTo(new Levels.Progress(9, 250, 10_000));
-        assertThat(Levels.progress(55_000)).isEqualTo(new Levels.Progress(10, 0, 10_000));
+        assertThat(Levels.progress(45_000 + 250)).isEqualTo(new Levels.Progress(10, 250, 10_000));
+        assertThat(Levels.progress(55_000)).isEqualTo(new Levels.Progress(11, 0, 10_000));
         assertThatThrownBy(() -> Levels.costOf(0)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void aNewPlayerStartsAtLevelOne() {
+        assertThat(Levels.progress(0)).isEqualTo(new Levels.Progress(1, 0, 5_000));
+        assertThat(Levels.progress(4_999).level()).isEqualTo(1);
+        assertThat(Levels.progress(5_000)).isEqualTo(new Levels.Progress(2, 0, 5_000));
     }
 
     @Test

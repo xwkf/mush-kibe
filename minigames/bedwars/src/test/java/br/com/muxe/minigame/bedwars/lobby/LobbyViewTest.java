@@ -118,7 +118,7 @@ class LobbyViewTest {
         assertThat(fresh.title()).isEqualTo("&b&lBED WARS");
         assertThat(fresh.lines()).containsExactly(
             "",
-            "Seu nível: &7[0&l✫&7]",
+            "Seu nível: &7[1&l✫&7]",
             "&f[&a&7▮▮▮▮▮▮▮▮▮▮&f] &7(0/5k)",
             "",
             "&e1v1:",
@@ -147,7 +147,7 @@ class LobbyViewTest {
 
         assertThat(LobbySidebar.mostPlayed(settings, stats, modes)).containsExactly("duplas", "trios");
         assertThat(LobbySidebar.mostPlayed(settings, new PlayerStats(Map.of("trios", counters(1, 0, 0))), modes)).containsExactly("trios", "1v1");
-        assertThat(LobbySidebar.content(settings, stats, BADGES, modes, mode -> mode, 1).lines()).contains("&eduplas:", " Vitórias: &a3", "Seu nível: &7[1&l✫&7]");
+        assertThat(LobbySidebar.content(settings, stats, BADGES, modes, mode -> mode, 1).lines()).contains("&eduplas:", " Vitórias: &a3", "Seu nível: &7[2&l✫&7]");
     }
 
     private static StatCounters counters(long games, long wins, long xp) {
@@ -181,7 +181,7 @@ class LobbyViewTest {
         List<String> lines = TopView.lines(BOARDS.getLast(), TEXTS, new TopState(), List.of(first), id -> "&b", BADGES, mode -> mode);
 
         assertThat(lines.get(1)).isEqualTo("&e&lNÍVEL");
-        assertThat(lines.get(2)).isEqualTo("&e1.&r &f&btadeu&r &7- &e&a[10&l✶&a]&r");
+        assertThat(lines.get(2)).isEqualTo("&e1.&r &f&btadeu&r &7- &e&a[11&l✶&a]&r");
         assertThat(lines.get(13)).isEqualTo("&a&lTotal&r &7Mensal&r &7Semanal&r");
     }
 
@@ -243,7 +243,7 @@ class LobbyViewTest {
 
         List<String> lines = LobbyLines.stats(settings.lines(), general, BADGES, settings.barSegments());
 
-        assertThat(lines).startsWith("Seu nível: &7[1&l✫&7]", "&f[&a&7▮▮▮▮▮▮▮▮▮▮▮▮&f] &7(0/5k)", "Vitórias: &a1.200", "Kills: &a30", "Kills finais: &a5.240", "Camas quebradas: &a7", "Winstreak: &a0");
+        assertThat(lines).startsWith("Seu nível: &7[2&l✫&7]", "&f[&a&7▮▮▮▮▮▮▮▮▮▮▮▮&f] &7(0/5k)", "Vitórias: &a1.200", "Kills: &a30", "Kills finais: &a5.240", "Camas quebradas: &a7", "Winstreak: &a0");
     }
 
     @Test

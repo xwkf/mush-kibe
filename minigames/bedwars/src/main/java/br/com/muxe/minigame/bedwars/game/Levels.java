@@ -4,6 +4,7 @@ public final class Levels {
 
     public static final long BASE = 5_000;
     public static final int LEVELS_PER_STEP = 10;
+    public static final int FIRST_LEVEL = 1;
 
     private Levels() {
     }
@@ -19,13 +20,13 @@ public final class Levels {
         if (totalXp < 0) {
             throw new IllegalArgumentException("Negative XP " + totalXp);
         }
-        int level = 0;
+        int level = FIRST_LEVEL;
         long left = totalXp;
-        while (left >= costOf(level + 1)) {
-            left -= costOf(level + 1);
+        while (left >= costOf(level)) {
+            left -= costOf(level);
             level++;
         }
-        return new Progress(level, left, costOf(level + 1));
+        return new Progress(level, left, costOf(level));
     }
 
     public record Progress(int level, long xp, long needed) {

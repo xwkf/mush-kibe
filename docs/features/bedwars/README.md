@@ -328,7 +328,7 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 - Every match end saves, for each player who played, the games, beds broken and lost, kills, deaths, assists, final kills, final deaths, final assists, wins, losses, winstreak and XP, per mode and in `geral`, for the day, week (Monday to Sunday), month and total, in the São Paulo time zone.
 - An assist goes to every other enemy who hit the victim in the last 15 seconds. Kill, final kill and bed XP come from `xp-rewards`; at the end each player also gets the per minute, per teammate and win XP.
 - The winstreak grows with each win and goes back to 0 on a loss; a draw keeps it. The best winstreak never goes down.
-- The level comes from the total XP: 5000 per level up to 9, 10000 from 10 to 19, and 5000 more every 10 levels. The badge follows the level list (`&7[0✫]`, `&a[10✶]`... `&4[100❤]`... rainbow from 1000).
+- The level comes from the total XP and starts at 1 (0 XP is level 1): leaving each level costs 5000 up to level 9, 10000 from 10 to 19, and 5000 more every 10 levels, so level 10 needs 45000 XP. The badge follows the level list (`&7[1✫]`, `&a[10✶]`... `&4[100❤]`... rainbow from 1000).
 
 ## Commands
 
