@@ -1,10 +1,11 @@
 package br.com.muxe.minigame.bedwars.cosmetic.animation;
 
-import br.com.muxe.core.bukkit.cosmetic.animation.Stage;
+import br.com.muxe.core.bukkit.cosmetic.animation.SignedSkin;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.Actor;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.Pose;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.Slot;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.StandStyle;
+import br.com.muxe.core.bukkit.cosmetic.animation.Stage;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import java.util.List;
 import org.bukkit.Material;
@@ -44,9 +45,9 @@ final class Companion {
         this.yaw = yaw;
     }
 
-    static Companion spawn(Stage stage, Vec position, float yaw) {
+    static Companion spawn(Stage stage, Vec position, float yaw, SignedSkin skin) {
         Actor seat = stage.armorStand(position, yaw, StandStyle.HIDDEN);
-        Actor witch = stage.player(position, yaw);
+        Actor witch = stage.player(position, yaw, skin);
         witch.equip(Slot.HAND, Material.STICK, 0);
         witch.ride(seat);
         Actor hat = stage.armorStand(position.add(0, HAT_UP, 0), yaw + SIDEWAYS, UNSEEN);

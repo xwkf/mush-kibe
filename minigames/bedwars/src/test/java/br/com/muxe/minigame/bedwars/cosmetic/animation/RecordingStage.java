@@ -1,5 +1,6 @@
 package br.com.muxe.minigame.bedwars.cosmetic.animation;
 
+import br.com.muxe.core.bukkit.cosmetic.animation.SignedSkin;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ final class RecordingStage implements Stage {
     final List<FakeActor> actors = new ArrayList<>();
     final Map<String, Integer> particles = new HashMap<>();
     final List<String> sounds = new ArrayList<>();
+    final List<SignedSkin> skins = new ArrayList<>();
     final List<Float> pitches = new ArrayList<>();
     final List<String> blocks = new ArrayList<>();
     final List<Long> times = new ArrayList<>();
@@ -144,6 +146,12 @@ final class RecordingStage implements Stage {
 
     @Override
     public Actor player(Vec position, float yaw) {
+        return add("Player", position);
+    }
+
+    @Override
+    public Actor player(Vec position, float yaw, SignedSkin skin) {
+        skins.add(skin);
         return add("Player", position);
     }
 

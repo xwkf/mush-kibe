@@ -309,4 +309,17 @@ class WitchVictoryTest {
     private static Scene scene(UUID... riders) {
         return new Scene(new Vec(0.5, FLOOR, 0.5), new Vec(0, 0, 1), Optional.empty(), List.of(riders));
     }
+
+    @Test
+    void theFourCompanionsWearTheFourSignedWitchSkins() {
+        RecordingStage stage = stage();
+        Timeline timeline = script(stage, scene(UUID.randomUUID()));
+        timeline.run(0);
+
+        assertThat(stage.skins).containsExactlyElementsOf(WitchSkins.ALL);
+        assertThat(WitchSkins.ALL).hasSize(4).allSatisfy(skin -> {
+            assertThat(skin.value()).isNotBlank();
+            assertThat(skin.signature()).isNotBlank();
+        });
+    }
 }

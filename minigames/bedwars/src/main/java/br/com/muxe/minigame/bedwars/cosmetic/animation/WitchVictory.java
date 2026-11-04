@@ -73,8 +73,8 @@ public final class WitchVictory implements SceneAnimation {
             Vec seat = flight.position();
             mount = stage.mount(seat, flight.yaw(), rider.seated());
             broom = Broom.build(stage, seat, flight.yaw());
-            for (Companion.Place place : Companion.PLACES) {
-                companions.add(Companion.spawn(stage, Companion.place(seat, flight.yaw(), place), flight.yaw()));
+            for (int index = 0; index < Companion.PLACES.size(); index++) {
+                companions.add(Companion.spawn(stage, Companion.place(seat, flight.yaw(), Companion.PLACES.get(index)), flight.yaw(), WitchSkins.of(index)));
             }
         }
 
