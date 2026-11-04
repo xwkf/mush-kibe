@@ -18,6 +18,7 @@ final class RecordingStage implements Stage {
     final List<FakeActor> actors = new ArrayList<>();
     final Map<String, Integer> particles = new HashMap<>();
     final List<String> sounds = new ArrayList<>();
+    final List<Float> pitches = new ArrayList<>();
     final List<String> blocks = new ArrayList<>();
     final List<Long> times = new ArrayList<>();
     final List<FakeMount> mounts = new ArrayList<>();
@@ -85,6 +86,7 @@ final class RecordingStage implements Stage {
     @Override
     public void sound(String name, Vec position, float volume, float pitch) {
         sounds.add(name);
+        pitches.add(pitch);
     }
 
     @Override

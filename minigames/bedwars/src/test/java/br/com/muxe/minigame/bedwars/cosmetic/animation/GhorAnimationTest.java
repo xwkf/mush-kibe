@@ -9,6 +9,7 @@ import br.com.muxe.core.bukkit.cosmetic.animation.Stage.StandStyle;
 import br.com.muxe.core.bukkit.cosmetic.animation.Timeline;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -47,11 +48,38 @@ class GhorAnimationTest {
             "51 mob.zombie.wood", "55 mob.zombie.wood", "59 mob.zombie.wood", "64 mob.zombie.wood",
             "64 mob.enderdragon.growl",
             "78 mob.zombie.woodbreak", "78 random.eat",
-            "96 random.burp",
+            "92 random.burp",
             "98 mob.slime.attack",
             "108 mob.zombie.unfect",
             "120 mob.endermen.portal",
             "126 random.fizz");
+    }
+
+    @Test
+    void everySoundReachesTheClientWithTheRecordedPitchByte() {
+        runUntil(Integer.MAX_VALUE);
+
+        assertThat(stage.pitches).extracting(pitch -> (int) (pitch * 63)).containsExactly(
+            31, 100, 31, 31, 75, 50, 100, 31, 53, 44, 53, 37, 75, 50, 37, 37, 94, 44, 37, 31);
+    }
+
+    @Test
+    void theEyeOpensCalmGlaresTurnsHungryAndBlinksBeforeLeaving() {
+        new GhorAnimation().script(BED, BREAKER, stage, timeline, new Random(42));
+        List<String> faces = new ArrayList<>();
+        for (int tick = 0; tick < GhorAnimation.LEAVE; tick++) {
+            timeline.run(tick);
+            if (tick >= GhorAnimation.APPEAR) {
+                List<RecordingStage.FakeActor> eye = stage.actors.stream().filter(actor -> GhorEye.SKIN.contains(skull(actor)) || isFace(skull(actor))).toList();
+                faces.add(tick + " " + face(eye));
+                assertThat(eye.subList(GhorEye.FRONT, eye.size())).extracting(GhorAnimationTest::skull).containsExactlyElementsOf(GhorEye.SKIN.subList(GhorEye.FRONT, GhorEye.SKIN.size()));
+            }
+        }
+
+        assertThat(faces).containsSubsequence("5 CALM", "20 CALM", "21 GLARE", "34 GLARE", "35 HUNGRY", "91 HUNGRY", "92 GLARE", "97 GLARE",
+            "98 CALM", "100 CALM", "101 GLARE", "107 GLARE", "108 CALM", "119 CALM");
+        assertThat(faces.stream().map(entry -> entry.substring(entry.indexOf(' ') + 1)).distinct()).containsExactly("CALM", "GLARE", "HUNGRY");
+        assertThat(GhorAnimation.EXPRESSIONS).extracting(GhorAnimation.Expression::tick).containsExactly(21, 35, 92, 98, 101, 108);
     }
 
     @Test
@@ -126,11 +154,22 @@ class GhorAnimationTest {
     @Test
     void theEyeWatchesTheBedThenTheBreakerThenTheBedUntilItEatsIt() {
         assertThat(GhorHunt.watchesBed(GhorAnimation.EMERGE)).isTrue();
-        assertThat(GhorHunt.watchesBed(GhorAnimation.STARE)).isFalse();
+        assertThat(GhorHunt.watchesBed(GhorAnimation.STARE)).isTrue();
+        assertThat(GhorHunt.watchesBed(GhorAnimation.STARE + 1)).isFalse();
         assertThat(GhorHunt.watchesBed(GhorAnimation.GROWL)).isFalse();
         assertThat(GhorHunt.watchesBed(GhorAnimation.GROWL + 1)).isTrue();
         assertThat(GhorHunt.watchesBed(GhorAnimation.EAT)).isTrue();
         assertThat(GhorHunt.watchesBed(GhorAnimation.EAT + 1)).isFalse();
+    }
+
+    @Test
+    void theEyeHoldsItsHeightWhileItDragsTheBedIn() {
+        double held = GhorHunt.drift(BED, GhorAnimation.PULL).y();
+
+        for (int tick = GhorAnimation.PULL; tick <= GhorAnimation.EAT; tick++) {
+            assertThat(GhorHunt.drift(BED, tick).y()).as("tick " + tick).isCloseTo(held, offset(1.0E-9));
+        }
+        assertThat(GhorHunt.drift(BED, GhorAnimation.STARE).y()).isNotCloseTo(held, offset(0.1));
     }
 
     @Test
@@ -192,6 +231,15 @@ class GhorAnimationTest {
                 schedule.add(tick + " " + sound);
             }
         }
+    }
+
+    private static boolean isFace(String texture) {
+        return Arrays.stream(GhorEye.Face.values()).anyMatch(face -> face.skin().contains(texture));
+    }
+
+    private static String face(List<RecordingStage.FakeActor> eye) {
+        List<String> front = eye.subList(0, GhorEye.FRONT).stream().map(GhorAnimationTest::skull).toList();
+        return Arrays.stream(GhorEye.Face.values()).filter(face -> face.skin().equals(front)).map(Enum::name).findFirst().orElse("MIXED");
     }
 
     private static String skull(RecordingStage.FakeActor actor) {

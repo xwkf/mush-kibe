@@ -106,7 +106,8 @@ final class GhorHunt {
         double lunge = tick > GhorAnimation.EAT && tick < GhorAnimation.CHEW
             ? Math.sin(Math.PI * (tick - GhorAnimation.EAT) / (GhorAnimation.CHEW - GhorAnimation.EAT))
             : 0;
-        return bed.forward().multiply(recoil - LUNGE * lunge).add(0, bob(tick) - LUNGE_DROP * lunge, 0);
+        double hover = bob(tick > GhorAnimation.PULL && tick <= GhorAnimation.EAT ? GhorAnimation.PULL : tick);
+        return bed.forward().multiply(recoil - LUNGE * lunge).add(0, hover - LUNGE_DROP * lunge, 0);
     }
 
     static double retreat(int tick) {
@@ -128,7 +129,7 @@ final class GhorHunt {
     }
 
     static boolean watchesBed(int tick) {
-        return tick < GhorAnimation.STARE || tick > GhorAnimation.GROWL && tick <= GhorAnimation.EAT;
+        return tick <= GhorAnimation.STARE || tick > GhorAnimation.GROWL && tick <= GhorAnimation.EAT;
     }
 
     static Vec pumpkinAt(BedFrame bed, Vec offset) {
@@ -168,6 +169,10 @@ final class GhorHunt {
             Vec tip = root.add(grip(bed, tentacle.up(), tentacle.side()).add(offset).subtract(root).multiply(reach(tick, GhorAnimation.LAUNCHES[index])));
             tentacle.place(GhorTentacle.points(root, tip, tentacle.up(), tentacle.side(), tick));
         }
+    }
+
+    void show(GhorEye.Face face) {
+        eye.show(face);
     }
 
     void bleed(int tick, double chance, double[] color) {

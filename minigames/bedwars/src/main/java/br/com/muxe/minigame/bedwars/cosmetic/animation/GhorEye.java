@@ -39,6 +39,7 @@ final class GhorEye {
         "829382c8e02e2e918de760ffb6ff6d84fe45ce57c8d22a70d22e7553bb71dd99",
         "4792e523858285b06891c2fa30f571b6e489216c39b0bffff1bc28ec3357a0a"
     );
+    static final int FRONT = 9;
     static final StandStyle PIECE = new StandStyle(true, false, false, false, false);
     static final StandStyle SMALL_PIECE = new StandStyle(true, true, false, false, false);
     static final List<Cell> CELLS = cells();
@@ -49,6 +50,7 @@ final class GhorEye {
     static final double CROWN = 1.9;
 
     private final List<Actor> pieces;
+    private Face face = Face.CALM;
 
     private GhorEye(List<Actor> pieces) {
         this.pieces = pieces;
@@ -95,6 +97,20 @@ final class GhorEye {
         }
     }
 
+    void show(Face next) {
+        if (next == face) {
+            return;
+        }
+        face = next;
+        for (int index = 0; index < FRONT; index++) {
+            pieces.get(index).equipSkull(Slot.HELMET, next.skin().get(index));
+        }
+    }
+
+    Face face() {
+        return face;
+    }
+
     void remove() {
         pieces.forEach(Actor::remove);
     }
@@ -114,5 +130,39 @@ final class GhorEye {
     }
 
     record Cell(int ahead, int up, int side) {
+    }
+
+    enum Face {
+        CALM(SKIN.subList(0, FRONT)),
+        GLARE(List.of(
+            "5c636302f308a2d5d73fda52836acedf0da0c6fe5237a01480b723ab18745585",
+            "b0fbfea17e9fa4d10451e8a6c7bff608cdac42600c991247754bc4d5596411a4",
+            "fd868fdf5dd347efe78a3aa9ebe98011ebef23342956470799bd4ab34f012d97",
+            "9055470f92b0a0d944a4a0e7e09a853f9d8d788fd21ed306838d5fd172fe1498",
+            "f9b2fe68e86ef5d7ba30e500532839dffef3e7a76d9ca9b38475fce5d8c37658",
+            "718c9700372a106987f40cb0031965ecf92471445d4a7fb4f3fb9a629c88240d",
+            "f0ef76c44bd7eb0036ac00371c1e3222fdbc3def455de7f34b7fe43d974e24cc",
+            "25fa1a664402b96df8e1512d2c0d73412af40eb7abf5e6e9378a535020d59238",
+            "ecdcb2a8e9e29c24e8fdcd2098750770483f9d4af8aa27ba02b133e1936bb4e1")),
+        HUNGRY(List.of(
+            "8a401f20f0f3ba13637e266bb680786d7e2e9147a996b2708b2d2932379ff73f",
+            "f31933bbcb13248e5e62f206eee4aa1d6f97c12e3ccb20dcaeaa9ef2fd0769de",
+            "bda4d4081be3283d8705ffdc60cde9cb6f5af9b46d1bdc1b3546972fc84e16ef",
+            "25c67f5c839c07e77b87ede9312f55a24ccc630c41d5495841a7f1ad2b3810ae",
+            "fd390330588c1c849c04fb3965b5e2ad6e8733c51fef9f90cc42010af756f76e",
+            "98219a908a423b3a091276b88fd519dddeea9e2fe9e0714b6d3e0d95f6668e5f",
+            "b1bf6bc93ff653e71e66c6d221f79206fb1877a088a81eddc6aa68e7100046f9",
+            "ad1e0b4432080652b5d62474853725c2a0053e943e76a73181a74fe9c1bb3188",
+            "e3f883e90dee03f32c07741cfb30f680bdc70c16feea192fbe517c4b21e01803"));
+
+        private final List<String> skin;
+
+        Face(List<String> skin) {
+            this.skin = List.copyOf(skin);
+        }
+
+        List<String> skin() {
+            return skin;
+        }
     }
 }
