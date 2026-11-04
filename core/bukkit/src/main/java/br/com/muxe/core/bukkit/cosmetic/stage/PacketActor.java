@@ -7,6 +7,7 @@ import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import br.com.muxe.core.bukkit.item.ItemBuilder;
 import net.minecraft.server.v1_8_R3.Entity;
 import net.minecraft.server.v1_8_R3.EntityArmorStand;
+import net.minecraft.server.v1_8_R3.EntityGuardian;
 import net.minecraft.server.v1_8_R3.EntityLiving;
 import net.minecraft.server.v1_8_R3.PacketPlayOutAttachEntity;
 import net.minecraft.server.v1_8_R3.PacketPlayOutEntityDestroy;
@@ -22,6 +23,8 @@ import org.bukkit.craftbukkit.v1_8_R3.inventory.CraftItemStack;
 import org.bukkit.inventory.ItemStack;
 
 final class PacketActor implements Actor {
+
+    private static final int GUARDIAN_TARGET = 17;
 
     private final PacketStage stage;
     private final Entity entity;
@@ -101,6 +104,14 @@ final class PacketActor implements Actor {
     public void leash(Actor holder) {
         if (!removed && holder instanceof PacketActor other) {
             stage.send(new PacketPlayOutAttachEntity(1, entity, other.entity));
+        }
+    }
+
+    @Override
+    public void target(Actor target) {
+        if (!removed && entity instanceof EntityGuardian && target instanceof PacketActor other) {
+            entity.getDataWatcher().watch(GUARDIAN_TARGET, other.entity.getId());
+            stage.send(new PacketPlayOutEntityMetadata(entity.getId(), entity.getDataWatcher(), true));
         }
     }
 

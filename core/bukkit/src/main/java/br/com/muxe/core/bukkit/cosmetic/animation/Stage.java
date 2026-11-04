@@ -70,6 +70,8 @@ public interface Stage {
 
         void leash(Actor holder);
 
+        void target(Actor target);
+
         void status(int opcode);
 
         void remove();
