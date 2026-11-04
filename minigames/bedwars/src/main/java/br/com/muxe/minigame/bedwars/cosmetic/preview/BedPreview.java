@@ -299,11 +299,11 @@ public final class BedPreview implements PreviewGate, Listener {
         Stage active = session.stage;
         session.cancel();
         boolean lastBreaker = active.breakers().left(viewer.getUniqueId());
+        viewer.teleport(session.from);
         for (Vec half : List.of(active.settings().bed().foot(), active.settings().bed().head())) {
             Block block = Stage.blockAt(active.world(), half);
             blocks.ifPresentOrElse(mask -> mask.reveal(viewer, block.getLocation()), () -> sendBlock(viewer, block));
         }
-        viewer.teleport(session.from);
         if (lastBreaker) {
             putBed(active);
         }
@@ -325,7 +325,9 @@ public final class BedPreview implements PreviewGate, Listener {
 
     @SuppressWarnings("deprecation")
     private static void sendBlock(Player viewer, Block block) {
-        viewer.sendBlockChange(block.getLocation(), block.getType(), block.getData());
+        if (viewer.getWorld().equals(block.getWorld())) {
+            viewer.sendBlockChange(block.getLocation(), block.getType(), block.getData());
+        }
     }
 
     @SuppressWarnings("deprecation")

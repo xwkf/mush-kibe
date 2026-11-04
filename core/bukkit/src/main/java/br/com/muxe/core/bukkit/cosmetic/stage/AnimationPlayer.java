@@ -38,19 +38,30 @@ public final class AnimationPlayer {
         PacketStage stage = new PacketStage(world, viewers, MountGuard.of(plugin));
         Timeline timeline = new Timeline();
         script.accept(stage, timeline);
-        Playback playback = new Playback(stage, onFinish);
+        Playback playback = new Playback(stage, new PlaybackLifecycle(timeline.length()));
         playback.task = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
             try {
-                stage.tick();
-                timeline.run(playback.tick);
+                int tick = playback.lifecycle.tick();
+                switch (playback.lifecycle.next(stage.watched())) {
+                    case PLAY -> {
+                        stage.tick();
+                        timeline.run(tick);
+                    }
+                    case FINISH -> {
+                        stage.tick();
+                        onFinish.run();
+                    }
+                    case HOLD -> stage.tick();
+                    case CLOSE, DONE -> playback.close();
+                }
             } catch (RuntimeException exception) {
+                if (playback.lifecycle.stopped() || playback.lifecycle.finished()) {
+                    playback.close();
+                    return;
+                }
                 plugin.getLogger().log(Level.WARNING, "Animation " + id + " failed", exception);
-                playback.finish();
-                return;
-            }
-            playback.tick++;
-            if (playback.tick > timeline.length()) {
-                playback.finish();
+                playback.lifecycle.stop();
+                onFinish.run();
             }
         }, 0L, 1L);
         return playback;
@@ -59,35 +70,27 @@ public final class AnimationPlayer {
     public static final class Playback {
 
         private final PacketStage stage;
-        private final Runnable onFinish;
+        private final PlaybackLifecycle lifecycle;
         private BukkitTask task;
-        private int tick;
-        private boolean finished;
 
-        private Playback(PacketStage stage, Runnable onFinish) {
+        private Playback(PacketStage stage, PlaybackLifecycle lifecycle) {
             this.stage = stage;
-            this.onFinish = onFinish;
+            this.lifecycle = lifecycle;
         }
 
         public boolean finished() {
-            return finished;
+            return lifecycle.finished() || lifecycle.stopped() || lifecycle.closed();
         }
 
         public void cancel() {
-            if (!finished) {
-                finished = true;
-                task.cancel();
-                stage.close();
-            }
+            lifecycle.stop();
+            stage.dismount();
         }
 
-        private void finish() {
-            if (!finished) {
-                finished = true;
-                task.cancel();
-                stage.close();
-                onFinish.run();
-            }
+        private void close() {
+            lifecycle.close();
+            task.cancel();
+            stage.close();
         }
     }
 }

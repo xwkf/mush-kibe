@@ -97,7 +97,7 @@ public final class PacketStage implements Stage, AutoCloseable {
     private final List<Player> timed = new ArrayList<>();
     private final MountGuard guard;
     private final List<Seats> mounts = new ArrayList<>();
-    private final Map<UUID, Integer> tools = new LinkedHashMap<>();
+    private final Map<UUID, Tool> tools = new LinkedHashMap<>();
     private final Map<EntityPlayer, Integer> listed = new LinkedHashMap<>();
     private final Set<ChunkCoordIntPair> bulkChunks = new LinkedHashSet<>();
     private ScoreboardTeam hiddenNames;
@@ -273,10 +273,11 @@ public final class PacketStage implements Stage, AutoCloseable {
         if (holder == null || !holder.isOnline()) {
             return;
         }
-        holder.getInventory().setItem(slot, ItemBuilder.of(material).name(name).build());
+        ItemStack item = ItemBuilder.of(material).name(name).build();
+        holder.getInventory().setItem(slot, item);
         holder.getInventory().setHeldItemSlot(slot);
         guard.tool(player, slot, onClick);
-        tools.put(player, slot);
+        tools.put(player, new Tool(slot, item));
     }
 
     @Override
@@ -363,6 +364,15 @@ public final class PacketStage implements Stage, AutoCloseable {
         return closed;
     }
 
+    public boolean watched() {
+        return viewers.get().stream().anyMatch(viewer -> viewer.isOnline() && viewer.getWorld().equals(world.getWorld()));
+    }
+
+    public void dismount() {
+        mounts.forEach(Seats::remove);
+        mounts.clear();
+    }
+
     @Override
     public void close() {
         if (closed) {
@@ -373,11 +383,11 @@ public final class PacketStage implements Stage, AutoCloseable {
             actor.remove();
         }
         for (BlockPosition position : changed.keySet()) {
-            send(new PacketPlayOutBlockChange(world, position));
+            sendInWorld(new PacketPlayOutBlockChange(world, position));
         }
         for (ChunkCoordIntPair chunk : bulkChunks) {
             if (world.getWorld().isChunkLoaded(chunk.x, chunk.z)) {
-                send(new PacketPlayOutMapChunk(world.getChunkAt(chunk.x, chunk.z), true, FULL_CHUNK));
+                sendInWorld(new PacketPlayOutMapChunk(world.getChunkAt(chunk.x, chunk.z), true, FULL_CHUNK));
             }
         }
         bulkChunks.clear();
@@ -387,13 +397,12 @@ public final class PacketStage implements Stage, AutoCloseable {
             send(new PacketPlayOutScoreboardTeam(hiddenNames, TEAM_REMOVE));
             hiddenNames = null;
         }
-        mounts.forEach(Seats::remove);
-        mounts.clear();
-        tools.forEach((player, slot) -> {
+        dismount();
+        tools.forEach((player, tool) -> {
             guard.dropTool(player);
             Player holder = Bukkit.getPlayer(player);
-            if (holder != null && holder.isOnline()) {
-                holder.getInventory().setItem(slot, null);
+            if (holder != null && holder.isOnline() && tool.item().equals(holder.getInventory().getItem(tool.slot()))) {
+                holder.getInventory().setItem(tool.slot(), null);
             }
         });
         tools.clear();
@@ -413,6 +422,17 @@ public final class PacketStage implements Stage, AutoCloseable {
                 ((CraftPlayer) viewer).getHandle().playerConnection.sendPacket(packet);
             }
         }
+    }
+
+    private void sendInWorld(Packet<?> packet) {
+        for (Player viewer : viewers.get()) {
+            if (viewer.isOnline() && viewer.getWorld().equals(world.getWorld())) {
+                ((CraftPlayer) viewer).getHandle().playerConnection.sendPacket(packet);
+            }
+        }
+    }
+
+    private record Tool(int slot, ItemStack item) {
     }
 
     private Actor living(EntityLiving entity, float yaw) {

@@ -65,8 +65,10 @@ public final class BlockMask implements Listener {
     @SuppressWarnings("deprecation")
     public void reveal(Player viewer, Location at) {
         masks.unmask(viewer.getUniqueId(), at.getBlockX(), at.getBlockY(), at.getBlockZ());
-        Block real = at.getBlock();
-        viewer.sendBlockChange(at, real.getType(), real.getData());
+        if (viewer.getWorld().equals(at.getWorld())) {
+            Block real = at.getBlock();
+            viewer.sendBlockChange(at, real.getType(), real.getData());
+        }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
