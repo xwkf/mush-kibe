@@ -28,7 +28,7 @@ public record LobbySettings(
             config.getInt("protection.void-level", 0),
             config.getDouble("arrival.fly-height", 5),
             new BossBarFrames(config.getStringList("bossbar.frames"), ticks(duration(config, "bossbar.interval", "500ms"))),
-            new ScoreboardTemplate(config.getString("scoreboard.title", "&b&lMUXE"), config.getStringList("scoreboard.lines")),
+            ScoreboardTemplate.from(config),
             duration(config, "scoreboard.update-interval", "1s"),
             new PlayerInfo(config.getString("scoreboard.default-tag", "&7Membro"), config.getLong("scoreboard.default-credits", 0)),
             LaunchPadSettings.from(config.getConfigurationSection("launch-pad"))

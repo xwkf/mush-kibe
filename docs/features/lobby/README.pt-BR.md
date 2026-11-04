@@ -111,6 +111,7 @@ O `/build` vem do Muxe-Core e funciona em todos os servidores, como descrito na 
 | `/jogar <modo>` (`/play`) | Envia o jogador para o lobby do jogo (`<modo>-lobby`) quando há um vivo, senão para o grupo do jogo. | Nenhuma |
 | `/setspawn` (`/setlobby`) | Salva a posição atual como spawn deste lobby. | `muxe.lobby.setspawn` |
 | `/fly` (`/voar`) | Liga ou desliga o voo. | `muxe.lobby.fly` |
+| `/lobbyconfig ver\|definir\|adicionar\|remover\|local\|recarregar ...` | Vê e altera o `config.yml` do lobby dentro do jogo; veja [Alterando a configuração no jogo](#alterando-a-configuração-no-jogo). | `muxe.admin.config` |
 | `/build <on\|off>` | Liga ou desliga o modo construção em qualquer servidor; sem argumento, alterna. Vem do Muxe-Core. | `muxe.build` |
 
 O `/jogar` completa os jogos configurados com tab.
@@ -122,6 +123,23 @@ O `/jogar` completa os jogos configurados com tab.
 | `muxe.lobby.fly` | Usar o `/fly`, chegar acima do spawn, voando, e voar de novo depois do modo construção. Semeada no `vip`, então todo cargo acima do VIP também tem. | op |
 | `muxe.build` | Usar o `/build` (Muxe-Core) para quebrar, colocar, largar e pegar itens no Criativo. | op |
 | `muxe.lobby.setspawn` | Usar `/setspawn`. | op |
+| `muxe.admin.config` | Usar o `/lobbyconfig` (e o `/coreconfig`, `/bwconfig`). Declarada pelo Muxe-Core. | op |
+
+## Alterando a configuração no jogo
+
+O `/lobbyconfig` (permissão `muxe.admin.config`) vê e altera qualquer chave do `config.yml` do lobby sem editar o arquivo, com os subcomandos do [editor de configuração](../../development/core-api/README.pt-BR.md#editor-de-configuração): `ver`, `definir`, `adicionar`, `remover`, `local` e `recarregar`.
+
+- Ao vivo, sem reiniciar: `spawn` (a posição do `/setspawn`, que o `local spawn --novo` também grava) e `scoreboard.title` e `scoreboard.lines`, que mudam o scoreboard que os jogadores veem na próxima atualização.
+- O resto (`play.games`, `protection.*`, `arrival.*`, `launch-pad.*`, `bossbar.*`, `scoreboard.default-*` e `scoreboard.update-interval`, `messages.*`) é salvo e a resposta diz que vale depois de reiniciar.
+
+```text
+/lobbyconfig ver scoreboard
+/lobbyconfig definir scoreboard.title &b&lMUXE
+/lobbyconfig adicionar play.games pvp
+/lobbyconfig local spawn --novo
+```
+
+A saudação de entrada é configuração do Muxe-Core: `/coreconfig definir join-greeting.delay 1s` aplica ao vivo.
 
 ## Configuração
 
@@ -188,6 +206,7 @@ As métricas de servidor Spigot do Muxe-Core. As métricas de visibilidade foram
 - [x] A saudação de entrada só fica ativa em servidores `LOBBY`, com o título e o subtítulo de referência.
 - [x] O arquivo dos NPCs de jogo tem os doze NPCs nos lugares e direções exportados, com o grupo, o item na mão e as linhas.
 - [x] A boss bar alterna `&e&lMUXE` e `&6&lMUXE` a cada 10 ticks, e a scoreboard preenche as linhas de referência.
+- [x] O comando de configuração do lobby altera o modelo do scoreboard e o spawn ao vivo e deixa as outras chaves para um reinício (`LobbyConfigCommandTest`, `LobbyReloadsTest`).
 - [ ] Boss bar, scoreboard e o voo depois do modo construção funcionam no jogo (conferido no jogo).
 - [x] O lançamento padrão alcança 20 blocos para a frente e 5 para cima na física do cliente 1.8, na direção para onde o jogador olha.
 - [ ] Os blocos de slime brilham em verde e lançam o jogador no jogo (conferido no jogo).

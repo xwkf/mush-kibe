@@ -9,7 +9,7 @@ public final class SpawnService {
     private static final String PATH = "spawn";
 
     private final JavaPlugin plugin;
-    private final ConfigLocation spawn;
+    private ConfigLocation spawn;
 
     public SpawnService(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -22,5 +22,9 @@ public final class SpawnService {
 
     public void set(Location location) {
         spawn.set(location);
+    }
+
+    public void reload() {
+        spawn = new ConfigLocation(plugin, PATH);
     }
 }

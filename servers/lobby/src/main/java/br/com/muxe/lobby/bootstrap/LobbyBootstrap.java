@@ -3,15 +3,22 @@ package br.com.muxe.lobby.bootstrap;
 import br.com.muxe.core.bukkit.api.MuxeCore;
 import br.com.muxe.core.bukkit.bossbar.BossBars;
 import br.com.muxe.core.bukkit.buildmode.BuildMode;
+import br.com.muxe.core.bukkit.command.config.ConfigPathSuggestions;
+import br.com.muxe.core.bukkit.command.config.ConfigReplies;
 import br.com.muxe.core.bukkit.command.framework.Commands;
+import br.com.muxe.core.bukkit.config.edit.ConfigEditor;
+import br.com.muxe.core.bukkit.config.edit.PluginConfigStore;
 import br.com.muxe.core.bukkit.credit.CreditBalances;
 import br.com.muxe.core.bukkit.credit.CreditBalancesListener;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
+import br.com.muxe.core.common.config.live.LiveValue;
 import br.com.muxe.core.common.persistence.migration.MigrationReport;
 import br.com.muxe.lobby.bossbar.LobbyBossBar;
 import br.com.muxe.lobby.command.FlyCommand;
+import br.com.muxe.lobby.command.LobbyConfigCommand;
 import br.com.muxe.lobby.command.PlayCommand;
 import br.com.muxe.lobby.command.SetSpawnCommand;
+import br.com.muxe.lobby.config.LobbyReloads;
 import br.com.muxe.lobby.config.LobbySettings;
 import br.com.muxe.lobby.launchpad.LaunchPads;
 import br.com.muxe.lobby.listener.LobbyJoinListener;
@@ -20,6 +27,7 @@ import br.com.muxe.lobby.listener.StaticWorld;
 import br.com.muxe.lobby.listener.VoidRule;
 import br.com.muxe.lobby.profile.RankInfoSource;
 import br.com.muxe.lobby.scoreboard.LobbyScoreboard;
+import br.com.muxe.lobby.scoreboard.ScoreboardTemplate;
 import br.com.muxe.lobby.spawn.ArrivalService;
 import br.com.muxe.lobby.spawn.FlightBuildHook;
 import br.com.muxe.lobby.spawn.SpawnService;
@@ -59,7 +67,9 @@ public final class LobbyBootstrap {
         BuildMode build = core.buildMode();
         build.addHook(new FlightBuildHook());
         CreditBalances credits = CreditBalancesListener.start(plugin, core, CREDIT_REFRESH);
-        LobbyScoreboard scoreboard = new LobbyScoreboard(core, settings.scoreboard(),
+        LiveValue<ScoreboardTemplate> scoreboardTemplate = new LiveValue<>(settings.scoreboard());
+        ConfigEditor configEditor = new ConfigEditor(new PluginConfigStore(plugin, core.async()), LobbyReloads.create(scoreboardTemplate, spawn::reload));
+        LobbyScoreboard scoreboard = new LobbyScoreboard(core, scoreboardTemplate,
             new RankInfoSource(player -> core.permissions().display(player).tag(), credits::of, settings.defaultInfo()));
         LobbyBossBar bossBar = new LobbyBossBar(BossBars.start(plugin), settings.bossBar());
 
@@ -73,10 +83,13 @@ public final class LobbyBootstrap {
         scheduler.runTaskTimer(plugin, scoreboard, scoreboardPeriod, scoreboardPeriod);
         scheduler.runTaskTimer(plugin, bossBar, bossBar.period(), bossBar.period());
 
-        Commands.of(plugin, messages).register(
+        Commands commands = Commands.of(plugin, messages);
+        ConfigPathSuggestions.register(commands, configEditor);
+        commands.register(
             new PlayCommand(core, messages, settings.games()),
             new SetSpawnCommand(spawn, messages),
-            new FlyCommand(messages)
+            new FlyCommand(messages),
+            new LobbyConfigCommand(configEditor, new ConfigReplies(messages))
         );
     }
 

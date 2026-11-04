@@ -111,6 +111,7 @@ Every slime block (`launch-pad.block`) in a lobby is a launch pad, with no setup
 | `/jogar <mode>` (`/play`) | Sends the player to the game's lobby (`<mode>-lobby`) when one is alive, otherwise to the game group. | None |
 | `/setspawn` (`/setlobby`) | Saves the current position as the spawn of this lobby. | `muxe.lobby.setspawn` |
 | `/fly` (`/voar`) | Turns flight on or off. | `muxe.lobby.fly` |
+| `/lobbyconfig ver\|definir\|adicionar\|remover\|local\|recarregar ...` | Views and changes the lobby `config.yml` in game; see [Changing the configuration in game](#changing-the-configuration-in-game). | `muxe.admin.config` |
 | `/build <on\|off>` | Turns build mode on or off on any server; without an argument it toggles. Provided by Muxe-Core. | `muxe.build` |
 
 `/jogar` completes the configured games with tab.
@@ -122,6 +123,23 @@ Every slime block (`launch-pad.block`) in a lobby is a launch pad, with no setup
 | `muxe.lobby.fly` | Use `/fly`, arrive above the spawn, flying, and fly again after build mode. Seeded on `vip`, so every rank above VIP has it too. | op |
 | `muxe.build` | Use `/build` (Muxe-Core) to break, place, drop and pick up items in Creative. | op |
 | `muxe.lobby.setspawn` | Use `/setspawn`. | op |
+| `muxe.admin.config` | Use `/lobbyconfig` (and `/coreconfig`, `/bwconfig`). Declared by Muxe-Core. | op |
+
+## Changing the configuration in game
+
+`/lobbyconfig` (permission `muxe.admin.config`) views and changes any key of the lobby `config.yml` without editing the file, with the subcommands of the [configuration editor](../../development/core-api/README.md#configuration-editor): `ver`, `definir`, `adicionar`, `remover`, `local` and `recarregar`.
+
+- Live, with no restart: `spawn` (the `/setspawn` position, which `local spawn --novo` also writes) and `scoreboard.title` and `scoreboard.lines`, which change the scoreboard the players see on its next update.
+- Everything else (`play.games`, `protection.*`, `arrival.*`, `launch-pad.*`, `bossbar.*`, `scoreboard.default-*` and `scoreboard.update-interval`, `messages.*`) is saved and the answer says it applies after a restart.
+
+```text
+/lobbyconfig ver scoreboard
+/lobbyconfig definir scoreboard.title &b&lMUXE
+/lobbyconfig adicionar play.games pvp
+/lobbyconfig local spawn --novo
+```
+
+The join greeting is Muxe-Core configuration: `/coreconfig definir join-greeting.delay 1s` applies it live.
 
 ## Configuration
 
@@ -188,6 +206,7 @@ The Spigot server metrics of Muxe-Core. The visibility metrics moved with it and
 - [x] The join greeting is enabled only on `LOBBY` servers, with the reference title and subtitle.
 - [x] The game NPC file has the twelve NPCs at the exported spots and turns, with their group, item in hand and lines.
 - [x] The boss bar alternates `&e&lMUXE` and `&6&lMUXE` every 10 ticks, and the scoreboard fills the reference lines.
+- [x] The lobby configuration command changes the scoreboard template and the spawn live and leaves the other keys for a restart (`LobbyConfigCommandTest`, `LobbyReloadsTest`).
 - [ ] Boss bar, scoreboard and flight after build mode work in game (checked in game).
 - [x] The default launch reaches 20 blocks forward and 5 blocks up in the 1.8 client physics, towards where the player looks.
 - [ ] Slime blocks sparkle green and launch the player in game (checked in game).

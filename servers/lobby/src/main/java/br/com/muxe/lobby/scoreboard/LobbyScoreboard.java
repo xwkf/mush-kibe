@@ -9,17 +9,18 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 public final class LobbyScoreboard implements Runnable {
 
     private final MuxeCore core;
-    private final ScoreboardTemplate template;
+    private final Supplier<ScoreboardTemplate> template;
     private final PlayerInfoSource info;
     private final Map<UUID, Sidebar> sidebars = new ConcurrentHashMap<>();
 
-    public LobbyScoreboard(MuxeCore core, ScoreboardTemplate template, PlayerInfoSource info) {
+    public LobbyScoreboard(MuxeCore core, Supplier<ScoreboardTemplate> template, PlayerInfoSource info) {
         this.core = core;
         this.template = template;
         this.info = info;
@@ -52,7 +53,8 @@ public final class LobbyScoreboard implements Runnable {
             sidebar.lines(override.get().lines());
             return;
         }
-        sidebar.title(template.title());
-        sidebar.lines(template.render(info.of(player.getUniqueId()), LobbyNumber.label(core.identity().id()), core.servers().onlinePlayers()));
+        ScoreboardTemplate current = template.get();
+        sidebar.title(current.title());
+        sidebar.lines(current.render(info.of(player.getUniqueId()), LobbyNumber.label(core.identity().id()), core.servers().onlinePlayers()));
     }
 }
