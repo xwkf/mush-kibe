@@ -24,3 +24,9 @@ permissions:
   muxe.cosmetic.ultra:
     description: Unlocks the BedWars cosmetics included in ULTRA.
     default: false
+  muxe.cosmetic.vip:
+    description: Unlocks the BedWars cosmetics included in VIP.
+    default: false
+  muxe.cosmetic.ultraplus:
+    description: Unlocks the BedWars cosmetics included in ULTRA+.
+    default: false

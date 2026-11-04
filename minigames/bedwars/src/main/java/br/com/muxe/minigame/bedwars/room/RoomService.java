@@ -13,6 +13,8 @@ import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.core.common.match.MatchReturns;
 import br.com.muxe.minigame.bedwars.arena.BedWarsArena;
 import br.com.muxe.minigame.bedwars.arena.BedWarsSchema;
+import br.com.muxe.minigame.bedwars.cosmetic.message.KillMessages;
+import br.com.muxe.minigame.bedwars.cosmetic.message.MessageSets;
 import br.com.muxe.minigame.bedwars.lobby.LevelChat;
 import br.com.muxe.minigame.bedwars.lobby.format.LevelBadges;
 import br.com.muxe.minigame.bedwars.matchmaking.RoomChoice;
@@ -91,6 +93,8 @@ public final class RoomService {
     private final MatchReturns returns;
     private PlayerPreferences preferences;
     private TeamColorStore teamColors;
+    private MessageSets messageSets;
+    private KillMessages killMessages;
     private volatile int activeMatches;
 
     public RoomService(JavaPlugin plugin, MuxeCore core, BedWarsSettings settings, MessageCatalog messages, BedWarsSchema schema, ArenaCatalog catalog, MatchWorld matchWorld,
@@ -452,6 +456,19 @@ public final class RoomService {
 
     public void preferences(PlayerPreferences preferences) {
         this.preferences = preferences;
+    }
+
+    public void killMessages(MessageSets sets, KillMessages messages) {
+        this.messageSets = sets;
+        this.killMessages = messages;
+    }
+
+    MessageSets messageSets() {
+        return messageSets;
+    }
+
+    KillMessages killMessages() {
+        return killMessages;
     }
 
     public void teamColors(TeamColorStore teamColors) {

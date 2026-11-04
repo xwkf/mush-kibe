@@ -31,7 +31,9 @@ public record CosmeticMenuSettings(
     public static final String FINAL_KILL = "final-kill";
     public static final String VICTORY_EFFECT = "victory-effect";
     public static final String AURA = "aura";
-    private static final List<String> CATEGORY_KEYS = List.of(BED_DESTRUCTION, FINAL_KILL, VICTORY_EFFECT, AURA);
+    public static final String WOOD_TYPE = "wood-type";
+    public static final String KILL_MESSAGE = "kill-message";
+    private static final List<String> CATEGORY_KEYS = List.of(BED_DESTRUCTION, FINAL_KILL, VICTORY_EFFECT, AURA, WOOD_TYPE, KILL_MESSAGE);
 
     public CosmeticMenuSettings {
         bedwarsItems = Map.copyOf(bedwarsItems);
@@ -105,7 +107,10 @@ public record CosmeticMenuSettings(
         String starsOff,
         String ownedName,
         String lockedName,
+        String vipTag,
         String ultraTag,
+        String ultraPlusTag,
+        List<String> header,
         List<String> selectOnly,
         List<String> select,
         List<String> selected,
@@ -122,7 +127,10 @@ public record CosmeticMenuSettings(
                 section.getString("stars-off", "&7&l"),
                 section.getString("owned-name", "&a{name}"),
                 section.getString("locked-name", "&c{name}"),
+                section.getString("vip-tag", "&7Incluso no &a&lVIP"),
                 section.getString("ultra-tag", "&7Incluso no &d&lULTRA"),
+                section.getString("ultra-plus-tag", "&7Incluso no &d&lULTRA&6+"),
+                section.getStringList("header"),
                 section.getStringList("select-only"),
                 section.getStringList("select"),
                 section.getStringList("selected"),
@@ -131,6 +139,31 @@ public record CosmeticMenuSettings(
                 section.getStringList("buy-affordable"),
                 section.getStringList("unavailable")
             );
+        }
+
+        LoreTexts over(ConfigurationSection section) {
+            return new LoreTexts(
+                section.getString("star", star),
+                section.getString("stars-on", starsOn),
+                section.getString("stars-off", starsOff),
+                section.getString("owned-name", ownedName),
+                section.getString("locked-name", lockedName),
+                section.getString("vip-tag", vipTag),
+                section.getString("ultra-tag", ultraTag),
+                section.getString("ultra-plus-tag", ultraPlusTag),
+                lines(section, "header", header),
+                lines(section, "select-only", selectOnly),
+                lines(section, "select", select),
+                lines(section, "selected", selected),
+                lines(section, "selected-with-preview", selectedWithPreview),
+                lines(section, "buy", buy),
+                lines(section, "buy-affordable", buyAffordable),
+                lines(section, "unavailable", unavailable)
+            );
+        }
+
+        private static List<String> lines(ConfigurationSection section, String path, List<String> inherited) {
+            return section.isList(path) ? section.getStringList(path) : inherited;
         }
     }
 }

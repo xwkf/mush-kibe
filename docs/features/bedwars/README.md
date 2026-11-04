@@ -68,11 +68,11 @@ A player who reaches a BedWars server goes back to the match they left if they s
 - **Name tags and tab list:** the team letter in bold and colour (`A` in blue), through `MuxeCore.nameTags()`. The scoreboard and the chat show the letter without bold. The tab list shows the health of players alive as a yellow number to the right of the name.
 - **Health below the name:** players alive show their health under the name (`20 ❤`, the heart from `messages.health-below-name`), through the engine's [health below the name](../../architecture/game-engine/README.md#health-below-the-name). Spectators and players waiting to respawn show nothing.
 - **Chat:** only the room sees it, with the team before the usual format: `[A] medal tag name`. In solo modes everyone in the room reads it. In team modes, while the match is played, the chat reaches only the player's team; `/g <mensagem>` talks to the whole room with `&6[G]` before it (`messages.global-prefix`). Every message starts with the sender's level badge (`[904⚝]`), also in the BedWars lobby; a player who turned off `Mostrar nível no chat` shows `[0✫]` to everyone. The chat runs off the main thread, so it reads a snapshot of each room (who hears whom and the team prefix) rebuilt on the main thread every second and whenever someone joins or leaves.
-- **Beds:** breaking an enemy bed sends `CAMA DESTRUÍDA` to everyone and `+100 XP` to the breaker. A team member who was away is eliminated, and the final kill goes to whoever broke the bed. Players cannot break their own bed.
+- **Beds:** breaking an enemy bed sends `CAMA DESTRUÍDA` (in the breaker's [kill message set](#kill-messages)) to everyone and `+100 XP` to the breaker. A team member who was away is eliminated, and the final kill goes to whoever broke the bed. Players cannot break their own bed.
 - **Deaths:**
   - The kill goes to the last enemy hit within 15 seconds. A final death with no hit goes to whoever broke the bed.
   - The killer gets the victim's iron, gold, diamonds and emeralds, with `+28 Ferros`-style lines and `+12 XP` (kill) or `+60 XP` (final kill).
-  - Falling below the arena's void height kills at once (`morreu no void`).
+  - Falling below the arena's void height kills at once (`morreu no void`). The kill, death and final kill texts come from the [kill message sets](#kill-messages), `Padrão` unless the player picked another.
   - With a bed the player watches as a spectator and respawns after 5 seconds, protected for 4 seconds, with the armour bought and the pickaxe and axe one tier lower. Without a bed the player is out (`KILL FINAL!`), and the team's last player out eliminates the team (`TIME ELIMINADO`).
 - **Blocks:** only blocks placed during the match can be broken, plus the map's grass and bushes (tall grass, double plants and dead bushes), which drop nothing. Nothing can be placed near spawns (5 blocks), NPCs (1) and generators (1), nor above the arena's build limit (`Você não pode colocar blocos aqui.`). Explosions only break placed blocks, never glass. TNT lights by itself and the fireball is thrown with a right click.
 - **Generators:** island iron drops every 0.9 s, as many ingots as players per team (up to 4), gold every 7 s, each with a limit of items lying within 3 blocks. Diamond and emerald show their tier and countdown in a hologram and get faster at 6, 12, 18 and 24 minutes. Iron and gold picked up are copied to teammates within 2 blocks, who hear the pickup sound.
@@ -145,7 +145,7 @@ Players pick an animation that plays when they break an enemy bed. The menus fol
 - **Menu do Bed Wars** (emerald): in the waiting room on BedWars servers, and in hotbar slot 3 on the BedWars lobby. Five rows, as in the reference export: `Missões` (slot 11), `Cosméticos` (pufferfish, slot 13), `Lista de Níveis` (slot 15, the level badges in its lore), `Compra rápida` (29), `Editor de hotbar` (31) and `Preferências` (33). `Editor de hotbar` opens the hotbar editor described in the Shop section.
 - **Preferências** (slot 33) opens `Preferências do Bed Wars` (4 rows): `Mostrar nível no chat` (slot 11), `Mostrar temporizador da TNT` (13) and `Guardar itens clicando no baú` (15: `Ativado`, `Sem hologramas`, `Desativado`), each with a dye below showing its value (lime on, grey off, light blue without holograms). Clicking either switches the value; `Voltar` goes back to the Bed Wars menu. They are saved in `bedwars.preferences` and loaded on every BedWars server.
 - **Compra rápida** (slot 29 of the Bed Wars menu) opens `Editando compra rápida...` with the player's 21 positions. Left click swaps the item, right click removes it, `Voltar` goes back to the Bed Wars menu and `Importar compra rápida` opens an anvil with `Insira o usuário`: the nick typed and taken from the result slot opens `Importando compra rápida...` with that player's quick buy (the default one if they never changed it, every position empty if there is no such player), `Cancelar` (back to the editor) and `Confirmar`, which copies it into the player's own. Swapping opens `Selecionando item... (1/2)`, every item the shop sells in category order, 21 per page; clicking one puts it in that position. Pickaxe and axe show as `Picareta` and `Machado` in diamond, and `editor-name`, `editor-material` and `editor-description` of a shop item change how it looks here. Changes are saved like those made in a match.
-- **Cosméticos do Bed Wars**: the **Destruição de Cama** category shows `owned/total (percent%)` and the selected cosmetic. **Cor preferida** (slot 35) opens the favourite team colour menu described in Favourite team colour. The other categories and the **Loja** button answer "coming soon".
+- **Cosméticos do Bed Wars**: the **Destruição de Cama** category shows `owned/total (percent%)` and the selected cosmetic. **Cor preferida** (slot 35) opens the favourite team colour menu described in Favourite team colour. **Tipos de madeira** and **Mensagens de kill** (slots 29 and 31) open the lists described in Wood types and Kill messages. The other categories and the **Loja** button answer "coming soon".
 - **Destruição de Cama (page/pages)**: 28 entries per page. Page 1 starts with **Nenhuma** and **Aleatório** (the default). The **Aleatório** icon cycles every 10 ticks through the icons of the cosmetics it can draw (the owned ones with an animation), keeping its name and lore; with none it keeps its own icon. Owned cosmetics come first in alphabetical order, then all the others in alphabetical order (`CosmeticOrder`, the rule for every cosmetics menu of the network).
   - Owned: left click selects, right click previews. The selected one glows and shows `Já selecionado.`
   - For sale: left click buys with credits (price by stars: 750, 900, 1.300, 1.750, 2.000), right click previews. When the player lacks credits, the lore shows `Faltam <n> créditos!`.
@@ -207,6 +207,55 @@ Players pick an animation that plays when they break an enemy bed. The menus fol
 - **Pattern** (`AuraPattern`, `AuraTrails`): every tick, per player with an aura, one particle (count 0, offsets 0, speed 1, long distance). If the player moved horizontally since the previous tick, it appears at the feet, at `(x, y + 0.1, z)`. Otherwise it is a point of a helix around the player, for a counter `k` that grows by 1 every tick, moving or not (starting at 0 when the aura starts showing): angle `18° · k`, offset `x = sin(angle)`, `z = -cos(angle)` (radius 1) and `y = 0.1 + ((k + 15) mod 60) / 30`. So it climbs 1/30 of a block per tick from 0.1 to about 2.07 over three turns (20 ticks per turn) and starts over every 60 ticks. Only horizontal movement counts: jumping or falling in place keeps the helix.
 - **Random:** `Aleatório` draws one owned aura per player and per match, the first tick the player is playing, and keeps it until they leave the match (`AuraCosmetics`, `AuraAssignments`); the next match draws again. `Nenhuma` shows nothing, and a chosen aura the player does not own is never used.
 - **Preview:** right click opens the world `aura-preview.world` (`previa_aura`, which must be in the server root of the BedWars lobby; without it the preview answers `preview-only-lobby`). The player stands at `aura-preview.spawn` (10.5 19 21.5, yaw 0) with the `Voltar ao Lobby` bed in slot 8 and sees that aura on themselves, only on themselves, while they walk around. There is no countdown or title. It ends on the bed, on `aura-preview.timeout` (`60s`) or when the player quits, and the player goes back where they were and the aura list opens again. It reuses the scene preview (`ScenePreview`) with an `AuraAnimation` per aura.
+
+### Kill messages
+
+`Mensagens de kill` (slot 31 of `Cosméticos do Bed Wars`, paper) lists the chat message sets in `Mensagens de kill ({page}/{pages})`, saved under the category `bedwars-mensagem-kill`. The slots follow the recording and the order is the catalog order, not owned first: `Padrão` (paper, slot 10), `Aleatório` (name tag, slot 11) and `Estatístico` (book, slot 12), then `Voltar` (slot 48, `Para Cosméticos do Bed Wars`) and `Selecionado: <name>` (slot 49). There is no `Nenhuma`: a player with nothing selected uses `Padrão`, which everyone owns and nobody buys (`availability: DEFAULT`). The lists have no right click: the lore of each set has `Prévia:` with sample lines and `Botão esquerdo: Selecionar`.
+
+| Set | Icon | Availability |
+|---|---|---|
+| `Padrão` (`padrao`) | `PAPER` | everyone |
+| `Estatístico` (`estatistico`) | `BOOK` | tournament prize (`availability: EVENT`, `&6Premiação de torneio`, shown as `Indisponível.` to anyone who does not own it) |
+
+The selected set replaces the chat messages of the match (`KillAnnouncer`, called by `RoomRuntime`):
+
+| Event | Whose set | Message kinds |
+|---|---|---|
+| Kill | The killer's | `kill`, `final-kill`, `void-kill`, `void-final-kill` |
+| Death without a killer (also a player eliminated for being away or when every bed is destroyed) | The victim's | `death`, `final-death`, `void-death`, `void-final-death` |
+| Bed destroyed | The breaker's | `bed`, after the `kill-messages.bed-prefix` (`CAMA DESTRUÍDA »`) every set shares |
+
+A player who leaves with the bed already destroyed counts as a final death (or a final kill for whoever hit him). The final kills of the players a bed break eliminates are final kills of the breaker, with the breaker's set.
+
+- **Templates** live in `kill-messages.sets.<id>.messages`, keyed by kind, with `{victim}`, `{killer}`, `{player}`, `{team-color}`, `{team}` and `{count}` (the counter, `17.089`, with the thousands separated by dots). `{br}` marks where the `Prévia:` breaks a long line in two (the game removes it). A set only writes the kinds it changes: a missing `void-*` kind uses the normal kind (`Estatístico` has no void variants). The default set (`kill-messages.default`, `padrao`) must have all of them and no `{count}`. Every message starts with `kill-messages.line-color` (`&7`), the same way in the game and in the preview.
+- **`Padrão`** keeps the texts the game already had, with the void kill (`morreu no void para <killer>`) as the only new one, since a void death with a killer used to read as a normal kill. Names keep the team colour.
+- **`Estatístico`** counts with the player's lifetime BedWars totals, all modes together, including the event itself: `Fulano foi a 17.089ª kill de tadeu.`, `Fulano foi a 19.215ª kill final de tadeu.`, `tadeu morreu pela 12.538ª vez.`, `tadeu teve sua 2.537ª morte final.`, `A Cama do Vermelho foi a 11.938ª cama destruída de tadeu.` The number is in `&b` and ends with `ª`. A kill adds one to the victim's death counter as well. The totals (`kills`, `finalKills`, `deaths`, `finalDeaths`, `bedsBroken` of `bedwars.player_stats`, general) are loaded when the player enters the room, together with the level (`FindPlayerStatsQuery`), and `LifetimeTally` adds what happens during the match. If they are not loaded yet, that message is told with `Padrão`.
+- **Random:** `Aleatório` draws one owned set per player and per match, the first time a message needs it, and keeps it until the match is closed (`KillMessages`, `MessageAssignments`). A selected set the player does not own is never used: `Padrão` is.
+- **`Prévia:`** is built from the templates above with the viewer's name in the colour of his tag (the `§8tadeu` of the recording), a victim `Fulano` in red and the team `Vermelho` (`kill-messages.preview`, `MessagePreview`). Padrão shows `kill`, `void-kill`, `death`, `void-death` and `bed`; Estatístico shows `kill`, `final-kill`, `death`, `final-death` and `bed` with the sample counters of `kill-messages.preview.counts`. A test checks that every preview line joined is exactly what the game sends.
+- `/cosmeticos dar` only grants bed destruction cosmetics, so for now a player owns `Estatístico` through `muxe.cosmetic.all`.
+
+### Wood types
+
+`Tipos de madeira` (slot 29 of `Cosméticos do Bed Wars`, planks) opens `Tipos de madeira ({page}/{pages})`, saved under the category `bedwars-madeira`. It has neither `Nenhuma` nor `Aleatório`, and the order is the catalog order. The item `madeira` of the shop (16 planks for 4 gold) is delivered with the selected wood instead of oak; its amount, price, name (`Madeira`) and place in the shop and the quick buy do not change, and it is placed in the hotbar like any other purchase (`HotbarDelivery`, which only looks at the item id). Placing and breaking behave as for any block placed in the match.
+
+| Slot | Name | Item | Included in |
+|---|---|---|---|
+| 10 | `Madeira de carvalho` (default) | `WOOD:0` | everyone |
+| 11 | `Madeira de pinheiro` | `WOOD:1` | `VIP` |
+| 12 | `Madeira de eucalipto` | `WOOD:2` | `VIP` |
+| 13 | `Madeira da selva` | `WOOD:3` | `ULTRA` |
+| 14 | `Madeira de acácia` | `WOOD:4` | `ULTRA` |
+| 15 | `Madeira de carvalho escuro` | `WOOD:5` | `ULTRA+` |
+| 16 | `Tronco de carvalho` | `LOG:0` | `ULTRA+` |
+| 19 | `Tronco de pinheiro` | `LOG:1` | nobody yet |
+| 20 | `Tronco de eucalipto` | `LOG:2` | tournament prize |
+| 21 | `Tronco de árvore da selva` | `LOG:3` | nobody yet |
+| 22 | `Tronco de acácia` | `LOG_2:0` | nobody yet |
+| 23 | `Tronco de carvalho escuro` | `LOG_2:1` | nobody yet |
+
+- **Lore:** `Incluso no VIP` / `ULTRA` / `ULTRA+` for the rank woods (`lore.vip-tag`, `lore.ultra-tag`, `lore.ultra-plus-tag`), `Premiação de torneio` for the prize, then `Botão esquerdo: Selecionar`, `Já selecionado.` or `Indisponível.`. Owned names are green and locked ones red. The selected wood glows and `Selecionado: <name>` (slot 49) shows the wood itself, with `&7` as lore.
+- **Ranks:** `Incluso no X` means every player of that rank or above owns it (`CosmeticAccess`): `muxe.cosmetic.vip` for `VIP`, `muxe.cosmetic.ultra` for `ULTRA` and `muxe.cosmetic.ultraplus` for `ULTRA+` (each tier covers the lower ones), and `muxe.cosmetic.all` owns everything. The permission comes from the groups, so give `muxe.cosmetic.vip` to the `vip` group (the ranks above inherit it) and `muxe.cosmetic.ultraplus` to whoever has Ultra+, which is not a group of its own yet. `muxe.cosmetic.ultra` is already given to `ultra`. The woods marked `nobody yet` or `tournament prize` are owned only through `muxe.cosmetic.all` or a grant (`core.owned_cosmetics`).
+- **Fallback:** the wood the shop delivers is the selected one if the player still owns it, and oak otherwise (a rank that expired, a wood never owned, nothing selected, or cosmetics not loaded). The selection is read when the player enters the server, so a change made in the lobby applies in the next match.
 
 ### BedWars lobby
 
@@ -275,7 +324,9 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | `muxe.cosmetics.admin` | op | Allows `/cosmeticos dar`. |
 | `muxe.bedwars.map-select` | op | Choosing the map in the mode menus (VIPs). Give it to the VIP groups. |
 | `muxe.cosmetic.all` | op | Owns every BedWars cosmetic. |
-| `muxe.cosmetic.ultra` | false | Owns the `Incluso no ULTRA` cosmetics. The `ultra` group has it (migration V14). |
+| `muxe.cosmetic.vip` | false | Owns the `Incluso no VIP` cosmetics (the pine and eucalyptus woods). Give it to the `vip` group; the groups above inherit it. |
+| `muxe.cosmetic.ultra` | false | Owns the `Incluso no ULTRA` cosmetics, and the VIP ones. The `ultra` group has it (migration V14). |
+| `muxe.cosmetic.ultraplus` | false | Owns the `Incluso no ULTRA+` cosmetics, and the ULTRA and VIP ones. Ultra+ is not a group yet, so give it to those players directly. |
 
 ## Configuration
 
@@ -321,6 +372,11 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | `victory-preview.*` | `previa_efeito_de_vitoria`, -19.5 27 68.5, `3...` `2...` `1...` every 20 ticks, `60s`, `1s` | World, spawn, countdown titles and ticks between them, timeout, wait after the effect, back item and scoreboard of the victory preview. |
 | `cosmetics.aura.*` | `bedwars-aura`; 750, 900, 1300, 1750, 2000; `liga-mestre` and `liga-diamante` | Category, prices by stars and the two auras, with the same fields as the bed ones. The id must match an aura of `Auras` to have an effect. |
 | `cosmetics.menus.categories.aura`, `cosmetics.menus.aura.*` | slot 33, emerald; `Aura ({page}/{pages})`, `Aleatório` as a name tag | The category button and the list overrides of the aura category (the rest follows the bed destruction list). |
+| `kill-messages.*` | `default: padrao`, `line-color: &7`, `bed-prefix`, `preview`, the sets `padrao` and `estatistico` | The chat message sets: the default set, the colour that starts every message, the prefix of the bed message, the sample of the `Prévia:` (`title`, `victim`, `team-color`, `team`, `counts` by kind) and `sets.<id>` with its `preview` kinds and its `messages` by kind (`kill`, `final-kill`, `void-kill`, `void-final-kill`, `death`, `final-death`, `void-death`, `void-final-death`, `bed`). `{br}` breaks the preview line. They replace the old `messages.kill`, `final-kill`, `death`, `void-*` and `bed-destroyed`. |
+| `cosmetics.kill-message.*` | `bedwars-mensagem-kill`; `default: padrao`; `padrao` and `estatistico` | Category, default cosmetic and the sets, with the same fields as the bed ones (`stars: 0`, no prices). The id must match a set of `kill-messages.sets`. |
+| `cosmetics.wood-type.*` | `bedwars-madeira`; `default: carvalho`; the 12 woods | Category, default cosmetic and woods. `icon` (`WOOD` or `LOG`, `LOG_2` and `data`) is the item the shop delivers; `availability` is `DEFAULT`, `VIP`, `ULTRA`, `ULTRA_PLUS` or `EVENT`. |
+| `cosmetics.menus.categories.kill-message`, `cosmetics.menus.categories.wood-type` | slot 31 paper; slot 29 planks | The category buttons. |
+| `cosmetics.menus.kill-message.*`, `cosmetics.menus.wood-type.*` | titles, `entries`, `lore`, `selected` | The list overrides. `entries` has `none` and `random` (show those entries), `random-after` (cosmetics before `Aleatório`), `owned-first` (owned first, as the other lists, or the catalog order), `previews` (right click) and `selected-icon` (the selected item shows the cosmetic). `lore.header` starts every cosmetic lore, `lore.vip-tag`, `lore.ultra-tag` and `lore.ultra-plus-tag` are the rank lines. Lore keys left out are inherited from the bed destruction list. |
 | `aura-preview.*` | `previa_aura`, 10.5 19 21.5 facing yaw 0, `60s`, `1s` | World, spawn, timeout, back item and scoreboard of the aura preview. It has no countdown. |
 | `preview.world` | `previa_quebra_de_cama` | Folder of the preview world in the server root. Without it the preview is off. |
 | `preview.spawn`, `preview.bed` | 6.5 11 21.5; foot 6 11 17, head 6 16 | Where the player stands and the bed they break. |
@@ -354,7 +410,7 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | File | What it holds |
 |---|---|
 | `core.arenas` (game `bedwars`) | One row per arena: mode, `ready`, the definition (display name, teams, points and heights, in YAML) and the map in the [Muxe map format](../../decisions/0009-own-map-format-and-match-cells.md). Migration `V16__create_arenas.sql`. Shared by every BedWars server. |
-| `core.owned_cosmetics`, `core.selected_cosmetics` | Owned and selected cosmetics, category `bedwars-cama`. See [Credits and cosmetics](../credits/README.md). |
+| `core.owned_cosmetics`, `core.selected_cosmetics` | Owned and selected cosmetics, category `bedwars-cama` (and `bedwars-vitoria`, `bedwars-kill-final`, `bedwars-aura`, `bedwars-mensagem-kill` and `bedwars-madeira`). See [Credits and cosmetics](../credits/README.md). |
 | `<server>/previa_quebra_de_cama/` | The preview world. Deployed to the BedWars lobby only, never committed. |
 | `<server>/previa_aura/` | The aura preview world. Deployed to the BedWars lobby only, never committed. |
 | `bedwars.player_stats` | One row per player, mode (and `geral`), period (`diario`, `semanal`, `mensal`, `total`) and period start, with every counter and the XP. Migration `V1__create_player_stats_and_favourite_maps.sql`. |
@@ -388,6 +444,8 @@ Commands and queries in `br.com.muxe.minigame.bedwars.stats`: `RecordMatchComman
 - [x] The favourite colour menu, its storage and the team assignment by favourite colour follow the rules above (`FavouriteColorMenuTest`, `FavouriteColorHandlersTest`, `PostgresFavouriteColorRepositoryIntegrationTest`, `TeamAssignerTest`, `RoomTest`).
 - [x] The 13 animations end without leftovers and follow the recorded timings (`BedAnimationsTest`).
 - [x] Cosmetic states, prices, sorting and lore follow the exports (`CosmeticCatalogTest`).
+- [x] The kill message sets, their recorded previews, whose set is used, the lifetime counters, the fallback and the random draw follow the rules above (`MessageSetsTest`, `KillAnnouncerTest`, `KillMessagesTest`, `LifetimeTallyTest`, `OrdinalTest`, `KillMessageCosmeticTest`).
+- [x] The wood types menu, the rank inclusion and the wood the shop delivers follow the rules above (`WoodTypeCosmeticTest`, `WoodTypesTest`, `WoodDeliveryTest`, `CosmeticAccessTest`, `CosmeticListSettingsTest`).
 - [x] Deaths, assists, beds lost, XP and match outcomes are counted (`RoomStatsTest`); periods, counters, tops and favourites are saved (`StatsHandlersTest`, `StatCountersTest`, `StatsPeriodTest`, `PostgresBedWarsStatsRepositoryIntegrationTest`).
 - [x] Matchmaking picks the fullest open room or asks the emptiest server for one (`MatchmakerTest`).
 - [x] Lobby NPCs, menus, tops, the mode selector, level badges, the statistics NPC and the lobby scoreboard follow the exports and annex 1 (`LobbyViewTest`, `LobbyFormatTest`).
@@ -395,6 +453,7 @@ Commands and queries in `br.com.muxe.minigame.bedwars.stats`: `RecordMatchComman
 - [ ] The hotbar editor and the placement of purchases checked in game.
 - [ ] Lobby NPCs, menus, matchmaking, map choice and tops checked in game.
 - [ ] Every animation and the preview checked in game.
+- [ ] The kill messages in a real match and the wood types in the shop checked in game.
 
 ## Failures and recovery
 
@@ -407,5 +466,6 @@ If Muxe-Core is not enabled, the plugin disables itself.
 - The lobby only knows the rooms of servers that published in the last 10 seconds; the room list of a server that stops is forgotten after that.
 - The other special shop items, the dragons and the victory and defeat titles are not in yet.
 - A restart or crash ends every match on the server without compensation.
-- 17 bed destruction cosmetics have no animation yet. The other cosmetic categories and the cosmetic shop are not in yet. The favourite colour is read when the player joins the server, so a choice made on another server is seen only after the player joins again.
+- 17 bed destruction cosmetics have no animation yet. `Skin dos Vendedores`, `Rastros de Projétil` and the cosmetic shop are not in yet. The favourite colour is read when the player joins the server, so a choice made on another server is seen only after the player joins again.
 - A purchase updates the menu at once, but another server sees it only when the player joins it again.
+- The `Estatístico` counters are the totals read when the player enters the room plus what happens in that match; they are not refreshed during it. The selected kill message set and wood are read when the player joins the server, like the other cosmetics.

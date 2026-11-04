@@ -17,13 +17,22 @@ public final class CosmeticCatalog {
     private final String category;
     private final Map<Integer, Long> prices;
     private final Map<String, BedCosmetic> cosmetics;
+    private final Optional<String> defaultId;
 
     public CosmeticCatalog(String category, Map<Integer, Long> prices, List<BedCosmetic> cosmetics) {
+        this(category, prices, cosmetics, Optional.empty());
+    }
+
+    public CosmeticCatalog(String category, Map<Integer, Long> prices, List<BedCosmetic> cosmetics, Optional<String> defaultId) {
         this.category = category;
         this.prices = Map.copyOf(prices);
         Map<String, BedCosmetic> byId = new LinkedHashMap<>();
         cosmetics.forEach(cosmetic -> byId.put(cosmetic.id(), cosmetic));
         this.cosmetics = byId;
+        if (defaultId.isPresent() && !byId.containsKey(defaultId.get())) {
+            throw new IllegalArgumentException("The default cosmetic " + defaultId.get() + " is not in the category " + category);
+        }
+        this.defaultId = defaultId;
     }
 
     public static final String BED_CATEGORY = "bedwars-cama";
@@ -34,9 +43,11 @@ public final class CosmeticCatalog {
 
     public static CosmeticCatalog from(ConfigurationSection section, String listKey, String defaultCategory, Predicate<String> animated) {
         Map<Integer, Long> prices = new HashMap<>();
-        ConfigurationSection priceSection = required(section, "prices");
-        for (String stars : priceSection.getKeys(false)) {
-            prices.put(Integer.parseInt(stars), priceSection.getLong(stars));
+        ConfigurationSection priceSection = section.getConfigurationSection("prices");
+        if (priceSection != null) {
+            for (String stars : priceSection.getKeys(false)) {
+                prices.put(Integer.parseInt(stars), priceSection.getLong(stars));
+            }
         }
         List<BedCosmetic> cosmetics = new ArrayList<>();
         ConfigurationSection list = required(section, listKey);
@@ -53,7 +64,7 @@ public final class CosmeticCatalog {
                 animated.test(id)
             ));
         }
-        return new CosmeticCatalog(section.getString("category", defaultCategory), prices, cosmetics);
+        return new CosmeticCatalog(section.getString("category", defaultCategory), prices, cosmetics, Optional.ofNullable(section.getString("default")));
     }
 
     public String category() {
@@ -66,6 +77,14 @@ public final class CosmeticCatalog {
 
     public Optional<BedCosmetic> find(String id) {
         return Optional.ofNullable(cosmetics.get(id));
+    }
+
+    public Optional<String> defaultId() {
+        return defaultId;
+    }
+
+    public Optional<BedCosmetic> defaultCosmetic() {
+        return defaultId.flatMap(this::find);
     }
 
     public long price(BedCosmetic cosmetic) {

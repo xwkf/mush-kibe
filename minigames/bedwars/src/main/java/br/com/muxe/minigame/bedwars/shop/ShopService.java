@@ -5,6 +5,8 @@ import br.com.muxe.core.bukkit.menu.ClickContext;
 import br.com.muxe.core.bukkit.menu.Menu;
 import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
+import br.com.muxe.minigame.bedwars.cosmetic.wood.WoodChoice;
+import br.com.muxe.minigame.bedwars.cosmetic.wood.WoodTypes;
 import br.com.muxe.minigame.bedwars.hotbar.HotbarDelivery;
 import br.com.muxe.minigame.bedwars.hotbar.menu.HotbarEditor;
 import br.com.muxe.minigame.bedwars.invisibility.Invisibility;
@@ -26,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Predicate;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -55,9 +58,10 @@ public final class ShopService {
     private final ItemNames names;
     private final HotbarDelivery hotbarDelivery;
     private final HotbarEditor hotbarEditor;
+    private final WoodTypes woods;
 
     public ShopService(ShopCatalog shop, UpgradeCatalog upgrades, MessageCatalog messages, MatchSounds sounds, QuickBuys quickBuys, ItemNames names,
-                       HotbarDelivery hotbarDelivery, HotbarEditor hotbarEditor) {
+                       HotbarDelivery hotbarDelivery, HotbarEditor hotbarEditor, WoodTypes woods) {
         this.names = names;
         this.shop = shop;
         this.upgrades = upgrades;
@@ -66,6 +70,7 @@ public final class ShopService {
         this.quickBuys = quickBuys;
         this.hotbarDelivery = hotbarDelivery;
         this.hotbarEditor = hotbarEditor;
+        this.woods = woods;
     }
 
     public void open(Player player, RoomRuntime runtime, boolean upgradeMenu) {
@@ -283,7 +288,7 @@ public final class ShopService {
         Tier tier = offer.tier();
         switch (item.type()) {
             case WOOL -> deliver(player, item, Kits.wool(team.color(), item.amount(), names));
-            case BLOCK -> deliver(player, item, names.named(new ItemStack(tier.material(), item.amount(), (short) item.data()), offer.boughtName()));
+            case BLOCK -> deliver(player, item, names.named(block(woods, player.getUniqueId(), item, tier), offer.boughtName()));
             case SWORD -> {
                 inventory.remove(Material.WOOD_SWORD);
                 deliver(player, item, Kits.sword(tier.material(), team, names));
@@ -310,6 +315,14 @@ public final class ShopService {
             case ITEM -> deliver(player, item, names.named(plain(item, tier), offer.boughtName()));
             case SPECIAL -> deliver(player, item, names.named(new ItemStack(tier.material(), item.amount(), (short) item.data()), offer.boughtName()));
         }
+    }
+
+    static ItemStack block(WoodTypes woods, UUID player, ShopItem item, Tier tier) {
+        if (item.id().equals(WoodTypes.ITEM_ID)) {
+            WoodChoice wood = woods.of(player);
+            return new ItemStack(wood.material(), item.amount(), wood.data());
+        }
+        return new ItemStack(tier.material(), item.amount(), (short) item.data());
     }
 
     private void deliver(Player player, ShopItem item, ItemStack stack) {

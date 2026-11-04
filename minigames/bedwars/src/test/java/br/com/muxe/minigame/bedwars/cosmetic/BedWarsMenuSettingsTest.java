@@ -85,7 +85,7 @@ class BedWarsMenuSettingsTest {
         assertThat(button.hidesFlags()).isFalse();
         assertThat(button.name()).isEqualTo("§aCor preferida");
         assertThat(button.lore()).containsExactly("§7Escolha a sua cor preferida", "§7para a partida!", " ", "§7Exclusivo para §d§lULTRA", " ", "§eClique para ver mais.");
-        assertThat(settings.soon()).doesNotContainKey(35).containsOnlyKeys(14, 27, 29, 31);
+        assertThat(settings.soon()).doesNotContainKey(35).containsOnlyKeys(14, 27);
 
         YamlConfiguration older = new YamlConfiguration();
         older.loadFromString(RoomFixtures.CONFIG.saveToString());

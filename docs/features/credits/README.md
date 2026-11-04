@@ -38,6 +38,8 @@ The BedWars cosmetics have their own `/cosmeticos dar`, described in [BedWars](.
 | `muxe.credits.admin` | `/creditos ver`, `dar` and `remover`. |
 | `muxe.cosmetic.all` | Owning every BedWars cosmetic (ops by default). |
 | `muxe.cosmetic.ultra` | Owning the cosmetics marked `Incluso no ULTRA`. Migration V14 gives it to the `ultra` group. |
+| `muxe.cosmetic.vip` | Owning the cosmetics marked `Incluso no VIP` (and, on the ULTRA and ULTRA+ tiers, the VIP ones too). Not given by a migration: give it to the `vip` group. |
+| `muxe.cosmetic.ultraplus` | Owning the cosmetics marked `Incluso no ULTRA+`, and the ULTRA and VIP ones. Not given by a migration: Ultra+ is not a group yet. |
 
 ## Configuration
 

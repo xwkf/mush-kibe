@@ -15,6 +15,8 @@ import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.core.bukkit.text.Title;
 import br.com.muxe.minigame.bedwars.arena.BedWarsArena.TeamBase;
 import br.com.muxe.minigame.bedwars.bootstrap.BedWarsBootstrap;
+import br.com.muxe.minigame.bedwars.cosmetic.message.KillAnnouncer;
+import br.com.muxe.minigame.bedwars.cosmetic.message.LifetimeTally;
 import br.com.muxe.minigame.bedwars.game.ChestAccess;
 import br.com.muxe.minigame.bedwars.game.ChestDeposits;
 import br.com.muxe.minigame.bedwars.game.ForgeHeights;
@@ -112,6 +114,8 @@ public final class RoomRuntime {
     private final Set<UUID> returnable = new HashSet<>();
     private final Map<UUID, Inventory> enderChests = new HashMap<>();
     private final Map<UUID, Long> storedXp = new ConcurrentHashMap<>();
+    private final LifetimeTally tally = new LifetimeTally();
+    private final KillAnnouncer announcer;
     private final Map<UUID, Map<Block, SpawnedHologram>> chestLabels = new HashMap<>();
     private List<Block> islandChests = List.of();
     private int seconds;
@@ -125,6 +129,7 @@ public final class RoomRuntime {
         this.world = world;
         this.view = new RoomView(settings.scoreboard(), settings.timeline());
         this.forges = new RoomForges(service.plugin(), settings, service.displays());
+        this.announcer = new KillAnnouncer(service.messageSets(), id -> service.killMessages().of(id, room.code(), ThreadLocalRandom.current()), tally);
     }
 
     public Room room() {
@@ -255,6 +260,7 @@ public final class RoomRuntime {
                 return;
             }
             storedXp.put(id, Math.max(0, stats.general().xp()));
+            tally.load(id, stats.general());
             showLevel(id);
         }));
     }
@@ -330,15 +336,9 @@ public final class RoomRuntime {
             .flatMap(room::player)
             .filter(player -> player.team() != dead.team());
         String victimName = coloredName(dead);
-        String key;
-        if (killer.isPresent()) {
-            key = finalKill ? "final-kill" : "kill";
-        } else if (voidDeath) {
-            key = finalKill ? "void-final-death" : "void-death";
-        } else {
-            key = finalKill ? "final-death" : "death";
-        }
-        broadcast(messages.get(key, "victim", victimName, "killer", killer.map(this::coloredName).orElse("")));
+        broadcast(killer.isPresent()
+            ? announcer.kill(killer.get().id(), coloredName(killer.get()), dead.id(), victimName, finalKill, voidDeath)
+            : announcer.death(dead.id(), victimName, finalKill, voidDeath));
         if (finalKill && !voidDeath) {
             killer.map(credited -> Bukkit.getPlayer(credited.id())).ifPresent(killerPlayer -> service.finalKills().killed(killerPlayer, victim, online()));
         }
@@ -390,13 +390,13 @@ public final class RoomRuntime {
         Optional<BedFrame> frame = bedFrame(owner.get());
         removeBed(owner.get());
         frame.ifPresent(bed -> service.bedBreaks().broken(breaker, world, bed, online()));
-        broadcast(messages.get("bed-destroyed", "team-color", Colors.translate(owner.get().color()), "team", owner.get().displayName(), "player", coloredName(player)));
+        broadcast(announcer.bed(player.id(), coloredName(player), Colors.translate(owner.get().color()), owner.get().displayName()));
         breaker.sendMessage(messages.get("xp", "xp", String.valueOf(settings.xp().bedDestroyed())));
         player.addXp(settings.xp().bedDestroyed());
         for (RoomPlayer gone : lost) {
             room.credit(player, true);
             player.addXp(settings.xp().finalKill());
-            broadcast(messages.get("final-kill", "victim", coloredName(gone), "killer", coloredName(player)));
+            broadcast(announcer.kill(player.id(), coloredName(player), gone.id(), coloredName(gone), true, false));
         }
         checkEliminations();
         refreshScoreboards();
@@ -450,7 +450,9 @@ public final class RoomRuntime {
                         room.credit(credited, true);
                         credited.addXp(settings.xp().finalKill());
                     });
-                    broadcast(messages.get(killer.isPresent() ? "final-kill" : "final-death", "victim", coloredName(quitter), "killer", killer.map(this::coloredName).orElse("")));
+                    broadcast(killer.isPresent()
+                        ? announcer.kill(killer.get().id(), coloredName(killer.get()), quitter.id(), coloredName(quitter), true, false)
+                        : announcer.death(quitter.id(), coloredName(quitter), true, false));
                     checkEliminations();
                 }
                 refreshScoreboards();
@@ -665,6 +667,7 @@ public final class RoomRuntime {
         npcs.clear();
         forges.clear();
         List.copyOf(returnable).forEach(this::forgetReturn);
+        room.players().forEach(player -> service.killMessages().forget(player.id()));
         service.closed(this);
     }
 
@@ -717,7 +720,7 @@ public final class RoomRuntime {
                 }
             } else if (player.state() == State.DISCONNECTED && player.disconnectedUntil().isBefore(now)) {
                 room.eliminate(player);
-                broadcast(messages.get("final-death", "victim", coloredName(player)));
+                broadcast(announcer.death(player.id(), coloredName(player), true, false));
                 checkEliminations();
             }
         }
@@ -741,7 +744,7 @@ public final class RoomRuntime {
             case BEDS_DESTROYED -> {
                 for (TeamColor color : room.teams().keySet()) {
                     if (room.team(color).bedAlive()) {
-                        room.breakBed(color, null).forEach(lost -> broadcast(messages.get("final-death", "victim", coloredName(lost))));
+                        room.breakBed(color, null).forEach(lost -> broadcast(announcer.death(lost.id(), coloredName(lost), true, false)));
                         removeBed(color);
                     }
                 }

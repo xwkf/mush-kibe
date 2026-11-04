@@ -179,6 +179,7 @@ public final class BedWarsBootstrap {
         rooms.missions(missions, MissionRules.from(config.getConfigurationSection("missions")));
         rooms.preferences(preferences);
         rooms.teamColors(teamColors);
+        rooms.killMessages(cosmetics.messageSets(), cosmetics.killMessages());
         rooms.start();
         engine.track(rooms::activeMatches, () -> catalog.all().size());
         rooms.onBedBreak(cosmetics.bedBreaks());
@@ -193,7 +194,8 @@ public final class BedWarsBootstrap {
             quickBuys,
             settings.items(),
             new HotbarDelivery(hotbars, hotbarChoices),
-            hotbarEditor
+            hotbarEditor,
+            cosmetics.woods()
         );
         rooms.onNpcClick((player, click) -> shop.open(player, click.runtime(), click.upgrades()));
         publisher = new RoomPublisher(plugin, core, rooms, settings.lobbyGroup());

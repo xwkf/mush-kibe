@@ -2,7 +2,6 @@ package br.com.muxe.minigame.bedwars.cosmetic.menu;
 
 import br.com.muxe.core.bukkit.credit.CreditFormat;
 import br.com.muxe.core.bukkit.item.ItemBuilder;
-import br.com.muxe.minigame.bedwars.cosmetic.catalog.Availability;
 import br.com.muxe.minigame.bedwars.cosmetic.catalog.BedCosmetic;
 import br.com.muxe.minigame.bedwars.cosmetic.catalog.CosmeticCatalog;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenuSettings.CategoryMenu;
@@ -11,6 +10,7 @@ import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticState;
 import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticWallet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public final class CosmeticIcons {
 
@@ -27,23 +27,25 @@ public final class CosmeticIcons {
     }
 
     public ItemBuilder cosmetic(BedCosmetic cosmetic, CosmeticWallet wallet) {
+        return cosmetic(cosmetic, wallet, cosmetic.description());
+    }
+
+    public ItemBuilder cosmetic(BedCosmetic cosmetic, CosmeticWallet wallet, List<String> description) {
         LoreTexts texts = settings.lore();
-        CosmeticState state = wallet.state(cosmetic);
+        CosmeticState state = effective(wallet).state(cosmetic);
         boolean owned = state == CosmeticState.SELECTED || state == CosmeticState.OWNED;
-        List<String> lore = new ArrayList<>();
+        List<String> lore = new ArrayList<>(texts.header());
         if (cosmetic.stars() > 0) {
             lore.add(stars(cosmetic.stars()));
             lore.add(BLANK);
         }
-        if (!cosmetic.description().isEmpty()) {
-            lore.addAll(cosmetic.description());
+        if (!description.isEmpty()) {
+            lore.addAll(description);
             lore.add(BLANK);
         }
-        if (cosmetic.availability() == Availability.ULTRA) {
-            lore.add(texts.ultraTag());
-            lore.add(BLANK);
-        } else if (cosmetic.tag().isPresent()) {
-            lore.add(cosmetic.tag().get());
+        Optional<String> tag = tag(cosmetic, texts);
+        if (tag.isPresent()) {
+            lore.add(tag.get());
             lore.add(BLANK);
         }
         long price = state == CosmeticState.BUY ? catalog.price(cosmetic) : 0;
@@ -84,12 +86,18 @@ public final class CosmeticIcons {
     }
 
     public ItemBuilder selected(CosmeticWallet wallet) {
-        List<String> lore = switch (wallet.selected()) {
+        String id = selection(wallet);
+        Optional<BedCosmetic> cosmetic = catalog.find(id);
+        List<String> lore = switch (id) {
             case CosmeticWallet.RANDOM -> settings.random().lore();
             case CosmeticWallet.NONE -> List.of();
-            default -> catalog.find(wallet.selected()).map(BedCosmetic::description).orElse(List.of());
+            default -> cosmetic.map(BedCosmetic::description).filter(description -> !description.isEmpty()).orElse(settings.selected().item().lore());
         };
-        return settings.selected().item().replacing("name", selectedName(wallet)).lore(lore);
+        ItemBuilder item = settings.selected().item().replacing("name", selectedName(wallet));
+        if (settings.entries().selectedIcon() && cosmetic.isPresent()) {
+            return cosmetic.get().icon().showFlags().name(item.name()).lore(lore);
+        }
+        return item.lore(lore);
     }
 
     public ItemBuilder category(CosmeticWallet wallet) {
@@ -105,10 +113,11 @@ public final class CosmeticIcons {
     }
 
     public String selectedName(CosmeticWallet wallet) {
-        return switch (wallet.selected()) {
+        String id = selection(wallet);
+        return switch (id) {
             case CosmeticWallet.RANDOM -> plain(settings.random().name());
             case CosmeticWallet.NONE -> plain(settings.none().name());
-            default -> catalog.find(wallet.selected()).map(BedCosmetic::name).orElse(plain(settings.random().name()));
+            default -> catalog.find(id).map(BedCosmetic::name).orElse(plain(settings.random().name()));
         };
     }
 
@@ -117,6 +126,26 @@ public final class CosmeticIcons {
         String lit = texts.starsOn() + texts.star().repeat(count);
         int unlit = BedCosmetic.MAX_STARS - count;
         return unlit == 0 ? lit : lit + texts.starsOff() + texts.star().repeat(unlit);
+    }
+
+    private CosmeticWallet effective(CosmeticWallet wallet) {
+        String id = selection(wallet);
+        return id.equals(wallet.selected()) ? wallet : wallet.selecting(id);
+    }
+
+    private String selection(CosmeticWallet wallet) {
+        boolean missing = CosmeticWallet.RANDOM.equals(wallet.selected()) && !settings.entries().random()
+            || CosmeticWallet.NONE.equals(wallet.selected()) && !settings.entries().none();
+        return missing ? catalog.defaultId().orElse(wallet.selected()) : wallet.selected();
+    }
+
+    private static Optional<String> tag(BedCosmetic cosmetic, LoreTexts texts) {
+        return switch (cosmetic.availability()) {
+            case VIP -> Optional.of(texts.vipTag());
+            case ULTRA -> Optional.of(texts.ultraTag());
+            case ULTRA_PLUS -> Optional.of(texts.ultraPlusTag());
+            case DEFAULT, SALE, EVENT -> cosmetic.tag();
+        };
     }
 
     private static String plain(String colored) {

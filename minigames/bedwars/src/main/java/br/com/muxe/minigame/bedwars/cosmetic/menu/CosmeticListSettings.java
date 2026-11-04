@@ -17,7 +17,8 @@ public record CosmeticListSettings(
     MenuSlot next,
     MenuSlot selected,
     MenuSlot shop,
-    LoreTexts lore
+    LoreTexts lore,
+    Entries entries
 ) {
 
     public CosmeticListSettings {
@@ -36,7 +37,8 @@ public record CosmeticListSettings(
             MenuSlot.from(CosmeticMenuSettings.section(section, "next")),
             MenuSlot.from(CosmeticMenuSettings.section(section, "selected")),
             MenuSlot.from(CosmeticMenuSettings.section(section, "shop")),
-            LoreTexts.from(CosmeticMenuSettings.section(section, "lore"))
+            LoreTexts.from(CosmeticMenuSettings.section(section, "lore")),
+            Entries.DEFAULT.over(Optional.ofNullable(section.getConfigurationSection("entries")))
         );
     }
 
@@ -56,7 +58,8 @@ public record CosmeticListSettings(
             slot(own, "next").orElse(next),
             slot(own, "selected").orElse(selected),
             slot(own, "shop").orElse(shop),
-            Optional.ofNullable(own.getConfigurationSection("lore")).map(LoreTexts::from).orElse(lore)
+            Optional.ofNullable(own.getConfigurationSection("lore")).map(lore::over).orElse(lore),
+            entries.over(Optional.ofNullable(own.getConfigurationSection("entries")))
         );
     }
 
@@ -66,5 +69,39 @@ public record CosmeticListSettings(
 
     private static Optional<MenuSlot> slot(ConfigurationSection section, String path) {
         return Optional.ofNullable(section.getConfigurationSection(path)).map(MenuSlot::from);
+    }
+
+    public record Entries(boolean none, boolean random, int randomAfter, boolean ownedFirst, boolean previews, boolean selectedIcon) {
+
+        public static final Entries DEFAULT = new Entries(true, true, 0, true, true, false);
+
+        public Entries {
+            if (randomAfter < 0) {
+                throw new IllegalArgumentException("random-after cannot be negative");
+            }
+        }
+
+        Entries over(Optional<ConfigurationSection> section) {
+            if (section.isEmpty()) {
+                return this;
+            }
+            ConfigurationSection own = section.get();
+            return new Entries(
+                own.getBoolean("none", none),
+                own.getBoolean("random", random),
+                own.getInt("random-after", randomAfter),
+                own.getBoolean("owned-first", ownedFirst),
+                own.getBoolean("previews", previews),
+                own.getBoolean("selected-icon", selectedIcon)
+            );
+        }
+
+        public int entryIndex(int cosmeticIndex, int cosmetics) {
+            int before = none ? 1 : 0;
+            if (random && Math.min(randomAfter, cosmetics) <= cosmeticIndex) {
+                before++;
+            }
+            return cosmeticIndex + before;
+        }
     }
 }

@@ -10,6 +10,7 @@ import br.com.muxe.core.bukkit.nms.PlayerSkins;
 import br.com.muxe.core.bukkit.npc.NpcSkin;
 import br.com.muxe.core.bukkit.permission.command.Replies;
 import br.com.muxe.core.bukkit.permission.command.TargetLookup;
+import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.minigame.bedwars.cosmetic.BedBreakCosmetics;
 import br.com.muxe.minigame.bedwars.cosmetic.SceneCosmetics;
@@ -25,12 +26,17 @@ import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenuSettings;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenus.PreviewGate;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenus;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.MenuSlot;
+import br.com.muxe.minigame.bedwars.cosmetic.message.KillMessages;
+import br.com.muxe.minigame.bedwars.cosmetic.message.MessageDescriptions;
+import br.com.muxe.minigame.bedwars.cosmetic.message.MessagePreview;
+import br.com.muxe.minigame.bedwars.cosmetic.message.MessageSets;
 import br.com.muxe.minigame.bedwars.cosmetic.preview.BedPreview;
 import br.com.muxe.minigame.bedwars.cosmetic.preview.PreviewSettings;
 import br.com.muxe.minigame.bedwars.cosmetic.preview.ScenePreview;
 import br.com.muxe.minigame.bedwars.cosmetic.preview.ScenePreviewSettings;
 import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticProfileListener;
 import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticProfiles;
+import br.com.muxe.minigame.bedwars.cosmetic.wood.WoodTypes;
 import br.com.muxe.minigame.bedwars.hotbar.menu.HotbarEditor;
 import br.com.muxe.minigame.bedwars.preferences.menu.PreferencesMenu;
 import br.com.muxe.minigame.bedwars.teamcolor.menu.FavouriteColorMenu;
@@ -53,22 +59,31 @@ final class CosmeticFeatures {
     private static final String VICTORY_CATEGORY = "bedwars-vitoria";
     private static final String FINAL_KILL_CATEGORY = "bedwars-kill-final";
     private static final String AURA_CATEGORY = "bedwars-aura";
+    private static final String WOOD_CATEGORY = "bedwars-madeira";
+    private static final String KILL_MESSAGE_CATEGORY = "bedwars-mensagem-kill";
 
     private final CosmeticMenus menus;
     private final BedBreakCosmetics bedBreaks;
     private final SceneCosmetics victories;
     private final SceneCosmetics finalKills;
     private final AuraCosmetics auras;
+    private final MessageSets messageSets;
+    private final KillMessages killMessages;
+    private final WoodTypes woods;
     private final BedPreview preview;
     private final List<ScenePreview> scenePreviews;
 
-    private CosmeticFeatures(CosmeticMenus menus, BedBreakCosmetics bedBreaks, SceneCosmetics victories, SceneCosmetics finalKills, AuraCosmetics auras, BedPreview preview,
+    private CosmeticFeatures(CosmeticMenus menus, BedBreakCosmetics bedBreaks, SceneCosmetics victories, SceneCosmetics finalKills, AuraCosmetics auras, MessageSets messageSets,
+                             KillMessages killMessages, WoodTypes woods, BedPreview preview,
                              List<ScenePreview> scenePreviews) {
         this.menus = menus;
         this.bedBreaks = bedBreaks;
         this.victories = victories;
         this.finalKills = finalKills;
         this.auras = auras;
+        this.messageSets = messageSets;
+        this.killMessages = killMessages;
+        this.woods = woods;
         this.preview = preview;
         this.scenePreviews = List.copyOf(scenePreviews);
     }
@@ -93,6 +108,12 @@ final class CosmeticFeatures {
         CosmeticCatalog auraCatalog = CosmeticCatalog.from(section(section, CosmeticMenuSettings.AURA), "cosmetics", AURA_CATEGORY,
             id -> Auras.find(id).isPresent());
         CosmeticProfiles auraProfiles = profiles(plugin, core, auraCatalog);
+        MessageSets messageSets = MessageSets.from(section(config, "kill-messages"));
+        CosmeticCatalog killMessageCatalog = CosmeticCatalog.from(section(section, CosmeticMenuSettings.KILL_MESSAGE), "cosmetics", KILL_MESSAGE_CATEGORY,
+            id -> messageSets.find(id).isPresent());
+        CosmeticProfiles killMessageProfiles = profiles(plugin, core, killMessageCatalog);
+        CosmeticCatalog woodCatalog = CosmeticCatalog.from(section(section, CosmeticMenuSettings.WOOD_TYPE), "cosmetics", WOOD_CATEGORY, id -> true);
+        CosmeticProfiles woodProfiles = profiles(plugin, core, woodCatalog);
 
         BedPreview preview = null;
         List<ScenePreview> scenes = new ArrayList<>();
@@ -101,6 +122,8 @@ final class CosmeticFeatures {
         PreviewGate victoryGate = onlyLobby;
         PreviewGate killGate = onlyLobby;
         PreviewGate auraGate = onlyLobby;
+        PreviewGate withoutPreview = (player, cosmetic, back) -> {
+        };
         if (lobby) {
             BedPreview started = new BedPreview(plugin, core.buildMode(), BlockMask.start(plugin), PreviewSettings.from(section(config, "preview")), animations, messages);
             if (started.start()) {
@@ -141,7 +164,15 @@ final class CosmeticFeatures {
         if (menuSettings.categories().containsKey(CosmeticMenuSettings.AURA)) {
             categories.add(CosmeticCategory.of(menuSettings.category(CosmeticMenuSettings.AURA), auraCatalog, auraProfiles, auraGate));
         }
-        CosmeticMenus menus = new CosmeticMenus(menuSettings, categories, core.commands(), core.mainThread(), messages, plugin.getLogger());
+        if (menuSettings.categories().containsKey(CosmeticMenuSettings.WOOD_TYPE)) {
+            categories.add(CosmeticCategory.of(menuSettings.category(CosmeticMenuSettings.WOOD_TYPE), woodCatalog, woodProfiles, withoutPreview));
+        }
+        if (menuSettings.categories().containsKey(CosmeticMenuSettings.KILL_MESSAGE)) {
+            MessageDescriptions descriptions = new MessageDescriptions(messageSets, MessagePreview.from(section(section(config, "kill-messages"), "preview")));
+            categories.add(CosmeticCategory.of(menuSettings.category(CosmeticMenuSettings.KILL_MESSAGE), killMessageCatalog, killMessageProfiles, withoutPreview, descriptions));
+        }
+        CosmeticMenus menus = new CosmeticMenus(menuSettings, categories, core.commands(), core.mainThread(), messages, plugin.getLogger(),
+            player -> Colors.translate(core.permissions().display(player.getUniqueId()).color()) + player.getName());
         if (lobby) {
             BedWarsMenuItem item = new BedWarsMenuItem(plugin, MenuSlot.from(section(config, "lobby.menu-item")), menus);
             plugin.getServer().getPluginManager().registerEvents(item, plugin);
@@ -153,7 +184,8 @@ final class CosmeticFeatures {
             new CosmeticProfileListener(profiles, plugin.getLogger())));
         return new CosmeticFeatures(menus, new BedBreakCosmetics(animator, animations, catalog, profiles),
             new SceneCosmetics(animator, victoryAnimations, victoryCatalog, victoryProfiles), new SceneCosmetics(animator, killAnimations, killCatalog, killProfiles),
-            new AuraCosmetics(auraCatalog, auraProfiles::of), preview, scenes);
+            new AuraCosmetics(auraCatalog, auraProfiles::of), messageSets, new KillMessages(messageSets, killMessageCatalog, killMessageProfiles::of),
+            new WoodTypes(woodCatalog, woodProfiles::of), preview, scenes);
     }
 
     private static CosmeticProfiles profiles(JavaPlugin plugin, MuxeCore core, CosmeticCatalog catalog) {
@@ -166,6 +198,18 @@ final class CosmeticFeatures {
 
     BedBreakCosmetics bedBreaks() {
         return bedBreaks;
+    }
+
+    MessageSets messageSets() {
+        return messageSets;
+    }
+
+    KillMessages killMessages() {
+        return killMessages;
+    }
+
+    WoodTypes woods() {
+        return woods;
     }
 
     AuraCosmetics auras() {

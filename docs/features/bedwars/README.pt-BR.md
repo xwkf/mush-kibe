@@ -68,11 +68,11 @@ Quem chega num servidor de BedWars volta para a partida que deixou, se ainda pud
 - **Name tags e tab:** a letra do time em negrito e a cor (`A` em azul), pelo `MuxeCore.nameTags()`. O placar e o chat mostram a letra sem negrito. O tab mostra a vida dos jogadores vivos como um número amarelo à direita do nome.
 - **Vida abaixo do nome:** os jogadores vivos mostram a vida embaixo do nome (`20 ❤`, com o coração de `messages.health-below-name`), pela [vida abaixo do nome](../../architecture/game-engine/README.pt-BR.md#vida-abaixo-do-nome) da engine. Espectadores e quem espera renascer não mostram nada.
 - **Chat:** só a sala vê, com o time antes do formato de sempre: `[A] medalha tag nome`. Nos modos solo todos da sala leem. Nos modos com time, durante a partida, o chat chega só ao time do jogador; `/g <mensagem>` fala com a sala toda, com `&6[G]` antes (`messages.global-prefix`). Toda mensagem começa com o emblema do nível de quem fala (`[904⚝]`), também no lobby de BedWars; quem desligou `Mostrar nível no chat` aparece como `[0✫]` para todos. O chat roda fora da thread principal, então lê um retrato de cada sala (quem ouve quem e o prefixo do time) refeito na thread principal a cada segundo e sempre que alguém entra ou sai.
-- **Camas:** quebrar a cama de um inimigo manda `CAMA DESTRUÍDA` para todos e `+100 XP` para quem quebrou. Um integrante do time que estava fora é eliminado, e a kill final vai para quem quebrou a cama. Ninguém quebra a própria cama.
+- **Camas:** quebrar a cama de um inimigo manda `CAMA DESTRUÍDA` (no [conjunto de mensagens](#mensagens-de-kill) de quem quebrou) para todos e `+100 XP` para quem quebrou. Um integrante do time que estava fora é eliminado, e a kill final vai para quem quebrou a cama. Ninguém quebra a própria cama.
 - **Mortes:**
   - A kill vai para o último inimigo que bateu nos últimos 15 segundos. Uma morte final sem golpe vai para quem quebrou a cama.
   - Quem mata recebe o ferro, ouro, diamantes e esmeraldas da vítima, com linhas como `+28 Ferros` e `+12 XP` (kill) ou `+60 XP` (kill final).
-  - Cair abaixo da altura do void da arena mata na hora (`morreu no void`).
+  - Cair abaixo da altura do void da arena mata na hora (`morreu no void`). Os textos de kill, morte e kill final vêm dos [conjuntos de mensagens de kill](#mensagens-de-kill), o `Padrão` a menos que o jogador escolha outro.
   - Com cama, o jogador assiste como espectador e renasce depois de 5 segundos, protegido por 4 segundos, com a armadura comprada e a picareta e o machado um nível abaixo. Sem cama, o jogador sai (`KILL FINAL!`), e o último jogador do time a sair elimina o time (`TIME ELIMINADO`).
 - **Blocos:** só blocos colocados durante a partida podem ser quebrados, além do mato do mapa (grama alta, plantas duplas e arbustos secos), que não dropa nada. Nada pode ser colocado perto dos spawns (5 blocos), dos NPCs (1) e dos geradores (1), nem acima do limite de construção da arena (`Você não pode colocar blocos aqui.`). Explosões só quebram blocos colocados, nunca vidro. A TNT acende sozinha e a bola de fogo é lançada com o botão direito.
 - **Geradores:** o ferro da ilha cai a cada 0,9 s, tantos lingotes quanto jogadores por time (até 4), o ouro a cada 7 s, cada um com um limite de itens no chão num raio de 3 blocos. Diamante e esmeralda mostram nível e contagem num holograma e aceleram aos 6, 12, 18 e 24 minutos. Ferro e ouro coletados são copiados para os companheiros a até 2 blocos, que ouvem o som de coleta.
@@ -145,7 +145,7 @@ O jogador escolhe uma animação que toca quando ele quebra uma cama inimiga. Os
 - **Menu do Bed Wars** (esmeralda): na sala de espera dos servidores de BedWars e no slot 3 da hotbar do lobby de BedWars. Cinco linhas, como no export de referência: `Missões` (slot 11), `Cosméticos` (baiacu, slot 13), `Lista de Níveis` (slot 15, com as insígnias de nível na descrição), `Compra rápida` (29), `Editor de hotbar` (31) e `Preferências` (33). `Editor de hotbar` abre o editor de hotbar descrito na seção Loja.
 - **Preferências** (slot 33) abre `Preferências do Bed Wars` (4 linhas): `Mostrar nível no chat` (slot 11), `Mostrar temporizador da TNT` (13) e `Guardar itens clicando no baú` (15: `Ativado`, `Sem hologramas`, `Desativado`), cada um com um corante embaixo mostrando o valor (verde-limão ligado, cinza desligado, azul-claro sem hologramas). Clicar em qualquer um troca o valor; `Voltar` volta ao menu do Bed Wars. Elas ficam salvas em `bedwars.preferences` e são carregadas em todo servidor de BedWars.
 - **Compra rápida** (slot 29 do menu do Bed Wars) abre `Editando compra rápida...` com as 21 posições do jogador. Botão esquerdo troca o item, botão direito tira, `Voltar` volta para o menu do Bed Wars e `Importar compra rápida` abre uma bigorna com `Insira o usuário`: o nick digitado e retirado do slot de resultado abre `Importando compra rápida...` com a compra rápida desse jogador (a padrão se ele nunca mudou, todas as posições vazias se o jogador não existe), `Cancelar` (volta ao editor) e `Confirmar`, que copia ela para a do jogador. Trocar abre `Selecionando item... (1/2)`, todos os itens que a loja vende na ordem das categorias, 21 por página; clicar num deles coloca ele naquela posição. Picareta e machado aparecem como `Picareta` e `Machado` de diamante, e `editor-name`, `editor-material` e `editor-description` de um item da loja mudam como ele aparece aqui. As mudanças são salvas como as feitas numa partida.
-- **Cosméticos do Bed Wars**: a categoria **Destruição de Cama** mostra `possuídos/total (porcentagem%)` e o cosmético selecionado. **Cor preferida** (slot 35) abre o menu de cor de time preferida descrito em Cor preferida. As outras categorias e o botão **Loja** respondem "em breve".
+- **Cosméticos do Bed Wars**: a categoria **Destruição de Cama** mostra `possuídos/total (porcentagem%)` e o cosmético selecionado. **Cor preferida** (slot 35) abre o menu de cor de time preferida descrito em Cor preferida. **Tipos de madeira** e **Mensagens de kill** (slots 29 e 31) abrem as listas descritas em Tipos de madeira e Mensagens de kill. As outras categorias e o botão **Loja** respondem "em breve".
 - **Destruição de Cama (página/páginas)**: 28 itens por página. A página 1 começa com **Nenhuma** e **Aleatório** (o padrão). O ícone do **Aleatório** troca a cada 10 ticks pelos ícones dos cosméticos que ele pode sortear (os possuídos com animação), mantendo o nome e a descrição; sem nenhum, ele fica com o próprio ícone. Primeiro vêm os cosméticos possuídos em ordem alfabética, depois todos os outros em ordem alfabética (`CosmeticOrder`, a regra de todo menu de cosméticos da rede).
   - Possuído: botão esquerdo seleciona, botão direito visualiza. O selecionado brilha e mostra `Já selecionado.`
   - À venda: botão esquerdo compra com créditos (preço por estrelas: 750, 900, 1.300, 1.750, 2.000), botão direito visualiza. Quando faltam créditos, a lore mostra `Faltam <n> créditos!`.
@@ -207,6 +207,55 @@ O jogador escolhe uma animação que toca quando ele quebra uma cama inimiga. Os
 - **Padrão** (`AuraPattern`, `AuraTrails`): a cada tick, por jogador com aura, uma partícula (quantidade 0, offsets 0, velocidade 1, longa distância). Se o jogador andou na horizontal desde o tick anterior, ela aparece nos pés, em `(x, y + 0.1, z)`. Senão é um ponto de uma hélice em volta do jogador, para um contador `k` que cresce 1 a cada tick, andando ou não (começando em 0 quando a aura passa a aparecer): ângulo `18° · k`, deslocamento `x = sin(ângulo)`, `z = -cos(ângulo)` (raio 1) e `y = 0.1 + ((k + 15) mod 60) / 30`. Assim ela sobe 1/30 de bloco por tick de 0,1 até cerca de 2,07 em três voltas (20 ticks por volta) e recomeça a cada 60 ticks. Só o movimento horizontal conta: pular ou cair parado mantém a hélice.
 - **Aleatório:** `Aleatório` sorteia uma aura possuída por jogador e por partida, no primeiro tick em que o jogador está jogando, e a mantém até ele sair da partida (`AuraCosmetics`, `AuraAssignments`); a partida seguinte sorteia de novo. `Nenhuma` não mostra nada, e uma aura escolhida que o jogador não possui nunca é usada.
 - **Prévia:** o botão direito abre o mundo `aura-preview.world` (`previa_aura`, que precisa estar na raiz do servidor do lobby de BedWars; sem ele a prévia responde `preview-only-lobby`). O jogador fica em `aura-preview.spawn` (10.5 19 21.5, yaw 0) com a cama `Voltar ao Lobby` no slot 8 e vê aquela aura em si mesmo, só em si mesmo, enquanto anda. Não há contagem nem título. Termina na cama, em `aura-preview.timeout` (`60s`) ou quando o jogador sai, e ele volta de onde estava e a lista de auras abre de novo. Reaproveita a prévia de cenas (`ScenePreview`) com uma `AuraAnimation` por aura.
+
+### Mensagens de kill
+
+`Mensagens de kill` (slot 31 de `Cosméticos do Bed Wars`, papel) lista os conjuntos de mensagens do chat em `Mensagens de kill ({page}/{pages})`, salvos na categoria `bedwars-mensagem-kill`. Os slots seguem a gravação e a ordem é a do catálogo, não a de possuídos primeiro: `Padrão` (papel, slot 10), `Aleatório` (name tag, slot 11) e `Estatístico` (livro, slot 12), depois `Voltar` (slot 48, `Para Cosméticos do Bed Wars`) e `Selecionado: <nome>` (slot 49). Não existe `Nenhuma`: quem não selecionou nada usa o `Padrão`, que todos possuem e ninguém compra (`availability: DEFAULT`). As listas não têm botão direito: a lore de cada conjunto traz `Prévia:` com linhas de exemplo e `Botão esquerdo: Selecionar`.
+
+| Conjunto | Ícone | Disponibilidade |
+|---|---|---|
+| `Padrão` (`padrao`) | `PAPER` | todos |
+| `Estatístico` (`estatistico`) | `BOOK` | premiação de torneio (`availability: EVENT`, `&6Premiação de torneio`, mostrado como `Indisponível.` para quem não possui) |
+
+O conjunto selecionado substitui as mensagens de chat da partida (`KillAnnouncer`, chamado pelo `RoomRuntime`):
+
+| Evento | De quem é o conjunto | Tipos de mensagem |
+|---|---|---|
+| Kill | De quem matou | `kill`, `final-kill`, `void-kill`, `void-final-kill` |
+| Morte sem autor (também o jogador eliminado por estar fora ou quando todas as camas são destruídas) | De quem morreu | `death`, `final-death`, `void-death`, `void-final-death` |
+| Cama destruída | De quem quebrou | `bed`, depois do `kill-messages.bed-prefix` (`CAMA DESTRUÍDA »`) que todos os conjuntos compartilham |
+
+Um jogador que sai com a cama já destruída conta como morte final (ou kill final de quem o acertou por último). As kills finais dos jogadores que uma cama quebrada elimina são kills finais de quem quebrou, com o conjunto dele.
+
+- **Textos** ficam em `kill-messages.sets.<id>.messages`, por tipo, com `{victim}`, `{killer}`, `{player}`, `{team-color}`, `{team}` e `{count}` (o contador, `17.089`, com os milhares separados por ponto). `{br}` marca onde a `Prévia:` quebra uma linha longa em duas (no jogo ele some). Um conjunto só escreve os tipos que muda: um tipo `void-*` ausente usa o tipo normal (o `Estatístico` não tem variações de void). O conjunto padrão (`kill-messages.default`, `padrao`) precisa ter todos e nenhum `{count}`. Toda mensagem começa com `kill-messages.line-color` (`&7`), igual no jogo e na prévia.
+- **`Padrão`** mantém os textos que o jogo já tinha, e a kill no void (`morreu no void para <killer>`) é a única nova, já que uma morte no void com autor antes aparecia como kill normal. Os nomes mantêm a cor do time.
+- **`Estatístico`** conta com os totais de BedWars do jogador na vida inteira, todos os modos juntos, incluindo o próprio evento: `Fulano foi a 17.089ª kill de tadeu.`, `Fulano foi a 19.215ª kill final de tadeu.`, `tadeu morreu pela 12.538ª vez.`, `tadeu teve sua 2.537ª morte final.`, `A Cama do Vermelho foi a 11.938ª cama destruída de tadeu.` O número fica em `&b` e termina com `ª`. Uma kill soma também no contador de mortes da vítima. Os totais (`kills`, `finalKills`, `deaths`, `finalDeaths`, `bedsBroken` de `bedwars.player_stats`, geral) são carregados quando o jogador entra na sala, junto com o nível (`FindPlayerStatsQuery`), e o `LifetimeTally` soma o que acontece na partida. Se ainda não foram carregados, aquela mensagem sai com o `Padrão`.
+- **Aleatório:** o `Aleatório` sorteia um conjunto possuído por jogador e por partida, na primeira vez que uma mensagem precisa dele, e o mantém até a partida ser encerrada (`KillMessages`, `MessageAssignments`). Um conjunto selecionado que o jogador não possui nunca é usado: usa-se o `Padrão`.
+- **`Prévia:`** é montada com os textos acima, com o nome de quem vê na cor da tag dele (o `§8tadeu` da gravação), uma vítima `Fulano` em vermelho e o time `Vermelho` (`kill-messages.preview`, `MessagePreview`). O Padrão mostra `kill`, `void-kill`, `death`, `void-death` e `bed`; o Estatístico mostra `kill`, `final-kill`, `death`, `final-death` e `bed` com os contadores de exemplo de `kill-messages.preview.counts`. Um teste confere que cada linha da prévia, juntada, é exatamente o que o jogo envia.
+- O `/cosmeticos dar` só dá cosméticos de destruição de cama, então por enquanto o `Estatístico` é possuído por quem tem `muxe.cosmetic.all`.
+
+### Tipos de madeira
+
+`Tipos de madeira` (slot 29 de `Cosméticos do Bed Wars`, tábuas) abre `Tipos de madeira ({page}/{pages})`, salvo na categoria `bedwars-madeira`. Não tem `Nenhuma` nem `Aleatório`, e a ordem é a do catálogo. O item `madeira` da loja (16 tábuas por 4 de ouro) é entregue com a madeira selecionada no lugar do carvalho; a quantidade, o preço, o nome (`Madeira`) e o lugar na loja e na compra rápida não mudam, e ele vai para a hotbar como qualquer compra (`HotbarDelivery`, que só olha o id do item). Colocar e quebrar funcionam como em qualquer bloco colocado na partida.
+
+| Slot | Nome | Item | Incluso em |
+|---|---|---|---|
+| 10 | `Madeira de carvalho` (padrão) | `WOOD:0` | todos |
+| 11 | `Madeira de pinheiro` | `WOOD:1` | `VIP` |
+| 12 | `Madeira de eucalipto` | `WOOD:2` | `VIP` |
+| 13 | `Madeira da selva` | `WOOD:3` | `ULTRA` |
+| 14 | `Madeira de acácia` | `WOOD:4` | `ULTRA` |
+| 15 | `Madeira de carvalho escuro` | `WOOD:5` | `ULTRA+` |
+| 16 | `Tronco de carvalho` | `LOG:0` | `ULTRA+` |
+| 19 | `Tronco de pinheiro` | `LOG:1` | ninguém ainda |
+| 20 | `Tronco de eucalipto` | `LOG:2` | premiação de torneio |
+| 21 | `Tronco de árvore da selva` | `LOG:3` | ninguém ainda |
+| 22 | `Tronco de acácia` | `LOG_2:0` | ninguém ainda |
+| 23 | `Tronco de carvalho escuro` | `LOG_2:1` | ninguém ainda |
+
+- **Lore:** `Incluso no VIP` / `ULTRA` / `ULTRA+` nas madeiras de rank (`lore.vip-tag`, `lore.ultra-tag`, `lore.ultra-plus-tag`), `Premiação de torneio` no prêmio, depois `Botão esquerdo: Selecionar`, `Já selecionado.` ou `Indisponível.`. Os nomes possuídos ficam verdes e os bloqueados vermelhos. A madeira selecionada brilha e `Selecionado: <nome>` (slot 49) mostra a própria madeira, com `&7` de lore.
+- **Ranks:** `Incluso no X` significa que todo jogador desse rank ou acima possui (`CosmeticAccess`): `muxe.cosmetic.vip` para o `VIP`, `muxe.cosmetic.ultra` para o `ULTRA` e `muxe.cosmetic.ultraplus` para o `ULTRA+` (cada nível cobre os de baixo), e `muxe.cosmetic.all` possui tudo. A permissão vem dos grupos, então dê `muxe.cosmetic.vip` ao grupo `vip` (os ranks acima herdam) e `muxe.cosmetic.ultraplus` a quem tem Ultra+, que ainda não é um grupo próprio. O `muxe.cosmetic.ultra` já é dado ao `ultra`. As madeiras marcadas `ninguém ainda` ou `premiação de torneio` só são possuídas por `muxe.cosmetic.all` ou por uma concessão (`core.owned_cosmetics`).
+- **Alternativa:** a madeira que a loja entrega é a selecionada se o jogador ainda a possui, e carvalho caso contrário (rank que expirou, madeira nunca possuída, nada selecionado ou cosméticos ainda não carregados). A seleção é lida quando o jogador entra no servidor, então uma troca feita no lobby vale na próxima partida.
 
 ### Lobby do BedWars
 
@@ -275,7 +324,9 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 | `muxe.cosmetics.admin` | op | Permite o `/cosmeticos dar`. |
 | `muxe.bedwars.map-select` | op | Escolher o mapa nos menus dos modos (VIPs). Dê aos grupos VIP. |
 | `muxe.cosmetic.all` | op | Possui todos os cosméticos do BedWars. |
-| `muxe.cosmetic.ultra` | false | Possui os cosméticos `Incluso no ULTRA`. O grupo `ultra` tem essa permissão (migração V14). |
+| `muxe.cosmetic.vip` | false | Possui os cosméticos `Incluso no VIP` (as madeiras de pinheiro e eucalipto). Dê ao grupo `vip`; os grupos acima herdam. |
+| `muxe.cosmetic.ultra` | false | Possui os cosméticos `Incluso no ULTRA` e os do VIP. O grupo `ultra` tem essa permissão (migração V14). |
+| `muxe.cosmetic.ultraplus` | false | Possui os cosméticos `Incluso no ULTRA+` e os do ULTRA e do VIP. O Ultra+ ainda não é um grupo, então dê a esses jogadores diretamente. |
 
 ## Configuração
 
@@ -321,6 +372,11 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 | `victory-preview.*` | `previa_efeito_de_vitoria`, -19.5 27 68.5, `3...` `2...` `1...` a cada 20 ticks, `60s`, `1s` | Mundo, spawn, títulos da contagem e ticks entre eles, tempo limite, espera depois do efeito, item de voltar e scoreboard da prévia de vitória. |
 | `cosmetics.aura.*` | `bedwars-aura`; 750, 900, 1300, 1750, 2000; `liga-mestre` e `liga-diamante` | Categoria, preços por estrelas e as duas auras, com os mesmos campos dos de cama. O id precisa bater com uma aura de `Auras` para ter efeito. |
 | `cosmetics.menus.categories.aura`, `cosmetics.menus.aura.*` | slot 33, esmeralda; `Aura ({page}/{pages})`, `Aleatório` como name tag | O botão da categoria e o que a lista de auras muda (o resto segue a lista de destruição de cama). |
+| `kill-messages.*` | `default: padrao`, `line-color: &7`, `bed-prefix`, `preview`, os conjuntos `padrao` e `estatistico` | Os conjuntos de mensagens do chat: o conjunto padrão, a cor que começa toda mensagem, o prefixo da mensagem de cama, o exemplo da `Prévia:` (`title`, `victim`, `team-color`, `team`, `counts` por tipo) e `sets.<id>` com os tipos da `preview` e as `messages` por tipo (`kill`, `final-kill`, `void-kill`, `void-final-kill`, `death`, `final-death`, `void-death`, `void-final-death`, `bed`). `{br}` quebra a linha da prévia. Substituem os antigos `messages.kill`, `final-kill`, `death`, `void-*` e `bed-destroyed`. |
+| `cosmetics.kill-message.*` | `bedwars-mensagem-kill`; `default: padrao`; `padrao` e `estatistico` | Categoria, cosmético padrão e os conjuntos, com os mesmos campos dos de cama (`stars: 0`, sem preços). O id precisa ser de um conjunto de `kill-messages.sets`. |
+| `cosmetics.wood-type.*` | `bedwars-madeira`; `default: carvalho`; as 12 madeiras | Categoria, cosmético padrão e madeiras. O `icon` (`WOOD` ou `LOG`, `LOG_2` e `data`) é o item que a loja entrega; `availability` é `DEFAULT`, `VIP`, `ULTRA`, `ULTRA_PLUS` ou `EVENT`. |
+| `cosmetics.menus.categories.kill-message`, `cosmetics.menus.categories.wood-type` | slot 31 papel; slot 29 tábuas | Os botões das categorias. |
+| `cosmetics.menus.kill-message.*`, `cosmetics.menus.wood-type.*` | títulos, `entries`, `lore`, `selected` | As substituições das listas. `entries` tem `none` e `random` (mostrar essas entradas), `random-after` (cosméticos antes do `Aleatório`), `owned-first` (possuídos primeiro, como nas outras listas, ou a ordem do catálogo), `previews` (botão direito) e `selected-icon` (o item selecionado mostra o cosmético). `lore.header` começa a lore de cada cosmético, `lore.vip-tag`, `lore.ultra-tag` e `lore.ultra-plus-tag` são as linhas de rank. As chaves de lore omitidas são herdadas da lista de destruição de cama. |
 | `aura-preview.*` | `previa_aura`, 10.5 19 21.5 yaw 0, `60s`, `1s` | Mundo, spawn, tempo limite, item de voltar e scoreboard da prévia de aura. Não tem contagem. |
 | `preview.world` | `previa_quebra_de_cama` | Pasta do mundo da prévia na raiz do servidor. Sem ela a prévia fica desligada. |
 | `preview.spawn`, `preview.bed` | 6.5 11 21.5; pé 6 11 17, cabeceira 6 16 | Onde o jogador fica e a cama que ele quebra. |
@@ -354,7 +410,7 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 | Arquivo | O que guarda |
 |---|---|
 | `core.arenas` (jogo `bedwars`) | Uma linha por arena: modo, `ready`, a definição (nome de exibição, times, pontos e alturas, em YAML) e o mapa no [formato de mapa da Muxe](../../decisions/0009-own-map-format-and-match-cells.pt-BR.md). Migração `V16__create_arenas.sql`. Compartilhada por todos os servidores de BedWars. |
-| `core.owned_cosmetics`, `core.selected_cosmetics` | Cosméticos possuídos e selecionados, categoria `bedwars-cama`. Veja [Créditos e cosméticos](../credits/README.pt-BR.md). |
+| `core.owned_cosmetics`, `core.selected_cosmetics` | Cosméticos possuídos e selecionados, categoria `bedwars-cama` (e `bedwars-vitoria`, `bedwars-kill-final`, `bedwars-aura`, `bedwars-mensagem-kill` e `bedwars-madeira`). Veja [Créditos e cosméticos](../credits/README.pt-BR.md). |
 | `bedwars.player_stats` | Uma linha por jogador, modo (e `geral`), período (`diario`, `semanal`, `mensal`, `total`) e início do período, com todos os contadores e o XP. Migração `V1__create_player_stats_and_favourite_maps.sql`. |
 | `bedwars.recorded_matches` | O id de cada partida já salva, reivindicado na mesma transação das estatísticas, então uma partida salva duas vezes conta uma vez só. Migração `V2__create_recorded_matches.sql`. |
 | `bedwars.favourite_maps` | Arenas favoritas de cada jogador. |
@@ -388,6 +444,8 @@ Comandos e consultas em `br.com.muxe.minigame.bedwars.stats`: `RecordMatchComman
 - [x] O menu de cor preferida, o armazenamento e a divisão dos times pela cor preferida seguem as regras acima (`FavouriteColorMenuTest`, `FavouriteColorHandlersTest`, `PostgresFavouriteColorRepositoryIntegrationTest`, `TeamAssignerTest`, `RoomTest`).
 - [x] As 13 animações terminam sem deixar nada e seguem os tempos gravados (`BedAnimationsTest`).
 - [x] Estados, preços, ordem e lore dos cosméticos seguem os exports (`CosmeticCatalogTest`).
+- [x] Os conjuntos de mensagens de kill, as prévias gravadas, de quem é o conjunto usado, os contadores da vida inteira, a alternativa e o sorteio seguem as regras acima (`MessageSetsTest`, `KillAnnouncerTest`, `KillMessagesTest`, `LifetimeTallyTest`, `OrdinalTest`, `KillMessageCosmeticTest`).
+- [x] O menu de tipos de madeira, os cosméticos por rank e a madeira que a loja entrega seguem as regras acima (`WoodTypeCosmeticTest`, `WoodTypesTest`, `WoodDeliveryTest`, `CosmeticAccessTest`, `CosmeticListSettingsTest`).
 - [x] Mortes, assistências, camas perdidas, XP e resultados das partidas são contados (`RoomStatsTest`); períodos, contadores, tops e favoritos são salvos (`StatsHandlersTest`, `StatCountersTest`, `StatsPeriodTest`, `PostgresBedWarsStatsRepositoryIntegrationTest`).
 - [x] O matchmaking escolhe a sala aberta mais cheia ou pede uma ao servidor mais vazio (`MatchmakerTest`).
 - [x] NPCs, menus, tops, o seletor de modo, insígnias de nível, o NPC de estatísticas e a scoreboard do lobby seguem os exports e o anexo 1 (`LobbyViewTest`, `LobbyFormatTest`).
@@ -395,6 +453,7 @@ Comandos e consultas em `br.com.muxe.minigame.bedwars.stats`: `RecordMatchComman
 - [ ] O editor de hotbar e a colocação das compras conferidos no jogo.
 - [ ] NPCs, menus, matchmaking, escolha de mapa e tops do lobby conferidos no jogo.
 - [ ] Todas as animações e a prévia conferidas no jogo.
+- [ ] As mensagens de kill numa partida de verdade e os tipos de madeira na loja conferidos no jogo.
 
 ## Falhas e recuperação
 
@@ -407,5 +466,6 @@ Se o Muxe-Core não estiver habilitado, o plugin se desabilita.
 - O lobby só conhece as salas dos servidores que publicaram nos últimos 10 segundos; a lista de um servidor que para é esquecida depois disso.
 - Os outros itens especiais da loja, os dragões e os títulos de vitória e derrota ainda não entraram.
 - Um reinício ou crash encerra todas as partidas do servidor sem compensação.
-- 17 cosméticos de destruição de cama ainda não têm animação. As outras categorias de cosméticos e a loja de cosméticos ainda não existem. A cor preferida é lida quando o jogador entra no servidor, então uma escolha feita em outro servidor só é vista depois que o jogador entrar de novo.
+- 17 cosméticos de destruição de cama ainda não têm animação. `Skin dos Vendedores`, `Rastros de Projétil` e a loja de cosméticos ainda não existem. A cor preferida é lida quando o jogador entra no servidor, então uma escolha feita em outro servidor só é vista depois que o jogador entrar de novo.
 - Uma compra atualiza o menu na hora, mas outro servidor só vê quando o jogador entra nele de novo.
+- Os contadores do `Estatístico` são os totais lidos quando o jogador entra na sala mais o que acontece naquela partida; não são atualizados durante ela. O conjunto de mensagens e a madeira selecionados são lidos quando o jogador entra no servidor, como os outros cosméticos.

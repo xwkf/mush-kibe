@@ -1,7 +1,6 @@
 package br.com.muxe.minigame.bedwars.cosmetic.profile;
 
 import br.com.muxe.core.common.cosmetic.domain.CosmeticOrder;
-import br.com.muxe.minigame.bedwars.cosmetic.catalog.Availability;
 import br.com.muxe.minigame.bedwars.cosmetic.catalog.BedCosmetic;
 import br.com.muxe.minigame.bedwars.cosmetic.catalog.CosmeticCatalog;
 import java.util.HashSet;
@@ -10,15 +9,19 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.random.RandomGenerator;
 
-public record CosmeticWallet(Set<String> owned, String selected, long credits, boolean ultra) {
+public record CosmeticWallet(Set<String> owned, String selected, long credits, CosmeticAccess access) {
 
     public static final String RANDOM = "aleatorio";
     public static final String NONE = "nenhuma";
-    public static final CosmeticWallet EMPTY = new CosmeticWallet(Set.of(), RANDOM, 0, false);
+    public static final CosmeticWallet EMPTY = new CosmeticWallet(Set.of(), RANDOM, 0, CosmeticAccess.REGULAR);
 
     public CosmeticWallet {
         owned = Set.copyOf(owned);
         selected = selected == null ? RANDOM : selected;
+    }
+
+    public CosmeticWallet(Set<String> owned, String selected, long credits, boolean ultra) {
+        this(owned, selected, credits, ultra ? CosmeticAccess.ULTRA : CosmeticAccess.REGULAR);
     }
 
     public static CosmeticWallet loaded(Set<String> owned, String selected, long credits, CosmeticAccess access, CosmeticCatalog catalog) {
@@ -26,11 +29,11 @@ public record CosmeticWallet(Set<String> owned, String selected, long credits, b
         if (access == CosmeticAccess.ALL) {
             catalog.all().forEach(cosmetic -> all.add(cosmetic.id()));
         }
-        return new CosmeticWallet(all, selected, credits, access != CosmeticAccess.REGULAR);
+        return new CosmeticWallet(all, selected, credits, access);
     }
 
     public boolean owns(BedCosmetic cosmetic) {
-        return owned.contains(cosmetic.id()) || cosmetic.availability() == Availability.ULTRA && ultra;
+        return owned.contains(cosmetic.id()) || access.covers(cosmetic.availability());
     }
 
     public boolean usable(BedCosmetic cosmetic) {
@@ -70,17 +73,26 @@ public record CosmeticWallet(Set<String> owned, String selected, long credits, b
         return Optional.of(usable.get(random.nextInt(usable.size())).id());
     }
 
+    public Optional<BedCosmetic> chosen(CosmeticCatalog catalog) {
+        return catalog.find(selected).filter(this::usable).or(() -> catalog.defaultCosmetic().filter(this::usable));
+    }
+
+    public Optional<BedCosmetic> drawn(CosmeticCatalog catalog, RandomGenerator random) {
+        List<BedCosmetic> usable = catalog.all().stream().filter(this::usable).toList();
+        return usable.isEmpty() ? Optional.empty() : Optional.of(usable.get(random.nextInt(usable.size())));
+    }
+
     public CosmeticWallet selecting(String id) {
-        return new CosmeticWallet(owned, id, credits, ultra);
+        return new CosmeticWallet(owned, id, credits, access);
     }
 
     public CosmeticWallet withCredits(long balance) {
-        return new CosmeticWallet(owned, selected, balance, ultra);
+        return new CosmeticWallet(owned, selected, balance, access);
     }
 
     public CosmeticWallet buying(String id, long balance) {
         Set<String> more = new HashSet<>(owned);
         more.add(id);
-        return new CosmeticWallet(more, selected, balance, ultra);
+        return new CosmeticWallet(more, selected, balance, access);
     }
 }

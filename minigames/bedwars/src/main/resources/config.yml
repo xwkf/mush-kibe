@@ -514,15 +514,8 @@ messages:
   room-left: "{player} &esaiu da sala."
   health-below-name: "&c❤"
   level-up: "&b&lPARABÉNS &7Você subiu para o nível {level}&7!"
-  bed-destroyed: "&f&lCAMA DESTRUÍDA &f» &7A {team-color}Cama do {team} &7foi destruída por {player}&7."
   own-bed: "&cVocê não pode quebrar a sua própria cama."
   xp: "&b+{xp} XP"
-  kill: "{victim} &7morreu para {killer}&7."
-  final-kill: "{victim} &7morreu para {killer}&7. &b&lKILL FINAL!"
-  void-death: "{victim} &7morreu no void."
-  void-final-death: "{victim} &7morreu no void. &b&lKILL FINAL!"
-  death: "{victim} &7morreu."
-  final-death: "{victim} &7morreu. &b&lKILL FINAL!"
   loot-iron-one: "&f+1 Ferro"
   loot-iron-many: "&f+{amount} Ferros"
   loot-gold-one: "&6+1 Ouro"
@@ -590,6 +583,53 @@ messages:
   cosmetic-already-had: "&f{player} &cjá possui &f{name}&c."
   cosmetic-unknown: "&cCosmético desconhecido: &f{id}&c."
   player-unknown: "&cO jogador &f{player} &cnunca entrou no servidor."
+
+kill-messages:
+  default: padrao
+  line-color: "&7"
+  bed-prefix: "&f&lCAMA DESTRUÍDA &f» "
+  preview:
+    title: "&7Prévia:"
+    victim: "&cFulano"
+    team-color: "&c"
+    team: "Vermelho"
+    counts:
+      kill: 17089
+      final-kill: 19215
+      death: 12538
+      final-death: 2537
+      bed: 11938
+  sets:
+    padrao:
+      preview:
+        - kill
+        - void-kill
+        - death
+        - void-death
+        - bed
+      messages:
+        kill: "{victim} &7morreu para {killer}&7."
+        final-kill: "{victim} &7morreu para {killer}&7. &b&lKILL FINAL!"
+        void-kill: "{victim} &7morreu no void para {killer}&7."
+        void-final-kill: "{victim} &7morreu no void para {killer}&7. &b&lKILL FINAL!"
+        death: "{victim} &7morreu&7."
+        final-death: "{victim} &7morreu&7. &b&lKILL FINAL!"
+        void-death: "{victim} &7morreu no void&7."
+        void-final-death: "{victim} &7morreu no void&7. &b&lKILL FINAL!"
+        bed: "A {team-color}Cama do {team} &7foi destruída {br}por {player}&7."
+    estatistico:
+      preview:
+        - kill
+        - final-kill
+        - death
+        - final-death
+        - bed
+      messages:
+        kill: "{victim} &7foi a &b{count}ª&7 kill de {killer}&7."
+        final-kill: "{victim} &7foi a &b{count}ª&7 kill final {br}de {killer}&7."
+        death: "{victim} &7morreu pela &b{count}ª&7 vez&7."
+        final-death: "{victim} &7teve sua &b{count}ª&7 morte final&7."
+        bed: "A {team-color}Cama do {team} &7foi a &b{count}ª&7 {br}cama destruída de {player}&7."
 
 preferences:
   title: "Preferências do Bed Wars"
@@ -2440,6 +2480,112 @@ cosmetics:
         stars: 5
         tag: "&6Premiação de torneio"
         availability: EVENT
+  kill-message:
+    category: bedwars-mensagem-kill
+    default: padrao
+    cosmetics:
+      padrao:
+        name: "Padrão"
+        icon:
+          material: PAPER
+        stars: 0
+        availability: DEFAULT
+      estatistico:
+        name: "Estatístico"
+        icon:
+          material: BOOK
+        stars: 0
+        tag: "&6Premiação de torneio"
+        availability: EVENT
+  wood-type:
+    category: bedwars-madeira
+    default: carvalho
+    cosmetics:
+      carvalho:
+        name: "Madeira de carvalho"
+        icon:
+          material: WOOD
+          data: 0
+        stars: 0
+        availability: DEFAULT
+      pinheiro:
+        name: "Madeira de pinheiro"
+        icon:
+          material: WOOD
+          data: 1
+        stars: 0
+        availability: VIP
+      eucalipto:
+        name: "Madeira de eucalipto"
+        icon:
+          material: WOOD
+          data: 2
+        stars: 0
+        availability: VIP
+      selva:
+        name: "Madeira da selva"
+        icon:
+          material: WOOD
+          data: 3
+        stars: 0
+        availability: ULTRA
+      acacia:
+        name: "Madeira de acácia"
+        icon:
+          material: WOOD
+          data: 4
+        stars: 0
+        availability: ULTRA
+      carvalho-escuro:
+        name: "Madeira de carvalho escuro"
+        icon:
+          material: WOOD
+          data: 5
+        stars: 0
+        availability: ULTRA_PLUS
+      tronco-carvalho:
+        name: "Tronco de carvalho"
+        icon:
+          material: LOG
+          data: 0
+        stars: 0
+        availability: ULTRA_PLUS
+      tronco-pinheiro:
+        name: "Tronco de pinheiro"
+        icon:
+          material: LOG
+          data: 1
+        stars: 0
+        availability: EVENT
+      tronco-eucalipto:
+        name: "Tronco de eucalipto"
+        icon:
+          material: LOG
+          data: 2
+        stars: 0
+        tag: "&6Premiação de torneio"
+        availability: EVENT
+      tronco-selva:
+        name: "Tronco de árvore da selva"
+        icon:
+          material: LOG
+          data: 3
+        stars: 0
+        availability: EVENT
+      tronco-acacia:
+        name: "Tronco de acácia"
+        icon:
+          material: LOG_2
+          data: 0
+        stars: 0
+        availability: EVENT
+      tronco-carvalho-escuro:
+        name: "Tronco de carvalho escuro"
+        icon:
+          material: LOG_2
+          data: 1
+        stars: 0
+        availability: EVENT
   menus:
     bedwars:
       title: "Menu do Bed Wars"
@@ -2566,6 +2712,34 @@ cosmetics:
             - "&7Selecionado: &a{selected}"
             - " "
             - "&eClique para ver mais."
+      wood-type:
+        slot: 29
+        item:
+          material: WOOD
+          name: "&aTipos de madeira"
+          lore:
+            - "&8{owned}/{total} ({percent}%)"
+            - " "
+            - "&7Customize o tipo de"
+            - "&7madeira de sua loja."
+            - " "
+            - "&7Selecionado: &a{selected}"
+            - " "
+            - "&eClique para ver mais."
+      kill-message:
+        slot: 31
+        item:
+          material: PAPER
+          name: "&aMensagens de kill"
+          lore:
+            - "&8{owned}/{total} ({percent}%)"
+            - " "
+            - "&7Customize as suas mensagens"
+            - "&7de kill."
+            - " "
+            - "&7Selecionado: &a{selected}"
+            - " "
+            - "&eClique para ver mais."
       soon:
         "14":
           material: SKULL_ITEM
@@ -2589,30 +2763,6 @@ cosmetics:
             - " "
             - "&7Customize o rastro de"
             - "&7seus projéteis."
-            - " "
-            - "&7Selecionado: &aAleatório"
-            - " "
-            - "&eClique para ver mais."
-        "29":
-          material: WOOD
-          name: "&aTipos de madeira"
-          lore:
-            - "&80/11 (0%)"
-            - " "
-            - "&7Customize o tipo de"
-            - "&7madeira de sua loja."
-            - " "
-            - "&7Selecionado: &aAleatório"
-            - " "
-            - "&eClique para ver mais."
-        "31":
-          material: PAPER
-          name: "&aMensagens de kill"
-          lore:
-            - "&80/1 (0%)"
-            - " "
-            - "&7Customize as suas mensagens"
-            - "&7de kill."
             - " "
             - "&7Selecionado: &aAleatório"
             - " "
@@ -2665,6 +2815,61 @@ cosmetics:
         lore:
           - "&7Seleciona um cosmético"
           - "&7aleatório que você possui"
+    kill-message:
+      title: "Mensagens de kill ({page}/{pages})"
+      entries:
+        none: false
+        random-after: 1
+        owned-first: false
+        previews: false
+      random:
+        material: NAME_TAG
+        name: "&aAleatório"
+        lore:
+          - "&7Seleciona um cosmético"
+          - "&7aleatório que você possui"
+      lore:
+        header:
+          - " "
+        select-only:
+          - "&eBotão esquerdo: &fSelecionar"
+        select:
+          - "&eBotão esquerdo: &fSelecionar"
+        selected:
+          - "&aJá selecionado."
+        selected-with-preview:
+          - "&aJá selecionado."
+        unavailable:
+          - "&cIndisponível."
+    wood-type:
+      title: "Tipos de madeira ({page}/{pages})"
+      entries:
+        none: false
+        random: false
+        owned-first: false
+        previews: false
+        selected-icon: true
+      selected:
+        slot: 49
+        item:
+          material: WOOD
+          hide-flags: false
+          name: "&eSelecionado: &7{name}"
+          lore:
+            - "&7"
+      lore:
+        header:
+          - " "
+        select-only:
+          - "&eBotão esquerdo: &fSelecionar"
+        select:
+          - "&eBotão esquerdo: &fSelecionar"
+        selected:
+          - "&aJá selecionado."
+        selected-with-preview:
+          - "&aJá selecionado."
+        unavailable:
+          - "&cIndisponível."
     bed-destruction:
       title: "Destruição de Cama ({page}/{pages})"
       rows: 6

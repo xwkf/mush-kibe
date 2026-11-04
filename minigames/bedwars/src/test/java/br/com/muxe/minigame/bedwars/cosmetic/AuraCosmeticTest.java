@@ -78,7 +78,7 @@ class AuraCosmeticTest {
     void theCategoryButtonReplacesTheComingSoonItemAndKeepsTheOthersThatAreStillComing() {
         assertThat(menu.button().slot()).isEqualTo(33);
         assertThat(menus.soon()).doesNotContainKey(33);
-        assertThat(menus.soon()).containsOnlyKeys(14, 27, 29, 31);
+        assertThat(menus.soon()).containsOnlyKeys(14, 27);
         assertThat(menu.button().item().material()).isEqualTo(Material.EMERALD);
         assertThat(menu.button().item().name()).isEqualTo("§aAura");
         assertThat(icons.category(CosmeticWallet.EMPTY).lore()).containsExactly(

@@ -36,7 +36,7 @@ public final class CosmeticProfiles {
         CompletableFuture<CosmeticProfile> cosmetics = queries.ask(new FindCosmeticsQuery(playerId, catalog.category()));
         CompletableFuture<Long> credits = queries.ask(new FindCreditsQuery(playerId));
         return cosmetics.thenCombine(credits, (profile, balance) ->
-            CosmeticWallet.loaded(profile.owned(), profile.selected().orElse(CosmeticWallet.RANDOM), balance, access, catalog)
+            CosmeticWallet.loaded(profile.owned(), profile.selected().orElse(catalog.defaultId().orElse(CosmeticWallet.RANDOM)), balance, access, catalog)
         ).thenApplyAsync(wallet -> {
             if (online.test(playerId)) {
                 wallets.put(playerId, wallet);
