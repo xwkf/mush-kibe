@@ -249,12 +249,8 @@ public final class ShopService {
         RoomPlayer roomPlayer = runtime.room().player(player.getUniqueId()).orElseThrow();
         RoomTeam team = runtime.room().team(roomPlayer.team());
         Offer offer = Offer.of(item, roomPlayer);
-        if (offer.state() == Offer.State.MAXED) {
-            player.sendMessage(Colors.translate(shop.texts().maxed()));
-            return;
-        }
-        if (offer.state() == Offer.State.OWNED) {
-            player.sendMessage(Colors.translate(shop.texts().owned()));
+        if (offer.alreadyHad()) {
+            player.sendMessage(messages.get("already-have"));
             return;
         }
         if (item.type() == ShopCatalog.Type.SPECIAL && !BUYABLE_SPECIALS.contains(item.id())) {

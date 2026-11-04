@@ -16,6 +16,10 @@ public record Offer(ShopItem item, State state, Tier tier, int level) {
         MAXED
     }
 
+    public boolean alreadyHad() {
+        return state != State.AVAILABLE;
+    }
+
     public static Offer of(ShopItem item, RoomPlayer player) {
         List<Tier> tiers = item.tiers();
         return switch (item.type()) {

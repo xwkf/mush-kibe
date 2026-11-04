@@ -262,6 +262,14 @@ public final class Room {
         player.protectUntil(protectedUntil);
     }
 
+    public void protectAll(Instant until) {
+        players.values().stream().filter(RoomPlayer::isAlive).forEach(player -> player.protectUntil(until));
+    }
+
+    public void struck(UUID attacker) {
+        player(attacker).ifPresent(player -> player.protectUntil(Instant.MIN));
+    }
+
     public void disconnected(RoomPlayer player, Instant until) {
         player.state(State.DISCONNECTED);
         player.disconnectedUntil(until);

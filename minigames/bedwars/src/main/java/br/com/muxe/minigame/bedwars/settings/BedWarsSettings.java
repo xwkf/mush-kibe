@@ -79,7 +79,7 @@ public record BedWarsSettings(
                 section.getInt("respawn-seconds", 5),
                 section.getInt("rejoin-seconds", 180),
                 section.getInt("restart-seconds", 30),
-                section.getInt("respawn-protection-seconds", 4),
+                section.getInt("respawn-protection-seconds", 3),
                 section.getInt("island-radius", 17),
                 section.getInt("spawn-protection-radius", 5),
                 section.getInt("npc-protection-radius", 1),

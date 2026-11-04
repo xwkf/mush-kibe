@@ -17,6 +17,7 @@ import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
 import br.com.muxe.minigame.bedwars.settings.MatchSounds;
 import br.com.muxe.minigame.bedwars.tnt.TntTimers;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -45,13 +46,15 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.inventory.InventoryType.SlotType;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
@@ -305,18 +308,26 @@ public final class MatchListener implements Listener {
             return;
         }
         RoomPlayer roomPlayer = room.player(player.getUniqueId()).orElseThrow();
+        Entity damager = event instanceof EntityDamageByEntityEvent byEntity ? byEntity.getDamager() : null;
+        Optional<Player> attacker = damager == null ? Optional.empty() : attacker(damager);
+        if (attacker.isPresent() && !attacker.get().equals(player)) {
+            Optional<RoomPlayer> other = room.player(attacker.get().getUniqueId());
+            boolean direct = damager instanceof Player || damager instanceof Projectile;
+            if (other.isEmpty() || other.get().team() == roomPlayer.team() || direct && !other.get().isAlive()) {
+                event.setCancelled(true);
+                return;
+            }
+            if (other.get().isAlive()) {
+                room.struck(other.get().id());
+            }
+        }
         if (roomPlayer.isProtected(core.clock().instant())) {
             event.setCancelled(true);
             return;
         }
         if (event instanceof EntityDamageByEntityEvent byEntity) {
-            Optional<Player> attacker = attacker(byEntity.getDamager());
             if (attacker.isPresent()) {
                 Optional<RoomPlayer> other = room.player(attacker.get().getUniqueId());
-                if (other.isPresent() && other.get().team() == roomPlayer.team() && !attacker.get().equals(player)) {
-                    event.setCancelled(true);
-                    return;
-                }
                 if (other.isPresent() && other.get().isAlive()) {
                     room.credit().hit(player.getUniqueId(), attacker.get().getUniqueId(), core.clock().instant());
                 }
@@ -435,7 +446,7 @@ public final class MatchListener implements Listener {
     }
 
     private void deposit(Player player, RoomRuntime runtime, Block block, ItemStack item) {
-        if (!ChestDeposits.canStore(item.getType())) {
+        if (item.getType() == Material.AIR || !mayStore(player, item, null)) {
             return;
         }
         Inventory target;
@@ -482,6 +493,68 @@ public final class MatchListener implements Listener {
             && event.getSlotType() == SlotType.ARMOR) {
             event.setCancelled(true);
         }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onStoreClick(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player) || !storage(player, event.getView().getTopInventory())) {
+            return;
+        }
+        Inventory top = event.getView().getTopInventory();
+        boolean intoTop = event.getClickedInventory() != null && event.getClickedInventory().equals(top);
+        ItemStack moving = null;
+        ItemStack cursor = null;
+        if (event.isShiftClick() && !intoTop) {
+            moving = event.getCurrentItem();
+        } else if (intoTop && event.getClick() == ClickType.NUMBER_KEY) {
+            moving = player.getInventory().getItem(event.getHotbarButton());
+        } else if (intoTop) {
+            moving = event.getCursor();
+            cursor = moving;
+        }
+        if (moving != null && !mayStore(player, moving, cursor)) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onStoreDrag(InventoryDragEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player) || !storage(player, event.getView().getTopInventory())) {
+            return;
+        }
+        int topSize = event.getView().getTopInventory().getSize();
+        if (event.getRawSlots().stream().anyMatch(slot -> slot < topSize) && !mayStore(player, event.getOldCursor(), event.getOldCursor())) {
+            event.setCancelled(true);
+        }
+    }
+
+    private boolean storage(Player player, Inventory top) {
+        Optional<RoomRuntime> runtime = rooms.roomOf(player.getUniqueId());
+        if (runtime.isEmpty() || runtime.get().room().phase() != Room.Phase.PLAYING) {
+            return false;
+        }
+        InventoryHolder holder = top.getHolder();
+        return holder instanceof Chest || holder instanceof DoubleChest || top.equals(runtime.get().enderChest(player));
+    }
+
+    private boolean mayStore(Player player, ItemStack item, ItemStack cursor) {
+        List<Material> carried = new ArrayList<>();
+        for (ItemStack held : player.getInventory().getContents()) {
+            if (held != null) {
+                carried.add(held.getType());
+            }
+        }
+        if (cursor != null) {
+            carried.add(cursor.getType());
+        }
+        switch (ChestDeposits.verdict(item.getType(), carried)) {
+            case KEPT -> player.sendMessage(messages.get("chest-kept"));
+            case LAST_SWORD -> player.sendMessage(messages.get("chest-last-one"));
+            case STORE, NOTHING -> {
+                return true;
+            }
+        }
+        return false;
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)

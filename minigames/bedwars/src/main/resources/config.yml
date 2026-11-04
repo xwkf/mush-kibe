@@ -78,7 +78,7 @@ timings:
   respawn-seconds: 5
   rejoin-seconds: 180
   restart-seconds: 30
-  respawn-protection-seconds: 4
+  respawn-protection-seconds: 3
   island-radius: 17
   spawn-protection-radius: 5
   npc-protection-radius: 1
@@ -519,11 +519,19 @@ messages:
   global-prefix: "&6[G] "
   chest-deposited: "&eVocê guardou: &a{item} ({amount}x) &eem seu baú."
   chest-full: "&cO baú está cheio."
+  chest-kept: "&cVocê não pode guardar este item."
+  chest-last-one: "&cVocê não pode guardar só um deste item."
+  already-have: "&cVocê já tem este item."
   chest-hologram:
     - "&eBata para"
     - "&eguardar!"
   room-joined: "{player} &eentrou na sala (&b{players}&e/&b{max}&e)."
   room-left: "{player} &esaiu da sala."
+  match-started:
+    - "&eO jogo iniciou!"
+    - ""
+    - "&c&lAVISO:"
+    - "&c - A aliança com outros jogadores é proibida e resultará em punição."
   health-below-name: "&c❤"
   level-up: "&b&lPARABÉNS &7Você subiu para o nível {level}&7!"
   own-bed: "&cVocê não pode quebrar a sua própria cama."

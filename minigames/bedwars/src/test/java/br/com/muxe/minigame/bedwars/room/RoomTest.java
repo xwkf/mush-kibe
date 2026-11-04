@@ -145,6 +145,37 @@ class RoomTest {
     }
 
     @Test
+    void spawnProtectionCoversRespawnAndMatchStartAndEndsWhenThePlayerHitsSomeone() {
+        Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
+        UUID tadeu = join(room, "tadeu");
+        UUID other = join(room, "x572");
+        room.forceStart(10);
+        room.start(List.of(), NOW);
+        room.protectAll(NOW.plusSeconds(3));
+        RoomPlayer player = room.player(tadeu).orElseThrow();
+        RoomPlayer enemy = room.player(other).orElseThrow();
+
+        assertThat(player.isProtected(NOW.plusSeconds(2))).isTrue();
+        assertThat(player.isProtected(NOW.plusSeconds(3))).isFalse();
+
+        room.struck(tadeu);
+
+        assertThat(player.isProtected(NOW.plusSeconds(1))).isFalse();
+        assertThat(enemy.isProtected(NOW.plusSeconds(1))).isTrue();
+
+        room.die(player, 5);
+        room.respawned(player, NOW.plusSeconds(3));
+        assertThat(player.isProtected(NOW.plusSeconds(2))).isTrue();
+        room.struck(tadeu);
+        assertThat(player.isProtected(NOW.plusSeconds(2))).isFalse();
+    }
+
+    @Test
+    void spawnProtectionLastsThreeSecondsByDefault() {
+        assertThat(RoomFixtures.SETTINGS.timings().respawnProtectionSeconds()).isEqualTo(3);
+    }
+
+    @Test
     void aMatchForcedWithASinglePlayerKeepsGoingUntilThatPlayerIsEliminated() {
         Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
         UUID tadeu = join(room, "tadeu");

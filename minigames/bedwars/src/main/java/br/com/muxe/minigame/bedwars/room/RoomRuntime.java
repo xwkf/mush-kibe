@@ -284,6 +284,7 @@ public final class RoomRuntime {
     void start() {
         Instant now = core.clock().instant();
         room.start(List.of(), service.teamColors().preferred(room.joinOrder()), ThreadLocalRandom.current(), now);
+        room.protectAll(now.plus(Duration.ofSeconds(settings.timings().respawnProtectionSeconds())));
         missions = new MissionTracker(core, BedWarsBootstrap.GAME, service.missions(), "room " + room.code(), service.plugin().getLogger());
         missions.begin(room.players().stream().map(RoomPlayer::id).toList());
         for (Map.Entry<TeamColor, RoomTeam> entry : room.teams().entrySet()) {
@@ -321,6 +322,7 @@ public final class RoomRuntime {
         clearWaitingArea();
         findIslandChests();
         refreshScoreboards();
+        messages.lines("match-started").forEach(this::broadcast);
     }
 
     public void die(Player victim, boolean voidDeath) {
