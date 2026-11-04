@@ -27,10 +27,10 @@ class VictoryEffectTest {
     private final CosmeticIcons icons = new CosmeticIcons(menu, catalog);
 
     @Test
-    void theVictoryEffectsAreTheTwentyTwoOfTheReferenceAndTenOfThemPlay() {
+    void theVictoryEffectsAreTheTwentyTwoOfTheReferenceAndTwelveOfThemPlay() {
         assertThat(catalog.category()).isEqualTo("bedwars-vitoria");
         assertThat(catalog.all()).hasSize(22);
-        assertThat(catalog.all().stream().filter(BedCosmetic::animated).map(BedCosmetic::id)).containsExactlyInAnyOrder("tinta", "feliz-natal", "como-treinar-seu-porco", "altas-aventuras", "colheita-de-aboboras", "apavorante", "contagem-de-flash", "apocalipse-zumbi", "aventureiro", "necromante", "deserto");
+        assertThat(catalog.all().stream().filter(BedCosmetic::animated).map(BedCosmetic::id)).containsExactlyInAnyOrder("tinta", "feliz-natal", "como-treinar-seu-porco", "altas-aventuras", "colheita-de-aboboras", "apavorante", "contagem-de-flash", "apocalipse-zumbi", "aventureiro", "necromante", "deserto", "bruxa");
         BedCosmetic christmas = catalog.find("feliz-natal").orElseThrow();
         assertThat(christmas.stars()).isEqualTo(5);
         assertThat(christmas.tag()).contains("&cNatal 2025");

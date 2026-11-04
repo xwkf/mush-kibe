@@ -43,6 +43,14 @@ class EveryRiderTest {
             .map(change -> change.x() + "," + change.z()).collect(Collectors.toSet())).hasSize(2);
     }
 
+    @Test
+    void everyLivingPlayerGetsTheirOwnBroomAndWitches() {
+        RecordingStage stage = assertOwnMounts(new WitchVictory());
+
+        assertThat(stage.tools).containsOnlyKeys(winner, other);
+        assertThat(stage.actors.stream().filter(actor -> actor.type.equals("Player"))).hasSize(8);
+    }
+
     private RecordingStage assertOwnMounts(SceneAnimation animation) {
         RecordingStage stage = new RecordingStage(block -> block[1] < 27);
         stage.eyesOf.put(other, new Vec(60.5, 27 + Riders.EYE_HEIGHT, -40.5));

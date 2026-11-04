@@ -168,6 +168,9 @@ final class RecordingStage implements Stage {
         Vec position;
         boolean removed;
         StandStyle style;
+        Pose pose;
+        Actor target;
+        Actor vehicle;
         final Map<Integer, Object> watched = new HashMap<>();
         final Map<Slot, String> skulls = new HashMap<>();
         final Map<Slot, Material> equipment = new HashMap<>();
@@ -203,15 +206,22 @@ final class RecordingStage implements Stage {
 
         @Override
         public void pose(Pose pose) {
+            this.pose = pose;
         }
 
         @Override
         public void ride(Actor vehicle) {
+            this.vehicle = vehicle;
         }
 
         @Override
         public void leash(Actor holder) {
             watched.put(-1, holder);
+        }
+
+        @Override
+        public void target(Actor target) {
+            this.target = target;
         }
 
         @Override
