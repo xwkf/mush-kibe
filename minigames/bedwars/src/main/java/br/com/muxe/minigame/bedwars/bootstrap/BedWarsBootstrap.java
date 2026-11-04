@@ -32,6 +32,7 @@ import br.com.muxe.minigame.bedwars.invisibility.InvisiblePlayers;
 import br.com.muxe.minigame.bedwars.listener.Bedbugs;
 import br.com.muxe.minigame.bedwars.listener.MatchListener;
 import br.com.muxe.minigame.bedwars.lobby.format.LevelBadges;
+import br.com.muxe.minigame.bedwars.lobby.menu.LobbyMenus;
 import br.com.muxe.minigame.bedwars.mission.BedWarsGoal;
 import br.com.muxe.minigame.bedwars.mission.MissionRules;
 import br.com.muxe.minigame.bedwars.network.RoomPublisher;
@@ -54,8 +55,8 @@ import br.com.muxe.minigame.bedwars.teamcolor.FavouriteColors;
 import br.com.muxe.minigame.bedwars.teamcolor.TeamColorModule;
 import br.com.muxe.minigame.bedwars.teamcolor.menu.FavouriteColorMenu;
 import br.com.muxe.minigame.bedwars.teamcolor.menu.FavouriteColorMenuSettings;
-import br.com.muxe.minigame.bedwars.tnt.TntTimerSettings;
 import br.com.muxe.minigame.bedwars.title.EndTitles;
+import br.com.muxe.minigame.bedwars.tnt.TntTimerSettings;
 import br.com.muxe.minigame.bedwars.tnt.TntTimers;
 import br.com.muxe.minigame.engine.MinigameEngine;
 import br.com.muxe.minigame.engine.arena.ArenaCatalog;
@@ -208,14 +209,15 @@ public final class BedWarsBootstrap {
             cosmetics.woods()
         );
         rooms.onNpcClick((player, click) -> shop.open(player, click.runtime(), click.upgrades()));
-        publisher = new RoomPublisher(plugin, core, rooms, settings.lobbyGroup());
+        publisher = new RoomPublisher(plugin, core, rooms, List.of(settings.lobbyGroup(), GAME));
+        LobbyMenus playAgain = PlayAgain.menus(plugin, core, config, messages, schema, rooms, publisher);
         publisher.start();
         bedbugs = new Bedbugs(plugin, rooms, core.clock());
         bedbugs.start();
         TntTimers tntTimers = TntTimers.start(plugin, TntTimerSettings.from(
             Objects.requireNonNull(config.getConfigurationSection("tnt-timer"), "Missing configuration section tnt-timer")), preferences);
         plugin.getServer().getPluginManager().registerEvents(new MatchListener(plugin, core, rooms, settings, messages, cosmetics::openMenu, bedbugs,
-            preferences, tntTimers), plugin);
+            preferences, tntTimers, playAgain::openMode), plugin);
 
         InvisiblePlayers.start(plugin, rooms);
         auras = AuraTask.start(plugin, rooms, cosmetics.auras());

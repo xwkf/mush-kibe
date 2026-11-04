@@ -8,12 +8,12 @@ import br.com.muxe.core.bukkit.cosmetic.stage.AnimationPlayer;
 import br.com.muxe.minigame.bedwars.cosmetic.animation.SceneAnimations;
 import br.com.muxe.minigame.bedwars.cosmetic.catalog.CosmeticCatalog;
 import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticProfiles;
+import br.com.muxe.minigame.bedwars.spectator.Ghosts;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
-import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -48,7 +48,7 @@ public final class SceneCosmetics {
     public static List<UUID> riders(Player owner, List<Player> viewers) {
         List<UUID> riders = new ArrayList<>();
         riders.add(owner.getUniqueId());
-        viewers.stream().filter(viewer -> viewer != owner && viewer.getGameMode() != GameMode.SPECTATOR).forEach(viewer -> riders.add(viewer.getUniqueId()));
+        viewers.stream().filter(viewer -> viewer != owner && !Ghosts.is(viewer)).forEach(viewer -> riders.add(viewer.getUniqueId()));
         return riders;
     }
 

@@ -16,7 +16,6 @@ import java.util.Set;
 import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Effect;
-import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -51,7 +50,7 @@ public final class InvisiblePlayers {
             List<Player> online = runtime.online();
             for (Player target : online) {
                 Optional<RoomPlayer> player = runtime.room().player(target.getUniqueId()).filter(RoomPlayer::isAlive);
-                if (player.isEmpty() || target.getGameMode() == GameMode.SPECTATOR || !target.hasPotionEffect(PotionEffectType.INVISIBILITY)) {
+                if (player.isEmpty() || runtime.isSpectator(target) || !target.hasPotionEffect(PotionEffectType.INVISIBILITY)) {
                     continue;
                 }
                 invisible.add(target.getUniqueId());

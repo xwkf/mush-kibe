@@ -3,8 +3,11 @@ package br.com.muxe.minigame.bedwars.network;
 import br.com.muxe.core.bukkit.api.MuxeCore;
 import br.com.muxe.core.common.messaging.channel.PacketTarget;
 import br.com.muxe.minigame.bedwars.room.RoomService;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -16,14 +19,15 @@ public final class RoomPublisher {
     private final Plugin plugin;
     private final MuxeCore core;
     private final RoomService rooms;
-    private final String lobbyGroup;
+    private final List<String> groups;
+    private final List<Consumer<RoomsPacket>> listeners = new ArrayList<>();
     private BukkitTask task;
 
-    public RoomPublisher(Plugin plugin, MuxeCore core, RoomService rooms, String lobbyGroup) {
+    public RoomPublisher(Plugin plugin, MuxeCore core, RoomService rooms, List<String> groups) {
         this.plugin = plugin;
         this.core = core;
         this.rooms = rooms;
-        this.lobbyGroup = lobbyGroup;
+        this.groups = List.copyOf(groups);
     }
 
     public void start() {
@@ -41,15 +45,22 @@ public final class RoomPublisher {
         task = plugin.getServer().getScheduler().runTaskTimer(plugin, this::publish, PERIOD_TICKS, PERIOD_TICKS);
     }
 
+    public void onPublish(Consumer<RoomsPacket> listener) {
+        listeners.add(listener);
+    }
+
     public void stop() {
         Optional.ofNullable(task).ifPresent(BukkitTask::cancel);
     }
 
     private void publish() {
         RoomsPacket packet = new RoomsPacket(core.identity().id(), rooms.summaries(), rooms.arenas());
-        core.packets().publish(PacketTarget.group(lobbyGroup), packet).exceptionally(error -> {
-            plugin.getLogger().log(Level.FINE, "Could not publish the rooms", error);
-            return null;
-        });
+        listeners.forEach(listener -> listener.accept(packet));
+        for (String group : groups) {
+            core.packets().publish(PacketTarget.group(group), packet).exceptionally(error -> {
+                plugin.getLogger().log(Level.FINE, "Could not publish the rooms to " + group, error);
+                return null;
+            });
+        }
     }
 }

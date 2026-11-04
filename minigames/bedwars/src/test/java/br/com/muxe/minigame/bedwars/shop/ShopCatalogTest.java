@@ -63,12 +63,27 @@ class ShopCatalogTest {
         assertThat(first.lore(catalog.texts(), false, true, false)).startsWith("&7Preço: &f10 Ferros", "&7Nível: &eI", " ",
             "&7Você sempre renascerá com ao mínimo", "&7o último nível.");
 
+        player.pickaxeTier(1);
+        assertThat(Offer.of(pickaxe, player).tier().name()).isEqualTo("Picareta de Pedra (Eficiência I)");
         player.pickaxeTier(2);
-        assertThat(Offer.of(pickaxe, player).tier().name()).isEqualTo("Picareta de Ouro (Eficiência III, Afiação II)");
+        assertThat(Offer.of(pickaxe, player).tier().name()).isEqualTo("Picareta de Ferro (Eficiência II)");
         assertThat(Offer.of(pickaxe, player).level()).isEqualTo(3);
-
+        player.pickaxeTier(3);
+        assertThat(Offer.of(pickaxe, player).tier().name()).isEqualTo("Picareta de Ouro (Eficiência III)");
+        assertThat(Offer.of(pickaxe, player).tier().price()).isEqualTo(3);
         player.pickaxeTier(4);
+        assertThat(Offer.of(pickaxe, player).tier().name()).isEqualTo("Picareta de Diamante (Eficiência III)");
+
+        player.pickaxeTier(5);
         assertThat(Offer.of(pickaxe, player).state()).isEqualTo(State.MAXED);
+        assertThat(Offer.of(pickaxe, player).lore(catalog.texts(), true, true, false)).endsWith("&aJá adquirido.");
+    }
+
+    @Test
+    void ownedToolsAndArmourSayAlreadyBought() {
+        player.giveShears();
+
+        assertThat(Offer.of(catalog.items().get("tesoura"), player).lore(catalog.texts(), true, true, false)).endsWith("&aJá adquirido.");
     }
 
     @Test

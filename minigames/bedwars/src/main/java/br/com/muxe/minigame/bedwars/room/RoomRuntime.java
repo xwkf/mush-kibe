@@ -30,6 +30,9 @@ import br.com.muxe.minigame.bedwars.room.RoomPlayer.State;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
 import br.com.muxe.minigame.bedwars.settings.MatchSounds;
 import br.com.muxe.minigame.bedwars.shop.ResourcePool;
+import br.com.muxe.minigame.bedwars.spectator.Ghosts;
+import br.com.muxe.minigame.bedwars.spectator.SpectatorTargets;
+import br.com.muxe.minigame.bedwars.spectator.TeleporterMenu;
 import br.com.muxe.minigame.bedwars.stats.application.command.RecordMatchCommand;
 import br.com.muxe.minigame.bedwars.stats.application.query.FindPlayerStatsQuery;
 import br.com.muxe.minigame.bedwars.stats.domain.MatchOutcome;
@@ -82,6 +85,7 @@ import org.bukkit.util.Vector;
 public final class RoomRuntime {
 
     static final GameMode PLAYER_MODE = GameMode.SURVIVAL;
+    static final Duration COMBAT_WINDOW = Duration.ofSeconds(5);
 
     private static final int RESEND_EVERY = 3;
     private static final Map<Material, String> LOOT = new LinkedHashMap<>();
@@ -361,7 +365,7 @@ public final class RoomRuntime {
             }
         });
         room.die(dead, settings.timings().respawnSeconds());
-        reset(victim, GameMode.SPECTATOR);
+        ghost(victim, dead.state() != State.RESPAWNING);
         victim.teleport(location(room.arena().spectator()));
         if (dead.state() == State.RESPAWNING) {
             Title.of(messages.get("died-title"), messages.get("respawn-subtitle", "seconds", String.valueOf(settings.timings().respawnSeconds()))).send(victim);
@@ -483,7 +487,7 @@ public final class RoomRuntime {
         RoomPlayer roomPlayer = room.player(player.getUniqueId()).orElseThrow();
         room.reconnected(roomPlayer, settings.timings().respawnSeconds());
         forgetReturn(player.getUniqueId());
-        reset(player, GameMode.SPECTATOR);
+        ghost(player, false);
         player.teleport(location(room.arena().spectator()));
         sidebars.put(player.getUniqueId(), Sidebar.create(player));
         loadLevel(player);
@@ -953,6 +957,9 @@ public final class RoomRuntime {
         for (Player player : audience) {
             hideChestLabels(player.getUniqueId());
             forges.hide(player.getUniqueId());
+            if (isSpectator(player)) {
+                Ghosts.give(player, settings.spectators().spectator());
+            }
         }
         winner.ifPresent(team -> celebrate(team, audience));
         String time = clock(room.elapsed());
@@ -984,6 +991,9 @@ public final class RoomRuntime {
     private void celebrate(TeamColor team, List<Player> audience) {
         for (Player player : audience) {
             boolean won = room.player(player.getUniqueId()).map(RoomPlayer::team).filter(team::equals).isPresent();
+            if (won && !isSpectator(player)) {
+                Ghosts.give(player, settings.spectators().winner());
+            }
             service.endTitles().ifPresent(titles -> {
                 if (won) {
                     titles.victory(player);
@@ -1042,6 +1052,42 @@ public final class RoomRuntime {
         reset(player, PLAYER_MODE);
         player.teleport(location(base.spawn()));
         Kits.spawnKit(player, roomPlayer, room.team(roomPlayer.team()), settings.items());
+        refreshVisibility();
+    }
+
+    private void ghost(Player player, boolean items) {
+        reset(player, GameMode.ADVENTURE);
+        Ghosts.become(player);
+        if (items) {
+            Ghosts.give(player, settings.spectators().spectator());
+        }
+        refreshVisibility();
+    }
+
+    private void refreshVisibility() {
+        Ghosts.refresh(online(), this::isSpectator);
+    }
+
+    public boolean isSpectator(Player player) {
+        if (room.phase() != Room.Phase.PLAYING && room.phase() != Room.Phase.ENDING) {
+            return false;
+        }
+        return room.player(player.getUniqueId()).filter(RoomPlayer::isAlive).isEmpty();
+    }
+
+    public void openTeleporter(Player viewer) {
+        List<Player> targets = online().stream().filter(other -> !other.equals(viewer) && !isSpectator(other)).toList();
+        TeleporterMenu.open(viewer, settings.teleporter(), targets, target -> room.player(target.getUniqueId()).map(this::coloredName).orElse(target.getName()));
+    }
+
+    public void teleportSpectator(Player viewer, boolean inCombat) {
+        List<UUID> alive = online().stream().filter(other -> !isSpectator(other)).map(Player::getUniqueId).toList();
+        Optional<UUID> target = inCombat
+            ? SpectatorTargets.inCombat(alive, room.credit().fighting(core.clock().instant(), COMBAT_WINDOW), viewer.getUniqueId(), ThreadLocalRandom.current())
+            : SpectatorTargets.random(alive, viewer.getUniqueId(), ThreadLocalRandom.current());
+        target.map(Bukkit::getPlayer).filter(Player::isOnline).ifPresentOrElse(
+            found -> viewer.teleport(found.getLocation()),
+            () -> viewer.sendMessage(messages.get(inCombat ? "spectator-no-combat" : "spectator-no-target")));
     }
 
     private void spawnNpc(TeamColor team, String kind, Point point, List<String> lines) {
@@ -1158,6 +1204,7 @@ public final class RoomRuntime {
         player.getInventory().clear();
         player.getInventory().setArmorContents(null);
         player.setGameMode(mode);
+        Ghosts.restore(player);
         player.setHealth(player.getMaxHealth());
         player.setFoodLevel(20);
         player.setSaturation(20);

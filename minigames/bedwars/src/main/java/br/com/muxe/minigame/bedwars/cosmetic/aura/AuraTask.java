@@ -12,7 +12,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import org.bukkit.Effect;
-import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -62,7 +61,7 @@ public final class AuraTask {
                 UUID id = player.getUniqueId();
                 inMatch.add(id);
                 Optional<RoomPlayer> member = room.player(id);
-                if (member.isEmpty() || !AuraRules.shows(room.phase(), member.get().state(), player.getGameMode() == GameMode.SPECTATOR,
+                if (member.isEmpty() || !AuraRules.shows(room.phase(), member.get().state(), runtime.isSpectator(player),
                     player.hasPotionEffect(PotionEffectType.INVISIBILITY))) {
                     continue;
                 }

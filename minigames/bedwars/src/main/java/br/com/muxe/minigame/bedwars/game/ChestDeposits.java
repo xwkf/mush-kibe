@@ -9,7 +9,7 @@ public final class ChestDeposits {
     private static final Set<Material> CHESTS = Set.of(Material.CHEST, Material.TRAPPED_CHEST, Material.ENDER_CHEST);
     private static final Set<Material> KEPT = Set.of(
         Material.WOOD_SWORD, Material.SHEARS,
-        Material.WOOD_PICKAXE, Material.IRON_PICKAXE, Material.GOLD_PICKAXE, Material.DIAMOND_PICKAXE,
+        Material.WOOD_PICKAXE, Material.STONE_PICKAXE, Material.IRON_PICKAXE, Material.GOLD_PICKAXE, Material.DIAMOND_PICKAXE,
         Material.WOOD_AXE, Material.STONE_AXE, Material.IRON_AXE, Material.DIAMOND_AXE
     );
 

@@ -7,6 +7,7 @@ import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.minigame.bedwars.cosmetic.wood.WoodChoice;
 import br.com.muxe.minigame.bedwars.cosmetic.wood.WoodTypes;
+import br.com.muxe.minigame.bedwars.game.Slingshot;
 import br.com.muxe.minigame.bedwars.hotbar.HotbarDelivery;
 import br.com.muxe.minigame.bedwars.hotbar.menu.HotbarEditor;
 import br.com.muxe.minigame.bedwars.invisibility.Invisibility;
@@ -38,7 +39,7 @@ import org.bukkit.inventory.meta.PotionMeta;
 
 public final class ShopService {
 
-    public static final Set<String> BUYABLE_SPECIALS = Set.of(Bedbugs.ITEM_ID);
+    public static final Set<String> BUYABLE_SPECIALS = Set.of(Bedbugs.ITEM_ID, Slingshot.ITEM_ID);
 
     public static final List<Integer> ITEM_SLOTS = List.of(19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43);
 
@@ -309,7 +310,8 @@ public final class ShopService {
             }
             case POTION -> deliver(player, item, potion(item, tier));
             case ITEM -> deliver(player, item, names.named(plain(item, tier), offer.boughtName()));
-            case SPECIAL -> deliver(player, item, names.named(new ItemStack(tier.material(), item.amount(), (short) item.data()), offer.boughtName()));
+            case SPECIAL -> deliver(player, item, names.named(new ItemStack(tier.material(), item.amount(), (short) item.data()),
+                item.id().equals(Slingshot.ITEM_ID) ? Slingshot.ITEM_NAME : offer.boughtName()));
         }
     }
 

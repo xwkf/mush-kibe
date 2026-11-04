@@ -237,6 +237,31 @@ hotbar:
       slot: 8
       material: BED
       name: "&aVoltar ao Lobby"
+  spectator:
+    teleporter:
+      slot: 0
+      material: COMPASS
+      name: "&aTeleportador"
+    random-player:
+      slot: 3
+      material: IRON_SWORD
+      name: "&aTeleportar: Jogador aleatório"
+    player-in-combat:
+      slot: 4
+      material: DIAMOND_SWORD
+      name: "&aTeleportar: Jogador em combate"
+    play-again:
+      slot: 7
+      material: PAPER
+      name: "&aJogar novamente"
+    leave:
+      slot: 8
+      material: BED
+      name: "&aVoltar ao Lobby"
+  teleporter:
+    title: "Teleportador"
+    entry-lore:
+      - "&eClique para teleportar."
 
 scoreboard:
   title: "&b&lBED WARS"
@@ -551,6 +576,8 @@ messages:
   died-title: "&cVOCÊ MORREU!"
   respawn-subtitle: "&eRenascendo em &c{seconds}&e..."
   spectator-subtitle: "&7Você agora é um espectador."
+  spectator-no-target: "&cNenhum jogador para teleportar."
+  spectator-no-combat: "&cNenhum jogador em combate agora."
   generator-upgrade: "&eGeradores de {type} &emelhorados para nível &c{tier}&e."
   generator-diamond: "&bDiamante"
   generator-emerald: "&2Esmeralda"
@@ -772,16 +799,17 @@ favourite-color:
 
 tnt-timer:
   format: "{color}{seconds}s"
+  decimals: 2
   height: 1.1
   view-distance: 24
-  update-ticks: 2
-  green-threshold: 0.75
-  yellow-threshold: 0.5
-  orange-threshold: 0.25
+  update-ticks: 1
+  green-threshold: 0.9
+  yellow-threshold: 0.6
+  orange-threshold: 0.3
   colors:
-    green: "&a"
-    yellow: "&e"
-    orange: "&6"
+    green: "&2"
+    yellow: "&a"
+    orange: "&e"
     red: "&c"
 
 item-names:
@@ -804,6 +832,7 @@ item-names:
   DIAMOND_SWORD: "Espada de Diamante"
   STICK: "Graveto"
   WOOD_PICKAXE: "Picareta de Madeira"
+  STONE_PICKAXE: "Picareta de Pedra"
   IRON_PICKAXE: "Picareta de Ferro"
   GOLD_PICKAXE: "Picareta de Ouro"
   DIAMOND_PICKAXE: "Picareta de Diamante"
@@ -946,8 +975,8 @@ shop:
           - "&eClique para selecionar."
   cannot-afford: "&cVocê não tem {currency} o suficiente."
   can-afford: "&eClique para comprar."
-  maxed: "&aVocê já tem o nível máximo."
-  owned: "&aVocê já tem este item."
+  maxed: "&aJá adquirido."
+  owned: "&aJá adquirido."
   open-category: "&eClique para ver."
   name-affordable: "&a"
   name-unaffordable: "&c"
@@ -1279,12 +1308,16 @@ shop:
           name: "Picareta de Madeira (Eficiência I)"
           price: 10
           currency: iron
+        - material: STONE_PICKAXE
+          name: "Picareta de Pedra (Eficiência I)"
+          price: 10
+          currency: iron
         - material: IRON_PICKAXE
           name: "Picareta de Ferro (Eficiência II)"
           price: 10
           currency: iron
         - material: GOLD_PICKAXE
-          name: "Picareta de Ouro (Eficiência III, Afiação II)"
+          name: "Picareta de Ouro (Eficiência III)"
           price: 3
           currency: gold
         - material: DIAMOND_PICKAXE

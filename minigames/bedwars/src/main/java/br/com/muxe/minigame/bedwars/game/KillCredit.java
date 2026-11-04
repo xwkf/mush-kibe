@@ -4,10 +4,12 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 public final class KillCredit {
@@ -58,6 +60,17 @@ public final class KillCredit {
             }
         }
         return assisters;
+    }
+
+    public Set<UUID> fighting(Instant now, Duration within) {
+        Set<UUID> fighting = new HashSet<>();
+        attackers.forEach((victim, hits) -> hits.forEach((attacker, at) -> {
+            if (!at.plus(within).isBefore(now)) {
+                fighting.add(victim);
+                fighting.add(attacker);
+            }
+        }));
+        return fighting;
     }
 
     public void forget(UUID victim) {

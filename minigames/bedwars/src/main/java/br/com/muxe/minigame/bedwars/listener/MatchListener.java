@@ -1,11 +1,18 @@
 package br.com.muxe.minigame.bedwars.listener;
 
 import br.com.muxe.core.bukkit.api.MuxeCore;
+import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
+import br.com.muxe.core.bukkit.menu.MenuHolder;
+import br.com.muxe.core.bukkit.nms.Fireballs;
+import br.com.muxe.core.bukkit.text.ActionBar;
 import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.minigame.bedwars.game.Activity;
 import br.com.muxe.minigame.bedwars.game.ChestDeposits;
+import br.com.muxe.minigame.bedwars.game.ExplosionKnockback.Source;
+import br.com.muxe.minigame.bedwars.game.ExplosionKnockback;
 import br.com.muxe.minigame.bedwars.game.Foliage;
+import br.com.muxe.minigame.bedwars.game.Slingshot;
 import br.com.muxe.minigame.bedwars.preferences.PlayerPreferences;
 import br.com.muxe.minigame.bedwars.room.ChatView;
 import br.com.muxe.minigame.bedwars.room.ForgePickup;
@@ -15,7 +22,9 @@ import br.com.muxe.minigame.bedwars.room.RoomRuntime;
 import br.com.muxe.minigame.bedwars.room.RoomService;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
 import br.com.muxe.minigame.bedwars.settings.MatchSounds;
+import br.com.muxe.minigame.bedwars.spectator.SpectatorHotbar;
 import br.com.muxe.minigame.bedwars.tnt.TntTimers;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,7 +34,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import org.bukkit.Effect;
+import org.bukkit.EntityEffect;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -71,12 +83,13 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Vector;
 
 public final class MatchListener implements Listener {
 
+    private static final long SLINGSHOT_BAR_TICKS = 2L;
     private static final List<String> LOBBY_COMMANDS = List.of("/l", "/lobby", "/hub");
-    private static final int TNT_FUSE_TICKS = 52;
-    private static final double FIREBALL_SPEED = 1.5;
 
     private final Plugin plugin;
     private final MuxeCore core;
@@ -89,9 +102,12 @@ public final class MatchListener implements Listener {
     private final Activity activity = new Activity();
     private final PlayerPreferences preferences;
     private final TntTimers tntTimers;
+    private final BiConsumer<Player, String> playAgain;
+    private final Slingshot slingshot = new Slingshot();
 
     public MatchListener(Plugin plugin, MuxeCore core, RoomService rooms, BedWarsSettings settings, MessageCatalog messages, Consumer<Player> openMenu, Bedbugs bedbugs,
-                         PlayerPreferences preferences, TntTimers tntTimers) {
+                         PlayerPreferences preferences, TntTimers tntTimers, BiConsumer<Player, String> playAgain) {
+        this.playAgain = playAgain;
         this.preferences = preferences;
         this.tntTimers = tntTimers;
         this.openMenu = openMenu;
@@ -119,6 +135,7 @@ public final class MatchListener implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         event.setQuitMessage(null);
         activity.forget(event.getPlayer().getUniqueId());
+        slingshot.forget(event.getPlayer().getUniqueId());
         rooms.leave(event.getPlayer());
     }
 
@@ -182,6 +199,21 @@ public final class MatchListener implements Listener {
             }
             return;
         }
+        boolean spectating = room.phase() == Room.Phase.PLAYING && !alive(found.get(), player);
+        if ((spectating || room.phase() == Room.Phase.ENDING) && item != null) {
+            Optional<SpectatorHotbar.Action> action = settings.spectators().action(player.getInventory().getHeldItemSlot(), item.getType().name());
+            if (action.isPresent()) {
+                event.setCancelled(true);
+                if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                    spectatorAction(player, found.get(), action.get());
+                }
+                return;
+            }
+        }
+        if (spectating) {
+            event.setCancelled(true);
+            return;
+        }
         if (room.phase() != Room.Phase.PLAYING || item == null) {
             return;
         }
@@ -190,12 +222,45 @@ public final class MatchListener implements Listener {
             event.setCancelled(true);
             consumeOne(player);
             Fireball fireball = player.launchProjectile(Fireball.class);
-            fireball.setVelocity(player.getLocation().getDirection().multiply(FIREBALL_SPEED));
+            Fireballs.accelerate(fireball, player.getLocation().getDirection(), ExplosionKnockback.FIREBALL_ACCELERATION);
             fireball.setIsIncendiary(false);
-            fireball.setYield(2.0f);
+            fireball.setYield(ExplosionKnockback.FIREBALL_YIELD);
             explosives.put(fireball.getUniqueId(), player.getUniqueId());
             room.player(player.getUniqueId()).ifPresent(RoomPlayer::useExplosive);
+        } else if (rightClick && item.getType() == Material.MAGMA_CREAM) {
+            event.setCancelled(true);
+            sling(player);
         }
+    }
+
+    private void sling(Player player) {
+        if (!slingshot.use(player.getUniqueId(), core.clock().instant())) {
+            return;
+        }
+        consumeOne(player);
+        Vector look = player.getLocation().getDirection();
+        Vec push = Slingshot.push(new Vec(look.getX(), look.getY(), look.getZ()));
+        player.setVelocity(new Vector(push.x(), push.y(), push.z()));
+        player.getWorld().playEffect(player.getLocation(), Effect.STEP_SOUND, Slingshot.SLIME_BLOCK_ID);
+        for (int index = 0; index < Slingshot.SOUND_PITCHES.size(); index++) {
+            float pitch = Slingshot.SOUND_PITCHES.get(index);
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                if (player.isOnline()) {
+                    player.getWorld().playSound(player.getLocation(), Sound.SLIME_WALK2, 1, pitch);
+                }
+            }, (long) index * Slingshot.SOUND_GAP_TICKS);
+        }
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                Optional<Duration> left = slingshot.remaining(player.getUniqueId(), core.clock().instant());
+                if (!player.isOnline() || left.isEmpty()) {
+                    cancel();
+                    return;
+                }
+                ActionBar.send(player, Slingshot.actionBar(left.get()));
+            }
+        }.runTaskTimer(plugin, 0L, SLINGSHOT_BAR_TICKS);
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -219,7 +284,8 @@ public final class MatchListener implements Listener {
         if (block.getType() == Material.TNT) {
             block.setType(Material.AIR, false);
             TNTPrimed tnt = block.getWorld().spawn(block.getLocation().add(0.5, 0, 0.5), TNTPrimed.class);
-            tnt.setFuseTicks(TNT_FUSE_TICKS);
+            tnt.setFuseTicks(ExplosionKnockback.TNT_FUSE_TICKS);
+            tnt.setYield(ExplosionKnockback.TNT_YIELD);
             tntTimers.track(tnt);
             explosives.put(tnt.getUniqueId(), player.getUniqueId());
             runtime.room().player(player.getUniqueId()).ifPresent(RoomPlayer::useExplosive);
@@ -288,7 +354,6 @@ public final class MatchListener implements Listener {
         event.blockList().removeIf(block -> block.getType() == Material.GLASS || block.getType() == Material.STAINED_GLASS
             || !room.wasPlaced(block.getX(), block.getY(), block.getZ()));
         event.blockList().forEach(block -> room.unplaced(block.getX(), block.getY(), block.getZ()));
-        event.setYield(0);
         Optional.ofNullable(explosives.get(exploded)).flatMap(room::player).ifPresent(owner -> owner.addExplosiveBlocks(event.blockList().size()));
     }
 
@@ -310,6 +375,11 @@ public final class MatchListener implements Listener {
         RoomPlayer roomPlayer = room.player(player.getUniqueId()).orElseThrow();
         Entity damager = event instanceof EntityDamageByEntityEvent byEntity ? byEntity.getDamager() : null;
         Optional<Player> attacker = damager == null ? Optional.empty() : attacker(damager);
+        if (attacker.isPresent() && attacker.get().equals(player) && (damager instanceof Fireball || damager instanceof TNTPrimed)) {
+            event.setCancelled(true);
+            launch(player, damager);
+            return;
+        }
         if (attacker.isPresent() && !attacker.get().equals(player)) {
             Optional<RoomPlayer> other = room.player(attacker.get().getUniqueId());
             boolean direct = damager instanceof Player || damager instanceof Projectile;
@@ -398,7 +468,7 @@ public final class MatchListener implements Listener {
     public void onDrop(PlayerDropItemEvent event) {
         rooms.roomOf(event.getPlayer().getUniqueId()).ifPresent(runtime -> {
             Material type = event.getItemDrop().getItemStack().getType();
-            if (runtime.room().phase() != Room.Phase.PLAYING || type == Material.WOOD_SWORD || type.name().endsWith("_PICKAXE")
+            if (runtime.room().phase() != Room.Phase.PLAYING || !alive(runtime, event.getPlayer()) || type == Material.WOOD_SWORD || type.name().endsWith("_PICKAXE")
                 || type.name().endsWith("_AXE") || type == Material.SHEARS) {
                 event.setCancelled(true);
             }
@@ -606,6 +676,35 @@ public final class MatchListener implements Listener {
         String badge = Colors.translate(rooms.chatBadge(player.getUniqueId())) + " ";
         String template = shout + badge + Colors.translate(view.get().prefix()) + core.messages().get("chat-format");
         event.setFormat(core.permissions().display(player.getUniqueId()).chatFormat(template));
+    }
+
+    private static void launch(Player player, Entity explosive) {
+        Location blast = explosive.getLocation();
+        Location feet = player.getLocation();
+        Vec push = ExplosionKnockback.of(explosive instanceof Fireball ? Source.FIREBALL : Source.TNT,
+            new Vec(blast.getX(), blast.getY(), blast.getZ()), new Vec(feet.getX(), feet.getY(), feet.getZ()), player.isOnGround());
+        player.setVelocity(new Vector(push.x(), push.y(), push.z()));
+        player.playEffect(EntityEffect.HURT);
+    }
+
+    private void spectatorAction(Player player, RoomRuntime runtime, SpectatorHotbar.Action action) {
+        switch (action) {
+            case TELEPORTER -> runtime.openTeleporter(player);
+            case RANDOM_PLAYER -> runtime.teleportSpectator(player, false);
+            case PLAYER_IN_COMBAT -> runtime.teleportSpectator(player, true);
+            case PLAY_AGAIN -> playAgain.accept(player, runtime.room().mode().id());
+            case LEAVE -> core.network().connectToGroup(player.getUniqueId(), settings.lobbyGroup());
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onSpectatorInventory(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player) || event.getView().getTopInventory().getHolder() instanceof MenuHolder) {
+            return;
+        }
+        rooms.roomOf(player.getUniqueId())
+            .filter(runtime -> runtime.room().phase() == Room.Phase.ENDING || runtime.room().phase() == Room.Phase.PLAYING && !alive(runtime, player))
+            .ifPresent(runtime -> event.setCancelled(true));
     }
 
     private boolean alive(RoomRuntime runtime, Player player) {

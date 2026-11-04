@@ -24,8 +24,14 @@ public final class MatchConnector {
     private final RoomDirectory directory;
     private final Function<String, String> modeNames;
     private final Set<UUID> pending = ConcurrentHashMap.newKeySet();
+    private final LocalJoin local;
 
     public MatchConnector(MuxeCore core, MessageCatalog messages, Function<String, String> modeNames) {
+        this(core, messages, modeNames, (player, request) -> false);
+    }
+
+    public MatchConnector(MuxeCore core, MessageCatalog messages, Function<String, String> modeNames, LocalJoin local) {
+        this.local = local;
         this.core = core;
         this.messages = messages;
         this.modeNames = modeNames;
@@ -53,6 +59,13 @@ public final class MatchConnector {
         }
         JoinNotices.beforeRequest(target.get()).forEach(key -> player.sendMessage(messages.get(key)));
         JoinRoomRequest request = new JoinRoomRequest(id, mode, arena.orElse(""), target.get().roomCode());
+        if (target.get().serverId().equals(core.identity().id())) {
+            pending.remove(id);
+            if (!local.join(player, request)) {
+                player.sendMessage(messages.get("room-unavailable", "mode", modeNames.apply(mode)));
+            }
+            return;
+        }
         core.packets().request(PacketTarget.server(target.get().serverId()), request, JoinRoomReply.class, core.requestTimeout())
             .whenCompleteAsync((reply, error) -> {
                 pending.remove(id);
@@ -69,5 +82,10 @@ public final class MatchConnector {
                     return null;
                 });
             }, core.mainThread());
+    }
+
+    public interface LocalJoin {
+
+        boolean join(Player player, JoinRoomRequest request);
     }
 }

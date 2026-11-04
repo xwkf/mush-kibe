@@ -1,11 +1,13 @@
 package br.com.muxe.minigame.bedwars.settings;
 
 import br.com.muxe.minigame.bedwars.game.GeneratorTimer.Rate;
-import br.com.muxe.minigame.bedwars.game.Timeline;
 import br.com.muxe.minigame.bedwars.game.Timeline.Event;
 import br.com.muxe.minigame.bedwars.game.Timeline.Kind;
+import br.com.muxe.minigame.bedwars.game.Timeline;
 import br.com.muxe.minigame.bedwars.game.XpRewards;
 import br.com.muxe.minigame.bedwars.item.ItemNames;
+import br.com.muxe.minigame.bedwars.spectator.SpectatorHotbar;
+import br.com.muxe.minigame.bedwars.spectator.TeleporterMenu.Teleporter;
 import br.com.muxe.minigame.engine.match.CountdownTitles;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +26,8 @@ public record BedWarsSettings(
     ScoreboardSettings scoreboard,
     Holograms holograms,
     WaitingHotbar hotbar,
+    SpectatorHotbar spectators,
+    Teleporter teleporter,
     MatchSounds sounds,
     ItemNames items
 ) {
@@ -43,6 +47,8 @@ public record BedWarsSettings(
             ScoreboardSettings.from(section(config, "scoreboard")),
             Holograms.from(section(config, "holograms")),
             WaitingHotbar.from(section(config, "hotbar.waiting")),
+            SpectatorHotbar.from(section(config, "hotbar.spectator")),
+            new Teleporter(config.getString("hotbar.teleporter.title", "Teleportador"), config.getStringList("hotbar.teleporter.entry-lore")),
             MatchSounds.from(config.getConfigurationSection("sounds")),
             ItemNames.from(config.getConfigurationSection("item-names"))
         );

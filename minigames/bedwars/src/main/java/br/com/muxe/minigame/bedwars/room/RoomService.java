@@ -49,6 +49,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -309,6 +310,15 @@ public final class RoomService {
         core.nameTags().refresh(player);
     }
 
+    public void moveToReserved(Player player) {
+        leave(player);
+        for (Player other : Bukkit.getOnlinePlayers()) {
+            other.showPlayer(player);
+            player.showPlayer(other);
+        }
+        arrive(player);
+    }
+
     public Optional<RoomRuntime> roomOf(UUID player) {
         String code = byPlayer.get(player);
         return code == null ? Optional.empty() : Optional.ofNullable(rooms.get(code));
@@ -490,7 +500,7 @@ public final class RoomService {
 
     private void clicked(Player player, Npc npc) {
         roomOf(player.getUniqueId()).ifPresent(runtime -> {
-            if (runtime.npcRoom(npc.id()).isEmpty() || runtime.room().phase() != Room.Phase.PLAYING) {
+            if (runtime.npcRoom(npc.id()).isEmpty() || runtime.room().phase() != Room.Phase.PLAYING || runtime.isSpectator(player)) {
                 return;
             }
             boolean upgrades = npc.id().contains("-melhorias");

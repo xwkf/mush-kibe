@@ -10,22 +10,24 @@ class TntTimerSettingsTest {
     private final TntTimerSettings settings = TntTimerSettings.from(RoomFixtures.CONFIG.getConfigurationSection("tnt-timer"));
 
     @Test
-    void theTimerShowsTheSecondsLeftWithOneDecimal() {
-        assertThat(settings.text(52, 52)).isEqualTo("&a2.6s");
-        assertThat(settings.text(0, 52)).isEqualTo("&c0.0s");
+    void theTimerShowsTheSecondsLeftWithTwoDecimalsAndAComma() {
+        assertThat(settings.text(59, 60)).isEqualTo("&22,95s");
+        assertThat(settings.text(0, 60)).isEqualTo("&c0,00s");
     }
 
     @Test
-    void theColourGoesFromGreenToRedAsTheFuseBurns() {
-        assertThat(settings.text(40, 52)).startsWith("&a");
-        assertThat(settings.text(30, 52)).startsWith("&e");
-        assertThat(settings.text(20, 52)).startsWith("&6");
-        assertThat(settings.text(10, 52)).startsWith("&c");
+    void theColourGoesFromDarkGreenToRedAsTheFuseBurns() {
+        assertThat(settings.text(54, 60)).startsWith("&2");
+        assertThat(settings.text(53, 60)).startsWith("&a");
+        assertThat(settings.text(36, 60)).startsWith("&a");
+        assertThat(settings.text(35, 60)).startsWith("&e");
+        assertThat(settings.text(18, 60)).startsWith("&e");
+        assertThat(settings.text(17, 60)).startsWith("&c");
     }
 
     @Test
-    void itIsSeenWithinTheViewDistanceAndUpdatedOftenEnoughToCountTenths() {
+    void itIsSeenWithinTheViewDistanceAndUpdatedEveryTick() {
         assertThat(settings.viewDistance()).isEqualTo(24);
-        assertThat(settings.updateTicks()).isEqualTo(2);
+        assertThat(settings.updateTicks()).isEqualTo(1);
     }
 }

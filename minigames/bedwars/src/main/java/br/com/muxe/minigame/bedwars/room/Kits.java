@@ -21,8 +21,8 @@ public final class Kits {
 
     private static final Material[] BOOTS = {Material.LEATHER_BOOTS, Material.CHAINMAIL_BOOTS, Material.IRON_BOOTS, Material.DIAMOND_BOOTS};
     private static final Material[] LEGGINGS = {Material.LEATHER_LEGGINGS, Material.CHAINMAIL_LEGGINGS, Material.IRON_LEGGINGS, Material.DIAMOND_LEGGINGS};
-    private static final Material[] PICKAXES = {Material.WOOD_PICKAXE, Material.IRON_PICKAXE, Material.GOLD_PICKAXE, Material.DIAMOND_PICKAXE};
-    private static final int[][] PICKAXE_ENCHANTS = {{1, 0}, {2, 0}, {3, 2}, {3, 0}};
+    private static final Material[] PICKAXES = {Material.WOOD_PICKAXE, Material.STONE_PICKAXE, Material.IRON_PICKAXE, Material.GOLD_PICKAXE, Material.DIAMOND_PICKAXE};
+    private static final int[] PICKAXE_EFFICIENCY = {1, 1, 2, 3, 3};
     private static final Material[] AXES = {Material.WOOD_AXE, Material.STONE_AXE, Material.IRON_AXE, Material.DIAMOND_AXE};
     private static final int[] AXE_EFFICIENCY = {1, 1, 2, 3};
     private static final int INFINITE = Integer.MAX_VALUE;
@@ -90,10 +90,15 @@ public final class Kits {
     }
 
     public static ItemStack pickaxe(int tier, ItemNames names) {
-        int index = Math.clamp(tier, 1, PICKAXES.length) - 1;
-        ItemStack item = names.named(unbreakable(new ItemStack(PICKAXES[index])));
-        enchant(item, Enchantment.DIG_SPEED, PICKAXE_ENCHANTS[index][0]);
-        return enchant(item, Enchantment.DAMAGE_ALL, PICKAXE_ENCHANTS[index][1]);
+        return enchant(names.named(unbreakable(new ItemStack(pickaxeMaterial(tier)))), Enchantment.DIG_SPEED, pickaxeEfficiency(tier));
+    }
+
+    public static Material pickaxeMaterial(int tier) {
+        return PICKAXES[Math.clamp(tier, 1, PICKAXES.length) - 1];
+    }
+
+    public static int pickaxeEfficiency(int tier) {
+        return PICKAXE_EFFICIENCY[Math.clamp(tier, 1, PICKAXES.length) - 1];
     }
 
     public static ItemStack axe(int tier, RoomTeam team, ItemNames names) {

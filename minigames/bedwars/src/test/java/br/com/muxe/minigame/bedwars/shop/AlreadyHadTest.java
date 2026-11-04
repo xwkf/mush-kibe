@@ -15,7 +15,7 @@ class AlreadyHadTest {
     @Test
     void armourAlreadyWornAndToolsAtTheirLastLevelCannotBeBoughtAgain() {
         player.armorTier(3);
-        player.pickaxeTier(4);
+        player.pickaxeTier(5);
         player.giveShears();
 
         assertThat(Offer.of(catalog.items().get("armadura-ferro"), player).alreadyHad()).isTrue();
