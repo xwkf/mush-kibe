@@ -13,12 +13,7 @@ import org.bukkit.Material;
 final class Companion {
 
     static final List<Place> PLACES = List.of(new Place(4, -4), new Place(4, 4), new Place(3, -7), new Place(3, 7));
-    static final int FOLLOW_START = 7;
-    static final double FOLLOW_GAIN = 0.18;
-    static final double TOP_SPEED = 1.0;
-    static final double EASING = 0.3;
-    static final double TURN_EASING = 0.35;
-    static final double TURN_SPEED = 0.05;
+    static final double FOLLOW_DISTANCE = 4;
     static final double HAT_UP = 0.3125;
     static final float SIDEWAYS = 90;
     static final Pose UPSIDE_DOWN = Pose.STANDING.withHead(new Vec(180, 90, 0));
@@ -31,21 +26,17 @@ final class Companion {
     private final Actor witch;
     private final Actor hat;
     private final Broom broom;
-    private Vec position;
-    private Vec velocity = BroomFlight.START_VELOCITY;
-    private double yaw;
-    private int age;
+    private final BroomFlight flight;
 
-    private Companion(Actor seat, Actor witch, Actor hat, Broom broom, Vec position, float yaw) {
+    private Companion(Actor seat, Actor witch, Actor hat, Broom broom, BroomFlight flight) {
         this.seat = seat;
         this.witch = witch;
         this.hat = hat;
         this.broom = broom;
-        this.position = position;
-        this.yaw = yaw;
+        this.flight = flight;
     }
 
-    static Companion spawn(Stage stage, Vec position, float yaw, SignedSkin skin) {
+    static Companion spawn(Stage stage, Vec position, float yaw, SignedSkin skin, int phase) {
         Actor seat = stage.armorStand(position, yaw, StandStyle.HIDDEN);
         Actor witch = stage.player(position, yaw, skin);
         witch.equip(Slot.HAND, Material.STICK, 0);
@@ -54,27 +45,34 @@ final class Companion {
         hat.equip(Slot.HELMET, Material.HOPPER, 0);
         hat.pose(UPSIDE_DOWN);
         stage.particle("CLOUD", Broom.spot(position, yaw, PUFF_FORWARD, PUFF_UP), 25, PUFF_SPREAD, 0.1);
-        return new Companion(seat, witch, hat, Broom.build(stage, position, yaw), position, yaw);
+        BroomFlight flight = new BroomFlight(position, yaw);
+        for (int tick = 0; tick < phase; tick++) {
+            flight.hover();
+        }
+        return new Companion(seat, witch, hat, Broom.build(stage, position, yaw), flight);
     }
 
-    static Vec place(Vec leader, double leaderYaw, Place place) {
-        return leader.add(BroomFlight.forward(leaderYaw).multiply(place.ahead())).add(BroomFlight.right(leaderYaw).multiply(place.right()));
+    static Vec place(Vec leader, double heading, Place place) {
+        return leader.add(Broom.forward(heading).multiply(place.ahead())).add(Broom.right(heading).multiply(place.right()));
     }
 
-    static Vec chase(Vec from, Vec place) {
-        Vec wanted = place.subtract(from).multiply(FOLLOW_GAIN);
-        return wanted.length() > TOP_SPEED ? wanted.normalize().multiply(TOP_SPEED) : wanted;
+    static boolean chasing(Vec from, Vec place) {
+        return place.distance(from) > FOLLOW_DISTANCE;
+    }
+
+    static float pitchTowards(Vec offset) {
+        return (float) -Math.toDegrees(Math.atan2(offset.y(), Math.hypot(offset.x(), offset.z())));
     }
 
     void follow(Vec place) {
-        age++;
-        Vec wanted = age < FOLLOW_START ? Vec.ZERO : chase(position, place);
-        velocity = velocity.add(wanted.subtract(velocity).multiply(EASING));
-        position = position.add(velocity);
-        if (Math.hypot(velocity.x(), velocity.z()) > TURN_SPEED) {
-            yaw += TURN_EASING * Flight.wrap(Vec.ZERO.yawTowards(velocity) - yaw);
+        Vec offset = place.subtract(flight.position());
+        if (chasing(flight.position(), place)) {
+            flight.step(true, Vec.ZERO.yawTowards(offset), pitchTowards(offset));
+        } else {
+            flight.hover();
         }
-        float facing = (float) yaw;
+        Vec position = flight.position();
+        float facing = flight.yaw();
         seat.teleport(position, facing, 0);
         witch.teleport(position, facing, 0);
         hat.teleport(position.add(0, HAT_UP, 0), facing + SIDEWAYS, 0);

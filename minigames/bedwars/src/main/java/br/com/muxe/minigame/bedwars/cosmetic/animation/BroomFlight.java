@@ -6,13 +6,14 @@ final class BroomFlight {
 
     static final double TOP_SPEED = 1.0;
     static final double EASING = 0.3;
-    static final double TURN_EASING = 0.35;
-    static final double MAX_CLIMB = 1.0;
-    static final Vec START_VELOCITY = new Vec(0, 0.1, 0);
+    static final double TURN_EASING = 0.2;
+    static final double BOB_STEP = 0.1;
+    static final double BOB_RATE = 0.2;
 
     private Vec position;
-    private Vec velocity = START_VELOCITY;
+    private Vec velocity = Vec.ZERO;
     private double yaw;
+    private int ticks;
 
     BroomFlight(Vec position, float yaw) {
         this.position = position;
@@ -20,9 +21,15 @@ final class BroomFlight {
     }
 
     void step(boolean pushing, float lookYaw, float lookPitch) {
+        Vec target = pushing ? Flight.direction(lookYaw, lookPitch).multiply(TOP_SPEED) : Vec.ZERO;
+        velocity = velocity.add(target.subtract(velocity).multiply(EASING));
+        position = position.add(velocity).add(0, bob(ticks), 0);
         yaw += TURN_EASING * Flight.wrap(lookYaw - yaw);
-        velocity = velocity.add(target(pushing, yaw, lookPitch).subtract(velocity).multiply(EASING));
-        position = position.add(velocity);
+        ticks++;
+    }
+
+    void hover() {
+        step(false, (float) yaw, 0);
     }
 
     Vec position() {
@@ -37,24 +44,7 @@ final class BroomFlight {
         return (float) yaw;
     }
 
-    static Vec target(boolean pushing, double yaw, double pitch) {
-        if (!pushing) {
-            return Vec.ZERO;
-        }
-        return forward(yaw).multiply(TOP_SPEED).add(0, climb(pitch), 0);
-    }
-
-    static double climb(double pitch) {
-        return Math.clamp(-Math.tan(Math.toRadians(pitch)) * TOP_SPEED, -MAX_CLIMB, MAX_CLIMB);
-    }
-
-    static Vec forward(double yaw) {
-        double radians = Math.toRadians(yaw);
-        return new Vec(-Math.sin(radians), 0, Math.cos(radians));
-    }
-
-    static Vec right(double yaw) {
-        Vec forward = forward(yaw);
-        return new Vec(-forward.z(), 0, forward.x());
+    static double bob(int tick) {
+        return BOB_STEP * Math.cos(BOB_RATE * tick);
     }
 }

@@ -174,6 +174,7 @@ final class RecordingStage implements Stage {
 
         final String type;
         Vec position;
+        float yaw;
         boolean removed;
         StandStyle style;
         Pose pose;
@@ -191,6 +192,7 @@ final class RecordingStage implements Stage {
         @Override
         public void teleport(Vec position, float yaw, float pitch) {
             this.position = position;
+            this.yaw = yaw;
         }
 
         @Override

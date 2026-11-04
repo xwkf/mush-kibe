@@ -36,40 +36,43 @@ class WitchVictoryTest {
     }
 
     @Test
-    void holdingWFliesOneBlockPerTickWhereTheBroomFacesAndClimbsAlongTheLook() {
-        Vec south = BroomFlight.target(true, 0, 0);
-        assertThat(south.x()).isCloseTo(0, offset(1e-9));
-        assertThat(south.y()).isCloseTo(0, offset(1e-9));
-        assertThat(south.z()).isCloseTo(1, offset(1e-9));
-        Vec east = BroomFlight.target(true, -90, 0);
-        assertThat(east.x()).isCloseTo(1, offset(1e-9));
-        assertThat(east.z()).isCloseTo(0, offset(1e-9));
-        assertThat(BroomFlight.target(true, 0, -20).y()).isCloseTo(Math.tan(Math.toRadians(20)), offset(1e-9));
-        assertThat(BroomFlight.target(true, 0, 30).y()).isCloseTo(-Math.tan(Math.toRadians(30)), offset(1e-9));
-        assertThat(BroomFlight.target(true, 0, 89).y()).isEqualTo(-1);
-        assertThat(BroomFlight.target(true, 0, -89).y()).isEqualTo(1);
-        assertThat(BroomFlight.target(false, 40, -30)).isEqualTo(Vec.ZERO);
+    void theBroomBobsHalfABlockWhileHoveringAndFliesWhereTheRiderLooksWhileHoldingW() {
+        RecordingStage stage = stage();
+        Timeline timeline = script(stage, scene(winner));
+        FakeMount mount = run(stage, timeline, 0);
+        double lowest = Double.MAX_VALUE;
+        double highest = -Double.MAX_VALUE;
+        for (int tick = 1; tick <= 63; tick++) {
+            timeline.run(tick);
+            assertThat(mount.seat.x()).isEqualTo(mount.start.x());
+            assertThat(mount.seat.z()).isEqualTo(mount.start.z());
+            lowest = Math.min(lowest, mount.seat.y());
+            highest = Math.max(highest, mount.seat.y());
+        }
+        assertThat(highest - lowest).isBetween(0.9, 1.05);
+
+        mount.pushing = true;
+        mount.pitch = -20;
+        for (int tick = 64; tick <= 120; tick++) {
+            timeline.run(tick);
+        }
+        Vec step = mount.path.getLast().subtract(mount.path.get(mount.path.size() - 2));
+        assertThat(step.z()).isCloseTo(Math.cos(Math.toRadians(20)), offset(1e-3));
+        assertThat(step.y()).isCloseTo(Math.sin(Math.toRadians(20)), offset(BroomFlight.BOB_STEP + 1e-3));
     }
 
     @Test
-    void theBroomSpeedsUpAndTurnsTowardTheLookEasingIn() {
-        BroomFlight flight = new BroomFlight(new Vec(0, 30, 0), 0);
+    void theBroomTurnsAFifthOfTheWayTowardTheLookEachTick() {
+        RecordingStage stage = stage();
+        Timeline timeline = script(stage, scene(winner));
+        FakeMount mount = run(stage, timeline, 0);
+        mount.yaw = 40;
 
-        flight.step(true, 0, 0);
-        assertThat(flight.velocity().z()).isCloseTo(0.3, offset(1e-9));
-        assertThat(flight.velocity().y()).isCloseTo(0.07, offset(1e-9));
-        for (int tick = 0; tick < 30; tick++) {
-            flight.step(true, 0, 0);
-        }
-        assertThat(flight.velocity().z()).isCloseTo(1, offset(1e-3));
+        timeline.run(1);
 
-        flight.step(true, 40, 0);
-        assertThat((double) flight.yaw()).isCloseTo(14, offset(1e-4));
-        for (int tick = 0; tick < 40; tick++) {
-            flight.step(false, 40, 0);
-        }
-        assertThat((double) flight.yaw()).isCloseTo(40, offset(1e-3));
-        assertThat(flight.velocity().length()).isLessThan(1e-4);
+        FakeActor bristles = stage.actors.getFirst();
+        assertThat(bristles.position).isEqualTo(Broom.spot(mount.seat, 8, Broom.BRISTLES_FORWARD, Broom.BRISTLES_UP));
+        assertThat((double) bristles.yaw).isCloseTo(8 + Broom.SIDEWAYS, offset(1e-4));
     }
 
     @Test
@@ -128,51 +131,77 @@ class WitchVictoryTest {
     }
 
     @Test
-    void theWitchesHoverFirstThenChaseTheirPlaceNoFasterThanOneBlockPerTick() {
-        assertThat(Companion.chase(Vec.ZERO, new Vec(0, 0, 2))).isEqualTo(new Vec(0, 0, 2 * 0.18));
-        assertThat(Companion.chase(Vec.ZERO, new Vec(0, 0, 40)).length()).isCloseTo(1, offset(1e-9));
+    void theFormationTurnsWithTheWayTheBroomFliesAndNotWithWhereTheRiderLooks() {
         Vec place = Companion.place(new Vec(0, 30, 0), 90, new Companion.Place(4, 7));
         assertThat(place.x()).isCloseTo(-4, offset(1e-9));
         assertThat(place.z()).isCloseTo(-7, offset(1e-9));
-
-        RecordingStage stage = stage();
-        Timeline timeline = script(stage, scene(winner));
-        FakeMount mount = run(stage, timeline, 0);
-        mount.pushing = true;
-        FakeActor witch = stage.actors.stream().filter(actor -> actor.type.equals("Player")).findFirst().orElseThrow();
-        Vec start = witch.position;
-        for (int tick = 1; tick < Companion.FOLLOW_START; tick++) {
-            timeline.run(tick);
-            assertThat(witch.position.x()).isEqualTo(start.x());
-            assertThat(witch.position.z()).isEqualTo(start.z());
-        }
-        assertThat(witch.position.y()).isGreaterThan(start.y());
-        Vec previous = witch.position;
-        for (int tick = Companion.FOLLOW_START; tick < 120; tick++) {
-            timeline.run(tick);
-            assertThat(witch.position.distance(previous)).isLessThanOrEqualTo(1.0 + 1e-9);
-            previous = witch.position;
-        }
-        assertThat(witch.position.z()).isBetween(mount.seat.z() - 6, mount.seat.z() + 4);
-        assertThat(witch.position.x()).isCloseTo(mount.seat.x() + 4, offset(0.5));
+        assertThat((double) WitchVictory.heading(30, new Vec(-1, 0.4, 0))).isCloseTo(90, offset(1e-4));
+        assertThat(WitchVictory.heading(30, new Vec(0.05, 0.5, -0.05))).isEqualTo(30);
+        assertThat(Companion.chasing(Vec.ZERO, new Vec(0, 3, 2.6))).isFalse();
+        assertThat(Companion.chasing(Vec.ZERO, new Vec(0, 3, 2.7))).isTrue();
+        assertThat((double) Companion.pitchTowards(new Vec(0, 1, 1))).isCloseTo(-45, offset(1e-4));
     }
 
     @Test
-    void theRiderSteersTheBroomAndTheBroomFollowsTheSeat() {
+    void theWitchesStayWhereTheyAreAndKeepFacingTheSameWayWhileTheRiderHoversAndTurns() {
         RecordingStage stage = stage();
         Timeline timeline = script(stage, scene(winner));
         FakeMount mount = run(stage, timeline, 0);
-        mount.pitch = -20;
+        List<FakeActor> witches = witches(stage);
+        List<Vec> starts = witches.stream().map(witch -> witch.position).toList();
+        int[] peaks = new int[witches.size()];
+        double[] highest = new double[witches.size()];
+        for (int tick = 1; tick <= 80; tick++) {
+            mount.yaw = tick * 9;
+            timeline.run(tick);
+            for (int index = 0; index < witches.size(); index++) {
+                FakeActor witch = witches.get(index);
+                assertThat(witch.position.x()).isEqualTo(starts.get(index).x());
+                assertThat(witch.position.z()).isEqualTo(starts.get(index).z());
+                assertThat(witch.yaw).isZero();
+                if (tick <= 31 && witch.position.y() > highest[index]) {
+                    highest[index] = witch.position.y();
+                    peaks[index] = tick;
+                }
+            }
+        }
+        for (int index = 1; index < witches.size(); index++) {
+            assertThat(peaks[0] - peaks[index]).isEqualTo(index);
+        }
+    }
+
+    @Test
+    void theWitchesSetOffOnceTheRiderLeavesThemFourBlocksBehindAndThenHoldTheirSides() {
+        RecordingStage stage = stage();
+        Timeline timeline = script(stage, scene(winner));
+        FakeMount mount = run(stage, timeline, 0);
         mount.pushing = true;
-        for (int tick = 1; tick <= 60; tick++) {
+        List<FakeActor> witches = witches(stage);
+        List<Vec> starts = witches.stream().map(witch -> witch.position).toList();
+        for (int tick = 1; tick <= 7; tick++) {
             timeline.run(tick);
         }
+        for (int index = 0; index < witches.size(); index++) {
+            assertThat(witches.get(index).position.z()).isEqualTo(starts.get(index).z());
+        }
+        timeline.run(8);
+        assertThat(witches).allSatisfy(witch -> assertThat(witch.position.z()).isGreaterThan(starts.get(witches.indexOf(witch)).z()));
 
-        Vec step = mount.path.getLast().subtract(mount.path.get(mount.path.size() - 2));
-        assertThat(step.z()).isCloseTo(1, offset(1e-3));
-        assertThat(step.y()).isCloseTo(Math.tan(Math.toRadians(20)), offset(1e-3));
-        FakeActor bristles = stage.actors.getFirst();
-        assertThat(bristles.position).isEqualTo(Broom.spot(mount.seat, 0, Broom.BRISTLES_FORWARD, Broom.BRISTLES_UP));
+        List<Vec> previous = witches.stream().map(witch -> witch.position).toList();
+        for (int tick = 9; tick <= 150; tick++) {
+            timeline.run(tick);
+            for (int index = 0; index < witches.size(); index++) {
+                assertThat(witches.get(index).position.distance(previous.get(index))).isLessThanOrEqualTo(BroomFlight.TOP_SPEED + BroomFlight.BOB_STEP);
+            }
+            previous = witches.stream().map(witch -> witch.position).toList();
+        }
+        for (int index = 0; index < witches.size(); index++) {
+            Companion.Place place = Companion.PLACES.get(index);
+            Vec witch = witches.get(index).position;
+            assertThat(witch.x()).isCloseTo(mount.seat.x() - place.right(), offset(0.05));
+            assertThat(witch.z()).isBetween(mount.seat.z() - 6, mount.seat.z() + place.ahead() - Companion.FOLLOW_DISTANCE + 0.2);
+            assertThat((double) witches.get(index).yaw).isCloseTo(0, offset(0.5));
+        }
     }
 
     @Test
@@ -285,6 +314,10 @@ class WitchVictoryTest {
         assertThat(stage.sounds.stream().filter("fireworks.launch"::equals).count()).isEqualTo(20);
         assertThat(stage.sounds.stream().filter("random.explode"::equals).count()).isZero();
         assertThat(stage.alive()).isZero();
+    }
+
+    private static List<FakeActor> witches(RecordingStage stage) {
+        return stage.actors.stream().filter(actor -> actor.type.equals("Player")).toList();
     }
 
     private static long guardians(RecordingStage stage) {

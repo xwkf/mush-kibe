@@ -51,7 +51,16 @@ final class Broom {
     }
 
     static Vec spot(Vec seat, float yaw, double forward, double up) {
-        return seat.add(BroomFlight.forward(yaw).multiply(forward)).add(0, up, 0);
+        return seat.add(forward(yaw).multiply(forward)).add(0, up, 0);
+    }
+
+    static Vec forward(double yaw) {
+        return Flight.direction(yaw, 0);
+    }
+
+    static Vec right(double yaw) {
+        Vec forward = forward(yaw);
+        return new Vec(-forward.z(), 0, forward.x());
     }
 
     void place(Vec seat, float yaw) {

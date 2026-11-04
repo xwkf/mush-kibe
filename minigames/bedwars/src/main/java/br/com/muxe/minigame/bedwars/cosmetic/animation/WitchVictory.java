@@ -22,6 +22,7 @@ public final class WitchVictory implements SceneAnimation {
     static final int WAND_SLOT = 4;
     static final String WAND_NAME = "§dVarinha Mágica";
     static final int COOLDOWN = 13;
+    static final double HEADING_SPEED = 0.1;
     static final int LAUNCH_FIRST = 1;
     static final int LAUNCH_EVERY = 10;
 
@@ -52,6 +53,10 @@ public final class WitchVictory implements SceneAnimation {
         return lastCast.map(last -> tick - last >= COOLDOWN).orElse(true);
     }
 
+    static float heading(float previous, Vec velocity) {
+        return Math.hypot(velocity.x(), velocity.z()) > HEADING_SPEED ? Vec.ZERO.yawTowards(velocity) : previous;
+    }
+
     static Vec aim(Stage stage, Vec eyes, Vec look) {
         return GrapplerVictory.trace(stage, eyes, look).orElse(eyes.add(look.normalize().multiply(GrapplerVictory.RANGE)));
     }
@@ -63,10 +68,12 @@ public final class WitchVictory implements SceneAnimation {
         private final List<Companion> companions = new ArrayList<>();
         private Mount mount;
         private Broom broom;
+        private float heading;
 
         Ride(Riders.Rider rider) {
             this.rider = rider;
             this.flight = new BroomFlight(rider.ground().add(0, SEAT_ABOVE_GROUND, 0), rider.yaw());
+            this.heading = rider.yaw();
         }
 
         void start(Stage stage) {
@@ -74,17 +81,18 @@ public final class WitchVictory implements SceneAnimation {
             mount = stage.mount(seat, flight.yaw(), rider.seated());
             broom = Broom.build(stage, seat, flight.yaw());
             for (int index = 0; index < Companion.PLACES.size(); index++) {
-                companions.add(Companion.spawn(stage, Companion.place(seat, flight.yaw(), Companion.PLACES.get(index)), flight.yaw(), WitchSkins.of(index)));
+                companions.add(Companion.spawn(stage, Companion.place(seat, heading, Companion.PLACES.get(index)), flight.yaw(), WitchSkins.of(index), index));
             }
         }
 
         void fly() {
+            heading = heading(heading, flight.velocity());
+            for (int index = 0; index < companions.size(); index++) {
+                companions.get(index).follow(Companion.place(flight.position(), heading, Companion.PLACES.get(index)));
+            }
             flight.step(mount.pushing(), mount.lookYaw(), mount.lookPitch());
             mount.move(flight.position(), flight.yaw());
             broom.place(flight.position(), flight.yaw());
-            for (int index = 0; index < companions.size(); index++) {
-                companions.get(index).follow(Companion.place(flight.position(), flight.yaw(), Companion.PLACES.get(index)));
-            }
         }
 
         void remove() {
