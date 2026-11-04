@@ -10,19 +10,25 @@ public record MatchSounds(
     Optional<SoundCue> bought,
     Optional<SoundCue> upgrade,
     Optional<SoundCue> cannotAfford,
-    Optional<SoundCue> enderChest
+    Optional<SoundCue> enderChest,
+    Optional<SoundCue> deposited,
+    Optional<SoundCue> bedDestroyed,
+    Optional<SoundCue> bedLost
 ) {
 
     public static MatchSounds from(ConfigurationSection section) {
         if (section == null) {
-            return new MatchSounds(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
+            return new MatchSounds(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
         }
         return new MatchSounds(
             SoundCue.from(section.getConfigurationSection("countdown")),
             SoundCue.from(section.getConfigurationSection("bought")),
             SoundCue.from(section.getConfigurationSection("upgrade")),
             SoundCue.from(section.getConfigurationSection("cannot-afford")),
-            SoundCue.from(section.getConfigurationSection("ender-chest"))
+            SoundCue.from(section.getConfigurationSection("ender-chest")),
+            SoundCue.from(section.getConfigurationSection("deposited")),
+            SoundCue.from(section.getConfigurationSection("bed-destroyed")),
+            SoundCue.from(section.getConfigurationSection("bed-lost"))
         );
     }
 

@@ -105,15 +105,27 @@ sounds:
     volume: 1
     pitch: 1
   upgrade:
-    sound: CLICK
+    sound: LEVEL_UP
     volume: 1
-    pitch: 1
+    pitch: 2
   cannot-afford:
     sound: VILLAGER_NO
     volume: 1
     pitch: 1
   ender-chest:
     sound: CHEST_OPEN
+    volume: 1
+    pitch: 1
+  deposited:
+    sound: CHICKEN_EGG_POP
+    volume: 1
+    pitch: 1.5
+  bed-destroyed:
+    sound: ENDERDRAGON_GROWL
+    volume: 1
+    pitch: 1
+  bed-lost:
+    sound: ENDERDRAGON_DEATH
     volume: 1
     pitch: 1
 
@@ -295,13 +307,13 @@ holograms:
     - "{color}&lMELHORIAS DA EQUIPE"
     - "&7Clique para ver mais."
   diamond:
-    - "&fNível &c{tier}"
+    - "&eNível &c{tier}"
     - "&b&lDiamante"
-    - "&fGera em &c{seconds} &fsegundos."
+    - "&eGera em &c{seconds} &esegundos"
   emerald:
-    - "&fNível &c{tier}"
+    - "&eNível &c{tier}"
     - "&2&lEsmeralda"
-    - "&fGera em &c{seconds} &fsegundos."
+    - "&eGera em &c{seconds} &esegundos"
 
 missions:
   daily-count: 3

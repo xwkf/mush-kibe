@@ -390,6 +390,8 @@ public final class RoomRuntime {
         Optional<BedFrame> frame = bedFrame(owner.get());
         removeBed(owner.get());
         frame.ifPresent(bed -> service.bedBreaks().broken(breaker, world, bed, online()));
+        MatchSounds.play(settings.sounds().bedDestroyed(), breaker);
+        room.members(owner.get()).forEach(member -> Optional.ofNullable(Bukkit.getPlayer(member.id())).ifPresent(victim -> MatchSounds.play(settings.sounds().bedLost(), victim)));
         broadcast(announcer.bed(player.id(), coloredName(player), Colors.translate(owner.get().color()), owner.get().displayName()));
         breaker.sendMessage(messages.get("xp", "xp", String.valueOf(settings.xp().bedDestroyed())));
         player.addXp(settings.xp().bedDestroyed());

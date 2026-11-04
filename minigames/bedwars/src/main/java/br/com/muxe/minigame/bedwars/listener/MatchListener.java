@@ -461,6 +461,7 @@ public final class MatchListener implements Listener {
             player.setItemInHand(item);
         }
         player.sendMessage(messages.get("chest-deposited", "item", name, "amount", String.valueOf(stored)));
+        MatchSounds.play(settings.sounds().deposited(), player);
     }
 
     private void give(Player player, RoomPlayer roomPlayer, Material type, int amount) {
