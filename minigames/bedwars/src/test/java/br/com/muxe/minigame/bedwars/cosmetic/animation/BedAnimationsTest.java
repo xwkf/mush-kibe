@@ -26,11 +26,12 @@ class BedAnimationsTest {
     }
 
     @Test
-    void fifteenRecordedAnimationsAreRegisteredByTheirCatalogIds() {
+    void sixteenRecordedAnimationsAreRegisteredByTheirCatalogIds() {
         assertThat(new BedAnimations().all()).extracting(BedAnimation::id).containsExactly(
             "ajudante-do-papai-noel", "avalanche", "coelhos", "passarinhos", "friaca", "fogos-de-artificio", "colheita-de-aboboras",
-            "apavorante", "deserto", "tinta", "bola-de-canhao", "enderman", "sal-na-ferida", "espiral-de-coelhos", "six-seven");
+            "apavorante", "deserto", "tinta", "bola-de-canhao", "enderman", "sal-na-ferida", "espiral-de-coelhos", "six-seven", "ghor");
         assertThat(new BedAnimations().find("tinta")).containsInstanceOf(PaintAnimation.class);
+        assertThat(new BedAnimations().find("ghor")).containsInstanceOf(GhorAnimation.class);
         assertThat(new BedAnimations().find("raio")).isEmpty();
     }
 

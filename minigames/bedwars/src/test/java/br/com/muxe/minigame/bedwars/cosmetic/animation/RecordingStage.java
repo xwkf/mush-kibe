@@ -37,7 +37,9 @@ final class RecordingStage implements Stage {
 
     @Override
     public Actor armorStand(Vec position, float yaw, StandStyle style) {
-        return add("ArmorStand", position);
+        FakeActor stand = add("ArmorStand", position);
+        stand.style = style;
+        return stand;
     }
 
     @Override
@@ -163,7 +165,10 @@ final class RecordingStage implements Stage {
         final String type;
         Vec position;
         boolean removed;
+        StandStyle style;
         final Map<Integer, Object> watched = new HashMap<>();
+        final Map<Slot, String> skulls = new HashMap<>();
+        final Map<Slot, Material> equipment = new HashMap<>();
 
         FakeActor(String type, Vec position) {
             this.type = type;
@@ -181,10 +186,12 @@ final class RecordingStage implements Stage {
 
         @Override
         public void equip(Slot slot, Material material, int data) {
+            equipment.put(slot, material);
         }
 
         @Override
         public void equipSkull(Slot slot, String texture) {
+            skulls.put(slot, texture);
         }
 
         @Override
