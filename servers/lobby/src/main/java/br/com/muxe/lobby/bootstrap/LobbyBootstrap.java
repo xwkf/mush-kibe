@@ -13,6 +13,8 @@ import br.com.muxe.core.bukkit.credit.CreditBalancesListener;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.core.common.config.live.LiveValue;
 import br.com.muxe.core.common.persistence.migration.MigrationReport;
+import br.com.muxe.lobby.afk.AfkSettings;
+import br.com.muxe.lobby.afk.AfkWatch;
 import br.com.muxe.lobby.bossbar.LobbyBossBar;
 import br.com.muxe.lobby.command.FlyCommand;
 import br.com.muxe.lobby.command.LobbyConfigCommand;
@@ -77,6 +79,7 @@ public final class LobbyBootstrap {
         plugins.registerEvents(new LobbyJoinListener(arrival, scoreboard, bossBar), plugin);
         plugins.registerEvents(new LobbyProtectionListener(arrival, build, new VoidRule(lobbyWorlds(), settings.voidLevel())), plugin);
         LaunchPads.start(plugin, core, settings.launchPad());
+        AfkWatch.start(plugin, core, AfkSettings.from(config.getConfigurationSection("afk")));
 
         BukkitScheduler scheduler = plugin.getServer().getScheduler();
         long scoreboardPeriod = LobbySettings.ticks(settings.scoreboardInterval());

@@ -24,6 +24,13 @@ launch-pad:
     per-block: 1
     view-radius: 32
 
+afk:
+  enabled: true
+  idle-after: 5m
+  server-group: afk
+  check-interval: 1s
+  origin-ttl: 12h
+
 bossbar:
   interval: 500ms
   frames:

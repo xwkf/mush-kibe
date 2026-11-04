@@ -12,3 +12,6 @@ permissions:
   muxe.lobby.fly:
     description: Arrives 5 blocks above the spawn with flight enabled and allows /fly.
     default: op
+  muxe.afk.bypass:
+    description: Never sent to the AFK server for standing still in a lobby.
+    default: op
