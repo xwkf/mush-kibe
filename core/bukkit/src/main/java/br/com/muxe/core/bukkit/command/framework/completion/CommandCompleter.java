@@ -52,7 +52,7 @@ public final class CommandCompleter {
             .flatMap(method -> method.argumentAt(position))
             .ifPresent(argument -> {
                 try {
-                    found.addAll(argument.suggestions(sender));
+                    found.addAll(argument.suggestions(sender, prefix));
                 } catch (RuntimeException exception) {
                     logger.log(Level.WARNING, "Suggestions for /" + command.name() + " failed", exception);
                 }

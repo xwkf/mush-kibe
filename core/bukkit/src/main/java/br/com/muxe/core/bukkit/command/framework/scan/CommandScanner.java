@@ -14,7 +14,9 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public final class CommandScanner {
@@ -126,8 +128,15 @@ public final class CommandScanner {
     }
 
     static List<Method> methods(Class<?> type) {
-        return Arrays.stream(type.getDeclaredMethods())
-            .filter(method -> !method.isSynthetic())
+        Map<String, Method> found = new LinkedHashMap<>();
+        for (Class<?> level = type; level != null && level != Object.class; level = level.getSuperclass()) {
+            for (Method method : level.getDeclaredMethods()) {
+                if (!method.isSynthetic() && !method.isBridge()) {
+                    found.putIfAbsent(method.getName() + Arrays.toString(method.getParameterTypes()), method);
+                }
+            }
+        }
+        return found.values().stream()
             .sorted(Comparator.comparing(Method::getName).thenComparingInt(Method::getParameterCount))
             .toList();
     }

@@ -30,6 +30,8 @@ public final class HologramCommand {
 
 The class keeps its dependencies in the constructor, as any other class. Handlers are public methods that return nothing.
 
+Handlers declared in a superclass are registered with the subclass command: a base class holds the shared subcommands and each subclass adds the `@Command`, the `@Permission` and its own subcommands. A subclass method with the same name and parameters replaces the inherited one. `ConfigCommand` is built this way (see [Configuration editor](../core-api/README.md#configuration-editor)).
+
 ## Annotations
 
 | Annotation | Where | What it does |
@@ -99,6 +101,7 @@ Types are added to `Commands` before the commands that use them: `commands.argum
 - Arguments complete from `@Suggest` or from their type. Text, numbers and plain `String` arguments complete nothing, so passwords are never completed.
 - Everything is filtered by what was typed, ignoring case, and sorted.
 - Shared providers are registered by name: `commands.suggestions("games", sender -> games)`. `SuggestionRegistry.PLAYERS` (`"players"`) is always there and lists the online players the sender can see.
+- A provider can also read what has been typed for its argument: `SuggestionProvider.suggest(sender, typed)` has a default that calls `suggest(sender)`, and a provider that overrides it (the configuration paths do) can answer one level at a time instead of listing everything.
 
 ## Order of the checks
 

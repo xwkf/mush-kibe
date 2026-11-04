@@ -30,6 +30,8 @@ public final class HologramCommand {
 
 A classe recebe as suas dependências no construtor, como qualquer outra classe. Os handlers são métodos públicos que não retornam nada.
 
+Handlers declarados em uma superclasse são registrados com o comando da subclasse: uma classe base guarda os subcomandos compartilhados e cada subclasse acrescenta o `@Command`, o `@Permission` e os seus próprios subcomandos. Um método da subclasse com o mesmo nome e os mesmos parâmetros substitui o herdado. O `ConfigCommand` é feito assim (veja [Editor de configuração](../core-api/README.pt-BR.md#editor-de-configuração)).
+
 ## Anotações
 
 | Anotação | Onde | O que faz |
@@ -99,6 +101,7 @@ Os tipos são adicionados ao `Commands` antes dos comandos que os usam: `command
 - Os argumentos completam pelo `@Suggest` ou pelo tipo. Textos, números e argumentos `String` simples não completam nada, então senhas nunca são completadas.
 - Tudo é filtrado pelo que foi digitado, sem diferenciar maiúsculas, e ordenado.
 - Provedores compartilhados são registrados por nome: `commands.suggestions("games", sender -> games)`. O `SuggestionRegistry.PLAYERS` (`"players"`) sempre existe e lista os jogadores online que quem enviou consegue ver.
+- Um provedor também pode ler o que foi digitado para o argumento: `SuggestionProvider.suggest(sender, typed)` tem uma implementação padrão que chama `suggest(sender)`, e um provedor que a sobrescreve (os caminhos da configuração fazem isso) pode responder um nível por vez em vez de listar tudo.
 
 ## Ordem das verificações
 

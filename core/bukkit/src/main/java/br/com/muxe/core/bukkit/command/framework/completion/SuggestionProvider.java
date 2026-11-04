@@ -7,4 +7,8 @@ import org.bukkit.command.CommandSender;
 public interface SuggestionProvider {
 
     Collection<String> suggest(CommandSender sender);
+
+    default Collection<String> suggest(CommandSender sender, String typed) {
+        return suggest(sender);
+    }
 }

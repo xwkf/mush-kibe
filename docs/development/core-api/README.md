@@ -77,6 +77,49 @@ FileConfiguration config = PluginConfig.load(plugin);
 
 `load` saves the default `config.yml` when there is none, then writes into the server's file every key of the jar's `config.yml` that it lacks, without changing the values already there, and reads it again. A plugin updated with new sections or messages keeps working on a server whose file was created by an older version. BedWars loads its configuration this way.
 
+### Configuration editor
+
+Staff view and change the `config.yml` of a plugin in game, without editing files. The pieces live in `br.com.muxe.core.bukkit.config.edit`, and the command in `br.com.muxe.core.bukkit.command.config`.
+
+```java
+ConfigReloads reloads = new ConfigReloads()
+    .register("scoreboard", "scoreboard", config -> template.reload(() -> ScoreboardTemplate.from(config)));
+ConfigEditor editor = new ConfigEditor(new PluginConfigStore(plugin, core.async()), reloads);
+ConfigPathSuggestions.register(commands, editor);
+commands.register(new LobbyConfigCommand(editor, new ConfigReplies(messages)));
+```
+
+- **Store.** `PluginConfigStore` works on the plugin's live `FileConfiguration` (`plugin.getConfig()`), so what other code of the plugin saves never overwrites a staff change. A change is written to the file on the core's async executor with `LatestWriter`: the text is built on the main thread and when several changes queue up only the latest content is written. The rest of the file is kept as Bukkit's YAML save writes it (comments are not kept, as with `saveConfig`).
+- **Paths.** Words of letters, digits, `_` and `-` joined by dots (`ConfigPaths`). Any path with `password`, `senha`, `secret`, `token` or `credential` in it is protected: it is never shown, completed or changed. A section is never replaced by a value, and a value is never turned into a section.
+- **Values.** `ConfigValues` infers the type from the text typed: `true`/`false`, whole numbers, decimals and text. When the key already has a value its type wins: a number key refuses text, a decimal key accepts `27` and stores `27.0`, a text key keeps `123` as text. Durations such as `60s` are text. `"123"` in quotes forces text. A list is set with comma separated values (`a, b, c`, or `[]` to empty it) and its items follow the type of the first item; `adicionar` and `remover` change one item, commas included.
+- **Locations.** `LocationValues.of(world, x, y, z, yaw, pitch, centered)` rounds the coordinates to hundredths and the angles to tenths; with `centered` the horizontal coordinates go to the middle of the block (`.5`). It is written as `x`, `y`, `z`, `yaw`, `pitch` under the path, and `world` too when the section already has a `world` key, does not exist yet, or `--mundo` is used.
+- **Unknown paths.** The editor only changes keys that exist in the file or in the jar's defaults; `--novo` at the end of the command creates a new one.
+- **Live apply.** A component registers a `Reloadable` for a path prefix with `ConfigReloads.register(name, prefix, callback)`. After a change, every component whose prefix covers the changed path (or lies below it) is called once with the plugin configuration; the staff sees the names that were applied, the ones that failed with the reason, or that the change only applies after a restart. Settings that components read through a `LiveValue<T>` (package `br.com.muxe.core.common.config.live`) are replaced by `reload(loader)`, which keeps the old value when the loader throws; whoever already took a snapshot keeps using it, so a running session is never changed in the middle. The editor remembers the changed paths no component covers and `recarregar` lists them.
+
+`ConfigCommand` is the abstract command every plugin extends with its own name and `@Permission(ConfigCommand.PERMISSION)`: `/coreconfig` (Muxe-Core), `/lobbyconfig` (lobby) and `/bwconfig` (BedWars). The permission is `muxe.admin.config` (default op), declared by Muxe-Core.
+
+| Subcommand | What it does |
+|---|---|
+| `ver [caminho]` | Shows a value and its type, the items of a list or the keys of a section (those with `.` at the end are sections). Without a path it lists the top level. |
+| `definir <caminho> <valor...> [--novo]` | Sets a value, saves and applies it live when a component covers it. |
+| `adicionar <caminho> <valor...>` | Adds an item to a list. |
+| `remover <caminho> <valor...>` | Removes an item from a list. |
+| `local <caminho> [--novo] [--centro] [--mundo]` | Stores the location of the sender (players only) under the path. |
+| `recarregar` | Reads the file again, applies every live component and lists the changes that wait for a restart. |
+
+Tab completes the subcommands and the paths one level at a time.
+
+```text
+/lobbyconfig ver scoreboard
+/lobbyconfig definir scoreboard.title &b&lMUXE
+/lobbyconfig adicionar scoreboard.lines &7Novo
+/lobbyconfig local spawn --novo
+/bwconfig definir timings.respawn-seconds 7
+/coreconfig definir join-greeting.delay 1s
+```
+
+The texts are `messages.config.*` in Muxe-Core's `config.yml`, which every plugin inherits.
+
 ### Message catalog
 
 ```java

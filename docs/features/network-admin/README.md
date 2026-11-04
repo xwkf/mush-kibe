@@ -25,6 +25,7 @@ Staff commands to see the network from inside the game. Lives in `core:bukkit` (
 | `/muxe find <player>` | Shows which server a player is on. | `muxe.admin` |
 | `/muxe metrics` | Shows a summary of packet metrics and TPS. | `muxe.admin` |
 | `/muxe latencia` | Shows connection pools, queues and the slowest timers. | `muxe.admin` |
+| `/coreconfig ver\|definir\|adicionar\|remover\|local\|recarregar ...` | Views and changes Muxe-Core's `config.yml` in game. Secrets (keys with `password`, `secret`, `token`) are never shown or changed. | `muxe.admin.config` |
 
 `/muxe find` completes the names of online players with tab.
 
@@ -33,8 +34,11 @@ Staff commands to see the network from inside the game. Lives in `core:bukkit` (
 | Permission | Grants | Default |
 |---|---|---|
 | `muxe.admin` | Every `/muxe` command. | op |
+| `muxe.admin.config` | `/coreconfig`, `/lobbyconfig` and `/bwconfig`: see the [configuration editor](../../development/core-api/README.md#configuration-editor). | op |
 
 ## Configuration
+
+Only `join-greeting.*` applies live through `/coreconfig`; every other key is saved and applies after a restart. The texts of the editor are `messages.config.*`.
 
 Messages under `messages.admin.*` in Muxe-Core's `config.yml`, plus `messages.no-permission` and the [command messages](../../development/commands/README.md#messages).
 

@@ -7,6 +7,9 @@ permissions:
   muxe.admin:
     description: Allows /muxe.
     default: op
+  muxe.admin.config:
+    description: Allows /coreconfig, /lobbyconfig and /bwconfig, which view and change the plugin configuration in game.
+    default: op
   muxe.build:
     description: Allows /build, which switches to creative to build and break on any server.
     default: op

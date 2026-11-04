@@ -34,11 +34,15 @@ public record ArgumentSpec(
     }
 
     public Collection<String> suggestions(CommandSender sender) {
+        return suggestions(sender, "");
+    }
+
+    public Collection<String> suggestions(CommandSender sender, String typed) {
         if (fixedSuggestions.isEmpty() && provider.isEmpty()) {
             return type.suggest(sender);
         }
         List<String> all = new ArrayList<>(fixedSuggestions);
-        provider.ifPresent(source -> all.addAll(source.suggest(sender)));
+        provider.ifPresent(source -> all.addAll(source.suggest(sender, typed)));
         return all;
     }
 }

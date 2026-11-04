@@ -6,12 +6,18 @@ import br.com.muxe.core.bukkit.buildmode.BuildSettings;
 import br.com.muxe.core.bukkit.command.BuildCommand;
 import br.com.muxe.core.bukkit.command.LobbyCommand;
 import br.com.muxe.core.bukkit.command.ReturnCommand;
+import br.com.muxe.core.bukkit.command.config.ConfigPathSuggestions;
+import br.com.muxe.core.bukkit.command.config.ConfigReplies;
+import br.com.muxe.core.bukkit.command.config.CoreConfigCommand;
 import br.com.muxe.core.bukkit.command.MuxeAdminCommand;
 import br.com.muxe.core.bukkit.command.framework.Commands;
 import br.com.muxe.core.bukkit.command.framework.registry.CommandMapRegistrar;
 import br.com.muxe.core.bukkit.command.framework.registry.PermissionMessages;
 import br.com.muxe.core.bukkit.command.framework.registry.UnknownCommands;
 import br.com.muxe.core.bukkit.config.BukkitConfigSource;
+import br.com.muxe.core.bukkit.config.edit.ConfigEditor;
+import br.com.muxe.core.bukkit.config.edit.ConfigReloads;
+import br.com.muxe.core.bukkit.config.edit.PluginConfigStore;
 import br.com.muxe.core.bukkit.greeting.GreetingSettings;
 import br.com.muxe.core.bukkit.greeting.JoinGreeting;
 import br.com.muxe.core.bukkit.greeting.LeftoverTitleCleaner;
@@ -29,6 +35,7 @@ import br.com.muxe.core.bukkit.thread.BukkitMainThreadGuard;
 import br.com.muxe.core.bukkit.world.ClearMidday;
 import br.com.muxe.core.common.buildmode.BuildState;
 import br.com.muxe.core.common.config.ConfigException;
+import br.com.muxe.core.common.config.live.LiveValue;
 import br.com.muxe.core.common.config.secret.SecretResolver;
 import br.com.muxe.core.common.config.settings.MuxeSettings;
 import br.com.muxe.core.common.config.settings.SettingsLoader;
@@ -90,14 +97,16 @@ public final class CoreBukkitBootstrap {
         plugin.getServer().getPluginManager().registerEvents(buildMode, plugin);
         plugin.getServer().getScheduler().runTaskTimer(plugin, buildMode, BuildMode.ACTION_BAR_PERIOD_TICKS, BuildMode.ACTION_BAR_PERIOD_TICKS);
         plugin.getServer().getPluginManager().registerEvents(new LeftoverTitleCleaner(Title::clear), plugin);
-        GreetingSettings greeting = GreetingSettings.from(config.getConfigurationSection("join-greeting"));
-        if (greeting.appliesTo(settings.server().kind())) {
-            plugin.getServer().getPluginManager().registerEvents(new JoinGreeting(plugin, greeting, messages), plugin);
-        }
+        LiveValue<GreetingSettings> greeting = new LiveValue<>(GreetingSettings.from(config.getConfigurationSection("join-greeting")));
+        plugin.getServer().getPluginManager().registerEvents(new JoinGreeting(plugin, greeting, settings.server().kind(), messages), plugin);
+        ConfigReloads reloads = new ConfigReloads()
+            .register("join-greeting", "join-greeting", section -> greeting.reload(() -> GreetingSettings.from(section.getConfigurationSection("join-greeting"))));
+        ConfigEditor configEditor = new ConfigEditor(new PluginConfigStore(plugin, runtime.executors().io()), reloads);
         String lobbyGroup = config.getString("network.lobby-group", "lobby");
         Commands commands = Commands.of(plugin, messages);
+        ConfigPathSuggestions.register(commands, configEditor);
         commands.register(new MuxeAdminCommand(core, JoinTraffic.start(plugin, runtime.metrics())), new LobbyCommand(core, lobbyGroup), new BuildCommand(buildMode, messages),
-            new ReturnCommand(core, new MatchReturns(core.store())));
+            new ReturnCommand(core, new MatchReturns(core.store())), new CoreConfigCommand(configEditor, new ConfigReplies(messages)));
         ranks = RankFeatures.start(plugin, core, config, commands);
         features = PlacedFeatures.start(plugin, core, config, commands);
         HotbarFeatures.start(plugin, core, config, features);

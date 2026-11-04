@@ -25,6 +25,7 @@ Comandos da equipe para ver a rede de dentro do jogo. Fica no `core:bukkit` (`Mu
 | `/muxe find <player>` | Mostra em qual servidor um jogador está. | `muxe.admin` |
 | `/muxe metrics` | Mostra um resumo das métricas de pacotes e o TPS. | `muxe.admin` |
 | `/muxe latencia` | Mostra os pools de conexão, as filas e os timers mais lentos. | `muxe.admin` |
+| `/coreconfig ver\|definir\|adicionar\|remover\|local\|recarregar ...` | Vê e altera o `config.yml` do Muxe-Core dentro do jogo. Segredos (chaves com `password`, `secret`, `token`) nunca são mostrados nem alterados. | `muxe.admin.config` |
 
 O `/muxe find` completa os nomes dos jogadores online com tab.
 
@@ -33,8 +34,11 @@ O `/muxe find` completa os nomes dos jogadores online com tab.
 | Permissão | Libera | Padrão |
 |---|---|---|
 | `muxe.admin` | Todos os comandos `/muxe`. | op |
+| `muxe.admin.config` | `/coreconfig`, `/lobbyconfig` e `/bwconfig`: veja o [editor de configuração](../../development/core-api/README.pt-BR.md#editor-de-configuração). | op |
 
 ## Configuração
+
+Só o `join-greeting.*` vale ao vivo pelo `/coreconfig`; toda outra chave é salva e vale depois de reiniciar. Os textos do editor são `messages.config.*`.
 
 Mensagens em `messages.admin.*` no `config.yml` do Muxe-Core, além de `messages.no-permission` e das [mensagens de comandos](../../development/commands/README.pt-BR.md#mensagens).
 
