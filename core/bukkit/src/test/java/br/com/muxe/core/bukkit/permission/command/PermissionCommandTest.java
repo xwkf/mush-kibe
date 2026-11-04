@@ -113,7 +113,7 @@ class PermissionCommandTest {
             "§cO cargo §fnada §cnão existe. Use §f/cargo listar§c."
         );
         assertThat(kit.sync.data().group("vip").orElseThrow().nodes()).extracting(PermissionNode::key)
-            .containsExactlyInAnyOrder("group.membro", "muxe.medal.carinha", "muxe.medal.toxico", "muxe.medal.yin-yang");
+            .containsExactlyInAnyOrder("group.membro", "muxe.medal.carinha", "muxe.medal.toxico", "muxe.medal.yin-yang", "muxe.afk.bypass");
         assertThat(kit.database.recentActions(10)).allSatisfy(action -> assertThat(action.actor()).isEqualTo("Staff"));
     }
 

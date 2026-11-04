@@ -4,5 +4,6 @@ public enum ServerKind {
     PROXY,
     AUTH,
     LOBBY,
-    MINIGAME
+    MINIGAME,
+    AFK
 }

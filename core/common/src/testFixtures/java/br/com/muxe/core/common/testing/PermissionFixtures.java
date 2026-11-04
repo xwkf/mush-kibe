@@ -51,6 +51,7 @@ public final class PermissionFixtures {
         new Medal("imperial", "Imperial", "⚜", "&6", 310)
     );
     public static final String LOBBY_FLY = "muxe.lobby.fly";
+    public static final String AFK_BYPASS = "muxe.afk.bypass";
     public static final Map<String, List<String>> MEDAL_GRANTS = Map.of(
         "vip", List.of("carinha", "toxico", "yin-yang"),
         "ultra", List.of("musico", "flash", "paz-e-amor", "amor", "cafe")
@@ -96,6 +97,7 @@ public final class PermissionFixtures {
             MEDAL_GRANTS.getOrDefault(id, List.of()).forEach(medal -> nodes.add(PermissionNode.permanent(Medal.PERMISSION_PREFIX + medal, true, SEEDED_AT)));
             if (id.equals("vip")) {
                 nodes.add(PermissionNode.permanent(LOBBY_FLY, true, SEEDED_AT));
+                nodes.add(PermissionNode.permanent(AFK_BYPASS, true, SEEDED_AT));
             }
             if (id.equals("mod")) {
                 STAFF_PERMISSIONS.forEach(permission -> nodes.add(PermissionNode.permanent(permission, true, SEEDED_AT)));
