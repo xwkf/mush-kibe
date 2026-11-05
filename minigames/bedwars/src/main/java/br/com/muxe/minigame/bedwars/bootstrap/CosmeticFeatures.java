@@ -47,6 +47,7 @@ import br.com.muxe.minigame.bedwars.teamcolor.menu.FavouriteColorMenu;
 import br.com.muxe.minigame.bedwars.settings.MatchSounds;
 import br.com.muxe.minigame.bedwars.shop.QuickBuyEditor;
 import br.com.muxe.minigame.bedwars.title.EndTitles;
+import br.com.muxe.minigame.engine.team.TeamColor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -236,10 +237,10 @@ JavaPlugin plugin, MuxeCore core, CosmeticCatalog catalog) {
         victories.play(winner, winner.getLocation(), SceneCosmetics.facing(winner.getLocation()), Optional.empty(), SceneCosmetics.riders(winner, viewers), viewers, Optional.of(area));
     }
 
-    void finalKill(Player killer, Player victim, List<Player> viewers) {
+    void finalKill(Player killer, Player victim, TeamColor victimColor, List<Player> viewers) {
         Location at = victim.getLocation();
         Optional<SignedSkin> skin = PlayerSkins.of(victim).map(found -> new SignedSkin(found.value(), found.signature()));
-        finalKills.playOnVictim(killer, at, SceneCosmetics.away(killer.getLocation(), at), skin, viewers);
+        finalKills.playOnVictim(killer, at, SceneCosmetics.away(killer.getLocation(), at), skin, SceneCosmetics.dye(victimColor), viewers);
     }
 
     void openMenu(Player player) {

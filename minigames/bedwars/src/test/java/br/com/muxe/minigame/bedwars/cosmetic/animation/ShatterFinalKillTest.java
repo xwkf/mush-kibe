@@ -6,6 +6,7 @@ import br.com.muxe.core.bukkit.cosmetic.animation.Scene;
 import br.com.muxe.core.bukkit.cosmetic.animation.Timeline;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import java.util.Arrays;
+import java.util.OptionalInt;
 import java.util.Random;
 import org.bukkit.Material;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,27 @@ class ShatterFinalKillTest {
         assertThat(stage.particles).containsOnlyKeys("BLOCK_CRACK").containsEntry("BLOCK_CRACK", ShatterFinalKill.HEIGHTS.length);
         assertThat(stage.sounds).containsExactly("dig.glass");
         assertThat(stage.actors).isEmpty();
+    }
+
+    @Test
+    void theGlassTakesTheColourOfTheVictimsTeam() {
+        RecordingStage stage = play(ShatterFinalKill.glass(), OptionalInt.of(14));
+
+        assertThat(stage.particleData.get("BLOCK_CRACK")).hasSize(ShatterFinalKill.HEIGHTS.length).containsOnly(Kit.blockId(Material.STAINED_GLASS, 14));
+    }
+
+    @Test
+    void withoutATeamTheGlassIsBlue() {
+        RecordingStage stage = play(ShatterFinalKill.glass(), OptionalInt.empty());
+
+        assertThat(stage.particleData.get("BLOCK_CRACK")).containsOnly(Kit.blockId(Material.STAINED_GLASS, ShatterFinalKill.BLUE));
+    }
+
+    @Test
+    void redstoneIgnoresTheTeamColour() {
+        RecordingStage stage = play(ShatterFinalKill.redstone(), OptionalInt.of(14));
+
+        assertThat(stage.particleData.get("BLOCK_CRACK")).containsOnly(Kit.blockId(Material.REDSTONE_BLOCK, 0));
     }
 
     @Test
@@ -49,9 +71,13 @@ class ShatterFinalKillTest {
     }
 
     private RecordingStage play(ShatterFinalKill animation) {
+        return play(animation, OptionalInt.empty());
+    }
+
+    private RecordingStage play(ShatterFinalKill animation, OptionalInt dye) {
         RecordingStage stage = new RecordingStage(block -> block[1] < 27);
         Timeline timeline = new Timeline();
-        animation.script(Scene.at(victim, new Vec(0, 0, 1)), stage, timeline, new Random(3));
+        animation.script(Scene.at(victim, new Vec(0, 0, 1)).withDye(dye), stage, timeline, new Random(3));
         for (int tick = 0; tick <= timeline.length(); tick++) {
             timeline.run(tick);
         }

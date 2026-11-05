@@ -10,11 +10,14 @@ import br.com.muxe.minigame.bedwars.cosmetic.animation.SceneAnimations;
 import br.com.muxe.minigame.bedwars.cosmetic.catalog.CosmeticCatalog;
 import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticProfiles;
 import br.com.muxe.minigame.bedwars.spectator.Ghosts;
+import br.com.muxe.minigame.engine.team.TeamColor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -53,23 +56,30 @@ public final class SceneCosmetics {
         return riders;
     }
 
+    public static OptionalInt dye(TeamColor color) {
+        return OptionalInt.of(color.woolData());
+    }
+
+    public static Scene victimScene(Vec origin, Vec facing, Optional<SignedSkin> victim, OptionalInt dye) {
+        return new Scene(origin, facing, victim.map(SignedSkin::value), List.of(), Area.around(origin, Scene.REACH), victim).withDye(dye);
+    }
+
     public void play(Player owner, Location at, Vec facing, Optional<String> skin, List<UUID> riders, List<Player> viewers, Optional<Area> area) {
-        play(owner, at, facing, skin, Optional.empty(), riders, viewers, area);
+        play(owner, at, origin -> new Scene(origin, facing, skin, riders, area.orElseGet(() -> Area.around(origin, Scene.REACH))), viewers);
     }
 
-    public void playOnVictim(Player owner, Location at, Vec facing, Optional<SignedSkin> victim, List<Player> viewers) {
-        play(owner, at, facing, victim.map(SignedSkin::value), victim, List.of(), viewers, Optional.empty());
+    public void playOnVictim(Player owner, Location at, Vec facing, Optional<SignedSkin> victim, OptionalInt dye, List<Player> viewers) {
+        play(owner, at, origin -> victimScene(origin, facing, victim, dye), viewers);
     }
 
-    private void play(Player owner, Location at, Vec facing, Optional<String> skin, Optional<SignedSkin> body, List<UUID> riders, List<Player> viewers,
-        Optional<Area> area) {
+    private void play(Player owner, Location at, Function<Vec, Scene> staging, List<Player> viewers) {
         profiles.of(owner.getUniqueId())
             .flatMap(wallet -> wallet.animation(catalog, ThreadLocalRandom.current()))
             .flatMap(animations::find)
             .ifPresent(animation -> {
                 List<Player> audience = List.copyOf(viewers);
                 Vec origin = onGround(at.getWorld(), at);
-                Scene scene = new Scene(origin, facing, skin, riders, area.orElseGet(() -> Area.around(origin, Scene.REACH)), body);
+                Scene scene = staging.apply(origin);
                 animator.play(animation, at.getWorld(), scene, () -> audience, () -> {
                 });
             });

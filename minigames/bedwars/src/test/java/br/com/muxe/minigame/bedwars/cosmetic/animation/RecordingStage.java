@@ -28,6 +28,7 @@ final class RecordingStage implements Stage {
     final List<Vec> pushes = new ArrayList<>();
     final List<BlockChange> bulk = new ArrayList<>();
     final List<Vec> bolts = new ArrayList<>();
+    final Map<String, List<Integer>> particleData = new HashMap<>();
     Function<int[], BlockType> types = block -> new BlockType(this.solid(block[0], block[1], block[2]) ? Material.STONE : Material.AIR, 0);
     Vec eyes = new Vec(0, 1.62, 0);
     final Map<UUID, Vec> eyesOf = new HashMap<>();
@@ -91,6 +92,9 @@ final class RecordingStage implements Stage {
     @Override
     public void particle(String type, Vec position, int count, Vec spread, double speed, int... data) {
         particles.merge(type, 1, Integer::sum);
+        if (data.length > 0) {
+            particleData.computeIfAbsent(type, key -> new ArrayList<>()).add(data[0]);
+        }
     }
 
     @Override

@@ -77,7 +77,7 @@ public final class RoomService {
     };
     private VictoryHandler victories = (winner, viewers, area) -> {
     };
-    private FinalKillHandler finalKills = (killer, victim, viewers) -> {
+    private FinalKillHandler finalKills = (killer, victim, color, viewers) -> {
     };
     private EndTitles endTitles;
     private BedBreakHandler bedBreaks = (breaker, world, bed, viewers) -> {
@@ -538,7 +538,7 @@ public final class RoomService {
     @FunctionalInterface
     public interface FinalKillHandler {
 
-        void killed(Player killer, Player victim, List<Player> viewers);
+        void killed(Player killer, Player victim, TeamColor victimColor, List<Player> viewers);
     }
 
     @FunctionalInterface

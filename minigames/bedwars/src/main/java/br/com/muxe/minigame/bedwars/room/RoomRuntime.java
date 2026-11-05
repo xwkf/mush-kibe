@@ -346,7 +346,7 @@ public final class RoomRuntime {
             ? announcer.kill(killer.get().id(), coloredName(killer.get()), dead.id(), victimName, finalKill, voidDeath)
             : announcer.death(dead.id(), victimName, finalKill, voidDeath));
         if (finalKill && !voidDeath) {
-            killer.map(credited -> Bukkit.getPlayer(credited.id())).ifPresent(killerPlayer -> service.finalKills().killed(killerPlayer, victim, online()));
+            killer.map(credited -> Bukkit.getPlayer(credited.id())).ifPresent(killerPlayer -> service.finalKills().killed(killerPlayer, victim, team.color(), online()));
         }
         Map<Material, Integer> loot = resources(victim);
         BedbugHit bedbug = bedbugHits.remove(dead.id());
