@@ -5,7 +5,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-public record Scene(Vec origin, Vec facing, Optional<String> skin, List<UUID> riders, Area area) {
+public record Scene(Vec origin, Vec facing, Optional<String> skin, List<UUID> riders, Area area, Optional<SignedSkin> body) {
 
     public static final double REACH = 16;
 
@@ -16,6 +16,11 @@ public record Scene(Vec origin, Vec facing, Optional<String> skin, List<UUID> ri
         Objects.requireNonNull(skin, "skin");
         riders = List.copyOf(riders);
         Objects.requireNonNull(area, "area");
+        Objects.requireNonNull(body, "body");
+    }
+
+    public Scene(Vec origin, Vec facing, Optional<String> skin, List<UUID> riders, Area area) {
+        this(origin, facing, skin, riders, area, Optional.empty());
     }
 
     public Scene(Vec origin, Vec facing, Optional<String> skin, List<UUID> riders) {
@@ -28,6 +33,10 @@ public record Scene(Vec origin, Vec facing, Optional<String> skin, List<UUID> ri
 
     public static Scene at(Vec origin, Vec facing) {
         return new Scene(origin, facing, Optional.empty());
+    }
+
+    public Scene withBody(Optional<SignedSkin> value) {
+        return new Scene(origin, facing, skin, riders, area, value);
     }
 
     public Vec right() {
