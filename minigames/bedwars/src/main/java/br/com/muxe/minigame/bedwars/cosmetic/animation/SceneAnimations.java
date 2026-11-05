@@ -30,7 +30,7 @@ public final class SceneAnimations {
             new DiscoPartyFinalKill(), new FireworksFinalKill(), new GalacticFinalKill(), new MagicalGirlFinalKill(), new IgniteFinalKill(),
             new FlowerGardenFinalKill(), new CoinsFinalKill(), new MagicTrickFinalKill(), new SnowPenguinsFinalKill(), new EndPortalFinalKill(),
             new LightningFinalKill(), ShatterFinalKill.glass(), ShatterFinalKill.redstone(), new SixSevenFinalKill(), new PaintFinalKill(), new MidasTouchFinalKill(),
-            new ChineseDragonsFinalKill()));
+            new ChineseDragonsFinalKill(), new VanillaFinalKill()));
     }
 
     public static SceneAnimations auras() {
