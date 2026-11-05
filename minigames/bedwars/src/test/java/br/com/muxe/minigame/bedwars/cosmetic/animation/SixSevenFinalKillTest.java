@@ -7,6 +7,8 @@ import br.com.muxe.core.bukkit.cosmetic.animation.Scene;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.Slot;
 import br.com.muxe.core.bukkit.cosmetic.animation.Timeline;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
+import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import org.junit.jupiter.api.Test;
 
@@ -45,6 +47,16 @@ class SixSevenFinalKillTest {
         assertThat(SixSevenFinalKill.shrunk(SixSevenFinalKill.FIRST_SHRINK)).isTrue();
         assertThat(SixSevenFinalKill.shrunk(SixSevenFinalKill.REGROW)).isFalse();
         assertThat(SixSevenFinalKill.shrunk(SixSevenFinalKill.SECOND_SHRINK)).isTrue();
+    }
+
+    @Test
+    void theDancerWearsTheHeadOfThePlayerWhoDied() {
+        RecordingStage stage = new RecordingStage(block -> block[1] < 27);
+        Timeline timeline = new Timeline();
+        new SixSevenFinalKill().script(new Scene(victim, new Vec(0, 0, 1), Optional.of("victim-skin"), List.of()), stage, timeline, new Random(3));
+        timeline.run(0);
+
+        assertThat(stage.actors.getFirst().skulls).containsEntry(Slot.HELMET, "victim-skin");
     }
 
     @Test

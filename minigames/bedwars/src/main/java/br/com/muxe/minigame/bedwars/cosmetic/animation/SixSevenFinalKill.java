@@ -57,7 +57,7 @@ public final class SixSevenFinalKill implements SceneAnimation {
         Vec origin = scene.origin();
         Vec toward = scene.facing().multiply(-1);
         Actor dancer = stage.armorStand(origin, origin.yawTowards(origin.add(toward)), DANCER_STYLE);
-        dancer.equipSkull(Slot.HELMET, DANCER);
+        dancer.equipSkull(Slot.HELMET, scene.skin().orElse(DANCER));
         Actor six = label(stage, place(origin, toward, true, HANGING), SixSevenAnimation.SIX);
         Actor seven = label(stage, place(origin, toward, false, HANGING), SixSevenAnimation.SEVEN);
         timeline.repeat(0, BLAST - 1, 1, tick -> {
