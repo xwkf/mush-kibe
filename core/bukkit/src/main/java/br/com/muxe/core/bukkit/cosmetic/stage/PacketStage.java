@@ -335,7 +335,15 @@ public final class PacketStage implements Stage, AutoCloseable {
 
     @Override
     public Actor player(Vec position, float yaw, SignedSkin skin) {
-        return fakePlayer(position, yaw, Optional.of(new Property(TEXTURES, skin.value(), skin.signature())));
+        String signature = skin.signature() != null ? skin.signature() : FakePlayers.signature(skin.value(), onlineSkins()).orElse(null);
+        return fakePlayer(position, yaw, Optional.of(new Property(TEXTURES, skin.value(), signature)));
+    }
+
+    private List<SignedSkin> onlineSkins() {
+        return Bukkit.getOnlinePlayers().stream()
+            .flatMap(online -> ((CraftPlayer) online).getProfile().getProperties().get(TEXTURES).stream())
+            .map(texture -> new SignedSkin(texture.getValue(), texture.getSignature()))
+            .toList();
     }
 
     private Actor fakePlayer(Vec position, float yaw, Optional<Property> skin) {

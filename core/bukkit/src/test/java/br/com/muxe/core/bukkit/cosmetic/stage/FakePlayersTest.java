@@ -2,6 +2,7 @@ package br.com.muxe.core.bukkit.cosmetic.stage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import br.com.muxe.core.bukkit.cosmetic.animation.SignedSkin;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -45,5 +46,18 @@ class FakePlayersTest {
         String name = FakePlayers.name(new Random(4));
 
         assertThat(name).hasSize(8).matches("[0-9a-f]{8}");
+    }
+
+    @Test
+    void aKnownSkinBorrowsTheSignatureOfTheOnlinePlayerWearingIt() {
+        List<SignedSkin> online = List.of(new SignedSkin("other", "other-signature"), new SignedSkin("victim", null), new SignedSkin("victim", "victim-signature"));
+
+        assertThat(FakePlayers.signature("victim", online)).contains("victim-signature");
+    }
+
+    @Test
+    void aSkinNobodyOnlineWearsHasNoSignature() {
+        assertThat(FakePlayers.signature("gone", List.of(new SignedSkin("other", "other-signature")))).isEmpty();
+        assertThat(FakePlayers.signature("unsigned", List.of(new SignedSkin("unsigned", null)))).isEmpty();
     }
 }
