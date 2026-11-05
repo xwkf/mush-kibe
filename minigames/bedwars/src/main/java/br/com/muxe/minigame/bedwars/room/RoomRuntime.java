@@ -362,6 +362,9 @@ public final class RoomRuntime {
             if (bukkit != null) {
                 giveLoot(bukkit, loot);
                 bukkit.sendMessage(messages.get("xp", "xp", String.valueOf(finalKill ? settings.xp().finalKill() : settings.xp().regularKill())));
+                if (finalKill) {
+                    MatchSounds.play(settings.sounds().finalKill(), bukkit);
+                }
             }
         });
         room.die(dead, settings.timings().respawnSeconds());
@@ -371,6 +374,7 @@ public final class RoomRuntime {
             Title.of(messages.get("died-title"), messages.get("respawn-subtitle", "seconds", String.valueOf(settings.timings().respawnSeconds()))).send(victim);
         } else {
             Title.of(messages.get("died-title"), messages.get("spectator-subtitle")).send(victim);
+            MatchSounds.play(settings.sounds().eliminated(), victim);
             checkEliminations();
         }
         refreshScoreboards();
@@ -929,6 +933,7 @@ public final class RoomRuntime {
         for (TeamColor color : room.teams().keySet()) {
             if (room.status(color).isEliminated() && announcedEliminations.add(color)) {
                 broadcast(messages.get("team-eliminated", "team-color", Colors.translate(color.color()), "team", color.displayName()));
+                online().forEach(player -> MatchSounds.play(settings.sounds().teamEliminated(), player));
             }
         }
         if (room.phase() == Room.Phase.PLAYING && room.isOver()) {
@@ -957,6 +962,8 @@ public final class RoomRuntime {
         for (Player player : audience) {
             hideChestLabels(player.getUniqueId());
             forges.hide(player.getUniqueId());
+            MatchSounds.play(settings.sounds().matchEnd(), player);
+            MatchSounds.play(settings.sounds().matchEndFirework(), player);
             if (isSpectator(player)) {
                 Ghosts.give(player, settings.spectators().spectator());
             }

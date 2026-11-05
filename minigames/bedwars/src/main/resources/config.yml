@@ -125,7 +125,27 @@ sounds:
     volume: 1
     pitch: 1
   bed-lost:
-    sound: ENDERDRAGON_DEATH
+    sound: WITHER_DEATH
+    volume: 1
+    pitch: 1
+  final-kill:
+    sound: NOTE_PLING
+    volume: 1
+    pitch: 2
+  eliminated:
+    sound: ZOMBIE_UNFECT
+    volume: 1
+    pitch: 2
+  team-eliminated:
+    sound: EXPLODE
+    volume: 1
+    pitch: 1
+  match-end:
+    sound: ENDERDRAGON_GROWL
+    volume: 1
+    pitch: 1
+  match-end-firework:
+    sound: FIREWORK_LAUNCH
     volume: 1
     pitch: 1
 

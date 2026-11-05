@@ -23,10 +23,22 @@ class MatchSoundsTest {
     }
 
     @Test
-    void breakingABedGrowlsAndLosingYoursSoundsLikeAnotherDragon() {
+    void breakingABedGrowlsAndLosingYoursSoundsLikeAWitherDying() {
         assertThat(sounds.bedDestroyed()).contains(new SoundCue(Sound.ENDERDRAGON_GROWL, 1, 1));
-        assertThat(sounds.bedLost()).isPresent();
-        assertThat(sounds.bedLost().orElseThrow().sound().name()).startsWith("ENDERDRAGON").isNotEqualTo(Sound.ENDERDRAGON_GROWL.name());
+        assertThat(sounds.bedLost()).contains(new SoundCue(Sound.WITHER_DEATH, 1, 1));
+    }
+
+    @Test
+    void aFinalKillPlingsHighForTheKillerAndTheEliminatedPlayerHearsAZombieCure() {
+        assertThat(sounds.finalKill()).contains(new SoundCue(Sound.NOTE_PLING, 1, 2));
+        assertThat(sounds.eliminated()).contains(new SoundCue(Sound.ZOMBIE_UNFECT, 1, 2));
+    }
+
+    @Test
+    void aTeamOutExplodesForEveryoneAndTheMatchEndsWithADragonAndAFirework() {
+        assertThat(sounds.teamEliminated()).contains(new SoundCue(Sound.EXPLODE, 1, 1));
+        assertThat(sounds.matchEnd()).contains(new SoundCue(Sound.ENDERDRAGON_GROWL, 1, 1));
+        assertThat(sounds.matchEndFirework()).contains(new SoundCue(Sound.FIREWORK_LAUNCH, 1, 1));
     }
 
     @Test
@@ -36,5 +48,7 @@ class MatchSoundsTest {
         assertThat(empty.deposited()).isEmpty();
         assertThat(empty.bedDestroyed()).isEmpty();
         assertThat(empty.bedLost()).isEmpty();
+        assertThat(empty.finalKill()).isEmpty();
+        assertThat(empty.matchEnd()).isEmpty();
     }
 }
