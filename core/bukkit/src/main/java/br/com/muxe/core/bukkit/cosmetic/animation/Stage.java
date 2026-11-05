@@ -52,6 +52,10 @@ public interface Stage {
 
     Actor player(Vec position, float yaw, SignedSkin skin);
 
+    default Actor playerWearing(Vec position, float yaw, String texture) {
+        return player(position, yaw);
+    }
+
     void lightning(Vec position);
 
     interface Actor {

@@ -4,6 +4,8 @@ import br.com.muxe.core.bukkit.cosmetic.animation.SignedSkin;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import br.com.muxe.core.bukkit.item.ItemBuilder;
+import br.com.muxe.core.bukkit.nms.PlayerSkins;
+import br.com.muxe.core.bukkit.npc.NpcSkin;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import java.lang.reflect.Field;
@@ -325,6 +327,15 @@ public final class PacketStage implements Stage, AutoCloseable {
     @Override
     public Actor player(Vec position, float yaw, SignedSkin skin) {
         return fakePlayer(position, yaw, Optional.of(new Property(TEXTURES, skin.value(), skin.signature())));
+    }
+
+    @Override
+    public Actor playerWearing(Vec position, float yaw, String texture) {
+        List<NpcSkin> online = Bukkit.getOnlinePlayers().stream().map(PlayerSkins::of).flatMap(Optional::stream).toList();
+        Property property = FakePlayers.signature(texture, online)
+            .map(signature -> new Property(TEXTURES, texture, signature))
+            .orElseGet(() -> new Property(TEXTURES, texture));
+        return fakePlayer(position, yaw, Optional.of(property));
     }
 
     private Actor fakePlayer(Vec position, float yaw, Optional<Property> skin) {
