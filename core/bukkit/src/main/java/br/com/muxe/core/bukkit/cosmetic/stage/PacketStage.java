@@ -374,8 +374,13 @@ public final class PacketStage implements Stage, AutoCloseable {
 
     @Override
     public void lightning(Vec position) {
-        send(new PacketPlayOutSpawnEntityWeather(new EntityLightning(world, position.x(), position.y(), position.z(), true)));
+        silentLightning(position);
         sound("ambient.weather.thunder", position, 2, 1);
+    }
+
+    @Override
+    public void silentLightning(Vec position) {
+        send(new PacketPlayOutSpawnEntityWeather(new EntityLightning(world, position.x(), position.y(), position.z(), true)));
     }
 
     void tick() {

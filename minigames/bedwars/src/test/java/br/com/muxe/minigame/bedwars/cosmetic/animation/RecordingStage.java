@@ -27,6 +27,7 @@ final class RecordingStage implements Stage {
     final Map<UUID, Consumer<Click>> tools = new HashMap<>();
     final List<Vec> pushes = new ArrayList<>();
     final List<BlockChange> bulk = new ArrayList<>();
+    final List<Vec> bolts = new ArrayList<>();
     Function<int[], BlockType> types = block -> new BlockType(this.solid(block[0], block[1], block[2]) ? Material.STONE : Material.AIR, 0);
     Vec eyes = new Vec(0, 1.62, 0);
     final Map<UUID, Vec> eyesOf = new HashMap<>();
@@ -165,6 +166,11 @@ final class RecordingStage implements Stage {
     @Override
     public void lightning(Vec position) {
         sounds.add("lightning");
+    }
+
+    @Override
+    public void silentLightning(Vec position) {
+        bolts.add(position);
     }
 
     long alive() {

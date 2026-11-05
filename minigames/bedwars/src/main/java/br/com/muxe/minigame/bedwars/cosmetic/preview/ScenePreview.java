@@ -3,6 +3,7 @@ package br.com.muxe.minigame.bedwars.cosmetic.preview;
 import br.com.muxe.core.bukkit.buildmode.BuildMode;
 import br.com.muxe.core.bukkit.cosmetic.animation.Scene;
 import br.com.muxe.core.bukkit.cosmetic.animation.SceneAnimation;
+import br.com.muxe.core.bukkit.cosmetic.animation.SignedSkin;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import br.com.muxe.core.bukkit.cosmetic.stage.AnimationPlayer;
 import br.com.muxe.core.bukkit.cosmetic.stage.AnimationPlayer.Playback;
@@ -238,16 +239,17 @@ public final class ScenePreview implements PreviewGate, Listener {
         session.target = null;
         ActionBar.send(player, "");
         player.playSound(npc.location(), Sound.HURT_FLESH, 1, 1);
-        play(session, SceneCosmetics.onGround(session.stage.world(), npc.location()), SceneCosmetics.away(player.getLocation(), npc.location()), session.targetSkin.map(NpcSkin::value), List.of());
+        play(session, SceneCosmetics.onGround(session.stage.world(), npc.location()), SceneCosmetics.away(player.getLocation(), npc.location()), session.targetSkin, List.of());
     }
 
-    private void play(Session session, Vec origin, Vec facing, Optional<String> skin, List<UUID> riders) {
+    private void play(Session session, Vec origin, Vec facing, Optional<NpcSkin> skin, List<UUID> riders) {
         Player viewer = session.viewer;
         if (!previewing(viewer)) {
             return;
         }
         onScene.accept(viewer);
-        session.playback = animator.play(session.animation, session.stage.world(), new Scene(origin, facing, skin, riders), () -> List.of(viewer), () ->
+        Scene scene = new Scene(origin, facing, skin.map(NpcSkin::value), riders).withBody(skin.map(found -> new SignedSkin(found.value(), found.signature())));
+        session.playback = animator.play(session.animation, session.stage.world(), scene, () -> List.of(viewer), () ->
             session.tasks.add(plugin.getServer().getScheduler().runTaskLater(plugin, () -> finish(viewer, true), Math.max(1, session.stage.settings().returnDelay().toMillis() / 50))));
     }
 

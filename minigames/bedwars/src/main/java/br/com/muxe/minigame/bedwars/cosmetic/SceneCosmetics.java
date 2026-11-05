@@ -3,6 +3,7 @@ package br.com.muxe.minigame.bedwars.cosmetic;
 import br.com.muxe.core.bukkit.cosmetic.animation.Area;
 import br.com.muxe.core.bukkit.cosmetic.animation.Ground;
 import br.com.muxe.core.bukkit.cosmetic.animation.Scene;
+import br.com.muxe.core.bukkit.cosmetic.animation.SignedSkin;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import br.com.muxe.core.bukkit.cosmetic.stage.AnimationPlayer;
 import br.com.muxe.minigame.bedwars.cosmetic.animation.SceneAnimations;
@@ -53,13 +54,22 @@ public final class SceneCosmetics {
     }
 
     public void play(Player owner, Location at, Vec facing, Optional<String> skin, List<UUID> riders, List<Player> viewers, Optional<Area> area) {
+        play(owner, at, facing, skin, Optional.empty(), riders, viewers, area);
+    }
+
+    public void playOnVictim(Player owner, Location at, Vec facing, Optional<SignedSkin> victim, List<Player> viewers) {
+        play(owner, at, facing, victim.map(SignedSkin::value), victim, List.of(), viewers, Optional.empty());
+    }
+
+    private void play(Player owner, Location at, Vec facing, Optional<String> skin, Optional<SignedSkin> body, List<UUID> riders, List<Player> viewers,
+        Optional<Area> area) {
         profiles.of(owner.getUniqueId())
             .flatMap(wallet -> wallet.animation(catalog, ThreadLocalRandom.current()))
             .flatMap(animations::find)
             .ifPresent(animation -> {
                 List<Player> audience = List.copyOf(viewers);
                 Vec origin = onGround(at.getWorld(), at);
-                Scene scene = new Scene(origin, facing, skin, riders, area.orElseGet(() -> Area.around(origin, Scene.REACH)));
+                Scene scene = new Scene(origin, facing, skin, riders, area.orElseGet(() -> Area.around(origin, Scene.REACH)), body);
                 animator.play(animation, at.getWorld(), scene, () -> audience, () -> {
                 });
             });

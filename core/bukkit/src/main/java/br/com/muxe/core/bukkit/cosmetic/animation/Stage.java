@@ -56,6 +56,8 @@ public interface Stage {
 
     void lightning(Vec position);
 
+    void silentLightning(Vec position);
+
     interface Actor {
 
         void teleport(Vec position, float yaw, float pitch);

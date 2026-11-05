@@ -4,12 +4,12 @@ import br.com.muxe.core.bukkit.api.MuxeCore;
 import br.com.muxe.core.bukkit.command.framework.Commands;
 import br.com.muxe.core.bukkit.config.edit.ConfigReloads;
 import br.com.muxe.core.bukkit.cosmetic.animation.Area;
+import br.com.muxe.core.bukkit.cosmetic.animation.SignedSkin;
 import br.com.muxe.core.bukkit.cosmetic.stage.AnimationPlayer;
 import br.com.muxe.core.bukkit.effect.SoundCue;
 import br.com.muxe.core.bukkit.mission.menu.MissionMenus;
 import br.com.muxe.core.bukkit.nms.BlockMask;
 import br.com.muxe.core.bukkit.nms.PlayerSkins;
-import br.com.muxe.core.bukkit.npc.NpcSkin;
 import br.com.muxe.core.bukkit.permission.command.Replies;
 import br.com.muxe.core.bukkit.permission.command.TargetLookup;
 import br.com.muxe.core.bukkit.text.Colors;
@@ -238,7 +238,8 @@ JavaPlugin plugin, MuxeCore core, CosmeticCatalog catalog) {
 
     void finalKill(Player killer, Player victim, List<Player> viewers) {
         Location at = victim.getLocation();
-        finalKills.play(killer, at, SceneCosmetics.away(killer.getLocation(), at), PlayerSkins.of(victim).map(NpcSkin::value), List.of(), viewers, Optional.empty());
+        Optional<SignedSkin> skin = PlayerSkins.of(victim).map(found -> new SignedSkin(found.value(), found.signature()));
+        finalKills.playOnVictim(killer, at, SceneCosmetics.away(killer.getLocation(), at), skin, viewers);
     }
 
     void openMenu(Player player) {
