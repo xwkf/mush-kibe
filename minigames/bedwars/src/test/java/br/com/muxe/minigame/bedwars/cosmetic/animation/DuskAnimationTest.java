@@ -22,10 +22,17 @@ class DuskAnimationTest {
     private final List<String> schedule = new ArrayList<>();
 
     @Test
-    void theSkyTurnsToNightAsTheMoonRises() {
-        runUntil(Integer.MAX_VALUE);
+    void theSkyFlashesToNightWhileTheMoonShines() {
+        runUntil(DuskAnimation.SET - 1);
 
-        assertThat(stage.times).startsWith(Nightfall.dayTime(0)).endsWith(Nightfall.NIGHT);
+        assertThat(stage.times).containsExactly(Nightfall.NIGHT);
+    }
+
+    @Test
+    void theDayComesBackWhenTheMoonScatters() {
+        runUntil(DuskAnimation.SET);
+
+        assertThat(stage.times).containsExactly(Nightfall.NIGHT, Nightfall.MIDDAY);
     }
 
     @Test

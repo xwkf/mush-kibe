@@ -53,7 +53,8 @@ public final class DuskAnimation implements BedAnimation {
 
     @Override
     public void script(BedFrame bed, Vec breaker, Stage stage, Timeline timeline, RandomGenerator random) {
-        Nightfall.schedule(stage, timeline);
+        timeline.at(0, () -> stage.time(Nightfall.NIGHT));
+        timeline.at(SET, () -> stage.time(Nightfall.MIDDAY));
         Kit.BedDisplay display = Kit.bed(stage, bed);
         Actor lantern = HeadLantern.place(stage, bed, Vec.ZERO);
         Vec[] owlAt = {at(bed, APPROACH[0])};
