@@ -22,6 +22,13 @@ class DuskAnimationTest {
     private final List<String> schedule = new ArrayList<>();
 
     @Test
+    void theSkyTurnsToNightAsTheMoonRises() {
+        runUntil(Integer.MAX_VALUE);
+
+        assertThat(stage.times).startsWith(Nightfall.dayTime(0)).endsWith(Nightfall.NIGHT);
+    }
+
+    @Test
     void theMoonSetsAboutTwoSecondsAfterTheBedBreaksAndNothingIsLeft() {
         runUntil(Integer.MAX_VALUE);
 

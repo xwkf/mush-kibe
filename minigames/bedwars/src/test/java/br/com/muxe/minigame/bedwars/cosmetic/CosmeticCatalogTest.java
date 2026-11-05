@@ -25,13 +25,16 @@ import org.junit.jupiter.api.Test;
 class CosmeticCatalogTest {
 
     private static final BedAnimations ANIMATIONS = new BedAnimations();
-    private final CosmeticCatalog catalog = CosmeticCatalog.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics"), id -> ANIMATIONS.find(id).isPresent());
+    private static final Set<String> WITHOUT_ANIMATION = Set.of("tornado", "tubarao");
+    private final CosmeticCatalog catalog = CosmeticCatalog.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics"),
+        id -> ANIMATIONS.find(id).isPresent() && !WITHOUT_ANIMATION.contains(id));
     private final CosmeticIcons icons = new CosmeticIcons(CosmeticMenuSettings.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus")).category(CosmeticMenuSettings.BED_DESTRUCTION), catalog);
 
     @Test
     void theCatalogListsThirtyCosmeticsAndEveryAnimationHasAnEntry() {
-        assertThat(catalog.all()).hasSize(30);
-        assertThat(catalog.all().stream().filter(BedCosmetic::animated)).hasSize(16);
+        CosmeticCatalog real = CosmeticCatalog.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics"), id -> ANIMATIONS.find(id).isPresent());
+        assertThat(real.all()).hasSize(30).allMatch(BedCosmetic::animated);
+        assertThat(catalog.all().stream().filter(BedCosmetic::animated)).hasSize(28);
         ANIMATIONS.all().forEach(animation -> assertThat(catalog.find(animation.id())).as(animation.id()).isPresent());
         assertThat(catalog.price(catalog.find("tinta").orElseThrow())).isEqualTo(1_750);
         assertThat(catalog.price(catalog.find("sal-na-ferida").orElseThrow())).isEqualTo(750);

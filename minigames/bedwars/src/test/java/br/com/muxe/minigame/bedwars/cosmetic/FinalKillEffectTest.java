@@ -30,7 +30,7 @@ class FinalKillEffectTest {
         assertThat(catalog.category()).isEqualTo("bedwars-kill-final");
         assertThat(catalog.all()).hasSize(43);
         assertThat(catalog.all().getFirst().id()).isEqualTo("presenteado");
-        assertThat(catalog.all().stream().filter(BedCosmetic::animated).map(BedCosmetic::id)).containsExactlyInAnyOrder("presenteado", "presentes", "passarinhos", "brain-freeze");
+        assertThat(catalog.all().stream().filter(cosmetic -> !cosmetic.animated()).map(BedCosmetic::id)).containsExactly("dragoes-chineses", "vanilla");
         assertThat(catalog.find("fogos-de-artificio").orElseThrow().availability()).isEqualTo(Availability.ULTRA);
         assertThat(catalog.price(catalog.find("colmeia").orElseThrow())).isEqualTo(2_000);
         assertThat(catalog.price(catalog.find("redstone").orElseThrow())).isEqualTo(750);

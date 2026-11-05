@@ -26,13 +26,15 @@ class BedAnimationsTest {
     }
 
     @Test
-    void sixteenRecordedAnimationsAreRegisteredByTheirCatalogIds() {
+    void thirtyRecordedAnimationsAreRegisteredByTheirCatalogIds() {
         assertThat(new BedAnimations().all()).extracting(BedAnimation::id).containsExactly(
             "ajudante-do-papai-noel", "avalanche", "coelhos", "passarinhos", "friaca", "fogos-de-artificio", "colheita-de-aboboras",
-            "apavorante", "deserto", "tinta", "bola-de-canhao", "enderman", "sal-na-ferida", "espiral-de-coelhos", "six-seven", "ghor");
+            "apavorante", "deserto", "tinta", "bola-de-canhao", "enderman", "sal-na-ferida", "espiral-de-coelhos", "six-seven", "ghor",
+            "raio", "tesouro-encontrado", "garota-magica", "quarto-abandonado", "tornado", "tubarao", "vulcanica",
+            "carro", "anoitecer", "assombrado", "baloes", "chuva-de-bolos", "encantado", "explosao-da-vitoria");
         assertThat(new BedAnimations().find("tinta")).containsInstanceOf(PaintAnimation.class);
         assertThat(new BedAnimations().find("ghor")).containsInstanceOf(GhorAnimation.class);
-        assertThat(new BedAnimations().find("raio")).isEmpty();
+        assertThat(new BedAnimations().find("raio")).containsInstanceOf(LightningAnimation.class);
     }
 
     @Test

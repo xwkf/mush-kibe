@@ -24,7 +24,21 @@ public final class BedAnimations {
         new SaltAnimation(),
         new RabbitSpiralAnimation(),
         new SixSevenAnimation(),
-        new GhorAnimation()
+        new GhorAnimation(),
+        new LightningAnimation(),
+        new TreasureAnimation(),
+        new MagicalGirlAnimation(),
+        new AbandonedRoomAnimation(),
+        new TornadoAnimation(),
+        new SharkAnimation(),
+        new VolcanicAnimation(),
+        new CarAnimation(),
+        new DuskAnimation(),
+        new HauntedAnimation(),
+        new BalloonsAnimation(),
+        new CakeRainAnimation(),
+        new EnchantedAnimation(),
+        new VictoryBlastAnimation()
     );
 
     private final Map<String, BedAnimation> byId = new LinkedHashMap<>();

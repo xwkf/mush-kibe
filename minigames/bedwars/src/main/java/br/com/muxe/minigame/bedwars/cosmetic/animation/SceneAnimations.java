@@ -22,7 +22,14 @@ public final class SceneAnimations {
     }
 
     public static SceneAnimations finalKills() {
-        return new SceneAnimations(List.of(new GiftedFinalKill(), new GiftShowerFinalKill(), new BirdsFinalKill(), new BrainFreezeFinalKill()));
+        return new SceneAnimations(List.of(new GiftedFinalKill(), new GiftShowerFinalKill(), new BirdsFinalKill(), new BrainFreezeFinalKill(),
+            new DrownFinalKill(), new DuskFinalKill(), new FrightfulFinalKill(), new RainbowFinalKill(), new CookiesAndMilkFinalKill(),
+            new BountyHunterFinalKill(), new PumpkinHarvestFinalKill(), new BeehiveFinalKill(), new DecapitatedFinalKill(), new TakeOffFinalKill(),
+            new ElectrifiedFinalKill(), new WrappedFinalKill(), new EnchantedFinalKill(), new DesertFinalKill(), new CursedSkeletonFinalKill(), new SkeletalFinalKill(),
+            new PumpkinExplosionFinalKill(), new MelonExplosionFinalKill(), new TntExplosionFinalKill(), new ExplodingSquidFinalKill(), new GhostsFinalKill(),
+            new DiscoPartyFinalKill(), new FireworksFinalKill(), new GalacticFinalKill(), new MagicalGirlFinalKill(), new IgniteFinalKill(),
+            new FlowerGardenFinalKill(), new CoinsFinalKill(), new MagicTrickFinalKill(), new SnowPenguinsFinalKill(), new EndPortalFinalKill(),
+            new LightningFinalKill(), ShatterFinalKill.glass(), ShatterFinalKill.redstone(), new SixSevenFinalKill(), new PaintFinalKill(), new MidasTouchFinalKill()));
     }
 
     public static SceneAnimations auras() {

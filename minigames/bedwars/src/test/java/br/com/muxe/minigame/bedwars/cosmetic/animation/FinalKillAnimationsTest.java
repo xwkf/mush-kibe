@@ -67,7 +67,8 @@ class FinalKillAnimationsTest {
             for (int tick = 0; tick <= timeline.length(); tick++) {
                 timeline.run(tick);
             }
-            assertThat(stage.actors).as(animation.id()).isNotEmpty().allSatisfy(actor -> assertThat(actor.removed()).isTrue());
+            assertThat(stage.actors.isEmpty() && stage.particles.isEmpty()).as(animation.id() + " shows something").isFalse();
+            assertThat(stage.actors).as(animation.id()).allSatisfy(actor -> assertThat(actor.removed()).isTrue());
         }
     }
 }
