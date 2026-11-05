@@ -1,5 +1,7 @@
 package br.com.muxe.core.bukkit.cosmetic.stage;
 
+import br.com.muxe.core.bukkit.cosmetic.animation.SignedSkin;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -17,6 +19,10 @@ final class FakePlayers {
     static Optional<UUID> skinOwner(List<UUID> online, Set<UUID> watching, RandomGenerator random) {
         List<UUID> others = online.stream().filter(player -> !watching.contains(player)).toList();
         return others.isEmpty() ? Optional.empty() : Optional.of(others.get(random.nextInt(others.size())));
+    }
+
+    static Optional<String> signature(String value, Collection<SignedSkin> online) {
+        return online.stream().filter(skin -> skin.value().equals(value) && skin.signature() != null).map(SignedSkin::signature).findFirst();
     }
 
     static String name(RandomGenerator random) {
