@@ -29,7 +29,8 @@ public final class SceneAnimations {
             new PumpkinExplosionFinalKill(), new MelonExplosionFinalKill(), new TntExplosionFinalKill(), new ExplodingSquidFinalKill(), new GhostsFinalKill(),
             new DiscoPartyFinalKill(), new FireworksFinalKill(), new GalacticFinalKill(), new MagicalGirlFinalKill(), new IgniteFinalKill(),
             new FlowerGardenFinalKill(), new CoinsFinalKill(), new MagicTrickFinalKill(), new SnowPenguinsFinalKill(), new EndPortalFinalKill(),
-            new LightningFinalKill(), ShatterFinalKill.glass(), ShatterFinalKill.redstone(), new SixSevenFinalKill(), new PaintFinalKill(), new MidasTouchFinalKill()));
+            new LightningFinalKill(), ShatterFinalKill.glass(), ShatterFinalKill.redstone(), new SixSevenFinalKill(), new PaintFinalKill(), new MidasTouchFinalKill(),
+            new ChineseDragonsFinalKill()));
     }
 
     public static SceneAnimations auras() {
