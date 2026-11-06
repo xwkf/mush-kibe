@@ -27,6 +27,7 @@ final class RecordingStage implements Stage {
     final List<FakeMount> mounts = new ArrayList<>();
     final Map<UUID, Consumer<Click>> tools = new HashMap<>();
     final List<Vec> pushes = new ArrayList<>();
+    final List<UUID> flyers = new ArrayList<>();
     final List<BlockChange> bulk = new ArrayList<>();
     final List<BlockChange> sectioned = new ArrayList<>();
     final List<Vec> bolts = new ArrayList<>();
@@ -175,6 +176,11 @@ final class RecordingStage implements Stage {
     @Override
     public void push(UUID player, Vec velocity) {
         pushes.add(velocity);
+    }
+
+    @Override
+    public void letFly(UUID player) {
+        flyers.add(player);
     }
 
     @Override

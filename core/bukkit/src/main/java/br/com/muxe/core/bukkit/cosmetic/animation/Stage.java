@@ -54,6 +54,8 @@ public interface Stage {
 
     void push(UUID player, Vec velocity);
 
+    void letFly(UUID player);
+
     void leash(Actor actor, UUID holder);
 
     Optional<Vec> eyes(UUID player);

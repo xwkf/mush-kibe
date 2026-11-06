@@ -109,6 +109,7 @@ public final class PacketStage implements Stage, AutoCloseable {
     private final MountGuard guard;
     private final List<Seats> mounts = new ArrayList<>();
     private final Map<UUID, Tool> tools = new LinkedHashMap<>();
+    private final Map<UUID, Boolean> flyers = new LinkedHashMap<>();
     private final Map<EntityPlayer, Integer> listed = new LinkedHashMap<>();
     private final Set<ChunkCoordIntPair> bulkChunks = new LinkedHashSet<>();
     private final FakeSections fakeSections;
@@ -354,6 +355,16 @@ public final class PacketStage implements Stage, AutoCloseable {
     }
 
     @Override
+    public void letFly(UUID player) {
+        Player flyer = Bukkit.getPlayer(player);
+        if (flyer == null || !flyer.isOnline()) {
+            return;
+        }
+        flyers.putIfAbsent(player, flyer.getAllowFlight());
+        flyer.setAllowFlight(true);
+    }
+
+    @Override
     public void leash(Actor actor, UUID holder) {
         Player player = Bukkit.getPlayer(holder);
         if (player != null && player.isOnline() && actor instanceof PacketActor leashed) {
@@ -502,6 +513,15 @@ public final class PacketStage implements Stage, AutoCloseable {
             }
         });
         tools.clear();
+        flyers.forEach((player, allowed) -> {
+            Player flyer = Bukkit.getPlayer(player);
+            if (flyer != null && flyer.isOnline() && !allowed) {
+                flyer.setFlying(false);
+                flyer.setAllowFlight(false);
+                flyer.setFallDistance(0);
+            }
+        });
+        flyers.clear();
         for (Player viewer : timed) {
             if (viewer.isOnline()) {
                 viewer.resetPlayerTime();
