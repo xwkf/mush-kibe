@@ -3,9 +3,11 @@ package br.com.muxe.minigame.bedwars.room;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import br.com.muxe.core.bukkit.cosmetic.animation.Area;
+import br.com.muxe.minigame.bedwars.arena.BedWarsArena;
 import br.com.muxe.minigame.bedwars.game.TeamStatus.Kind;
 import br.com.muxe.minigame.bedwars.room.RoomPlayer.State;
 import br.com.muxe.minigame.engine.match.StartCountdown.Change;
+import br.com.muxe.minigame.engine.setup.Point;
 import br.com.muxe.minigame.engine.team.TeamColor;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -33,6 +35,29 @@ class RoomTest {
 
         assertThat(room.area()).isEqualTo(new Area(
             offset - 2.5 - Room.MAP_MARGIN, offset + 0.5 - Room.MAP_MARGIN, offset + 43.5 + Room.MAP_MARGIN, offset + 64.5 + Room.MAP_MARGIN));
+    }
+
+    @Test
+    void theMiddleOfTheMapIsBetweenTheEmeraldGeneratorsNotTheCentreOfTheBox() {
+        BedWarsArena arena = RoomFixtures.arena("1v1", "Slip", RED_BLUE, List.of(Point.block(10, 70, 20), Point.block(16, 70, 30)));
+        Room room = RoomFixtures.room("2v7are", RoomFixtures.ONE_V_ONE, arena);
+        double offset = room.cell().offsetBlockX();
+
+        Area area = room.area();
+
+        assertThat(area.middleX()).isEqualTo(offset + 13.5);
+        assertThat(area.middleZ()).isEqualTo(offset + 25.5);
+        assertThat((area.minX() + area.maxX()) / 2).isNotEqualTo(area.middleX());
+    }
+
+    @Test
+    void withoutEmeraldGeneratorsTheMiddleIsTheCentreOfTheMap() {
+        Room room = RoomFixtures.room("2v7are", RoomFixtures.ONE_V_ONE, RoomFixtures.arena("1v1", "Slip", RED_BLUE));
+
+        Area area = room.area();
+
+        assertThat(area.middleX()).isEqualTo((area.minX() + area.maxX()) / 2);
+        assertThat(area.middleZ()).isEqualTo((area.minZ() + area.maxZ()) / 2);
     }
 
     @Test

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import br.com.muxe.core.bukkit.cosmetic.animation.Area;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.BlockChange;
+import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import java.util.List;
 import org.bukkit.Material;
 import org.junit.jupiter.api.Test;
@@ -19,11 +20,21 @@ class EndPillarsTest {
     }
 
     @Test
-    void theMiddleIsTheCentreOfTheMapArea() {
+    void withoutAKnownMiddleThePillarsGoAroundTheCentreOfTheMapArea() {
         EndPillars pillars = new EndPillars(new Area(0, 100, 40, 140));
 
         assertThat(pillars.pillars().getFirst().x()).isEqualTo(53);
         assertThat(pillars.pillars().getFirst().z()).isEqualTo(120);
+    }
+
+    @Test
+    void thePillarsGoAroundTheMiddleOfTheMapEvenWhenTheWinnerIsFarFromIt() {
+        Area aroundTheWinner = Area.around(new Vec(70.5, 35, 32.5), 16);
+
+        EndPillars pillars = new EndPillars(aroundTheWinner.middleAt(0.5, 0.5));
+
+        assertThat(pillars.pillars()).extracting(pillar -> pillar.x() + "," + pillar.z())
+            .containsExactly("33,0", "10,32", "-27,19", "-27,-19", "10,-32");
     }
 
     @Test

@@ -106,7 +106,14 @@ public final class Room {
         double minZ = points.stream().mapToDouble(Point::z).min().orElseThrow();
         double maxX = points.stream().mapToDouble(Point::x).max().orElseThrow();
         double maxZ = points.stream().mapToDouble(Point::z).max().orElseThrow();
-        return new Area(cell.toWorldX(minX) - MAP_MARGIN, cell.toWorldZ(minZ) - MAP_MARGIN, cell.toWorldX(maxX) + MAP_MARGIN, cell.toWorldZ(maxZ) + MAP_MARGIN);
+        Area area = new Area(cell.toWorldX(minX) - MAP_MARGIN, cell.toWorldZ(minZ) - MAP_MARGIN, cell.toWorldX(maxX) + MAP_MARGIN, cell.toWorldZ(maxZ) + MAP_MARGIN);
+        List<Point> emeralds = arena.emeralds();
+        if (emeralds.isEmpty()) {
+            return area;
+        }
+        double middleX = emeralds.stream().mapToDouble(Point::x).average().orElseThrow();
+        double middleZ = emeralds.stream().mapToDouble(Point::z).average().orElseThrow();
+        return area.middleAt(cell.toWorldX(middleX), cell.toWorldZ(middleZ));
     }
 
     public Phase phase() {

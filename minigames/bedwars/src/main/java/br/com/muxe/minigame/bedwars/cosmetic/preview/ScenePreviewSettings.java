@@ -1,5 +1,7 @@
 package br.com.muxe.minigame.bedwars.cosmetic.preview;
 
+import br.com.muxe.core.bukkit.cosmetic.animation.Area;
+import br.com.muxe.core.bukkit.cosmetic.animation.Scene;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import br.com.muxe.core.common.config.source.DurationParser;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings.HotbarItem;
@@ -24,7 +26,8 @@ public record ScenePreviewSettings(
     String title,
     List<String> lines,
     Optional<Target> target,
-    Optional<PreviewKit> kit
+    Optional<PreviewKit> kit,
+    Optional<Vec> middle
 ) {
 
     public ScenePreviewSettings {
@@ -53,12 +56,18 @@ public record ScenePreviewSettings(
             Optional.ofNullable(section.getConfigurationSection("target"))
                 .map(target -> new Target(target.getDouble("distance", 4), target.getString("action-bar", "&eAcerte o jogador!"),
                     target.getStringList("names"), target.getString("weapon", "WOOD_SWORD"))),
-            PreviewKit.from(section)
+            PreviewKit.from(section),
+            Optional.ofNullable(section.getConfigurationSection("middle")).map(middle -> new Vec(middle.getDouble("x"), 0, middle.getDouble("z")))
         );
     }
 
     public Vec origin() {
         return new Vec(x, y, z);
+    }
+
+    public Area area(Vec origin) {
+        Area around = Area.around(origin, Scene.REACH);
+        return middle.map(at -> around.middleAt(at.x(), at.z())).orElse(around);
     }
 
     public Vec targetAt() {

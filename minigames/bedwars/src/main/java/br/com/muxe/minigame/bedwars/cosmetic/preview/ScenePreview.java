@@ -275,7 +275,8 @@ public final class ScenePreview implements PreviewGate, Listener {
             return;
         }
         onScene.accept(viewer);
-        Scene scene = new Scene(origin, facing, skin.map(NpcSkin::value), riders).withBody(skin.map(found -> new SignedSkin(found.value(), found.signature())));
+        Scene scene = new Scene(origin, facing, skin.map(NpcSkin::value), riders, session.stage.settings().area(origin))
+            .withBody(skin.map(found -> new SignedSkin(found.value(), found.signature())));
         session.playback = animator.play(session.animation.get(), session.stage.world(), scene, () -> List.of(viewer), () ->
             session.tasks.add(plugin.getServer().getScheduler().runTaskLater(plugin, () -> finish(viewer, true), Math.max(1, session.stage.settings().returnDelay().toMillis() / 50))));
     }

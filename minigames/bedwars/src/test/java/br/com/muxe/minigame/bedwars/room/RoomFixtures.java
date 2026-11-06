@@ -26,6 +26,10 @@ public final class RoomFixtures {
     }
 
     public static BedWarsArena arena(String mode, String displayName, List<TeamColor> teams) {
+        return arena(mode, displayName, teams, List.of());
+    }
+
+    public static BedWarsArena arena(String mode, String displayName, List<TeamColor> teams, List<Point> emeralds) {
         ArenaDraft draft = new ArenaDraft(mode + "_test", mode, displayName);
         draft.restoreTeams(teams);
         draft.set(BedWarsSchema.WAITING_SPAWN, null, Point.block(0, 120, 0));
@@ -34,6 +38,7 @@ public final class RoomFixtures {
         draft.set(BedWarsSchema.SPECTATOR, null, Point.block(0, 100, 0));
         draft.set(BedWarsSchema.VOID, null, Point.block(0, 40, 0));
         draft.set(BedWarsSchema.DIAMOND, null, Point.block(20, 70, 0));
+        emeralds.forEach(emerald -> draft.set(BedWarsSchema.EMERALD, null, emerald));
         int index = 0;
         for (TeamColor team : teams) {
             int x = index++ * 40;

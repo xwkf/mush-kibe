@@ -2,6 +2,8 @@ package br.com.muxe.minigame.bedwars.cosmetic;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import br.com.muxe.core.bukkit.cosmetic.animation.Area;
+import br.com.muxe.core.bukkit.cosmetic.animation.Scene;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import br.com.muxe.core.bukkit.item.ItemBuilder;
 import br.com.muxe.minigame.bedwars.cosmetic.animation.SceneAnimations;
@@ -65,5 +67,24 @@ class VictoryEffectTest {
         assertThat(preview.sceneStart()).isEqualTo(60);
         assertThat(preview.origin()).isEqualTo(new Vec(-19.5, 27, 68.5));
         assertThat(preview.facing().z()).isLessThan(-0.9);
+    }
+
+    @Test
+    void thePreviewMapKnowsItsMiddleSoMapWideEffectsAreNotBuiltAroundTheViewer() {
+        ScenePreviewSettings preview = ScenePreviewSettings.from(RoomFixtures.CONFIG.getConfigurationSection("victory-preview"));
+
+        Area area = preview.area(preview.origin());
+
+        assertThat(area.middleX()).isEqualTo(0.5);
+        assertThat(area.middleZ()).isEqualTo(0.5);
+        assertThat(area).isEqualTo(Area.around(preview.origin(), Scene.REACH).middleAt(0.5, 0.5));
+    }
+
+    @Test
+    void aPreviewWithoutAMiddleUsesTheViewersSurroundings() {
+        ScenePreviewSettings preview = ScenePreviewSettings.from(RoomFixtures.CONFIG.getConfigurationSection("final-kill-preview"));
+        Vec origin = new Vec(4, 30, -8);
+
+        assertThat(preview.area(origin)).isEqualTo(Area.around(origin, Scene.REACH));
     }
 }

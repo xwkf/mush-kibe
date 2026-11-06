@@ -17,8 +17,8 @@ final class EndPillars {
     private final List<Pillar> pillars = new ArrayList<>();
 
     EndPillars(Area area) {
-        int middleX = (int) Math.floor((area.minX() + area.maxX()) / 2);
-        int middleZ = (int) Math.floor((area.minZ() + area.maxZ()) / 2);
+        int middleX = (int) Math.floor(area.middleX());
+        int middleZ = (int) Math.floor(area.middleZ());
         for (int[] offset : OFFSETS) {
             pillars.add(new Pillar(middleX + offset[0], middleZ + offset[1]));
         }

@@ -3264,6 +3264,9 @@ victory-preview:
     z: 68.5
     yaw: -161.0
     pitch: 2.0
+  middle:
+    x: 0.5
+    z: 0.5
   countdown:
     - "&a3..."
     - "&a2..."
