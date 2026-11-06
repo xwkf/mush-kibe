@@ -2563,6 +2563,170 @@ cosmetics:
         stars: 5
         tag: "&6Premiação de torneio"
         availability: EVENT
+  projectile-trail:
+    category: bedwars-rastro
+    prices:
+      "1": 300
+      "2": 350
+      "3": 500
+      "4": 700
+      "5": 800
+    cosmetics:
+      espiral-da-fortuna:
+        name: "Espiral da Fortuna"
+        icon:
+          material: DOUBLE_PLANT
+          data: 0
+        stars: 5
+        tag: "&6Premiação de torneio"
+        availability: EVENT
+      critico:
+        name: "Crítico"
+        icon:
+          material: DIAMOND_SWORD
+        stars: 1
+        availability: DEFAULT
+      chamas:
+        name: "Chamas"
+        icon:
+          material: BLAZE_POWDER
+        stars: 5
+        availability: ULTRA
+      ultra:
+        name: "Ultra"
+        icon:
+          material: INK_SACK
+          data: 9
+        stars: 5
+        tag: "&7Exclusivo para &d&lULTRA"
+        availability: ULTRA
+      natalino:
+        name: "Natalino"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: 28893da6c340975c37c9b990d3dc8a8944c5a62cb1034ace3add66980a59344
+        stars: 5
+        tag: "&cNatal 2025"
+        availability: EVENT
+      ossos:
+        name: "Ossos"
+        icon:
+          material: BONE
+        stars: 5
+        tag: "&6Halloween 2025"
+        availability: EVENT
+      espectro-verde:
+        name: "Espectro Verde"
+        icon:
+          material: EMERALD
+        stars: 5
+        availability: ULTRA_PLUS
+      coracoes:
+        name: "Corações"
+        icon:
+          material: APPLE
+        stars: 5
+        availability: ULTRA_PLUS
+      magia:
+        name: "Magia"
+        icon:
+          material: CAULDRON_ITEM
+        stars: 5
+        availability: ULTRA_PLUS
+      sorte-azul:
+        name: "Sorte Azul"
+        icon:
+          material: INK_SACK
+          data: 4
+        stars: 4
+        availability: SALE
+      faisca-cosmica:
+        name: "Faísca Cósmica"
+        icon:
+          material: EYE_OF_ENDER
+        stars: 1
+        availability: SALE
+      lava:
+        name: "Lava"
+        icon:
+          material: LAVA_BUCKET
+        stars: 1
+        availability: SALE
+      chroma:
+        name: "Chroma"
+        icon:
+          material: POTION
+          data: 0
+        stars: 5
+        tag: "&6Premiação mensal"
+        availability: EVENT
+      fumaca:
+        name: "Fumaça"
+        icon:
+          material: COAL
+        stars: 3
+        availability: SALE
+      vapor:
+        name: "Vapor"
+        icon:
+          material: WOOL
+          data: 0
+        stars: 3
+        availability: SALE
+      agua:
+        name: "Água"
+        icon:
+          material: WATER_BUCKET
+        stars: 4
+        availability: SALE
+      aldeao-furioso:
+        name: "Aldeão Furioso"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: d54e2f0a9b4f89b228449ea951a4dd1c6ccab43c620138fc70001e8bcdd73e69
+        stars: 4
+        availability: SALE
+      fogos-de-artificio:
+        name: "Fogos de Artifício"
+        icon:
+          material: FIREWORK
+        stars: 3
+        availability: SALE
+      notas-musicais:
+        name: "Notas Musicais"
+        icon:
+          material: NOTE_BLOCK
+        stars: 5
+        tag: "&6Premiação de torneio"
+        availability: EVENT
+      sangrento:
+        name: "Sangrento"
+        icon:
+          material: REDSTONE
+        stars: 5
+        availability: SALE
+      critico-encantado:
+        name: "Crítico Encantado"
+        icon:
+          material: BOOK
+        stars: 2
+        availability: SALE
+      mega-loucura:
+        name: "Mega-Loucura"
+        icon:
+          material: SPONGE
+        stars: 4
+        availability: SALE
+      arco-iris:
+        name: "Arco-íris"
+        icon:
+          material: SKULL_ITEM
+          data: 3
+          skull-texture: 9060d1220b268d74b181b3d6a6d1a7a9d40452759507b0f82a578ae2b0e545e1
+        stars: 4
+        availability: SALE
   kill-message:
     category: bedwars-mensagem-kill
     default: padrao
@@ -2795,6 +2959,20 @@ cosmetics:
             - "&7Selecionado: &a{selected}"
             - " "
             - "&eClique para ver mais."
+      projectile-trail:
+        slot: 27
+        item:
+          material: ARROW
+          name: "&aRastros de Projétil"
+          lore:
+            - "&8{owned}/{total} ({percent}%)"
+            - " "
+            - "&7Customize o rastro de"
+            - "&7seus projéteis."
+            - " "
+            - "&7Selecionado: &a{selected}"
+            - " "
+            - "&eClique para ver mais."
       wood-type:
         slot: 29
         item:
@@ -2834,18 +3012,6 @@ cosmetics:
             - " "
             - "&7Customize a skin dos"
             - "&7vendedores da ilha."
-            - " "
-            - "&7Selecionado: &aAleatório"
-            - " "
-            - "&eClique para ver mais."
-        "27":
-          material: ARROW
-          name: "&aRastros de Projétil"
-          lore:
-            - "&80/23 (0%)"
-            - " "
-            - "&7Customize o rastro de"
-            - "&7seus projéteis."
             - " "
             - "&7Selecionado: &aAleatório"
             - " "
@@ -2892,6 +3058,14 @@ cosmetics:
           - "&7aleatório que você possui"
     aura:
       title: "Aura ({page}/{pages})"
+      random:
+        material: NAME_TAG
+        name: "&aAleatório"
+        lore:
+          - "&7Seleciona um cosmético"
+          - "&7aleatório que você possui"
+    projectile-trail:
+      title: "Rastros de Projétil ({page}/{pages})"
       random:
         material: NAME_TAG
         name: "&aAleatório"
@@ -3168,6 +3342,57 @@ aura-preview:
       - "&e{name}"
       - ""
       - "&amuxe.com.br"
+
+projectile-trail-preview:
+  world: previa_aura
+  spawn:
+    x: 10.5
+    y: 19.0
+    z: 21.5
+    yaw: 180
+    pitch: 0.0
+  timeout: 60s
+  return-delay: 1s
+  back-item:
+    slot: 8
+    material: BED
+    name: "&aVoltar ao Lobby"
+  scoreboard:
+    title: "&b&lMUXE"
+    lines:
+      - ""
+      - "&fVisualizando:"
+      - "&e{name}"
+      - ""
+      - "&amuxe.com.br"
+  kit:
+    refill-ticks: 2
+    items:
+      "0":
+        material: SNOW_BALL
+        amount: 16
+        hide-flags: false
+      "1":
+        material: POTION
+        data: 16421
+        amount: 16
+        hide-flags: false
+      "2":
+        material: ENDER_PEARL
+        amount: 16
+        hide-flags: false
+      "3":
+        material: BOW
+        unbreakable: true
+        glow: true
+        hide-flags: false
+      "4":
+        material: FISHING_ROD
+        unbreakable: true
+        hide-flags: false
+      "9":
+        material: ARROW
+        hide-flags: false
 
 preview:
   world: previa_quebra_de_cama

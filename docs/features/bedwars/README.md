@@ -174,7 +174,7 @@ Players pick an animation that plays when they break an enemy bed. The menus fol
 
 ### Setting up the previews in game
 
-Staff place the four previews from inside the BedWars lobby with `/bwconfig previa <tipo> <ação> [valor]` (permission `muxe.admin.config`), without editing `config.yml`. The world folders must already be in the server root.
+Staff place the five previews from inside the BedWars lobby with `/bwconfig previa <tipo> <ação> [valor]` (permission `muxe.admin.config`), without editing `config.yml`. The world folders must already be in the server root.
 
 | `<tipo>` | Section | World folder |
 |---|---|---|
@@ -182,6 +182,7 @@ Staff place the four previews from inside the BedWars lobby with `/bwconfig prev
 | `vitoria` | `victory-preview` | `previa_efeito_de_vitoria` |
 | `kill-final` | `final-kill-preview` | `previa_kill_final` |
 | `aura` | `aura-preview` | `previa_aura` |
+| `rastro` | `projectile-trail-preview` | `previa_aura` |
 
 | Command | Writes |
 |---|---|
@@ -291,6 +292,46 @@ Every shortcut saves the file and applies the change live: each preview reads it
 - **Pattern** (`AuraPattern`, `AuraTrails`): every tick, per player with an aura, one particle (count 0, offsets 0, speed 1, long distance). If the player moved horizontally since the previous tick, it appears at the feet, at `(x, y + 0.1, z)`. Otherwise it is a point of a helix around the player, for a counter `k` that grows by 1 every tick, moving or not (starting at 0 when the aura starts showing): angle `18° · k`, offset `x = sin(angle)`, `z = -cos(angle)` (radius 1) and `y = 0.1 + ((k + 15) mod 60) / 30`. So it climbs 1/30 of a block per tick from 0.1 to about 2.07 over three turns (20 ticks per turn) and starts over every 60 ticks. Only horizontal movement counts: jumping or falling in place keeps the helix.
 - **Random:** `Aleatório` draws one owned aura per player and per match, the first tick the player is playing, and keeps it until they leave the match (`AuraCosmetics`, `AuraAssignments`); the next match draws again. `Nenhuma` shows nothing, and a chosen aura the player does not own is never used.
 - **Preview:** right click opens the world `aura-preview.world` (`previa_aura`, which must be in the server root of the BedWars lobby; without it the preview answers `preview-only-lobby`). The player stands at `aura-preview.spawn` (10.5 19 21.5, yaw 180) with the `Voltar ao Lobby` bed in slot 8 and sees that aura on themselves, only on themselves, while they walk around. There is no countdown or title. It ends on the bed, on `aura-preview.timeout` (`60s`) or when the player quits, and the player goes back where they were and the aura list opens again. It reuses the scene preview (`ScenePreview`) with an `AuraAnimation` per aura.
+
+### Projectile trails
+
+`Rastros de Projétil` (slot 27 of `Cosméticos do Bed Wars`, an arrow showing `{owned}/{total} ({percent}%)` and `Selecionado: {selected}`) lists the 23 trails in `Rastros de Projétil ({page}/{pages})`, with the same layout, order (owned first, then the rest, each group alphabetical), selection and `Voltar` rule as the aura list: `Nenhuma` (barrier, slot 10), `Aleatório` (name tag, slot 11), the trails from slot 12, `Voltar` (slot 48), `Selecionado: <name>` (slot 49) and `Loja` (slot 53). They are saved under the category `bedwars-rastro`. Prices by stars: 300, 350, 500, 700 and 800 credits. `Crítico` is `DEFAULT`, so every player owns it. `Ultra` is an ULTRA trail that shows its own tag, `&7Exclusivo para &d&lULTRA`, instead of `Incluso no ULTRA`: in every category, a VIP, ULTRA or ULTRA+ cosmetic with its own `tag` shows that tag instead of the rank one.
+
+A trail is animated only when `ProjectileTrails` (package `cosmetic.trail`) has a `ProjectileTrail` with its id. Until then it shows `Indisponível.`, is not sold, `Aleatório` never draws it, nobody gets it in a match and its preview answers `cosmetic-no-preview`; the rest of the category works with an empty registry.
+
+| Trail | Icon | Stars | Availability | Tag |
+|---|---|---|---|---|
+| `Espiral da Fortuna` (`espiral-da-fortuna`) | `DOUBLE_PLANT` | 5 | `EVENT` | `&6Premiação de torneio` |
+| `Crítico` (`critico`) | `DIAMOND_SWORD` | 1 | `DEFAULT` |  |
+| `Chamas` (`chamas`) | `BLAZE_POWDER` | 5 | `ULTRA` |  |
+| `Ultra` (`ultra`) | `INK_SACK:9` | 5 | `ULTRA` | `&7Exclusivo para &d&lULTRA` |
+| `Natalino` (`natalino`) | `SKULL_ITEM:3` | 5 | `EVENT` | `&cNatal 2025` |
+| `Ossos` (`ossos`) | `BONE` | 5 | `EVENT` | `&6Halloween 2025` |
+| `Espectro Verde` (`espectro-verde`) | `EMERALD` | 5 | `ULTRA_PLUS` |  |
+| `Corações` (`coracoes`) | `APPLE` | 5 | `ULTRA_PLUS` |  |
+| `Magia` (`magia`) | `CAULDRON_ITEM` | 5 | `ULTRA_PLUS` |  |
+| `Sorte Azul` (`sorte-azul`) | `INK_SACK:4` | 4 | `SALE` |  |
+| `Faísca Cósmica` (`faisca-cosmica`) | `EYE_OF_ENDER` | 1 | `SALE` |  |
+| `Lava` (`lava`) | `LAVA_BUCKET` | 1 | `SALE` |  |
+| `Chroma` (`chroma`) | `POTION:0` | 5 | `EVENT` | `&6Premiação mensal` |
+| `Fumaça` (`fumaca`) | `COAL` | 3 | `SALE` |  |
+| `Vapor` (`vapor`) | `WOOL:0` | 3 | `SALE` |  |
+| `Água` (`agua`) | `WATER_BUCKET` | 4 | `SALE` |  |
+| `Aldeão Furioso` (`aldeao-furioso`) | `SKULL_ITEM:3` | 4 | `SALE` |  |
+| `Fogos de Artifício` (`fogos-de-artificio`) | `FIREWORK` | 3 | `SALE` |  |
+| `Notas Musicais` (`notas-musicais`) | `NOTE_BLOCK` | 5 | `EVENT` | `&6Premiação de torneio` |
+| `Sangrento` (`sangrento`) | `REDSTONE` | 5 | `SALE` |  |
+| `Crítico Encantado` (`critico-encantado`) | `BOOK` | 2 | `SALE` |  |
+| `Mega-Loucura` (`mega-loucura`) | `SPONGE` | 4 | `SALE` |  |
+| `Arco-íris` (`arco-iris`) | `SKULL_ITEM:3` | 4 | `SALE` |  |
+
+- **Rule:** when a living player of a match (room in `PLAYING`, player alive, not a spectator) launches a projectile whose shooter is them (a bow arrow, snowball, egg, ender pearl, splash potion, fishing hook, the fireball of the shop's fire charge or any other projectile), their trail follows it. The kind the trail gets (`ProjectileKinds`) is `ARROW`, `SNOWBALL`, `EGG`, `ENDER_PEARL`, `POTION` (splash potions), `FISHING_HOOK`, `FIREBALL` (fireballs and small fireballs) or `OTHER` (anything else, such as an experience bottle or a wither skull).
+- **Random:** `Aleatório` draws one owned trail per player and per match, on their first launch, and keeps it for the whole match (`TrailCosmetics`, `TrailAssignments`); the next match draws again. `Nenhuma` shows nothing, and a chosen trail the player does not own is never used.
+- **Flight** (`TrailFlight`): the first server tick after the launch is age 0, at the projectile's current position (where it was spawned). Every tick while the projectile exists and is not on the ground, the trail gets `tick` with its position, velocity, age and kind. When it is gone (hit, exploded, removed, reeled in) or on the ground (an arrow stuck in a block, a hook lying still), `land` is called once with the last position and age, the stage stays open `linger()` more ticks so what the trail spawned can finish, and then it closes and removes every actor the trail created. A flight that lasts 1200 ticks lands anyway; an arrow that bounces off keeps flying.
+- **Viewers:** the online players of the room. Each flight has its own core `PacketStage`. The task (`TrailTask`, every tick) builds the viewer list once per room per tick, and only while some trail is flying. When the room leaves `PLAYING`, or the shooter quits or leaves the room, their flights close at once without `land`. A trail that throws is logged and closed without stopping the others.
+- **Preview:** right click opens the world `projectile-trail-preview.world` (`previa_aura`, the aura map) at the aura spawn (10.5 19 21.5, yaw 180), with the same scoreboard (`Visualizando:` and the name). There is no countdown and no scripted scene: the viewer gets the kit of the recording and throws things themselves: snowball ×16 (slot 0), splash potion of healing (`POTION:16421`) ×16 (slot 1), ender pearl ×16 (slot 2), a glowing unbreakable bow (slot 3), an unbreakable fishing rod (slot 4), one arrow (slot 9, the first of the main inventory) and the `Voltar ao Lobby` bed (slot 8). Right clicking with a kit item uses it (the clicked block is not used); everything else stays locked as in the other previews: blocks, drops, pickups, inventory clicks, hunger and damage. `kit.refill-ticks` (2) ticks after every launch each kit slot that is short or empty is filled back, so the items are infinite. As in the recordings, the ender pearl teleports the viewer (its fall damage is cancelled), the potion splashes but applies nothing (`PotionSplashEvent` cancelled, the splash still shows) and an arrow that hits something is removed. Every projectile the viewer launches gets the previewed trail, seen only by them (`TrailPreview`). It ends on the bed, on `projectile-trail-preview.timeout` (`60s`) or when the player quits; projectiles still flying are removed, and the player goes back where they were with the list open again. It is the kit mode of the scene preview: any `ScenePreview` section with a `kit` (`PreviewKit`) gives the kit instead of playing a scene, and a `KitPlay` hook hears every launch.
+
+Effects of each trail:
 
 ### Kill messages
 
@@ -467,6 +508,10 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | `cosmetics.wood-type.*` | `bedwars-madeira`; `default: carvalho`; the 12 woods | Category, default cosmetic and woods. `icon` (`WOOD` or `LOG`, `LOG_2` and `data`) is the item the shop delivers; `availability` is `DEFAULT`, `VIP`, `ULTRA`, `ULTRA_PLUS` or `EVENT`. |
 | `cosmetics.menus.categories.kill-message`, `cosmetics.menus.categories.wood-type` | slot 31 paper; slot 29 planks | The category buttons. |
 | `cosmetics.menus.kill-message.*`, `cosmetics.menus.wood-type.*` | titles, `entries`, `lore`, `selected` | The list overrides. `entries` has `none` and `random` (show those entries), `random-after` (cosmetics before `Aleatório`), `owned-first` (owned first, as the other lists, or the catalog order), `previews` (right click) and `selected-icon` (the selected item shows the cosmetic). `lore.header` starts every cosmetic lore, `lore.vip-tag`, `lore.ultra-tag` and `lore.ultra-plus-tag` are the rank lines. Lore keys left out are inherited from the bed destruction list. |
+| `cosmetics.projectile-trail.*` | `bedwars-rastro`; 300, 350, 500, 700, 800; the 23 trails | Category, prices by stars and the trails, with the same fields as the bed ones. The id must match a trail of `ProjectileTrails` to be animated. |
+| `cosmetics.menus.categories.projectile-trail`, `cosmetics.menus.projectile-trail.*` | slot 27, arrow; `Rastros de Projétil ({page}/{pages})`, `Aleatório` as a name tag | The category button and the list overrides of the trail category (the rest follows the bed destruction list). |
+| `projectile-trail-preview.*` | `previa_aura`, 10.5 19 21.5 facing yaw 180, `60s`, `1s` | World, spawn, timeout, back item and scoreboard of the trail preview, like `aura-preview`. |
+| `projectile-trail-preview.kit.items.<slot>`, `projectile-trail-preview.kit.refill-ticks` | the six kit items of the recording; `2` | The items given instead of a scripted scene (same fields as any item; the slot counts from 0, 9 and up is the main inventory) and the ticks after a launch before short stacks are filled back (at least 1). Any scene preview section with `kit` works this way. |
 | `aura-preview.*` | `previa_aura`, 10.5 19 21.5 facing yaw 180, `60s`, `1s` | World, spawn, timeout, back item and scoreboard of the aura preview. It has no countdown. |
 | `preview.world` | `previa_quebra_de_cama` | Folder of the preview world in the server root. Without it the preview is off. |
 | `preview.spawn`, `preview.bed` | 6.5 11 21.5; foot 6 11 17, head 6 16 | Where the player stands and the bed they break. |
@@ -501,7 +546,7 @@ The Percevejo can be bought now: thrown, its snowball spawns a silverfish of the
 | File | What it holds |
 |---|---|
 | `core.arenas` (game `bedwars`) | One row per arena: mode, `ready`, the definition (display name, teams, points and heights, in YAML) and the map in the [Muxe map format](../../decisions/0009-own-map-format-and-match-cells.md). Migration `V16__create_arenas.sql`. Shared by every BedWars server. |
-| `core.owned_cosmetics`, `core.selected_cosmetics` | Owned and selected cosmetics, category `bedwars-cama` (and `bedwars-vitoria`, `bedwars-kill-final`, `bedwars-aura`, `bedwars-mensagem-kill` and `bedwars-madeira`). See [Credits and cosmetics](../credits/README.md). |
+| `core.owned_cosmetics`, `core.selected_cosmetics` | Owned and selected cosmetics, category `bedwars-cama` (and `bedwars-vitoria`, `bedwars-kill-final`, `bedwars-aura`, `bedwars-rastro`, `bedwars-mensagem-kill` and `bedwars-madeira`). See [Credits and cosmetics](../credits/README.md). |
 | `<server>/previa_quebra_de_cama/` | The preview world. Deployed to the BedWars lobby only, never committed. |
 | `<server>/previa_aura/` | The aura preview world. Deployed to the BedWars lobby only, never committed. |
 | `bedwars.player_stats` | One row per player, mode (and `geral`), period (`diario`, `semanal`, `mensal`, `total`) and period start, with every counter and the XP. Migration `V1__create_player_stats_and_favourite_maps.sql`. |
@@ -544,7 +589,9 @@ Commands and queries in `br.com.muxe.minigame.bedwars.stats`: `RecordMatchComman
 - [ ] The hotbar editor and the placement of purchases checked in game.
 - [ ] Lobby NPCs, menus, matchmaking, map choice and tops checked in game.
 - [x] The preview shortcuts write the right keys, find both halves of a bed from either one, refuse bad values and apply live while running sessions keep their settings (`PreviewEditsTest`, `BedBlocksTest`, `BedWarsConfigCommandTest`).
+- [x] The trail catalog and menu, the tag of `Ultra`, whose trail is used, the flight lifecycle, the projectile kinds and the preview kit follow the rules above (`ProjectileTrailCosmeticTest`, `CosmeticIconsTagTest`, `TrailCosmeticsTest`, `TrailFlightTest`, `TrailFlightsTest`, `ProjectileKindsTest`).
 - [ ] Every animation and the preview checked in game.
+- [ ] The projectile trails and their preview kit checked in game.
 - [ ] `/bwconfig previa` checked in game on the lobby.
 - [ ] The kill messages in a real match and the wood types in the shop checked in game.
 
@@ -555,6 +602,7 @@ If Muxe-Core is not enabled, the plugin disables itself.
 ## Known limitations
 
 - MEGA and PILARES are not modes yet, so their NPCs open nothing.
+- The bow of the trail preview kit glows instead of carrying Infinity I (enchantments cannot be read from the configuration without a server in the tests); the arrow it shoots is given back by the refill instead.
 - A player who reaches a BedWars server without a reservation still joins a room of `default-mode`.
 - The lobby only knows the rooms of servers that published in the last 10 seconds; the room list of a server that stops is forgotten after that.
 - The other special shop items, the dragons and the victory and defeat titles are not in yet.

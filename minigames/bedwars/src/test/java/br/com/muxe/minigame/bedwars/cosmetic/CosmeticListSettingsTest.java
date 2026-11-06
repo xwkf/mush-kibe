@@ -82,7 +82,7 @@ class CosmeticListSettingsTest {
         CosmeticListSettings wood = menus.category(CosmeticMenuSettings.WOOD_TYPE).list();
 
         assertThat(menus.categories()).containsKeys(CosmeticMenuSettings.WOOD_TYPE, CosmeticMenuSettings.KILL_MESSAGE);
-        assertThat(menus.soon()).containsOnlyKeys(14, 27);
+        assertThat(menus.soon()).containsOnlyKeys(14);
         assertThat(wood.slots()).hasSizeGreaterThanOrEqualTo(12);
     }
 }

@@ -41,7 +41,10 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
+import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -50,13 +53,18 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.entity.PotionSplashEvent;
+import org.bukkit.event.entity.ProjectileHitEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.projectiles.ProjectileSource;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.Scoreboard;
 
@@ -66,11 +74,13 @@ public final class ScenePreview implements PreviewGate, Listener {
     private static final int COUNTDOWN_STAY = 40;
     private static final String SUBTITLE = " ";
     private static final String TARGET_PREFIX = "previa-alvo:";
+    private static final int HOTBAR_SIZE = 9;
 
     private final Plugin plugin;
     private final BuildMode buildMode;
     private final Supplier<ScenePreviewSettings> settings;
-    private final SceneAnimations animations;
+    private final Optional<SceneAnimations> animations;
+    private final Optional<KitPlay> kitPlay;
     private final Consumer<Player> onScene;
     private final Optional<SoundCue> countdownSound;
     private final Predicate<Player> busyElsewhere;
@@ -84,10 +94,22 @@ public final class ScenePreview implements PreviewGate, Listener {
 
     public ScenePreview(Plugin plugin, BuildMode buildMode, Supplier<ScenePreviewSettings> settings, SceneAnimations animations, Consumer<Player> onScene,
                         Optional<SoundCue> countdownSound, Predicate<Player> busyElsewhere, MessageCatalog messages) {
+        this(plugin, buildMode, settings, Optional.of(animations), Optional.empty(), onScene, countdownSound, busyElsewhere, messages);
+    }
+
+    public ScenePreview(Plugin plugin, BuildMode buildMode, Supplier<ScenePreviewSettings> settings, KitPlay kitPlay, Predicate<Player> busyElsewhere,
+                        MessageCatalog messages) {
+        this(plugin, buildMode, settings, Optional.empty(), Optional.of(kitPlay), player -> {
+        }, Optional.empty(), busyElsewhere, messages);
+    }
+
+    private ScenePreview(Plugin plugin, BuildMode buildMode, Supplier<ScenePreviewSettings> settings, Optional<SceneAnimations> animations, Optional<KitPlay> kitPlay,
+                         Consumer<Player> onScene, Optional<SoundCue> countdownSound, Predicate<Player> busyElsewhere, MessageCatalog messages) {
         this.plugin = plugin;
         this.buildMode = buildMode;
         this.settings = settings;
         this.animations = animations;
+        this.kitPlay = kitPlay;
         this.onScene = onScene;
         this.countdownSound = countdownSound;
         this.busyElsewhere = busyElsewhere;
@@ -147,8 +169,9 @@ public final class ScenePreview implements PreviewGate, Listener {
     @Override
     public void preview(Player viewer, BedCosmetic cosmetic, Consumer<Player> back) {
         Stage active = stage;
-        Optional<SceneAnimation> animation = animations.find(cosmetic.id());
-        if (active == null || animation.isEmpty()) {
+        Optional<SceneAnimation> animation = animations.flatMap(found -> found.find(cosmetic.id()));
+        boolean covered = kitPlay.map(play -> play.covers(cosmetic)).orElse(animation.isPresent());
+        if (active == null || !covered) {
             viewer.sendMessage(messages.get(active == null ? "preview-only-lobby" : "cosmetic-no-preview"));
             return;
         }
@@ -158,7 +181,7 @@ public final class ScenePreview implements PreviewGate, Listener {
         }
         ScenePreviewSettings config = active.settings();
         World world = active.world();
-        Session session = new Session(viewer, back, animation.get(), active);
+        Session session = new Session(viewer, back, cosmetic, animation, active);
         sessions.put(viewer.getUniqueId(), session);
         viewer.getInventory().clear();
         viewer.getInventory().setArmorContents(new ItemStack[4]);
@@ -178,6 +201,10 @@ public final class ScenePreview implements PreviewGate, Listener {
         sidebar.title(config.title());
         sidebar.lines(config.lines(cosmetic.name()));
         session.timeout = plugin.getServer().getScheduler().runTaskLater(plugin, () -> finish(viewer, true), config.timeout().toSeconds() * TICKS_PER_SECOND);
+        if (config.kit().isPresent()) {
+            giveKit(session, config.kit().get());
+            return;
+        }
         if (config.target().isPresent() && targets != null) {
             placeTarget(session, config.target().get());
             return;
@@ -244,13 +271,42 @@ public final class ScenePreview implements PreviewGate, Listener {
 
     private void play(Session session, Vec origin, Vec facing, Optional<NpcSkin> skin, List<UUID> riders) {
         Player viewer = session.viewer;
-        if (!previewing(viewer)) {
+        if (!previewing(viewer) || session.animation.isEmpty()) {
             return;
         }
         onScene.accept(viewer);
         Scene scene = new Scene(origin, facing, skin.map(NpcSkin::value), riders).withBody(skin.map(found -> new SignedSkin(found.value(), found.signature())));
-        session.playback = animator.play(session.animation, session.stage.world(), scene, () -> List.of(viewer), () ->
+        session.playback = animator.play(session.animation.get(), session.stage.world(), scene, () -> List.of(viewer), () ->
             session.tasks.add(plugin.getServer().getScheduler().runTaskLater(plugin, () -> finish(viewer, true), Math.max(1, session.stage.settings().returnDelay().toMillis() / 50))));
+    }
+
+    private void giveKit(Session session, PreviewKit kit) {
+        session.kit = kit;
+        kit.items().forEach((slot, item) -> session.viewer.getInventory().setItem(slot, item.build()));
+        kit.items().keySet().stream().filter(slot -> slot < HOTBAR_SIZE).findFirst().ifPresent(session.viewer.getInventory()::setHeldItemSlot);
+    }
+
+    private void refill(Session session) {
+        if (!previewing(session.viewer) || session.kit == null) {
+            return;
+        }
+        PlayerInventory inventory = session.viewer.getInventory();
+        session.kit.items().forEach((slot, item) -> {
+            ItemStack current = inventory.getItem(slot);
+            Material material = current == null ? Material.AIR : current.getType();
+            int data = current == null ? 0 : current.getDurability();
+            int amount = current == null ? 0 : current.getAmount();
+            if (session.kit.needsRefill(slot, material, data, amount)) {
+                inventory.setItem(slot, item.build());
+            }
+        });
+    }
+
+    private Optional<Session> kitSession(ProjectileSource shooter) {
+        if (!(shooter instanceof Player player)) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(sessions.get(player.getUniqueId())).filter(session -> session.kit != null);
     }
 
     private ItemStack backItem(ScenePreviewSettings config) {
@@ -264,11 +320,40 @@ public final class ScenePreview implements PreviewGate, Listener {
         if (session == null) {
             return;
         }
-        event.setCancelled(true);
         Action action = event.getAction();
         boolean rightClick = action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK;
-        if (session.stage.settings().goesBack(rightClick, event.getPlayer().getInventory().getHeldItemSlot())) {
+        int held = event.getPlayer().getInventory().getHeldItemSlot();
+        if (session.kit != null && session.stage.settings().usesKit(rightClick, held)) {
+            event.setUseInteractedBlock(Event.Result.DENY);
+            return;
+        }
+        event.setCancelled(true);
+        if (session.stage.settings().goesBack(rightClick, held)) {
             finish(event.getPlayer(), true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onLaunch(ProjectileLaunchEvent event) {
+        Projectile projectile = event.getEntity();
+        kitSession(projectile.getShooter()).ifPresent(session -> {
+            session.launched.add(projectile);
+            kitPlay.ifPresent(play -> play.launched(session.viewer, session.cosmetic, projectile));
+            session.tasks.add(plugin.getServer().getScheduler().runTaskLater(plugin, () -> refill(session), session.kit.refillTicks()));
+        });
+    }
+
+    @EventHandler
+    public void onHit(ProjectileHitEvent event) {
+        if (event.getEntity() instanceof Arrow arrow && kitSession(arrow.getShooter()).isPresent()) {
+            arrow.remove();
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onSplash(PotionSplashEvent event) {
+        if (kitSession(event.getPotion().getShooter()).isPresent()) {
+            event.setCancelled(true);
         }
     }
 
@@ -334,6 +419,8 @@ public final class ScenePreview implements PreviewGate, Listener {
             return;
         }
         session.cancel();
+        session.launched.stream().filter(Projectile::isValid).forEach(Projectile::remove);
+        kitPlay.ifPresent(play -> play.ended(viewer));
         if (session.target != null && targets != null) {
             targets.remove(session.target);
             targetNames.remove(session.target);
@@ -363,7 +450,8 @@ public final class ScenePreview implements PreviewGate, Listener {
 
         private final Player viewer;
         private final Consumer<Player> back;
-        private final SceneAnimation animation;
+        private final BedCosmetic cosmetic;
+        private final Optional<SceneAnimation> animation;
         private final Stage stage;
         private final Location from;
         private final ItemStack[] contents;
@@ -373,14 +461,17 @@ public final class ScenePreview implements PreviewGate, Listener {
         private final Scoreboard scoreboard;
         private final List<Player> hidden = new ArrayList<>();
         private final List<BukkitTask> tasks = new ArrayList<>();
+        private final List<Projectile> launched = new ArrayList<>();
         private BukkitTask timeout;
         private Playback playback;
         private String target;
         private Optional<NpcSkin> targetSkin = Optional.empty();
+        private PreviewKit kit;
 
-        Session(Player viewer, Consumer<Player> back, SceneAnimation animation, Stage stage) {
+        Session(Player viewer, Consumer<Player> back, BedCosmetic cosmetic, Optional<SceneAnimation> animation, Stage stage) {
             this.viewer = viewer;
             this.back = back;
+            this.cosmetic = cosmetic;
             this.animation = animation;
             this.stage = stage;
             this.from = viewer.getLocation();

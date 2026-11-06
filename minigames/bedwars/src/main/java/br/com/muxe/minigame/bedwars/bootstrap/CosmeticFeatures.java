@@ -34,12 +34,16 @@ import br.com.muxe.minigame.bedwars.cosmetic.message.MessageDescriptions;
 import br.com.muxe.minigame.bedwars.cosmetic.message.MessagePreview;
 import br.com.muxe.minigame.bedwars.cosmetic.message.MessageSets;
 import br.com.muxe.minigame.bedwars.cosmetic.preview.BedPreview;
+import br.com.muxe.minigame.bedwars.cosmetic.preview.KitPlay;
 import br.com.muxe.minigame.bedwars.cosmetic.preview.PreviewSettings;
 import br.com.muxe.minigame.bedwars.cosmetic.preview.ScenePreview;
 import br.com.muxe.minigame.bedwars.cosmetic.preview.ScenePreviewSettings;
 import br.com.muxe.minigame.bedwars.cosmetic.preview.config.PreviewKind;
 import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticProfileListener;
 import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticProfiles;
+import br.com.muxe.minigame.bedwars.cosmetic.trail.ProjectileTrails;
+import br.com.muxe.minigame.bedwars.cosmetic.trail.TrailCosmetics;
+import br.com.muxe.minigame.bedwars.cosmetic.trail.TrailPreview;
 import br.com.muxe.minigame.bedwars.cosmetic.wood.WoodTypes;
 import br.com.muxe.minigame.bedwars.hotbar.menu.HotbarEditor;
 import br.com.muxe.minigame.bedwars.preferences.menu.PreferencesMenu;
@@ -65,6 +69,7 @@ final class CosmeticFeatures {
     private static final String VICTORY_CATEGORY = "bedwars-vitoria";
     private static final String FINAL_KILL_CATEGORY = "bedwars-kill-final";
     private static final String AURA_CATEGORY = "bedwars-aura";
+    private static final String TRAIL_CATEGORY = "bedwars-rastro";
     private static final String WOOD_CATEGORY = "bedwars-madeira";
     private static final String KILL_MESSAGE_CATEGORY = "bedwars-mensagem-kill";
 
@@ -73,25 +78,29 @@ final class CosmeticFeatures {
     private final SceneCosmetics victories;
     private final SceneCosmetics finalKills;
     private final AuraCosmetics auras;
+    private final TrailCosmetics trails;
     private final MessageSets messageSets;
     private final KillMessages killMessages;
     private final WoodTypes woods;
     private final BedPreview preview;
     private final List<ScenePreview> scenePreviews;
+    private final List<Runnable> stops;
 
-    private CosmeticFeatures(CosmeticMenus menus, BedBreakCosmetics bedBreaks, SceneCosmetics victories, SceneCosmetics finalKills, AuraCosmetics auras, MessageSets messageSets,
-                             KillMessages killMessages, WoodTypes woods, BedPreview preview,
-                             List<ScenePreview> scenePreviews) {
+    private CosmeticFeatures(CosmeticMenus menus, BedBreakCosmetics bedBreaks, SceneCosmetics victories, SceneCosmetics finalKills, AuraCosmetics auras,
+                             TrailCosmetics trails, MessageSets messageSets, KillMessages killMessages, WoodTypes woods, BedPreview preview,
+                             List<ScenePreview> scenePreviews, List<Runnable> stops) {
         this.menus = menus;
         this.bedBreaks = bedBreaks;
         this.victories = victories;
         this.finalKills = finalKills;
         this.auras = auras;
+        this.trails = trails;
         this.messageSets = messageSets;
         this.killMessages = killMessages;
         this.woods = woods;
         this.preview = preview;
         this.scenePreviews = List.copyOf(scenePreviews);
+        this.stops = List.copyOf(stops);
     }
 
     static CosmeticFeatures start(JavaPlugin plugin, MuxeCore core, FileConfiguration config, MessageCatalog messages, Commands commands, boolean lobby, EndTitles titles,
@@ -115,6 +124,9 @@ final class CosmeticFeatures {
         CosmeticCatalog auraCatalog = CosmeticCatalog.from(section(section, CosmeticMenuSettings.AURA), "cosmetics", AURA_CATEGORY,
             id -> Auras.find(id).isPresent());
         CosmeticProfiles auraProfiles = profiles(plugin, core, auraCatalog);
+        CosmeticCatalog trailCatalog = CosmeticCatalog.from(section(section, CosmeticMenuSettings.PROJECTILE_TRAIL), "cosmetics", TRAIL_CATEGORY,
+            id -> ProjectileTrails.find(id).isPresent());
+        CosmeticProfiles trailProfiles = profiles(plugin, core, trailCatalog);
         MessageSets messageSets = MessageSets.from(section(config, "kill-messages"));
         CosmeticCatalog killMessageCatalog = CosmeticCatalog.from(section(section, CosmeticMenuSettings.KILL_MESSAGE), "cosmetics", KILL_MESSAGE_CATEGORY,
             id -> messageSets.find(id).isPresent());
@@ -124,11 +136,13 @@ final class CosmeticFeatures {
 
         BedPreview preview = null;
         List<ScenePreview> scenes = new ArrayList<>();
+        List<Runnable> stops = new ArrayList<>();
         PreviewGate onlyLobby = (player, cosmetic, back) -> player.sendMessage(messages.get("preview-only-lobby"));
         PreviewGate bedGate = onlyLobby;
         PreviewGate victoryGate = onlyLobby;
         PreviewGate killGate = onlyLobby;
         PreviewGate auraGate = onlyLobby;
+        PreviewGate trailGate = onlyLobby;
         PreviewGate withoutPreview = (player, cosmetic, back) -> {
         };
         if (lobby) {
@@ -148,6 +162,9 @@ final class CosmeticFeatures {
             }, Optional.empty(), busy, messages, scenes);
             auraGate = scenePreview(plugin, core, config, reloads, PreviewKind.AURA, auraAnimations, player -> {
             }, Optional.empty(), busy, messages, scenes);
+            TrailPreview trailPreview = TrailPreview.start(plugin, ProjectileTrails::find);
+            stops.add(trailPreview::stop);
+            trailGate = kitPreview(plugin, core, config, reloads, PreviewKind.PROJECTILE_TRAIL, trailPreview, busy, messages, scenes);
         }
         List<CosmeticCategory> categories = new ArrayList<>();
         categories.add(CosmeticCategory.of(menuSettings.category(CosmeticMenuSettings.BED_DESTRUCTION), catalog, profiles, bedGate));
@@ -159,6 +176,9 @@ final class CosmeticFeatures {
         }
         if (menuSettings.categories().containsKey(CosmeticMenuSettings.AURA)) {
             categories.add(CosmeticCategory.of(menuSettings.category(CosmeticMenuSettings.AURA), auraCatalog, auraProfiles, auraGate));
+        }
+        if (menuSettings.categories().containsKey(CosmeticMenuSettings.PROJECTILE_TRAIL)) {
+            categories.add(CosmeticCategory.of(menuSettings.category(CosmeticMenuSettings.PROJECTILE_TRAIL), trailCatalog, trailProfiles, trailGate));
         }
         if (menuSettings.categories().containsKey(CosmeticMenuSettings.WOOD_TYPE)) {
             categories.add(CosmeticCategory.of(menuSettings.category(CosmeticMenuSettings.WOOD_TYPE), woodCatalog, woodProfiles, withoutPreview));
@@ -180,8 +200,8 @@ final class CosmeticFeatures {
             new CosmeticProfileListener(profiles, plugin.getLogger())));
         return new CosmeticFeatures(menus, new BedBreakCosmetics(animator, animations, catalog, profiles),
             new SceneCosmetics(animator, victoryAnimations, victoryCatalog, victoryProfiles), new SceneCosmetics(animator, killAnimations, killCatalog, killProfiles),
-            new AuraCosmetics(auraCatalog, auraProfiles::of), messageSets, new KillMessages(messageSets, killMessageCatalog, killMessageProfiles::of),
-            new WoodTypes(woodCatalog, woodProfiles::of), preview, scenes);
+            new AuraCosmetics(auraCatalog, auraProfiles::of), new TrailCosmetics(trailCatalog, trailProfiles::of, ProjectileTrails::find), messageSets,
+            new KillMessages(messageSets, killMessageCatalog, killMessageProfiles::of), new WoodTypes(woodCatalog, woodProfiles::of), preview, scenes, stops);
     }
 
     private static ScenePreview scenePreview(JavaPlugin plugin, MuxeCore core, FileConfiguration config, ConfigReloads reloads, PreviewKind kind, SceneAnimations animations,
@@ -189,6 +209,19 @@ final class CosmeticFeatures {
                                              List<ScenePreview> scenes) {
         LiveValue<ScenePreviewSettings> settings = new LiveValue<>(ScenePreviewSettings.from(section(config, kind.section())));
         ScenePreview scene = new ScenePreview(plugin, core.buildMode(), settings, animations, onScene, countdownSound, busy, messages);
+        scene.start();
+        scenes.add(scene);
+        reloads.register(kind.section(), kind.section(), root -> {
+            settings.reload(() -> ScenePreviewSettings.from(section(root, kind.section())));
+            requireOpen(scene.refresh(), settings.get().world());
+        });
+        return scene;
+    }
+
+    private static ScenePreview kitPreview(JavaPlugin plugin, MuxeCore core, FileConfiguration config, ConfigReloads reloads, PreviewKind kind, KitPlay play,
+                                           Predicate<Player> busy, MessageCatalog messages, List<ScenePreview> scenes) {
+        LiveValue<ScenePreviewSettings> settings = new LiveValue<>(ScenePreviewSettings.from(section(config, kind.section())));
+        ScenePreview scene = new ScenePreview(plugin, core.buildMode(), settings, play, busy, messages);
         scene.start();
         scenes.add(scene);
         reloads.register(kind.section(), kind.section(), root -> {
@@ -231,6 +264,10 @@ JavaPlugin plugin, MuxeCore core, CosmeticCatalog catalog) {
 
     AuraCosmetics auras() {
         return auras;
+    }
+
+    TrailCosmetics trails() {
+        return trails;
     }
 
     void victory(Player winner, List<Player> viewers, Area area) {
@@ -276,6 +313,7 @@ JavaPlugin plugin, MuxeCore core, CosmeticCatalog catalog) {
             preview.stop();
         }
         scenePreviews.forEach(ScenePreview::stop);
+        stops.forEach(Runnable::run);
     }
 
     private static ConfigurationSection section(ConfigurationSection parent, String path) {

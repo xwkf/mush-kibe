@@ -10,7 +10,8 @@ public enum PreviewKind {
     BED("cama", "preview", true, false),
     VICTORY("vitoria", "victory-preview", false, false),
     FINAL_KILL("kill-final", "final-kill-preview", false, true),
-    AURA("aura", "aura-preview", false, false);
+    AURA("aura", "aura-preview", false, false),
+    PROJECTILE_TRAIL("rastro", "projectile-trail-preview", false, false);
 
     private final String word;
     private final String section;

@@ -23,7 +23,8 @@ public record ScenePreviewSettings(
     HotbarItem back,
     String title,
     List<String> lines,
-    Optional<Target> target
+    Optional<Target> target,
+    Optional<PreviewKit> kit
 ) {
 
     public ScenePreviewSettings {
@@ -51,7 +52,8 @@ public record ScenePreviewSettings(
             scoreboard.getStringList("lines"),
             Optional.ofNullable(section.getConfigurationSection("target"))
                 .map(target -> new Target(target.getDouble("distance", 4), target.getString("action-bar", "&eAcerte o jogador!"),
-                    target.getStringList("names"), target.getString("weapon", "WOOD_SWORD")))
+                    target.getStringList("names"), target.getString("weapon", "WOOD_SWORD"))),
+            PreviewKit.from(section)
         );
     }
 
@@ -75,6 +77,10 @@ public record ScenePreviewSettings(
 
     public boolean goesBack(boolean rightClick, int heldSlot) {
         return rightClick && heldSlot == back.slot();
+    }
+
+    public boolean usesKit(boolean rightClick, int heldSlot) {
+        return rightClick && heldSlot != back.slot() && kit.map(items -> items.holds(heldSlot)).orElse(false);
     }
 
     public List<String> lines(String name) {

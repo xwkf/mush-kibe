@@ -591,6 +591,7 @@ Packages `br.com.muxe.core.bukkit.cosmetic.animation` (pure) and `br.com.muxe.co
 - A `Scene` can also carry a `dye` (`OptionalInt`, a wool colour from 0 to 15, set with `withDye`), such as the colour of the victim's team, for effects that tint blocks or particles; it is empty when the caller knows none.
 - `Ground.surface(solid, x, y, z)` finds the top of the floor below a point (from 2 blocks above to 32 below, roofs ignored), so effects start on the ground wherever they happen; `Stage::solid` or a world lookup can be the `solid` test. `Ground.hit(solid, x, top, z, depth)` is for something falling: the top of the first solid block from `top` down to `depth` blocks below, or empty over the void.
 - `BedFrame.ofBlock(x, y, z, data)` builds the frame from either half of a 1.8 bed.
+- A caller can also drive a `PacketStage` itself, without a timeline: `new PacketStage(world, viewers, MountGuard.of(plugin))`, call the `Stage` methods whenever it wants, and `close()` it to remove every actor and fake block it created. BedWars projectile trails open one per flight and close it after the trail's linger.
 - Animations are tested without a server with a recording `Stage`, as `BedAnimationsTest` does in BedWars.
 
 ## Platform-free helpers

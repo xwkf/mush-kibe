@@ -31,9 +31,10 @@ public record CosmeticMenuSettings(
     public static final String FINAL_KILL = "final-kill";
     public static final String VICTORY_EFFECT = "victory-effect";
     public static final String AURA = "aura";
+    public static final String PROJECTILE_TRAIL = "projectile-trail";
     public static final String WOOD_TYPE = "wood-type";
     public static final String KILL_MESSAGE = "kill-message";
-    private static final List<String> CATEGORY_KEYS = List.of(BED_DESTRUCTION, FINAL_KILL, VICTORY_EFFECT, AURA, WOOD_TYPE, KILL_MESSAGE);
+    private static final List<String> CATEGORY_KEYS = List.of(BED_DESTRUCTION, FINAL_KILL, VICTORY_EFFECT, AURA, PROJECTILE_TRAIL, WOOD_TYPE, KILL_MESSAGE);
 
     public CosmeticMenuSettings {
         bedwarsItems = Map.copyOf(bedwarsItems);

@@ -174,7 +174,7 @@ O jogador escolhe uma animação que toca quando ele quebra uma cama inimiga. Os
 
 ### Montando as prévias no jogo
 
-A equipe posiciona as quatro prévias de dentro do lobby de BedWars com `/bwconfig previa <tipo> <ação> [valor]` (permissão `muxe.admin.config`), sem editar o `config.yml`. As pastas dos mundos já precisam estar na raiz do servidor.
+A equipe posiciona as cinco prévias de dentro do lobby de BedWars com `/bwconfig previa <tipo> <ação> [valor]` (permissão `muxe.admin.config`), sem editar o `config.yml`. As pastas dos mundos já precisam estar na raiz do servidor.
 
 | `<tipo>` | Seção | Pasta do mundo |
 |---|---|---|
@@ -182,6 +182,7 @@ A equipe posiciona as quatro prévias de dentro do lobby de BedWars com `/bwconf
 | `vitoria` | `victory-preview` | `previa_efeito_de_vitoria` |
 | `kill-final` | `final-kill-preview` | `previa_kill_final` |
 | `aura` | `aura-preview` | `previa_aura` |
+| `rastro` | `projectile-trail-preview` | `previa_aura` |
 
 | Comando | Grava |
 |---|---|
@@ -291,6 +292,46 @@ Cada atalho salva o arquivo e aplica a mudança ao vivo: cada prévia lê as sua
 - **Padrão** (`AuraPattern`, `AuraTrails`): a cada tick, por jogador com aura, uma partícula (quantidade 0, offsets 0, velocidade 1, longa distância). Se o jogador andou na horizontal desde o tick anterior, ela aparece nos pés, em `(x, y + 0.1, z)`. Senão é um ponto de uma hélice em volta do jogador, para um contador `k` que cresce 1 a cada tick, andando ou não (começando em 0 quando a aura passa a aparecer): ângulo `18° · k`, deslocamento `x = sin(ângulo)`, `z = -cos(ângulo)` (raio 1) e `y = 0.1 + ((k + 15) mod 60) / 30`. Assim ela sobe 1/30 de bloco por tick de 0,1 até cerca de 2,07 em três voltas (20 ticks por volta) e recomeça a cada 60 ticks. Só o movimento horizontal conta: pular ou cair parado mantém a hélice.
 - **Aleatório:** `Aleatório` sorteia uma aura possuída por jogador e por partida, no primeiro tick em que o jogador está jogando, e a mantém até ele sair da partida (`AuraCosmetics`, `AuraAssignments`); a partida seguinte sorteia de novo. `Nenhuma` não mostra nada, e uma aura escolhida que o jogador não possui nunca é usada.
 - **Prévia:** o botão direito abre o mundo `aura-preview.world` (`previa_aura`, que precisa estar na raiz do servidor do lobby de BedWars; sem ele a prévia responde `preview-only-lobby`). O jogador fica em `aura-preview.spawn` (10.5 19 21.5, yaw 180) com a cama `Voltar ao Lobby` no slot 8 e vê aquela aura em si mesmo, só em si mesmo, enquanto anda. Não há contagem nem título. Termina na cama, em `aura-preview.timeout` (`60s`) ou quando o jogador sai, e ele volta de onde estava e a lista de auras abre de novo. Reaproveita a prévia de cenas (`ScenePreview`) com uma `AuraAnimation` por aura.
+
+### Rastros de projétil
+
+`Rastros de Projétil` (slot 27 de `Cosméticos do Bed Wars`, uma flecha com `{owned}/{total} ({percent}%)` e `Selecionado: {selected}`) lista os 23 rastros em `Rastros de Projétil ({page}/{pages})`, com o mesmo layout, ordem (os possuídos primeiro, depois o resto, cada grupo em ordem alfabética), seleção e regra do `Voltar` da lista de auras: `Nenhuma` (barreira, slot 10), `Aleatório` (name tag, slot 11), os rastros a partir do slot 12, `Voltar` (slot 48), `Selecionado: <nome>` (slot 49) e `Loja` (slot 53). São salvos na categoria `bedwars-rastro`. Preços por estrelas: 300, 350, 500, 700 e 800 créditos. `Crítico` é `DEFAULT`, então todo jogador o possui. `Ultra` é um rastro ULTRA que mostra a própria tag, `&7Exclusivo para &d&lULTRA`, em vez de `Incluso no ULTRA`: em todas as categorias, um cosmético VIP, ULTRA ou ULTRA+ com `tag` própria mostra essa tag em vez da do rank.
+
+Um rastro só é animado quando `ProjectileTrails` (pacote `cosmetic.trail`) tem um `ProjectileTrail` com o id dele. Até lá ele mostra `Indisponível.`, não é vendido, o `Aleatório` nunca o sorteia, ninguém o recebe numa partida e a prévia responde `cosmetic-no-preview`; o resto da categoria funciona com o registro vazio.
+
+| Rastro | Ícone | Estrelas | Disponibilidade | Tag |
+|---|---|---|---|---|
+| `Espiral da Fortuna` (`espiral-da-fortuna`) | `DOUBLE_PLANT` | 5 | `EVENT` | `&6Premiação de torneio` |
+| `Crítico` (`critico`) | `DIAMOND_SWORD` | 1 | `DEFAULT` |  |
+| `Chamas` (`chamas`) | `BLAZE_POWDER` | 5 | `ULTRA` |  |
+| `Ultra` (`ultra`) | `INK_SACK:9` | 5 | `ULTRA` | `&7Exclusivo para &d&lULTRA` |
+| `Natalino` (`natalino`) | `SKULL_ITEM:3` | 5 | `EVENT` | `&cNatal 2025` |
+| `Ossos` (`ossos`) | `BONE` | 5 | `EVENT` | `&6Halloween 2025` |
+| `Espectro Verde` (`espectro-verde`) | `EMERALD` | 5 | `ULTRA_PLUS` |  |
+| `Corações` (`coracoes`) | `APPLE` | 5 | `ULTRA_PLUS` |  |
+| `Magia` (`magia`) | `CAULDRON_ITEM` | 5 | `ULTRA_PLUS` |  |
+| `Sorte Azul` (`sorte-azul`) | `INK_SACK:4` | 4 | `SALE` |  |
+| `Faísca Cósmica` (`faisca-cosmica`) | `EYE_OF_ENDER` | 1 | `SALE` |  |
+| `Lava` (`lava`) | `LAVA_BUCKET` | 1 | `SALE` |  |
+| `Chroma` (`chroma`) | `POTION:0` | 5 | `EVENT` | `&6Premiação mensal` |
+| `Fumaça` (`fumaca`) | `COAL` | 3 | `SALE` |  |
+| `Vapor` (`vapor`) | `WOOL:0` | 3 | `SALE` |  |
+| `Água` (`agua`) | `WATER_BUCKET` | 4 | `SALE` |  |
+| `Aldeão Furioso` (`aldeao-furioso`) | `SKULL_ITEM:3` | 4 | `SALE` |  |
+| `Fogos de Artifício` (`fogos-de-artificio`) | `FIREWORK` | 3 | `SALE` |  |
+| `Notas Musicais` (`notas-musicais`) | `NOTE_BLOCK` | 5 | `EVENT` | `&6Premiação de torneio` |
+| `Sangrento` (`sangrento`) | `REDSTONE` | 5 | `SALE` |  |
+| `Crítico Encantado` (`critico-encantado`) | `BOOK` | 2 | `SALE` |  |
+| `Mega-Loucura` (`mega-loucura`) | `SPONGE` | 4 | `SALE` |  |
+| `Arco-íris` (`arco-iris`) | `SKULL_ITEM:3` | 4 | `SALE` |  |
+
+- **Regra:** quando um jogador vivo de uma partida (sala em `PLAYING`, jogador vivo, não espectador) lança um projétil cujo atirador é ele (flecha de arco, bola de neve, ovo, pérola do fim, poção arremessável, anzol de vara de pesca, a bola de fogo da carga de fogo da loja ou qualquer outro projétil), o rastro dele o segue. O tipo que o rastro recebe (`ProjectileKinds`) é `ARROW`, `SNOWBALL`, `EGG`, `ENDER_PEARL`, `POTION` (poções arremessáveis), `FISHING_HOOK`, `FIREBALL` (bolas de fogo grandes e pequenas) ou `OTHER` (qualquer outro, como frasco de experiência ou crânio de wither).
+- **Aleatório:** o `Aleatório` sorteia um rastro possuído por jogador e por partida, no primeiro lançamento, e o mantém a partida inteira (`TrailCosmetics`, `TrailAssignments`); a próxima partida sorteia de novo. `Nenhuma` não mostra nada, e um rastro escolhido que o jogador não possui nunca é usado.
+- **Voo** (`TrailFlight`): o primeiro tick do servidor depois do lançamento é a idade 0, na posição atual do projétil (onde ele nasceu). A cada tick enquanto o projétil existe e não está no chão, o rastro recebe `tick` com a posição, a velocidade, a idade e o tipo. Quando ele some (acertou, explodiu, foi removido, foi recolhido) ou está no chão (uma flecha cravada num bloco, um anzol parado), `land` é chamado uma vez com a última posição e idade, o palco fica aberto mais `linger()` ticks para o que o rastro criou terminar, e então fecha e remove todo ator que o rastro criou. Um voo que dura 1200 ticks pousa de qualquer jeito; uma flecha que ricocheteia continua voando.
+- **Quem vê:** os jogadores online da sala. Cada voo tem o seu `PacketStage` do core. A tarefa (`TrailTask`, a cada tick) monta a lista de quem vê uma vez por sala por tick, e só enquanto algum rastro está voando. Quando a sala sai de `PLAYING`, ou o atirador sai do servidor ou da sala, os voos dele fecham na hora, sem `land`. Um rastro que lança exceção é registrado no log e fechado sem parar os outros.
+- **Prévia:** o botão direito abre o mundo `projectile-trail-preview.world` (`previa_aura`, o mapa da aura) no spawn da aura (10.5 19 21.5, yaw 180), com o mesmo scoreboard (`Visualizando:` e o nome). Não há contagem nem cena roteirizada: o jogador recebe o kit da gravação e lança as coisas ele mesmo: bola de neve ×16 (slot 0), poção arremessável de cura (`POTION:16421`) ×16 (slot 1), pérola do fim ×16 (slot 2), um arco brilhante inquebrável (slot 3), uma vara de pesca inquebrável (slot 4), uma flecha (slot 9, o primeiro do inventário principal) e a cama `Voltar ao Lobby` (slot 8). Clicar com o botão direito segurando um item do kit o usa (o bloco clicado não é usado); todo o resto continua travado como nas outras prévias: blocos, drops, coletas, cliques no inventário, fome e dano. `kit.refill-ticks` (2) ticks depois de cada lançamento, cada slot do kit que estiver faltando ou vazio é completado, então os itens são infinitos. Como nas gravações, a pérola teleporta o jogador (o dano de queda é cancelado), a poção estoura mas não aplica nada (`PotionSplashEvent` cancelado, o estouro aparece) e uma flecha que acerta algo é removida. Todo projétil que o jogador lança recebe o rastro da prévia, visto só por ele (`TrailPreview`). Termina na cama, em `projectile-trail-preview.timeout` (`60s`) ou quando o jogador sai; projéteis ainda voando são removidos, e o jogador volta de onde estava com a lista aberta de novo. É o modo kit da prévia de cenas: qualquer seção de `ScenePreview` com `kit` (`PreviewKit`) dá o kit em vez de tocar uma cena, e um gancho `KitPlay` ouve cada lançamento.
+
+Efeitos de cada rastro:
 
 ### Mensagens de kill
 
@@ -467,6 +508,10 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 | `cosmetics.wood-type.*` | `bedwars-madeira`; `default: carvalho`; as 12 madeiras | Categoria, cosmético padrão e madeiras. O `icon` (`WOOD` ou `LOG`, `LOG_2` e `data`) é o item que a loja entrega; `availability` é `DEFAULT`, `VIP`, `ULTRA`, `ULTRA_PLUS` ou `EVENT`. |
 | `cosmetics.menus.categories.kill-message`, `cosmetics.menus.categories.wood-type` | slot 31 papel; slot 29 tábuas | Os botões das categorias. |
 | `cosmetics.menus.kill-message.*`, `cosmetics.menus.wood-type.*` | títulos, `entries`, `lore`, `selected` | As substituições das listas. `entries` tem `none` e `random` (mostrar essas entradas), `random-after` (cosméticos antes do `Aleatório`), `owned-first` (possuídos primeiro, como nas outras listas, ou a ordem do catálogo), `previews` (botão direito) e `selected-icon` (o item selecionado mostra o cosmético). `lore.header` começa a lore de cada cosmético, `lore.vip-tag`, `lore.ultra-tag` e `lore.ultra-plus-tag` são as linhas de rank. As chaves de lore omitidas são herdadas da lista de destruição de cama. |
+| `cosmetics.projectile-trail.*` | `bedwars-rastro`; 300, 350, 500, 700, 800; os 23 rastros | Categoria, preços por estrelas e os rastros, com os mesmos campos dos de cama. O id precisa bater com um rastro de `ProjectileTrails` para ser animado. |
+| `cosmetics.menus.categories.projectile-trail`, `cosmetics.menus.projectile-trail.*` | slot 27, flecha; `Rastros de Projétil ({page}/{pages})`, `Aleatório` como name tag | O botão da categoria e o que a lista de rastros muda (o resto segue a lista de destruição de cama). |
+| `projectile-trail-preview.*` | `previa_aura`, 10.5 19 21.5 yaw 180, `60s`, `1s` | Mundo, spawn, tempo limite, item de voltar e scoreboard da prévia de rastro, como a `aura-preview`. |
+| `projectile-trail-preview.kit.items.<slot>`, `projectile-trail-preview.kit.refill-ticks` | os seis itens do kit da gravação; `2` | Os itens dados em vez de uma cena roteirizada (mesmos campos de qualquer item; o slot conta a partir de 0, do 9 em diante é o inventário principal) e os ticks depois de um lançamento até as pilhas que faltam serem completadas (no mínimo 1). Qualquer seção de prévia de cenas com `kit` funciona assim. |
 | `aura-preview.*` | `previa_aura`, 10.5 19 21.5 yaw 180, `60s`, `1s` | Mundo, spawn, tempo limite, item de voltar e scoreboard da prévia de aura. Não tem contagem. |
 | `preview.world` | `previa_quebra_de_cama` | Pasta do mundo da prévia na raiz do servidor. Sem ela a prévia fica desligada. |
 | `preview.spawn`, `preview.bed` | 6.5 11 21.5; pé 6 11 17, cabeceira 6 16 | Onde o jogador fica e a cama que ele quebra. |
@@ -501,7 +546,7 @@ O Percevejo agora pode ser comprado: arremessada, a bola de neve faz surgir uma 
 | Arquivo | O que guarda |
 |---|---|
 | `core.arenas` (jogo `bedwars`) | Uma linha por arena: modo, `ready`, a definição (nome de exibição, times, pontos e alturas, em YAML) e o mapa no [formato de mapa da Muxe](../../decisions/0009-own-map-format-and-match-cells.pt-BR.md). Migração `V16__create_arenas.sql`. Compartilhada por todos os servidores de BedWars. |
-| `core.owned_cosmetics`, `core.selected_cosmetics` | Cosméticos possuídos e selecionados, categoria `bedwars-cama` (e `bedwars-vitoria`, `bedwars-kill-final`, `bedwars-aura`, `bedwars-mensagem-kill` e `bedwars-madeira`). Veja [Créditos e cosméticos](../credits/README.pt-BR.md). |
+| `core.owned_cosmetics`, `core.selected_cosmetics` | Cosméticos possuídos e selecionados, categoria `bedwars-cama` (e `bedwars-vitoria`, `bedwars-kill-final`, `bedwars-aura`, `bedwars-rastro`, `bedwars-mensagem-kill` e `bedwars-madeira`). Veja [Créditos e cosméticos](../credits/README.pt-BR.md). |
 | `bedwars.player_stats` | Uma linha por jogador, modo (e `geral`), período (`diario`, `semanal`, `mensal`, `total`) e início do período, com todos os contadores e o XP. Migração `V1__create_player_stats_and_favourite_maps.sql`. |
 | `bedwars.recorded_matches` | O id de cada partida já salva, reivindicado na mesma transação das estatísticas, então uma partida salva duas vezes conta uma vez só. Migração `V2__create_recorded_matches.sql`. |
 | `bedwars.favourite_maps` | Arenas favoritas de cada jogador. |
@@ -544,7 +589,9 @@ Comandos e consultas em `br.com.muxe.minigame.bedwars.stats`: `RecordMatchComman
 - [ ] O editor de hotbar e a colocação das compras conferidos no jogo.
 - [ ] NPCs, menus, matchmaking, escolha de mapa e tops do lobby conferidos no jogo.
 - [x] Os atalhos das prévias gravam as chaves certas, acham as duas metades de uma cama por qualquer uma, recusam valores ruins e aplicam ao vivo enquanto as sessões em andamento mantêm as suas configurações (`PreviewEditsTest`, `BedBlocksTest`, `BedWarsConfigCommandTest`).
+- [x] O catálogo e o menu de rastros, a tag do `Ultra`, qual rastro é usado, o ciclo do voo, os tipos de projétil e o kit da prévia seguem as regras acima (`ProjectileTrailCosmeticTest`, `CosmeticIconsTagTest`, `TrailCosmeticsTest`, `TrailFlightTest`, `TrailFlightsTest`, `ProjectileKindsTest`).
 - [ ] Todas as animações e a prévia conferidas no jogo.
+- [ ] Os rastros de projétil e o kit da prévia deles conferidos no jogo.
 - [ ] `/bwconfig previa` conferido no jogo, no lobby.
 - [ ] As mensagens de kill numa partida de verdade e os tipos de madeira na loja conferidos no jogo.
 
@@ -555,6 +602,7 @@ Se o Muxe-Core não estiver habilitado, o plugin se desabilita.
 ## Limitações conhecidas
 
 - MEGA e PILARES ainda não são modos, então os NPCs deles não abrem nada.
+- O arco do kit da prévia de rastro brilha em vez de ter Infinidade I (encantamentos não podem ser lidos da configuração sem servidor nos testes); a flecha que ele atira volta pelo reabastecimento.
 - Quem chega a um servidor de BedWars sem reserva ainda entra numa sala do `default-mode`.
 - O lobby só conhece as salas dos servidores que publicaram nos últimos 10 segundos; a lista de um servidor que para é esquecida depois disso.
 - Os outros itens especiais da loja, os dragões e os títulos de vitória e derrota ainda não entraram.

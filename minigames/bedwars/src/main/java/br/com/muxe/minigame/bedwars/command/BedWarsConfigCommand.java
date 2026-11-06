@@ -42,7 +42,7 @@ public final class BedWarsConfigCommand extends ConfigCommand {
     @Subcommand("previa")
     public void preview(
         Player player,
-        @Arg("tipo") @Suggest({"cama", "vitoria", "kill-final", "aura"}) String kindWord,
+        @Arg("tipo") @Suggest({"cama", "vitoria", "kill-final", "aura", "rastro"}) String kindWord,
         @Arg("ação") @Suggest({"spawn", "cama", "distancia", "tempo"}) String actionWord,
         @Arg("valor") @Greedy Optional<String> value
     ) {

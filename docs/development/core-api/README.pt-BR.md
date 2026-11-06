@@ -593,6 +593,7 @@ Pacotes `br.com.muxe.core.bukkit.cosmetic.animation` (puro) e `br.com.muxe.core.
 - Uma `Scene` também pode levar um `dye` (`OptionalInt`, uma cor de lã de 0 a 15, definido com `withDye`), como a cor do time da vítima, para efeitos que tingem blocos ou partículas; fica vazio quando quem chama não conhece nenhuma.
 - `Ground.surface(sólido, x, y, z)` acha o topo do chão abaixo de um ponto (de 2 blocos acima até 32 abaixo, ignorando tetos), então os efeitos começam no chão onde quer que aconteçam; `Stage::solid` ou uma consulta ao mundo servem de teste `sólido`. `Ground.hit(sólido, x, topo, z, profundidade)` é para algo caindo: o topo do primeiro bloco sólido de `topo` até `profundidade` blocos abaixo, ou vazio sobre o void.
 - `BedFrame.ofBlock(x, y, z, data)` monta o frame a partir de qualquer metade de uma cama 1.8.
+- Quem chama também pode conduzir um `PacketStage` sozinho, sem timeline: `new PacketStage(world, viewers, MountGuard.of(plugin))`, chamar os métodos do `Stage` quando quiser e fechá-lo com `close()` para remover todo ator e bloco falso que ele criou. Os rastros de projétil do BedWars abrem um por voo e o fecham depois do `linger` do rastro.
 - As animações são testadas sem servidor com um `Stage` que grava, como o `BedAnimationsTest` faz no BedWars.
 
 ## Utilitários independentes de plataforma

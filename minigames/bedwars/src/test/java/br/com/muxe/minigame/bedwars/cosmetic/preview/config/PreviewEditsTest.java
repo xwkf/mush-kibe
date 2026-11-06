@@ -12,11 +12,13 @@ class PreviewEditsTest {
 
     @Test
     void thePreviewWordsMatchTheSectionsOfTheConfiguration() {
-        assertThat(PreviewKind.words()).containsExactly("cama", "vitoria", "kill-final", "aura");
+        assertThat(PreviewKind.words()).containsExactly("cama", "vitoria", "kill-final", "aura", "rastro");
         assertThat(PreviewKind.BED.section()).isEqualTo("preview");
         assertThat(PreviewKind.VICTORY.section()).isEqualTo("victory-preview");
         assertThat(PreviewKind.FINAL_KILL.section()).isEqualTo("final-kill-preview");
         assertThat(PreviewKind.AURA.section()).isEqualTo("aura-preview");
+        assertThat(PreviewKind.PROJECTILE_TRAIL.section()).isEqualTo("projectile-trail-preview");
+        assertThat(PreviewKind.parse("rastro")).contains(PreviewKind.PROJECTILE_TRAIL);
         assertThat(PreviewKind.parse("KILL-FINAL")).contains(PreviewKind.FINAL_KILL);
         assertThat(PreviewKind.parse("lobby")).isEmpty();
         assertThat(PreviewAction.words()).containsExactly("spawn", "cama", "distancia", "tempo");

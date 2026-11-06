@@ -239,7 +239,7 @@ class BedWarsConfigCommandTest {
         run(staff, "previa", "aura", "girar");
 
         assertThat(received).containsExactly(
-            "unknown kind lobby (cama, vitoria, kill-final, aura)",
+            "unknown kind lobby (cama, vitoria, kill-final, aura, rastro)",
             "unknown action girar (spawn, cama, distancia, tempo)");
     }
 
@@ -341,7 +341,7 @@ class BedWarsConfigCommandTest {
         RegisteredCommand command = registered.get("bwconfig");
 
         assertThat(command.complete(staff, new String[] {""})).containsExactly("adicionar", "definir", "local", "previa", "recarregar", "remover", "ver");
-        assertThat(command.complete(staff, new String[] {"previa", ""})).containsExactly("aura", "cama", "kill-final", "vitoria");
+        assertThat(command.complete(staff, new String[] {"previa", ""})).containsExactly("aura", "cama", "kill-final", "rastro", "vitoria");
         assertThat(command.complete(staff, new String[] {"previa", "cama", ""})).containsExactly("cama", "distancia", "spawn", "tempo");
         assertThat(command.complete(staff, new String[] {"ver", "final-kill-preview.ta"})).containsExactly("final-kill-preview.target.");
     }

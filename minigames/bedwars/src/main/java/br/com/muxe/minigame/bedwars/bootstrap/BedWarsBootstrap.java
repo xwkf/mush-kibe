@@ -21,6 +21,7 @@ import br.com.muxe.minigame.bedwars.command.BedWarsCommand;
 import br.com.muxe.minigame.bedwars.command.BedWarsConfigCommand;
 import br.com.muxe.minigame.bedwars.command.GlobalChatCommand;
 import br.com.muxe.minigame.bedwars.cosmetic.aura.AuraTask;
+import br.com.muxe.minigame.bedwars.cosmetic.trail.TrailTask;
 import br.com.muxe.minigame.bedwars.hotbar.HotbarChoices;
 import br.com.muxe.minigame.bedwars.hotbar.HotbarDelivery;
 import br.com.muxe.minigame.bedwars.hotbar.HotbarModule;
@@ -93,6 +94,7 @@ public final class BedWarsBootstrap {
     private RoomPublisher publisher;
     private Bedbugs bedbugs;
     private AuraTask auras;
+    private TrailTask trails;
 
     public BedWarsBootstrap(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -221,6 +223,7 @@ public final class BedWarsBootstrap {
 
         InvisiblePlayers.start(plugin, rooms);
         auras = AuraTask.start(plugin, rooms, cosmetics.auras());
+        trails = TrailTask.start(plugin, rooms, cosmetics.trails());
         commands.register(new BedWarsCommand(rooms, messages));
         commands.register(new GlobalChatCommand(rooms));
 
@@ -237,6 +240,9 @@ public final class BedWarsBootstrap {
         }
         if (auras != null) {
             auras.stop();
+        }
+        if (trails != null) {
+            trails.stop();
         }
         if (bedbugs != null) {
             bedbugs.stop();
