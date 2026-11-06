@@ -80,6 +80,11 @@ final class Seats implements Mount {
     }
 
     @Override
+    public float strafing() {
+        return leader().map(player -> ((CraftPlayer) player).getHandle().aZ).orElse(0f);
+    }
+
+    @Override
     public void move(Vec seat, float yaw) {
         this.seat = seat;
         this.yaw = yaw;

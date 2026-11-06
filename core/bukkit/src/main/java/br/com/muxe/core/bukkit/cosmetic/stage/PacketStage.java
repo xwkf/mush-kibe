@@ -53,6 +53,7 @@ import net.minecraft.server.v1_8_R3.PacketPlayOutScoreboardTeam;
 import net.minecraft.server.v1_8_R3.PacketPlayOutSpawnEntity;
 import net.minecraft.server.v1_8_R3.PacketPlayOutSpawnEntityLiving;
 import net.minecraft.server.v1_8_R3.PacketPlayOutSpawnEntityWeather;
+import net.minecraft.server.v1_8_R3.PacketPlayOutWorldEvent;
 import net.minecraft.server.v1_8_R3.PacketPlayOutWorldParticles;
 import net.minecraft.server.v1_8_R3.PlayerInteractManager;
 import net.minecraft.server.v1_8_R3.Scoreboard;
@@ -90,6 +91,7 @@ public final class PacketStage implements Stage, AutoCloseable {
     private static final int TEAM_JOIN = 3;
     private static final int WORLD_HEIGHT = 256;
     private static final int FULL_CHUNK = 65535;
+    private static final int BLOCK_BREAK_EVENT = 2001;
     private static final Field MULTI_BLOCK_CHUNK = field(ChunkCoordIntPair.class);
     private static final Field MULTI_BLOCK_INFOS = field(MultiBlockChangeInfo[].class);
 
@@ -258,6 +260,11 @@ public final class PacketStage implements Stage, AutoCloseable {
                 inChunk.forEach(change -> block(change.x(), change.y(), change.z(), change.material(), change.data()));
             }
         });
+    }
+
+    @Override
+    public void breakEffect(int x, int y, int z, Material material, int data) {
+        send(new PacketPlayOutWorldEvent(BLOCK_BREAK_EVENT, new BlockPosition(x, y, z), Block.getCombinedId(state(material, data)), false));
     }
 
     @Override

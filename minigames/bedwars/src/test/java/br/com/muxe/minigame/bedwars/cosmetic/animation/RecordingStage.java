@@ -29,6 +29,7 @@ final class RecordingStage implements Stage {
     final List<BlockChange> bulk = new ArrayList<>();
     final List<Vec> bolts = new ArrayList<>();
     final Map<String, List<Integer>> particleData = new HashMap<>();
+    final List<BlockChange> breakEffects = new ArrayList<>();
     Function<int[], BlockType> types = block -> new BlockType(this.solid(block[0], block[1], block[2]) ? Material.STONE : Material.AIR, 0);
     Vec eyes = new Vec(0, 1.62, 0);
     final Map<UUID, Vec> eyesOf = new HashMap<>();
@@ -121,6 +122,11 @@ final class RecordingStage implements Stage {
     @Override
     public void blocks(List<BlockChange> changes) {
         bulk.addAll(changes);
+    }
+
+    @Override
+    public void breakEffect(int x, int y, int z, Material material, int data) {
+        breakEffects.add(new BlockChange(x, y, z, material, data));
     }
 
     @Override
@@ -274,6 +280,7 @@ final class RecordingStage implements Stage {
         float yaw;
         float pitch;
         boolean pushing;
+        float strafing;
         final List<Vec> path = new ArrayList<>();
 
         FakeMount(Vec seat) {
@@ -299,6 +306,11 @@ final class RecordingStage implements Stage {
         @Override
         public boolean pushing() {
             return pushing;
+        }
+
+        @Override
+        public float strafing() {
+            return strafing;
         }
 
         @Override

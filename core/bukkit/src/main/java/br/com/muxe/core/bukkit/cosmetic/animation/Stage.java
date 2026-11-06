@@ -38,6 +38,8 @@ public interface Stage {
 
     void blocks(List<BlockChange> changes);
 
+    void breakEffect(int x, int y, int z, Material material, int data);
+
     Mount mount(Vec seat, float yaw, List<UUID> riders);
 
     void give(UUID player, int slot, Material material, String name, Consumer<Click> onClick);
@@ -94,6 +96,10 @@ public interface Stage {
         float lookPitch();
 
         boolean pushing();
+
+        default float strafing() {
+            return 0;
+        }
 
         void move(Vec seat, float yaw);
     }
