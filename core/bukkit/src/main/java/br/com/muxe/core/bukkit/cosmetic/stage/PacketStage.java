@@ -111,6 +111,7 @@ public final class PacketStage implements Stage, AutoCloseable {
     private final Map<UUID, Tool> tools = new LinkedHashMap<>();
     private final Map<EntityPlayer, Integer> listed = new LinkedHashMap<>();
     private final Set<ChunkCoordIntPair> bulkChunks = new LinkedHashSet<>();
+    private final FakeSections fakeSections;
     private ScoreboardTeam hiddenNames;
     private boolean closed;
 
@@ -118,6 +119,7 @@ public final class PacketStage implements Stage, AutoCloseable {
         this.world = ((CraftWorld) world).getHandle();
         this.viewers = viewers;
         this.guard = guard;
+        this.fakeSections = new FakeSections(this.world);
     }
 
     @Override
@@ -277,6 +279,19 @@ public final class PacketStage implements Stage, AutoCloseable {
                 inChunk.forEach(change -> block(change.x(), change.y(), change.z(), change.material(), change.data()));
             }
         });
+    }
+
+    @Override
+    public void sections(List<BlockChange> changes) {
+        fakeSections.apply(changes, change -> state(change.material(), change.data())).forEach((chunk, packet) -> {
+            bulkChunks.add(chunk);
+            send(packet);
+        });
+    }
+
+    @Override
+    public int highest(int x, int z) {
+        return fakeSections.highest(x, z);
     }
 
     @Override
@@ -471,6 +486,7 @@ public final class PacketStage implements Stage, AutoCloseable {
             }
         }
         bulkChunks.clear();
+        fakeSections.clear();
         listed.keySet().forEach(body -> send(new PacketPlayOutPlayerInfo(PacketPlayOutPlayerInfo.EnumPlayerInfoAction.REMOVE_PLAYER, body)));
         listed.clear();
         if (hiddenNames != null) {

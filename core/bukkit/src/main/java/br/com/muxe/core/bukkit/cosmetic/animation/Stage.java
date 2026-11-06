@@ -42,6 +42,10 @@ public interface Stage {
 
     void blocks(List<BlockChange> changes);
 
+    void sections(List<BlockChange> changes);
+
+    int highest(int x, int z);
+
     void breakEffect(int x, int y, int z, Material material, int data);
 
     Mount mount(Vec seat, float yaw, List<UUID> riders);

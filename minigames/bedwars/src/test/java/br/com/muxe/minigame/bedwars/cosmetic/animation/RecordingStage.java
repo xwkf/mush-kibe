@@ -28,6 +28,7 @@ final class RecordingStage implements Stage {
     final Map<UUID, Consumer<Click>> tools = new HashMap<>();
     final List<Vec> pushes = new ArrayList<>();
     final List<BlockChange> bulk = new ArrayList<>();
+    final List<BlockChange> sectioned = new ArrayList<>();
     final List<Vec> bolts = new ArrayList<>();
     final List<Vec> headings = new ArrayList<>();
     final Map<String, List<Integer>> particleData = new HashMap<>();
@@ -136,6 +137,21 @@ final class RecordingStage implements Stage {
     @Override
     public void blocks(List<BlockChange> changes) {
         bulk.addAll(changes);
+    }
+
+    @Override
+    public void sections(List<BlockChange> changes) {
+        sectioned.addAll(changes);
+    }
+
+    @Override
+    public int highest(int x, int z) {
+        for (int y = 255; y >= 0; y--) {
+            if (type(x, y, z).material() != Material.AIR) {
+                return y;
+            }
+        }
+        return -1;
     }
 
     @Override
