@@ -139,11 +139,11 @@ public final class CosmeticIcons {
         return missing ? catalog.defaultId().orElse(wallet.selected()) : wallet.selected();
     }
 
-    private static Optional<String> tag(BedCosmetic cosmetic, LoreTexts texts) {
+    static Optional<String> tag(BedCosmetic cosmetic, LoreTexts texts) {
         return switch (cosmetic.availability()) {
-            case VIP -> Optional.of(texts.vipTag());
-            case ULTRA -> Optional.of(texts.ultraTag());
-            case ULTRA_PLUS -> Optional.of(texts.ultraPlusTag());
+            case VIP -> cosmetic.tag().or(() -> Optional.of(texts.vipTag()));
+            case ULTRA -> cosmetic.tag().or(() -> Optional.of(texts.ultraTag()));
+            case ULTRA_PLUS -> cosmetic.tag().or(() -> Optional.of(texts.ultraPlusTag()));
             case DEFAULT, SALE, EVENT -> cosmetic.tag();
         };
     }
