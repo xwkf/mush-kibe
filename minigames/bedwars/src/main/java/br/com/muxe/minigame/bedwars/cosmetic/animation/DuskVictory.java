@@ -24,7 +24,6 @@ public final class DuskVictory implements SceneAnimation {
     static final double EASING = 0.12;
     static final double REIN_ABOVE = 1.4375;
     static final byte INVISIBLE = 32;
-    static final double FLOCK_ABOVE = 81;
     static final int FEATHER_FROM = 5;
     static final int FEATHER_LAG = 3;
     static final double FEATHER_HEIGHT = 1.5;
@@ -117,8 +116,7 @@ public final class DuskVictory implements SceneAnimation {
             OwlFlock.puff(stage, start);
             stage.sound("ambient.weather.thunder", rider.ground(), THUNDER_VOLUME, 1);
             stage.sound("mob.bat.idle", cry, SCREECH_VOLUME, SoundPitch.of(40));
-            flock = new OwlFlock(stage, random, start.y() + FLOCK_ABOVE);
-            flock.gather(start);
+            flock = new OwlFlock(stage, random);
         }
 
         void fly(int tick) {
@@ -126,7 +124,7 @@ public final class DuskVictory implements SceneAnimation {
             mount.move(seatAt(tick), yaw);
             owl.teleport(at, yaw, 0);
             rein.ifPresent(chicken -> chicken.teleport(at.add(0, REIN_ABOVE, 0), yaw, 0));
-            flock.step(at);
+            flock.step(at, tick);
         }
 
         void feathers(Stage stage, RandomGenerator random, int tick) {

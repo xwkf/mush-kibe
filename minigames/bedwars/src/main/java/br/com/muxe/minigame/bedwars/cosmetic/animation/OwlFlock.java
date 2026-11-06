@@ -11,8 +11,12 @@ import java.util.random.RandomGenerator;
 final class OwlFlock {
 
     static final int SIZE = 12;
+    static final int FIRST = 1;
+    static final int GATHER_EVERY = 4;
     static final double SPAWN_RADIUS = 12.5;
-    static final int MIN_LIFE = 60;
+    static final double LOWEST_ABOVE = 0.75;
+    static final double HIGHEST_ABOVE = 6.75;
+    static final int MIN_LIFE = 50;
     static final int MAX_LIFE = 120;
     static final double PUFF_ABOVE = 3.125;
     static final Vec CLOUD_SPREAD = new Vec(0.4, 0.4, 0.4);
@@ -23,22 +27,15 @@ final class OwlFlock {
 
     private final Stage stage;
     private final RandomGenerator random;
-    private final double altitude;
     private final List<Member> members = new ArrayList<>();
+    private int gathered;
 
-    OwlFlock(Stage stage, RandomGenerator random, double altitude) {
+    OwlFlock(Stage stage, RandomGenerator random) {
         this.stage = stage;
         this.random = random;
-        this.altitude = altitude;
     }
 
-    void gather(Vec around) {
-        for (int owl = 0; owl < SIZE; owl++) {
-            members.add(spawn(around));
-        }
-    }
-
-    void step(Vec around) {
+    void step(Vec around, int tick) {
         for (int index = 0; index < members.size(); index++) {
             Member member = members.get(index);
             member.life--;
@@ -51,6 +48,10 @@ final class OwlFlock {
             Vec position = member.glide.step(random);
             member.owl.teleport(position, member.glide.yaw(), 0);
         }
+        if (gathered < SIZE && tick >= FIRST + gathered * GATHER_EVERY) {
+            members.add(spawn(around));
+            gathered++;
+        }
     }
 
     void remove() {
@@ -62,9 +63,10 @@ final class OwlFlock {
         return members.stream().map(member -> member.glide.position()).toList();
     }
 
-    static Vec spot(Vec around, double altitude, RandomGenerator random) {
+    static Vec spot(Vec around, RandomGenerator random) {
         double radius = SPAWN_RADIUS * Math.sqrt(random.nextDouble());
-        return Kit.horizontal(random.nextDouble() * 360, radius).add(around.x(), altitude, around.z());
+        double above = LOWEST_ABOVE + random.nextDouble() * (HIGHEST_ABOVE - LOWEST_ABOVE);
+        return Kit.horizontal(random.nextDouble() * 360, radius).add(around.x(), around.y() + above, around.z());
     }
 
     static void puff(Stage stage, Vec owl) {
@@ -74,7 +76,7 @@ final class OwlFlock {
     }
 
     private Member spawn(Vec around) {
-        Vec home = spot(around, altitude, random);
+        Vec home = spot(around, random);
         Actor owl = stage.armorStand(home, (float) (random.nextDouble() * 360), DuskAnimation.OWL_STAND);
         owl.equipSkull(Slot.HELMET, DuskAnimation.OWL);
         puff(stage, home);

@@ -19,7 +19,6 @@ class DuskVictoryTest {
 
     private static final double FLOOR = 27;
     private static final double OWL_START = FLOOR + 1.5625;
-    private static final double FLOCK_ALTITUDE = OWL_START + 81;
 
     private final UUID winner = UUID.randomUUID();
 
@@ -102,7 +101,7 @@ class DuskVictoryTest {
         Vec owl = DuskVictory.owl(new Vec(0.5, OWL_START, 0.5), new Vec(1, 0, 0), 199);
         assertThat(owls(stage).getFirst().position).isEqualTo(owl);
         assertThat(mount.seat()).isEqualTo(DuskVictory.seat(new Vec(0.5, OWL_START, 0.5), new Vec(1, 0, 0), 199));
-        assertThat(mount.seat().y()).isGreaterThan(FLOCK_ALTITUDE);
+        assertThat(mount.seat().y()).isGreaterThan(OWL_START + 80);
         assertThat(mount.path).hasSize(199);
     }
 
@@ -145,22 +144,44 @@ class DuskVictoryTest {
     }
 
     @Test
-    void aFlockOfTwelveOwlsCirclesHighAboveAndKeepsItsSizeAsOwlsPuffAway() {
+    void theFlockGathersOneOwlEveryFourTicksJustAboveTheRiderUntilThereAreTwelve() {
+        RecordingStage stage = floor();
+        Timeline timeline = script(stage, List.of(winner));
+        Vec start = new Vec(0.5, OWL_START, 0.5);
+
+        timeline.run(0);
+        assertThat(flock(stage)).isEmpty();
+        assertThat(stage.particles.get("CLOUD")).isEqualTo(1);
+
+        for (int tick = 1; tick <= 45; tick++) {
+            int before = flock(stage).size();
+            timeline.run(tick);
+            boolean due = tick >= OwlFlock.FIRST && (tick - OwlFlock.FIRST) % OwlFlock.GATHER_EVERY == 0;
+            assertThat(flock(stage)).hasSize(before + (due ? 1 : 0));
+            if (due) {
+                Vec owl = DuskVictory.owl(start, new Vec(1, 0, 0), tick);
+                Vec newcomer = flock(stage).getLast().position;
+                assertThat(Math.hypot(newcomer.x() - owl.x(), newcomer.z() - owl.z())).isLessThanOrEqualTo(OwlFlock.SPAWN_RADIUS);
+                assertThat(newcomer.y() - owl.y()).isBetween(OwlFlock.LOWEST_ABOVE, OwlFlock.HIGHEST_ABOVE);
+            }
+        }
+        assertThat(flock(stage)).hasSize(OwlFlock.SIZE);
+        assertThat(stage.particles.get("CLOUD")).isEqualTo(1 + OwlFlock.SIZE);
+    }
+
+    @Test
+    void theFlockKeepsItsSizeAsOwlsPuffAwayAndNewOnesAppearAroundTheClimbingRider() {
         RecordingStage stage = floor();
         Timeline timeline = script(stage, List.of(winner));
 
-        timeline.run(0);
-        assertThat(flock(stage)).hasSize(OwlFlock.SIZE);
-        assertThat(flock(stage)).allSatisfy(owl -> assertThat(owl.position.y()).isEqualTo(FLOCK_ALTITUDE));
-        int clouds = stage.particles.get("CLOUD");
-        assertThat(clouds).isEqualTo(1 + OwlFlock.SIZE);
-
-        run(timeline, 1, 199);
+        run(timeline, 0, 199);
 
         assertThat(flock(stage).stream().filter(owl -> !owl.removed)).hasSize(OwlFlock.SIZE);
         assertThat(flock(stage).size()).isGreaterThan(OwlFlock.SIZE * 2);
         assertThat(stage.particles.get("CLOUD")).isEqualTo(1 + flock(stage).size() + flock(stage).stream().filter(owl -> owl.removed).count());
-        assertThat(flock(stage).stream().filter(owl -> !owl.removed)).allSatisfy(owl -> assertThat(owl.position.y()).isBetween(FLOCK_ALTITUDE - 1.5, FLOCK_ALTITUDE + OwlGlide.CEILING + 1.5));
+        double rider = DuskVictory.owl(new Vec(0.5, OWL_START, 0.5), new Vec(1, 0, 0), 199).y();
+        assertThat(flock(stage).getLast().position.y()).isGreaterThan(OWL_START + 40);
+        assertThat(flock(stage).stream().filter(owl -> !owl.removed)).allSatisfy(owl -> assertThat(owl.position.y()).isLessThan(rider + OwlFlock.HIGHEST_ABOVE + OwlGlide.CEILING + 1.5));
     }
 
     @Test
@@ -168,9 +189,9 @@ class DuskVictoryTest {
         Random random = new Random(3);
         Vec around = new Vec(40, 60, -12);
         for (int attempt = 0; attempt < 300; attempt++) {
-            Vec spot = OwlFlock.spot(around, 140, random);
+            Vec spot = OwlFlock.spot(around, random);
             assertThat(Math.hypot(spot.x() - 40, spot.z() + 12)).isLessThanOrEqualTo(12.5);
-            assertThat(spot.y()).isEqualTo(140);
+            assertThat(spot.y()).isBetween(60 + OwlFlock.LOWEST_ABOVE, 60 + OwlFlock.HIGHEST_ABOVE);
         }
     }
 
@@ -198,10 +219,13 @@ class DuskVictoryTest {
         timeline.run(0);
         assertThat(stage.mounts).extracting(mount -> mount.riders).containsExactly(List.of(winner), List.of(other));
         assertThat(stage.mounts.get(1).start).isEqualTo(new Vec(60.5, FLOOR + 1.5, -40.5));
-        assertThat(owls(stage)).hasSize(2 * (1 + OwlFlock.SIZE));
+        assertThat(owls(stage)).hasSize(2);
         assertThat(stage.actors.stream().filter(actor -> actor.type.equals("Chicken")).map(actor -> actor.leashedTo)).containsExactly(winner, other);
 
-        run(timeline, 1, 200);
+        run(timeline, 1, 45);
+        assertThat(owls(stage)).hasSize(2 * (1 + OwlFlock.SIZE));
+
+        run(timeline, 46, 200);
 
         assertThat(stage.mounts.get(1).seat().z()).isLessThan(-40.5 - 100);
         assertThat(stage.alive()).isZero();
