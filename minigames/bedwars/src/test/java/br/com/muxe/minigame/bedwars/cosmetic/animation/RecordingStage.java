@@ -162,6 +162,11 @@ final class RecordingStage implements Stage {
     }
 
     @Override
+    public void leash(Actor actor, UUID holder) {
+        ((FakeActor) actor).leashedTo = holder;
+    }
+
+    @Override
     public Optional<Vec> eyes(UUID player) {
         return Optional.of(eyesOf.getOrDefault(player, eyes));
     }
@@ -217,6 +222,7 @@ final class RecordingStage implements Stage {
         Pose pose;
         Actor target;
         Actor vehicle;
+        UUID leashedTo;
         final Map<Integer, Object> watched = new HashMap<>();
         final Map<Slot, String> skulls = new HashMap<>();
         final Map<Slot, Material> equipment = new HashMap<>();

@@ -50,6 +50,8 @@ public interface Stage {
 
     void push(UUID player, Vec velocity);
 
+    void leash(Actor actor, UUID holder);
+
     Optional<Vec> eyes(UUID player);
 
     Optional<Vec> look(UUID player);

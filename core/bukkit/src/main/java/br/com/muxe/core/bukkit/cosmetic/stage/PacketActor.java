@@ -107,6 +107,12 @@ final class PacketActor implements Actor {
         }
     }
 
+    void leashTo(Entity holder) {
+        if (!removed) {
+            stage.send(new PacketPlayOutAttachEntity(1, entity, holder));
+        }
+    }
+
     @Override
     public void target(Actor target) {
         if (!removed && entity instanceof EntityGuardian && target instanceof PacketActor other) {

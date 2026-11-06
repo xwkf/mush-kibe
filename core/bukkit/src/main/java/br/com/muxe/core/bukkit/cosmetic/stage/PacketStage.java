@@ -339,6 +339,14 @@ public final class PacketStage implements Stage, AutoCloseable {
     }
 
     @Override
+    public void leash(Actor actor, UUID holder) {
+        Player player = Bukkit.getPlayer(holder);
+        if (player != null && player.isOnline() && actor instanceof PacketActor leashed) {
+            leashed.leashTo(((CraftPlayer) player).getHandle());
+        }
+    }
+
+    @Override
     public Optional<Vec> eyes(UUID player) {
         return Optional.ofNullable(Bukkit.getPlayer(player)).filter(Player::isOnline)
             .map(Player::getEyeLocation).map(at -> new Vec(at.getX(), at.getY(), at.getZ()));
