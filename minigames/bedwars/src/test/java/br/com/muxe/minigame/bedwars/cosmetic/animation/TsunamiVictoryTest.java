@@ -82,6 +82,18 @@ class TsunamiVictoryTest {
     }
 
     @Test
+    void everyRiderCanFlyOverTheFloodFromTheStart() {
+        RecordingStage stage = stage();
+        UUID winner = UUID.randomUUID();
+        UUID teammate = UUID.randomUUID();
+        Timeline timeline = script(stage, new Scene(ORIGIN, new Vec(0, 0, 1), Optional.empty(), List.of(winner, teammate), AREA));
+
+        run(timeline, 0, timeline.length());
+
+        assertThat(stage.flyers).containsExactly(winner, teammate);
+    }
+
+    @Test
     void theRainFadesInOneHundredthEveryTickUntilItPours() {
         RecordingStage stage = stage();
         Timeline timeline = script(stage);

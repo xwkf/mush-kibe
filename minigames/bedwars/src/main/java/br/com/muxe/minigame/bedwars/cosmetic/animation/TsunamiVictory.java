@@ -27,7 +27,10 @@ public final class TsunamiVictory implements SceneAnimation {
     public void script(Scene scene, Stage stage, Timeline timeline, RandomGenerator random) {
         Flood flood = new Flood(stage, scene.area(), scene.facing(), scene.origin().y());
         SeaLife life = new SeaLife(stage, flood, scene.area(), scene.origin().y(), random);
-        timeline.at(0, () -> stage.sound("mob.enderdragon.growl", feet(scene, stage), 3, 1));
+        timeline.at(0, () -> {
+            scene.riders().forEach(stage::letFly);
+            stage.sound("mob.enderdragon.growl", feet(scene, stage), 3, 1);
+        });
         timeline.repeat(0, RAIN_TICKS, 1, tick -> stage.rain(rain(tick)));
         timeline.repeat(0, LENGTH - 1, 1, tick -> {
             if (!flood.done()) {
