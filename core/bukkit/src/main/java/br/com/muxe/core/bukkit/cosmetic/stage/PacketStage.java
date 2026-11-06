@@ -31,6 +31,7 @@ import net.minecraft.server.v1_8_R3.EntityFallingBlock;
 import net.minecraft.server.v1_8_R3.EntityFireworks;
 import net.minecraft.server.v1_8_R3.EntityFishingHook;
 import net.minecraft.server.v1_8_R3.EntityItem;
+import net.minecraft.server.v1_8_R3.EntityLargeFireball;
 import net.minecraft.server.v1_8_R3.EntityLightning;
 import net.minecraft.server.v1_8_R3.EntityLiving;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
@@ -81,6 +82,8 @@ public final class PacketStage implements Stage, AutoCloseable {
     private static final int OBJECT_SNOWBALL = 61;
     private static final int OBJECT_PRIMED_TNT = 50;
     private static final int OBJECT_FISHING_HOOK = 90;
+    private static final int OBJECT_LARGE_FIREBALL = 63;
+    private static final double FIREBALL_ACCELERATION = 0.1;
     private static final int SKIN_LAYERS = 10;
     private static final int TAB_LIST_TICKS = 40;
     private static final String TEXTURES = "textures";
@@ -192,6 +195,17 @@ public final class PacketStage implements Stage, AutoCloseable {
         Actor actor = object(tnt, new PacketPlayOutSpawnEntity(tnt, OBJECT_PRIMED_TNT), false);
         actor.velocity(velocity);
         return actor;
+    }
+
+    @Override
+    public Actor fireball(Vec position, Vec heading) {
+        EntityLargeFireball fireball = new EntityLargeFireball(world);
+        fireball.setPosition(position.x(), position.y(), position.z());
+        Vec acceleration = heading.normalize().multiply(FIREBALL_ACCELERATION);
+        fireball.motX = acceleration.x();
+        fireball.motY = acceleration.y();
+        fireball.motZ = acceleration.z();
+        return object(fireball, new PacketPlayOutSpawnEntity(fireball, OBJECT_LARGE_FIREBALL, 1), false);
     }
 
     @Override

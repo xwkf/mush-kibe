@@ -28,6 +28,7 @@ final class RecordingStage implements Stage {
     final List<Vec> pushes = new ArrayList<>();
     final List<BlockChange> bulk = new ArrayList<>();
     final List<Vec> bolts = new ArrayList<>();
+    final List<Vec> headings = new ArrayList<>();
     final Map<String, List<Integer>> particleData = new HashMap<>();
     final List<BlockChange> breakEffects = new ArrayList<>();
     Function<int[], BlockType> types = block -> new BlockType(this.solid(block[0], block[1], block[2]) ? Material.STONE : Material.AIR, 0);
@@ -83,6 +84,13 @@ final class RecordingStage implements Stage {
         FakeActor tnt = add("PrimedTnt", position);
         tnt.velocity(velocity);
         return tnt;
+    }
+
+    @Override
+    public Actor fireball(Vec position, Vec heading) {
+        FakeActor fireball = add("Fireball", position);
+        headings.add(heading);
+        return fireball;
     }
 
     @Override
