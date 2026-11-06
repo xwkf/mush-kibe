@@ -3,8 +3,10 @@ package br.com.muxe.minigame.bedwars.cosmetic.animation;
 import br.com.muxe.core.bukkit.cosmetic.animation.Ground;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.Actor;
+import br.com.muxe.core.bukkit.cosmetic.animation.Stage.BlockType;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import java.util.random.RandomGenerator;
+import org.bukkit.Material;
 
 final class SnowmanStroll {
 
@@ -17,14 +19,16 @@ final class SnowmanStroll {
     static final float STEP_VOLUME = 0.15f;
 
     private final Actor body;
+    private final Floor floor;
     private Vec position;
     private Vec target;
     private float yaw;
     private int rest;
     private int walked;
 
-    SnowmanStroll(Actor body, Vec position, float yaw) {
+    SnowmanStroll(Actor body, Vec position, float yaw, Floor floor) {
         this.body = body;
+        this.floor = floor;
         this.position = position;
         this.yaw = yaw;
     }
@@ -53,8 +57,12 @@ final class SnowmanStroll {
         body.teleport(position, yaw, 0);
         walked++;
         if (walked % STEP_EVERY == 0) {
-            stage.sound("step.snow", position, STEP_VOLUME, 1);
+            stage.sound(step(floor.at((int) Math.floor(position.x()), (int) Math.floor(position.y()) - 1, (int) Math.floor(position.z()))), position, STEP_VOLUME, 1);
         }
+    }
+
+    static String step(BlockType under) {
+        return under.material() == Material.SNOW_BLOCK ? "step.snow" : "step.stone";
     }
 
     Vec position() {
@@ -70,5 +78,11 @@ final class SnowmanStroll {
         Vec landed = Ground.surface(stage::solid, spot);
         boolean standing = stage.solid((int) Math.floor(landed.x()), (int) Math.floor(landed.y()) - 1, (int) Math.floor(landed.z()));
         return standing && Math.abs(landed.y() - position.y()) <= MAX_CLIMB ? landed : null;
+    }
+
+    @FunctionalInterface
+    interface Floor {
+
+        BlockType at(int x, int y, int z);
     }
 }

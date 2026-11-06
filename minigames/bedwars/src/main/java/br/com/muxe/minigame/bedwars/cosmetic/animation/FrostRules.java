@@ -3,6 +3,7 @@ package br.com.muxe.minigame.bedwars.cosmetic.animation;
 import br.com.muxe.core.bukkit.cosmetic.animation.Area;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.BlockType;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
@@ -13,24 +14,24 @@ import org.bukkit.Material;
 
 final class FrostRules {
 
-    static final double PACKED_SHARE = 0.2;
-    static final int BLOB = 5;
-    static final double EDGE_JITTER = 3;
-    static final double SPREAD = 13.8;
-    static final int FIRST_TICK = 1;
-    static final int LAST_TICK = 150;
+    static final double PACKED_SHARE = 0.15;
+    static final double SEED_SPACING = 6.5;
+    static final int CELL = 8;
+    static final int MAX_SEEDS = 12;
+    static final int FIRST_TICK = 0;
+    static final int WAVE_TICKS = 98;
+    static final int MIN_COLUMNS_PER_TICK = 250;
     static final BlockType SNOW = new BlockType(Material.SNOW_BLOCK, 0);
     static final BlockType PACKED_ICE = new BlockType(Material.PACKED_ICE, 0);
     static final BlockType ICE = new BlockType(Material.ICE, 0);
     static final BlockType AIR = new BlockType(Material.AIR, 0);
-    static final Set<Material> KEPT = EnumSet.of(Material.AIR, Material.BARRIER, Material.BED_BLOCK);
+    static final Set<Material> KEPT = EnumSet.of(Material.AIR, Material.BARRIER, Material.BED_BLOCK, Material.LAVA, Material.STATIONARY_LAVA);
     static final Set<Material> WATER = EnumSet.of(Material.WATER, Material.STATIONARY_WATER);
-    static final Set<Material> PLANTS = EnumSet.of(
-        Material.LONG_GRASS, Material.YELLOW_FLOWER, Material.RED_ROSE, Material.DOUBLE_PLANT, Material.DEAD_BUSH,
-        Material.SAPLING, Material.BROWN_MUSHROOM, Material.RED_MUSHROOM);
+    static final Set<Material> CUBES = EnumSet.of(Material.SEA_LANTERN, Material.GLOWSTONE, Material.REDSTONE_BLOCK, Material.TNT);
 
     private static final long GOLDEN = 0x9E3779B97F4A7C15L;
     private static final double UNIT = 0x1.0p-53;
+    private static final double SEEDS_PER_CELL = CELL * CELL * CELL / (SEED_SPACING * SEED_SPACING * SEED_SPACING);
 
     private FrostRules() {
     }
@@ -42,20 +43,26 @@ final class FrostRules {
             return Optional.empty();
         } else if (WATER.contains(material)) {
             frozen = ICE;
-        } else if (PLANTS.contains(material)) {
-            frozen = AIR;
-        } else if (material.isOccluding()) {
+        } else if (cube(material)) {
             frozen = packed ? PACKED_ICE : SNOW;
         } else if (material.isSolid()) {
             frozen = ICE;
         } else {
-            return Optional.empty();
+            frozen = AIR;
         }
         return frozen.equals(type) ? Optional.empty() : Optional.of(frozen);
     }
 
+    static boolean cube(Material material) {
+        return material.isOccluding() || CUBES.contains(material);
+    }
+
     static boolean ground(BlockType frozen) {
         return frozen.equals(SNOW) || frozen.equals(PACKED_ICE);
+    }
+
+    static int distance(int x, int z, int originX, int originZ) {
+        return Math.abs(x - originX) + Math.abs(z - originZ);
     }
 
     static List<Column> order(Area area, int originX, int originZ, RandomGenerator random) {
@@ -66,24 +73,30 @@ final class FrostRules {
         List<Column> columns = new ArrayList<>((maxX - minX + 1) * (maxZ - minZ + 1));
         for (int x = minX; x <= maxX; x++) {
             for (int z = minZ; z <= maxZ; z++) {
-                columns.add(new Column(x, z, Math.hypot(x - originX, z - originZ) + random.nextDouble() * EDGE_JITTER));
+                columns.add(new Column(x, z, distance(x, z, originX, originZ)));
             }
         }
-        columns.sort(Comparator.comparingDouble(Column::reach));
+        Collections.shuffle(columns, random);
+        columns.sort(Comparator.comparingInt(Column::reach));
         return columns;
     }
 
-    static double spread(List<Column> order) {
-        double farthest = order.isEmpty() ? 0 : order.getLast().reach();
-        return Math.max(SPREAD, farthest / Math.sqrt(LAST_TICK - FIRST_TICK));
+    static int perTick(int columns) {
+        return Math.max(MIN_COLUMNS_PER_TICK, (columns + WAVE_TICKS - 1) / WAVE_TICKS);
     }
 
-    static int tick(double reach, double spread) {
-        double steps = reach / spread;
-        return FIRST_TICK + (int) Math.floor(steps * steps);
+    static int batches(int columns) {
+        int perTick = perTick(columns);
+        return (columns + perTick - 1) / perTick;
     }
 
-    record Column(int x, int z, double reach) {
+    static List<Column> batch(List<Column> order, int index) {
+        int perTick = perTick(order.size());
+        int from = Math.min(index * perTick, order.size());
+        return order.subList(from, Math.min(from + perTick, order.size()));
+    }
+
+    record Column(int x, int z, int reach) {
     }
 
     static final class Blobs {
@@ -95,9 +108,9 @@ final class FrostRules {
         }
 
         boolean packed(int x, int y, int z) {
-            int cellX = Math.floorDiv(x, BLOB);
-            int cellY = Math.floorDiv(y, BLOB);
-            int cellZ = Math.floorDiv(z, BLOB);
+            int cellX = Math.floorDiv(x, CELL);
+            int cellY = Math.floorDiv(y, CELL);
+            int cellZ = Math.floorDiv(z, CELL);
             double best = Double.MAX_VALUE;
             boolean packed = false;
             for (int dx = -1; dx <= 1; dx++) {
@@ -106,18 +119,34 @@ final class FrostRules {
                         int cx = cellX + dx;
                         int cy = cellY + dy;
                         int cz = cellZ + dz;
-                        double px = cx * BLOB + unit(cx, cy, cz, 1) * BLOB - x;
-                        double py = cy * BLOB + unit(cx, cy, cz, 2) * BLOB - y;
-                        double pz = cz * BLOB + unit(cx, cy, cz, 3) * BLOB - z;
-                        double distance = px * px + py * py + pz * pz;
-                        if (distance < best) {
-                            best = distance;
-                            packed = unit(cx, cy, cz, 4) < PACKED_SHARE;
+                        int seeds = seeds(cx, cy, cz);
+                        for (int index = 0; index < seeds; index++) {
+                            int salt = index * 4;
+                            double distance = Math.abs(cx * CELL + unit(cx, cy, cz, salt + 1) * CELL - x)
+                                + Math.abs(cy * CELL + unit(cx, cy, cz, salt + 2) * CELL - y)
+                                + Math.abs(cz * CELL + unit(cx, cy, cz, salt + 3) * CELL - z);
+                            if (distance < best) {
+                                best = distance;
+                                packed = unit(cx, cy, cz, salt + 4) < PACKED_SHARE;
+                            }
                         }
                     }
                 }
             }
             return packed;
+        }
+
+        int seeds(int x, int y, int z) {
+            double roll = unit(x, y, z, 0);
+            double chance = Math.exp(-SEEDS_PER_CELL);
+            double total = chance;
+            int seeds = 0;
+            while (roll > total && seeds < MAX_SEEDS) {
+                seeds++;
+                chance *= SEEDS_PER_CELL / seeds;
+                total += chance;
+            }
+            return seeds;
         }
 
         private double unit(int x, int y, int z, int salt) {
