@@ -333,6 +333,30 @@ A trail is animated only when `ProjectileTrails` (package `cosmetic.trail`) has 
 
 Effects of each trail:
 
+- **Espiral da Fortuna:** golden dust spins in a ring half a block around the flight path, a full turn every 9 ticks, and drops a sunflower every tick that pops up and vanishes 5 ticks later.
+- **Crítico:** a critical hit spark follows the projectile every tick.
+- **Chamas:** a flame follows the projectile every tick.
+- **Ultra:** thick pink dust follows the projectile every tick.
+- **Natalino:** dust follows the projectile, alternating red, green and white every tick.
+- **Ossos:** every other tick a bone or a bone meal pops out under the projectile and vanishes 5 ticks later.
+- **Espectro Verde:** a green villager sparkle follows the projectile every tick.
+- **Corações:** a heart follows the projectile every tick.
+- **Magia:** a purple witch spell sparkle follows the projectile every tick.
+- **Sorte Azul:** every tick a lapis lazuli pops out under the projectile and vanishes 5 ticks later.
+- **Faísca Cósmica:** five portal particles swirl around the projectile every tick.
+- **Lava:** a lava drop pops from the projectile every tick.
+- **Chroma:** a few spell particles in random colours follow the projectile every tick.
+- **Fumaça:** a puff of large smoke follows the projectile every tick.
+- **Vapor:** a small white cloud follows the projectile every tick.
+- **Água:** a water splash follows the projectile every tick.
+- **Aldeão Furioso:** an angry villager cloud follows the projectile every tick.
+- **Fogos de Artifício:** a firework spark drifts down behind the projectile every tick.
+- **Notas Musicais:** every other tick a music note pops up within a block of the projectile, each later note more scattered and in a changing colour.
+- **Sangrento:** a red dust particle follows the projectile every tick.
+- **Crítico Encantado:** an enchanted critical hit spark follows the projectile every tick.
+- **Mega-Loucura:** every tick a particle drawn at random from 28 kinds (explosions, sparks, splashes, crits, smoke, spells, drips, villagers, notes, portal, flame, lava, cloud, dust, snow, slime and hearts) follows the projectile.
+- **Arco-íris:** thick dust follows the projectile, one rainbow colour a tick: red, orange, yellow, green, cyan, blue and magenta.
+
 ### Kill messages
 
 `Mensagens de kill` (slot 31 of `Cosméticos do Bed Wars`, paper) lists the chat message sets in `Mensagens de kill ({page}/{pages})`, saved under the category `bedwars-mensagem-kill`. The slots follow the recording and the order is the catalog order, not owned first: `Padrão` (paper, slot 10), `Aleatório` (name tag, slot 11) and `Estatístico` (book, slot 12), then `Voltar` (slot 48, `Para Cosméticos do Bed Wars`) and `Selecionado: <name>` (slot 49). There is no `Nenhuma`: a player with nothing selected uses `Padrão`, which everyone owns and nobody buys (`availability: DEFAULT`). The lists have no right click: the lore of each set has `Prévia:` with sample lines and `Botão esquerdo: Selecionar`.

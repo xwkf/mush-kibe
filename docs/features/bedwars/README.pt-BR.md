@@ -333,6 +333,30 @@ Um rastro só é animado quando `ProjectileTrails` (pacote `cosmetic.trail`) tem
 
 Efeitos de cada rastro:
 
+- **Espiral da Fortuna:** pó dourado gira num anel a meio bloco da trajetória, uma volta a cada 9 ticks, e solta um girassol a cada tick, que salta e some 5 ticks depois.
+- **Crítico:** uma faísca de golpe crítico segue o projétil a cada tick.
+- **Chamas:** uma chama segue o projétil a cada tick.
+- **Ultra:** pó rosa denso segue o projétil a cada tick.
+- **Natalino:** pó segue o projétil, alternando vermelho, verde e branco a cada tick.
+- **Ossos:** a cada dois ticks um osso ou uma farinha de osso salta debaixo do projétil e some 5 ticks depois.
+- **Espectro Verde:** um brilho verde de aldeão segue o projétil a cada tick.
+- **Corações:** um coração segue o projétil a cada tick.
+- **Magia:** um brilho roxo de feitiço de bruxa segue o projétil a cada tick.
+- **Sorte Azul:** a cada tick um lápis-lazúli salta debaixo do projétil e some 5 ticks depois.
+- **Faísca Cósmica:** cinco partículas de portal giram em volta do projétil a cada tick.
+- **Lava:** uma gota de lava estala do projétil a cada tick.
+- **Chroma:** algumas partículas de feitiço em cores aleatórias seguem o projétil a cada tick.
+- **Fumaça:** uma nuvem de fumaça grande segue o projétil a cada tick.
+- **Vapor:** uma pequena nuvem branca segue o projétil a cada tick.
+- **Água:** um respingo de água segue o projétil a cada tick.
+- **Aldeão Furioso:** uma nuvem de aldeão bravo segue o projétil a cada tick.
+- **Fogos de Artifício:** uma faísca de fogos desce atrás do projétil a cada tick.
+- **Notas Musicais:** a cada dois ticks uma nota musical surge a até um bloco do projétil, cada nota seguinte mais espalhada e com outra cor.
+- **Sangrento:** uma partícula de pó vermelho segue o projétil a cada tick.
+- **Crítico Encantado:** uma faísca de crítico encantado segue o projétil a cada tick.
+- **Mega-Loucura:** a cada tick uma partícula sorteada entre 28 tipos (explosões, faíscas, respingos, críticos, fumaça, feitiços, gotas, aldeões, notas, portal, chama, lava, nuvem, pó, neve, slime e corações) segue o projétil.
+- **Arco-íris:** pó denso segue o projétil, uma cor do arco-íris por tick: vermelho, laranja, amarelo, verde, ciano, azul e magenta.
+
 ### Mensagens de kill
 
 `Mensagens de kill` (slot 31 de `Cosméticos do Bed Wars`, papel) lista os conjuntos de mensagens do chat em `Mensagens de kill ({page}/{pages})`, salvos na categoria `bedwars-mensagem-kill`. Os slots seguem a gravação e a ordem é a do catálogo, não a de possuídos primeiro: `Padrão` (papel, slot 10), `Aleatório` (name tag, slot 11) e `Estatístico` (livro, slot 12), depois `Voltar` (slot 48, `Para Cosméticos do Bed Wars`) e `Selecionado: <nome>` (slot 49). Não existe `Nenhuma`: quem não selecionou nada usa o `Padrão`, que todos possuem e ninguém compra (`availability: DEFAULT`). As listas não têm botão direito: a lore de cada conjunto traz `Prévia:` com linhas de exemplo e `Botão esquerdo: Selecionar`.
