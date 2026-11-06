@@ -1,21 +1,19 @@
 package br.com.muxe.minigame.bedwars.cosmetic.trail.effect;
 
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
+import java.util.Objects;
 import java.util.random.RandomGenerator;
 
-public enum ParticleSpread {
-    NONE {
-        @Override
-        public Vec next(RandomGenerator random) {
-            return Vec.ZERO;
-        }
-    },
-    RANDOM {
-        @Override
-        public Vec next(RandomGenerator random) {
-            return new Vec(random.nextFloat(), random.nextFloat(), random.nextFloat());
-        }
-    };
+@FunctionalInterface
+public interface ParticleSpread {
 
-    public abstract Vec next(RandomGenerator random);
+    ParticleSpread NONE = fixed(Vec.ZERO);
+    ParticleSpread RANDOM = random -> new Vec(random.nextFloat(), random.nextFloat(), random.nextFloat());
+
+    Vec next(RandomGenerator random);
+
+    static ParticleSpread fixed(Vec spread) {
+        Objects.requireNonNull(spread, "spread");
+        return random -> spread;
+    }
 }
