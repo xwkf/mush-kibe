@@ -56,7 +56,7 @@ class InfernoVictoryTest {
     }
 
     @Test
-    void itIsTheInfernoEffectAndLastsTwoHundredTicksWithoutTouchingTheTime() {
+    void itIsTheInfernoEffectAndLastsTwoHundredTicks() {
         RecordingStage stage = standing();
         Timeline timeline = script(stage, List.of(winner));
 
@@ -64,7 +64,6 @@ class InfernoVictoryTest {
 
         assertThat(new InfernoVictory().id()).isEqualTo("inferno");
         assertThat(timeline.length()).isEqualTo(InfernoVictory.LENGTH);
-        assertThat(stage.times).isEmpty();
         assertThat(stage.alive()).isZero();
     }
 
@@ -77,7 +76,22 @@ class InfernoVictoryTest {
         assertThat(stage.bulk).isEmpty();
         run(timeline, 1, 1);
 
-        assertThat(stage.bulk).anyMatch(change -> change.x() == 0 && change.y() == 26 && change.z() == 0 && change.material() == Material.NETHERRACK);
+        assertThat(stage.bulk).anyMatch(change -> change.x() == 0 && change.y() == 26 && change.z() == 0
+            && (change.material() == Material.NETHERRACK || change.material() == Material.STATIONARY_LAVA));
+    }
+
+    @Test
+    void nightFallsOverTheFirstSecondEasingOutFromNoonToMidnight() {
+        RecordingStage stage = standing();
+        Timeline timeline = script(stage, List.of(winner));
+
+        run(timeline, 0, timeline.length());
+
+        assertThat(stage.times).hasSize(InfernoVictory.DUSK_TICKS);
+        assertThat(stage.times.subList(0, 3)).containsExactly(7170L, 8280L, 9330L);
+        assertThat(stage.times.get(9)).isEqualTo(15000L);
+        assertThat(stage.times.getLast()).isEqualTo(18000L);
+        assertThat(InfernoVictory.dayTime(40)).isEqualTo(18000L);
     }
 
     @Test

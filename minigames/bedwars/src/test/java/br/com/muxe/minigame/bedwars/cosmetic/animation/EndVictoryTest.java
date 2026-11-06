@@ -2,14 +2,21 @@ package br.com.muxe.minigame.bedwars.cosmetic.animation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import br.com.muxe.core.bukkit.cosmetic.animation.Area;
 import br.com.muxe.core.bukkit.cosmetic.animation.Scene;
+import br.com.muxe.core.bukkit.cosmetic.animation.Stage.BlockChange;
 import br.com.muxe.core.bukkit.cosmetic.animation.Timeline;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import br.com.muxe.minigame.bedwars.cosmetic.animation.RecordingStage.FakeActor;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.bukkit.Material;
 import org.junit.jupiter.api.Test;
 
@@ -61,20 +68,59 @@ class EndVictoryTest {
     }
 
     @Test
-    void theMapTurnsIntoEndStoneFromTheWinnerOutwards() {
+    void theMapTurnsIntoEndStoneFromTheWinnerOutwardsTwoHundredFiftySixColumnsATick() {
         RecordingStage stage = stage();
         Timeline timeline = script(stage, List.of(winner));
 
         run(timeline, 0, 0);
         assertThat(stage.bulk).isEmpty();
         run(timeline, 1, 1);
-        int first = stage.bulk.size();
+        List<BlockChange> first = List.copyOf(stage.bulk);
         run(timeline, 2, 2);
+        List<BlockChange> second = stage.bulk.subList(first.size(), stage.bulk.size());
 
-        assertThat(stage.bulk.subList(0, first)).anyMatch(change -> change.x() == 0 && change.y() == 26 && change.z() == 0 && change.material() == Material.ENDER_STONE)
-            .allMatch(change -> MapWave.distance(change.x(), change.z(), 0, 0) <= EndVictory.WAVE.radius(1));
-        assertThat(stage.bulk.subList(first, stage.bulk.size())).isNotEmpty()
-            .allMatch(change -> MapWave.distance(change.x(), change.z(), 0, 0) > EndVictory.WAVE.radius(1));
+        assertThat(first).anyMatch(change -> change.x() == 0 && change.y() == 26 && change.z() == 0 && change.material() == Material.ENDER_STONE)
+            .allMatch(change -> change.material() == Material.ENDER_STONE || change.material() == Material.SANDSTONE || change.material() == Material.WOOD);
+        assertThat(columns(first)).hasSize(MapWave.COLUMNS_PER_TICK);
+        assertThat(columns(second)).hasSize(MapWave.COLUMNS_PER_TICK).doesNotContainAnyElementsOf(columns(first));
+        int nearestSecond = second.stream().mapToInt(change -> MapWave.distance(change.x(), change.z(), 0, 0)).min().orElseThrow();
+        assertThat(first).allMatch(change -> MapWave.distance(change.x(), change.z(), 0, 0) <= nearestSecond);
+    }
+
+    @Test
+    void fiveObsidianPillarsRiseAroundTheMiddleOfTheMapWhenTheWaveReachesThem() {
+        RecordingStage stage = stage();
+        Timeline timeline = script(stage, List.of(winner));
+        EndPillars expected = new EndPillars(Area.around(ORIGIN, Scene.REACH));
+        Map<String, Integer> raisedAt = new HashMap<>();
+
+        for (int tick = 0; tick < EndVictory.LENGTH; tick++) {
+            int before = stage.bulk.size();
+            timeline.run(tick);
+            for (BlockChange change : stage.bulk.subList(before, stage.bulk.size())) {
+                if (change.material() == Material.OBSIDIAN) {
+                    raisedAt.putIfAbsent(change.x() + "," + change.z(), tick);
+                }
+            }
+        }
+
+        List<BlockChange> obsidian = stage.bulk.stream().filter(change -> change.material() == Material.OBSIDIAN).toList();
+        assertThat(obsidian).hasSize(EndPillars.OFFSETS.length * 69 * 128);
+        for (EndPillars.Pillar pillar : expected.pillars()) {
+            Set<Integer> ticks = new HashSet<>();
+            for (int[] column : pillar.columns()) {
+                ticks.add(raisedAt.get(column[0] + "," + column[1]));
+            }
+            assertThat(ticks).hasSize(1);
+        }
+        assertThat(obsidian).allMatch(change -> expected.pillars().stream()
+            .anyMatch(pillar -> Math.hypot(change.x() - pillar.x(), change.z() - pillar.z()) <= EndPillars.RADIUS));
+        assertThat(stage.bulk).noneMatch(change -> change.material() != Material.OBSIDIAN && expected.pillars().stream()
+            .anyMatch(pillar -> Math.hypot(change.x() - pillar.x(), change.z() - pillar.z()) <= EndPillars.RADIUS));
+    }
+
+    private static Set<String> columns(List<BlockChange> changes) {
+        return changes.stream().map(change -> change.x() + "," + change.z()).collect(Collectors.toSet());
     }
 
     @Test

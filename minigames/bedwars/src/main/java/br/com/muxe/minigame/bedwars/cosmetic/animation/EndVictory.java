@@ -18,7 +18,6 @@ public final class EndVictory implements SceneAnimation {
 
     static final int LENGTH = 200;
     static final int WAVE_FIRST = 1;
-    static final MapWave.Speed WAVE = new MapWave.Speed(20, 1.6);
     static final int[] ENDERMEN_TICKS = {5, 8};
     static final double ENDERMAN_MIN_DISTANCE = 18;
     static final double ENDERMAN_MAX_DISTANCE = 25;
@@ -75,6 +74,7 @@ public final class EndVictory implements SceneAnimation {
         private final Stage stage;
         private final RandomGenerator random;
         private final MapWave wave;
+        private final EndPillars pillars;
         private final List<Enderman> endermen = new ArrayList<>();
         private Enderman visitor;
 
@@ -82,7 +82,11 @@ public final class EndVictory implements SceneAnimation {
             this.scene = scene;
             this.stage = stage;
             this.random = random;
-            this.wave = new MapWave(stage, scene, WAVE, new EndPalette());
+            int[] box = MapWave.box(scene.area(), (int) Math.floor(scene.origin().x()), (int) Math.floor(scene.origin().z()));
+            Patches patches = new Patches(box, MapWave.BOTTOM, MapWave.TOP, EndPalette.PATCHES_PER_COLUMN, random);
+            this.wave = new MapWave(stage, scene, new EndPalette(patches), random);
+            this.pillars = new EndPillars(scene.area());
+            pillars.holdIn(wave);
         }
 
         void tick(int tick) {
@@ -92,7 +96,8 @@ public final class EndVictory implements SceneAnimation {
                 return;
             }
             if (tick >= WAVE_FIRST && !wave.done()) {
-                wave.step(tick - WAVE_FIRST + 1);
+                wave.step();
+                pillars.raiseReached(stage, wave);
             }
             if (tick >= LAUNCH_FIRST && (tick - LAUNCH_FIRST) % LAUNCH_EVERY == 0) {
                 stage.sound("fireworks.launch", feet(winner()), 3, 1);

@@ -21,7 +21,10 @@ public final class InfernoVictory implements SceneAnimation {
 
     static final int LENGTH = 200;
     static final int WAVE_FIRST = 1;
-    static final MapWave.Speed WAVE = new MapWave.Speed(20, 1.47);
+    static final int DUSK_TICKS = 20;
+    static final long NOON = 6000;
+    static final long DUSK_RATE = 1200;
+    static final long DUSK_EASE = 30;
     static final int BLAZES = 15;
     static final double BLAZE_RING = 10;
     static final int BLAZE_MAX_HEIGHT = 19;
@@ -76,6 +79,11 @@ public final class InfernoVictory implements SceneAnimation {
         return spots;
     }
 
+    static long dayTime(int tick) {
+        long clamped = Math.min(Math.max(tick, 0), DUSK_TICKS);
+        return NOON + DUSK_RATE * clamped - DUSK_EASE * clamped * clamped;
+    }
+
     static Vec knock(Vec motion) {
         Vec flat = new Vec(motion.x(), 0, motion.z()).normalize();
         return new Vec(flat.x() * KNOCK_SIDEWAYS, KNOCK_UP, flat.z() * KNOCK_SIDEWAYS);
@@ -105,7 +113,9 @@ public final class InfernoVictory implements SceneAnimation {
             this.scene = scene;
             this.stage = stage;
             this.random = random;
-            this.wave = new MapWave(stage, scene, WAVE, new InfernoPalette());
+            int[] box = MapWave.box(scene.area(), (int) Math.floor(scene.origin().x()), (int) Math.floor(scene.origin().z()));
+            Patches lava = new Patches(box, MapWave.BOTTOM, MapWave.TOP, InfernoPalette.LAVA_PER_COLUMN, random);
+            this.wave = new MapWave(stage, scene, new InfernoPalette(lava), random);
             this.heading = scene.facing();
             this.yaw = Vec.ZERO.yawTowards(heading);
         }
@@ -120,7 +130,10 @@ public final class InfernoVictory implements SceneAnimation {
                 blazeSpots(scene.origin(), random).forEach(spot -> blazes.add(new Blaze(stage.mob("Blaze", spot, yaw), spot)));
             }
             if (tick >= WAVE_FIRST && !wave.done()) {
-                wave.step(tick - WAVE_FIRST + 1);
+                wave.step();
+            }
+            if (tick >= 1 && tick <= DUSK_TICKS) {
+                stage.time(dayTime(tick));
             }
             if (tick >= LAUNCH_FIRST && (tick - LAUNCH_FIRST) % LAUNCH_EVERY == 0) {
                 stage.sound("fireworks.launch", winner(), 3, 1);
