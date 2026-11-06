@@ -156,11 +156,13 @@ final class CosmeticFeatures {
                 requireOpen(started.refresh(), bedSettings.get().world());
             });
             Predicate<Player> busy = player -> started.previewing(player) || scenes.stream().anyMatch(scene -> scene.previewing(player));
-            victoryGate = scenePreview(plugin, core, config, reloads, PreviewKind.VICTORY, victoryAnimations, titles::victory,
+            victoryGate = scenePreview(plugin, core, config, reloads, PreviewKind.VICTORY, victoryAnimations, titles::victory, titles::stop,
                 MatchSounds.from(config.getConfigurationSection("sounds")).countdown(), busy, messages, scenes);
             killGate = scenePreview(plugin, core, config, reloads, PreviewKind.FINAL_KILL, killAnimations, player -> {
+            }, player -> {
             }, Optional.empty(), busy, messages, scenes);
             auraGate = scenePreview(plugin, core, config, reloads, PreviewKind.AURA, auraAnimations, player -> {
+            }, player -> {
             }, Optional.empty(), busy, messages, scenes);
             TrailPreview trailPreview = TrailPreview.start(plugin, ProjectileTrails::find);
             stops.add(trailPreview::stop);
@@ -205,10 +207,10 @@ final class CosmeticFeatures {
     }
 
     private static ScenePreview scenePreview(JavaPlugin plugin, MuxeCore core, FileConfiguration config, ConfigReloads reloads, PreviewKind kind, SceneAnimations animations,
-                                             Consumer<Player> onScene, Optional<SoundCue> countdownSound, Predicate<Player> busy, MessageCatalog messages,
-                                             List<ScenePreview> scenes) {
+                                             Consumer<Player> onScene, Consumer<Player> onLeave, Optional<SoundCue> countdownSound, Predicate<Player> busy,
+                                             MessageCatalog messages, List<ScenePreview> scenes) {
         LiveValue<ScenePreviewSettings> settings = new LiveValue<>(ScenePreviewSettings.from(section(config, kind.section())));
-        ScenePreview scene = new ScenePreview(plugin, core.buildMode(), settings, animations, onScene, countdownSound, busy, messages);
+        ScenePreview scene = new ScenePreview(plugin, core.buildMode(), settings, animations, onScene, onLeave, countdownSound, busy, messages);
         scene.start();
         scenes.add(scene);
         reloads.register(kind.section(), kind.section(), root -> {

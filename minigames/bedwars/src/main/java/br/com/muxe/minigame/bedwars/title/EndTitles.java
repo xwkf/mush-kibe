@@ -20,6 +20,7 @@ public final class EndTitles {
     private final TitleSweep defeat;
     private final Optional<SoundCue> victorySound;
     private final Optional<SoundCue> defeatSound;
+    private final TitleRuns runs = new TitleRuns();
 
     public EndTitles(Plugin plugin, TitleSweep victory, TitleSweep defeat, Optional<SoundCue> victorySound, Optional<SoundCue> defeatSound) {
         this.plugin = plugin;
@@ -47,21 +48,39 @@ public final class EndTitles {
         show(player, defeat, defeatSound);
     }
 
+    public void stop(Player player) {
+        runs.stop(player.getUniqueId());
+    }
+
     private void show(Player player, TitleSweep sweep, Optional<SoundCue> sound) {
         Title.clear(player);
         sound.ifPresent(cue -> cue.play(player));
-        new BukkitRunnable() {
-            private int tick;
+        Sweep run = new Sweep(player, sweep);
+        run.runTaskTimer(plugin, 0L, 1L);
+        runs.start(player.getUniqueId(), run.stop);
+    }
 
-            @Override
-            public void run() {
-                Optional<String> frame = sweep.frame(tick++);
-                if (frame.isEmpty() || !player.isOnline()) {
-                    cancel();
-                    return;
-                }
-                Title.builder().title(Colors.translate(frame.get())).subtitle(SUBTITLE).timings(0, STAY_TICKS, 0).build().send(player);
+    private final class Sweep extends BukkitRunnable {
+
+        private final Player player;
+        private final TitleSweep sweep;
+        private final Runnable stop = this::cancel;
+        private int tick;
+
+        Sweep(Player player, TitleSweep sweep) {
+            this.player = player;
+            this.sweep = sweep;
+        }
+
+        @Override
+        public void run() {
+            Optional<String> frame = sweep.frame(tick++);
+            if (frame.isEmpty() || !player.isOnline()) {
+                cancel();
+                runs.done(player.getUniqueId(), stop);
+                return;
             }
-        }.runTaskTimer(plugin, 0L, 1L);
+            Title.builder().title(Colors.translate(frame.get())).subtitle(SUBTITLE).timings(0, STAY_TICKS, 0).build().send(player);
+        }
     }
 }

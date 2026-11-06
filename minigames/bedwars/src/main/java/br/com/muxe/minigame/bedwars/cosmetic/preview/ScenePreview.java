@@ -82,6 +82,7 @@ public final class ScenePreview implements PreviewGate, Listener {
     private final Optional<SceneAnimations> animations;
     private final Optional<KitPlay> kitPlay;
     private final Consumer<Player> onScene;
+    private final Consumer<Player> onLeave;
     private final Optional<SoundCue> countdownSound;
     private final Predicate<Player> busyElsewhere;
     private final AnimationPlayer animator;
@@ -93,24 +94,27 @@ public final class ScenePreview implements PreviewGate, Listener {
     private final Map<String, String> targetNames = new HashMap<>();
 
     public ScenePreview(Plugin plugin, BuildMode buildMode, Supplier<ScenePreviewSettings> settings, SceneAnimations animations, Consumer<Player> onScene,
-                        Optional<SoundCue> countdownSound, Predicate<Player> busyElsewhere, MessageCatalog messages) {
-        this(plugin, buildMode, settings, Optional.of(animations), Optional.empty(), onScene, countdownSound, busyElsewhere, messages);
+                        Consumer<Player> onLeave, Optional<SoundCue> countdownSound, Predicate<Player> busyElsewhere, MessageCatalog messages) {
+        this(plugin, buildMode, settings, Optional.of(animations), Optional.empty(), onScene, onLeave, countdownSound, busyElsewhere, messages);
     }
 
     public ScenePreview(Plugin plugin, BuildMode buildMode, Supplier<ScenePreviewSettings> settings, KitPlay kitPlay, Predicate<Player> busyElsewhere,
                         MessageCatalog messages) {
         this(plugin, buildMode, settings, Optional.empty(), Optional.of(kitPlay), player -> {
+        }, player -> {
         }, Optional.empty(), busyElsewhere, messages);
     }
 
     private ScenePreview(Plugin plugin, BuildMode buildMode, Supplier<ScenePreviewSettings> settings, Optional<SceneAnimations> animations, Optional<KitPlay> kitPlay,
-                         Consumer<Player> onScene, Optional<SoundCue> countdownSound, Predicate<Player> busyElsewhere, MessageCatalog messages) {
+                         Consumer<Player> onScene, Consumer<Player> onLeave, Optional<SoundCue> countdownSound, Predicate<Player> busyElsewhere,
+                         MessageCatalog messages) {
         this.plugin = plugin;
         this.buildMode = buildMode;
         this.settings = settings;
         this.animations = animations;
         this.kitPlay = kitPlay;
         this.onScene = onScene;
+        this.onLeave = onLeave;
         this.countdownSound = countdownSound;
         this.busyElsewhere = busyElsewhere;
         this.animator = new AnimationPlayer(plugin);
@@ -426,6 +430,7 @@ public final class ScenePreview implements PreviewGate, Listener {
             targets.remove(session.target);
             targetNames.remove(session.target);
         }
+        onLeave.accept(viewer);
         Title.clear(viewer);
         viewer.teleport(session.from);
         viewer.getInventory().setContents(session.contents);
