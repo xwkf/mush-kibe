@@ -19,7 +19,7 @@ public final class SceneAnimations {
         return new SceneAnimations(List.of(new PaintVictory(), new FlyingHyenaVictory(), new FlyingPigVictory(), new BalloonsVictory(), new PumpkinHarvestVictory(),
             new HauntedVictory(), new PaparazziVictory(), new ZombieApocalypseVictory(), new GrapplerVictory(), new NecromancerVictory(), new DesertVictory(),
             new WitchVictory(), new DragonVictory(), new InfernoVictory(), new EndVictory(), new TsunamiVictory(), new WitherVictory(), new DuskVictory(),
-            new FrozenVictory(), new FestivalVictory(), new MagicalGirlVictory()));
+            new FrozenVictory(), new FestivalVictory(), new MagicalGirlVictory(), new EnchantedVictory()));
     }
 
     public static SceneAnimations finalKills() {

@@ -27,10 +27,10 @@ class VictoryEffectTest {
     private final CosmeticIcons icons = new CosmeticIcons(menu, catalog);
 
     @Test
-    void theVictoryEffectsAreTheTwentyTwoOfTheReferenceAndAllButEncantadoPlay() {
+    void theVictoryEffectsAreTheTwentyTwoOfTheReferenceAndAllOfThemPlay() {
         assertThat(catalog.category()).isEqualTo("bedwars-vitoria");
         assertThat(catalog.all()).hasSize(22);
-        assertThat(catalog.all().stream().filter(cosmetic -> !cosmetic.animated()).map(BedCosmetic::id)).containsExactly("encantado");
+        assertThat(catalog.all()).allMatch(BedCosmetic::animated);
         BedCosmetic christmas = catalog.find("feliz-natal").orElseThrow();
         assertThat(christmas.stars()).isEqualTo(5);
         assertThat(christmas.tag()).contains("&cNatal 2025");
