@@ -34,6 +34,16 @@ class AreaTest {
     }
 
     @Test
+    void theMiddleIsTheCentreOfTheBoxUnlessTheMapSaysOtherwise() {
+        Area area = new Area(-20, 0, 60, 40);
+
+        assertThat(area.middleX()).isEqualTo(20);
+        assertThat(area.middleZ()).isEqualTo(20);
+        assertThat(area.middleAt(3.5, -7.5)).isEqualTo(new Area(-20, 0, 60, 40, 3.5, -7.5));
+        assertThat(Area.around(new Vec(10, 64, -4), 16).middleX()).isEqualTo(10);
+    }
+
+    @Test
     void aBigMapGetsTwiceAsManyFallingThingsAndASmallOneTheRecordedAmount() {
         assertThat(new Area(0, 0, 100, 100).copies()).isEqualTo(Area.MAX_COPIES);
         assertThat(Area.around(Vec.ZERO, 16).copies()).isEqualTo(1);
