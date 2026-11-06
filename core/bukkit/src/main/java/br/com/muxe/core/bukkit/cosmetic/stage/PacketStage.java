@@ -44,6 +44,7 @@ import net.minecraft.server.v1_8_R3.MinecraftServer;
 import net.minecraft.server.v1_8_R3.Packet;
 import net.minecraft.server.v1_8_R3.PacketPlayOutBlockChange;
 import net.minecraft.server.v1_8_R3.PacketPlayOutEntityMetadata;
+import net.minecraft.server.v1_8_R3.PacketPlayOutGameStateChange;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMapChunk;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMultiBlockChange.MultiBlockChangeInfo;
 import net.minecraft.server.v1_8_R3.PacketPlayOutMultiBlockChange;
@@ -95,6 +96,7 @@ public final class PacketStage implements Stage, AutoCloseable {
     private static final int WORLD_HEIGHT = 256;
     private static final int FULL_CHUNK = 65535;
     private static final int BLOCK_BREAK_EVENT = 2001;
+    private static final int RAIN_STRENGTH = 7;
     private static final Field MULTI_BLOCK_CHUNK = field(ChunkCoordIntPair.class);
     private static final Field MULTI_BLOCK_INFOS = field(MultiBlockChangeInfo[].class);
 
@@ -103,6 +105,7 @@ public final class PacketStage implements Stage, AutoCloseable {
     private final List<PacketActor> actors = new ArrayList<>();
     private final Map<BlockPosition, Boolean> changed = new LinkedHashMap<>();
     private final List<Player> timed = new ArrayList<>();
+    private final List<Player> rained = new ArrayList<>();
     private final MountGuard guard;
     private final List<Seats> mounts = new ArrayList<>();
     private final Map<UUID, Tool> tools = new LinkedHashMap<>();
@@ -294,6 +297,19 @@ public final class PacketStage implements Stage, AutoCloseable {
     }
 
     @Override
+    public void rain(float strength) {
+        PacketPlayOutGameStateChange packet = new PacketPlayOutGameStateChange(RAIN_STRENGTH, Math.clamp(strength, 0, 1));
+        for (Player viewer : viewers.get()) {
+            if (viewer.isOnline()) {
+                ((CraftPlayer) viewer).getHandle().playerConnection.sendPacket(packet);
+                if (!rained.contains(viewer)) {
+                    rained.add(viewer);
+                }
+            }
+        }
+    }
+
+    @Override
     public Mount mount(Vec seat, float yaw, List<UUID> riders) {
         Seats mount = Seats.create(world.getWorld(), guard, this::send, seat, yaw, riders);
         mounts.add(mount);
@@ -467,9 +483,16 @@ public final class PacketStage implements Stage, AutoCloseable {
                 viewer.resetPlayerTime();
             }
         }
+        PacketPlayOutGameStateChange weather = new PacketPlayOutGameStateChange(RAIN_STRENGTH, world.getWorld().hasStorm() ? 1 : 0);
+        for (Player viewer : rained) {
+            if (viewer.isOnline()) {
+                ((CraftPlayer) viewer).getHandle().playerConnection.sendPacket(weather);
+            }
+        }
         actors.clear();
         changed.clear();
         timed.clear();
+        rained.clear();
     }
 
     void send(Packet<?> packet) {

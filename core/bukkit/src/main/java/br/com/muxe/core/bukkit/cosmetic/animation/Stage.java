@@ -36,6 +36,8 @@ public interface Stage {
 
     void time(long dayTime);
 
+    void rain(float strength);
+
     BlockType type(int x, int y, int z);
 
     void blocks(List<BlockChange> changes);

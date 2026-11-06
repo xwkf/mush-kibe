@@ -23,6 +23,7 @@ final class RecordingStage implements Stage {
     final List<Float> pitches = new ArrayList<>();
     final List<String> blocks = new ArrayList<>();
     final List<Long> times = new ArrayList<>();
+    final List<Float> rains = new ArrayList<>();
     final List<FakeMount> mounts = new ArrayList<>();
     final Map<UUID, Consumer<Click>> tools = new HashMap<>();
     final List<Vec> pushes = new ArrayList<>();
@@ -120,6 +121,11 @@ final class RecordingStage implements Stage {
     @Override
     public void time(long dayTime) {
         times.add(dayTime);
+    }
+
+    @Override
+    public void rain(float strength) {
+        rains.add(strength);
     }
 
     @Override
