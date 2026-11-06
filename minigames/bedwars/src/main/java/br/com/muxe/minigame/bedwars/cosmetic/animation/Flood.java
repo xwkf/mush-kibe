@@ -5,19 +5,21 @@ import br.com.muxe.core.bukkit.cosmetic.animation.Stage;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.BlockChange;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import org.bukkit.Material;
 
 final class Flood {
 
     static final double TOE_SPEED = 4;
-    static final int TOE_DELAY = 1;
-    static final double CREST_SPEED = 2.25;
-    static final int CREST_DELAY = 10;
-    static final int LAYERS = 64;
-    static final int ABOVE_ORIGIN = 36;
+    static final double CREST_SPEED = 2;
+    static final int FIRST_RISE = 1;
+    static final int RISE_EVERY = 2;
+    static final int ABOVE_HIGHEST = 2;
     static final int MAX_HEIGHT = 255;
+    static final Set<Material> DROWNED = EnumSet.of(Material.AIR, Material.LONG_GRASS, Material.DOUBLE_PLANT, Material.RED_ROSE, Material.YELLOW_FLOWER);
 
     private final Stage stage;
     private final int minX;
@@ -25,8 +27,7 @@ final class Flood {
     private final int width;
     private final int depth;
     private final int top;
-    private final int bottom;
-    private final double[] distance;
+    private final int[] distance;
     private final int[] filled;
     private final List<Integer> rising = new ArrayList<>();
 
@@ -36,67 +37,78 @@ final class Flood {
         this.minZ = (int) Math.floor(area.minZ());
         this.width = (int) Math.floor(area.maxX()) - minX + 1;
         this.depth = (int) Math.floor(area.maxZ()) - minZ + 1;
-        this.top = Math.min(MAX_HEIGHT, (int) Math.floor(originY) + ABOVE_ORIGIN);
-        this.bottom = Math.max(0, top - LAYERS + 1);
-        this.distance = new double[width * depth];
+        this.distance = new int[width * depth];
         this.filled = new int[width * depth];
-        double edge = leadingEdge(area, facing);
+        int highest = (int) Math.floor(originY) - 1;
         for (int column = 0; column < distance.length; column++) {
-            double x = minX + column % width + 0.5;
-            double z = minZ + column / width + 0.5;
-            distance[column] = edge - (x * facing.x() + z * facing.z());
+            int x = minX + column % width;
+            int z = minZ + column / width;
+            distance[column] = rows(facing, x - minX, z - minZ, width, depth);
+            highest = Math.max(highest, stage.highest(x, z));
             rising.add(column);
         }
+        this.top = Math.min(MAX_HEIGHT, highest + ABOVE_HIGHEST);
     }
 
-    static int layers(double distance, int tick) {
-        double toe = TOE_SPEED * (tick - TOE_DELAY);
-        double crest = CREST_SPEED * (tick - CREST_DELAY);
-        if (distance <= crest) {
-            return LAYERS;
+    static int rows(Vec facing, int alongX, int alongZ, int width, int depth) {
+        if (Math.abs(facing.x()) > Math.abs(facing.z())) {
+            return facing.x() > 0 ? width - 1 - alongX : alongX;
         }
-        if (distance >= toe) {
+        return facing.z() > 0 ? depth - 1 - alongZ : alongZ;
+    }
+
+    static int layers(int distance, int tick, int height) {
+        if (tick < FIRST_RISE) {
             return 0;
         }
-        return (int) Math.min(LAYERS, Math.ceil(LAYERS * (toe - distance) / (toe - crest)));
+        double toe = TOE_SPEED * (tick - FIRST_RISE);
+        double crest = CREST_SPEED * (tick - FIRST_RISE);
+        if (distance <= crest) {
+            return height;
+        }
+        if (distance > toe) {
+            return 0;
+        }
+        return (int) Math.min(height, Math.floor((height - 1) * (toe - distance) / (toe - crest)) + 1);
     }
 
-    static double leadingEdge(Area area, Vec facing) {
-        double alongX = Math.max(area.minX() * facing.x(), area.maxX() * facing.x());
-        double alongZ = Math.max(area.minZ() * facing.z(), area.maxZ() * facing.z());
-        return alongX + alongZ;
+    static boolean rises(int tick) {
+        return tick >= FIRST_RISE && (tick - FIRST_RISE) % RISE_EVERY == 0;
     }
 
     void rise(int tick) {
+        if (!rises(tick)) {
+            return;
+        }
+        int height = top + 1;
         List<BlockChange> changes = new ArrayList<>();
         Iterator<Integer> columns = rising.iterator();
         while (columns.hasNext()) {
             int column = columns.next();
-            int target = Math.min(layers(distance[column], tick), top - bottom + 1);
+            int target = layers(distance[column], tick, height);
             if (target <= filled[column]) {
                 continue;
             }
             int x = minX + column % width;
             int z = minZ + column / width;
-            for (int layer = filled[column]; layer < target; layer++) {
-                int y = bottom + layer;
-                if (stage.type(x, y, z).material() == Material.AIR) {
+            for (int y = filled[column]; y < target; y++) {
+                if (DROWNED.contains(stage.type(x, y, z).material())) {
                     changes.add(new BlockChange(x, y, z, Material.STATIONARY_WATER, 0));
                 }
             }
             filled[column] = target;
-            if (target == top - bottom + 1) {
+            if (target == height) {
                 columns.remove();
             }
         }
         if (!changes.isEmpty()) {
-            stage.blocks(changes);
+            stage.sections(changes);
         }
     }
 
     boolean flooded(int x, int y, int z) {
         int column = column(x, z);
-        return column >= 0 && y >= bottom && y < bottom + filled[column];
+        return column >= 0 && y >= 0 && y < filled[column];
     }
 
     boolean water(int x, int y, int z) {

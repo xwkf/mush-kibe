@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.within;
 import br.com.muxe.core.bukkit.cosmetic.animation.Area;
 import br.com.muxe.core.bukkit.cosmetic.animation.Scene;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.BlockChange;
+import br.com.muxe.core.bukkit.cosmetic.animation.Stage.BlockType;
 import br.com.muxe.core.bukkit.cosmetic.animation.Timeline;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import br.com.muxe.minigame.bedwars.cosmetic.animation.RecordingStage.FakeActor;
@@ -32,8 +33,28 @@ class TsunamiVictoryTest {
         return new Scene(ORIGIN, new Vec(0, 0, 1), Optional.empty(), List.of(UUID.randomUUID()), area);
     }
 
+    private static final int TOP = 41;
+
+    private static boolean island(int[] block) {
+        return Math.abs(block[0]) <= 6 && Math.abs(block[2]) <= 6 && block[1] >= 20 && block[1] < 27;
+    }
+
+    private static boolean pillar(int[] block) {
+        return block[0] == 3 && block[2] == 3 && block[1] < 40;
+    }
+
     private static RecordingStage stage() {
-        return new RecordingStage(block -> block[1] < 27 || (block[0] == 3 && block[2] == 3 && block[1] < 30));
+        RecordingStage stage = new RecordingStage(block -> island(block) || pillar(block));
+        stage.types = block -> {
+            if (block[0] == -2 && block[1] == 27 && block[2] == -2) {
+                return new BlockType(Material.LONG_GRASS, 1);
+            }
+            if (block[0] == -3 && block[1] == 27 && block[2] == -3) {
+                return new BlockType(Material.TORCH, 5);
+            }
+            return new BlockType(island(block) || pillar(block) ? Material.STONE : Material.AIR, 0);
+        };
+        return stage;
     }
 
     private static Timeline script(RecordingStage stage) {
@@ -103,45 +124,68 @@ class TsunamiVictoryTest {
     }
 
     @Test
-    void theToeRunsAheadOfTheCrestAndTheWaterRampsBetweenThem() {
-        assertThat(Flood.layers(10, 3)).isZero();
-        assertThat(Flood.layers(0, 3)).isBetween(1, 63);
-        assertThat(Flood.layers(0, 10)).isEqualTo(64);
-        assertThat(Flood.layers(30, 20)).isBetween(1, 63);
-        assertThat(Flood.layers(20, 20)).isGreaterThan(Flood.layers(40, 20));
-        assertThat(Flood.layers(76, 20)).isZero();
+    void theBaseRunsFourRowsATickAndTheCrestTwoBothFromTheFirstTick() {
+        assertThat(Flood.layers(0, 0, 49)).isZero();
+        assertThat(Flood.layers(0, 1, 49)).isEqualTo(49);
+        assertThat(Flood.layers(1, 1, 49)).isZero();
+        assertThat(Flood.layers(4, 3, 49)).isEqualTo(49);
+        assertThat(Flood.layers(6, 3, 49)).isEqualTo(25);
+        assertThat(Flood.layers(8, 3, 49)).isEqualTo(1);
+        assertThat(Flood.layers(9, 3, 49)).isZero();
+        assertThat(Flood.layers(64, 17, 49)).isEqualTo(1);
+        assertThat(Flood.layers(64, 33, 49)).isEqualTo(49);
         for (int tick = 0; tick < 100; tick++) {
-            assertThat(Flood.layers(50, tick + 1)).isGreaterThanOrEqualTo(Flood.layers(50, tick));
+            assertThat(Flood.layers(50, tick + 1, 49)).isGreaterThanOrEqualTo(Flood.layers(50, tick, 49));
         }
     }
 
     @Test
-    void theWaveComesFromTheFarSideTheWinnerFaces() {
-        RecordingStage stage = stage();
-        Timeline timeline = script(stage);
-
-        run(timeline, 0, 5);
-
-        assertThat(stage.bulk).isNotEmpty();
-        assertThat(stage.bulk).allMatch(change -> change.z() >= 8);
+    void theWaterRisesEveryOtherTickFromTheFirstOne() {
+        assertThat(Flood.rises(0)).isFalse();
+        assertThat(Flood.rises(1)).isTrue();
+        assertThat(Flood.rises(2)).isFalse();
+        assertThat(Flood.rises(3)).isTrue();
     }
 
     @Test
-    void theWholeMapFloodsWithStillWaterUpToThirtySixBlocksAboveTheWinnerWithoutTouchingBlocks() {
+    void theWaveStartsOnTheFarSideOfTheWinnersNearestAxis() {
+        assertThat(Flood.rows(new Vec(0, 0, 1), 3, 24, 25, 25)).isZero();
+        assertThat(Flood.rows(new Vec(0, 0, 1), 3, 0, 25, 25)).isEqualTo(24);
+        assertThat(Flood.rows(new Vec(-0.38, 0, -0.92), 3, 0, 25, 25)).isZero();
+        assertThat(Flood.rows(new Vec(-0.9, 0, 0.4), 0, 7, 25, 25)).isZero();
+        assertThat(Flood.rows(new Vec(0.9, 0, -0.4), 0, 7, 25, 25)).isEqualTo(24);
+    }
+
+    @Test
+    void theFirstRowFloodsWholeOnTheFirstTick() {
+        RecordingStage stage = stage();
+        Timeline timeline = script(stage);
+
+        run(timeline, 0, 1);
+
+        assertThat(stage.sectioned).hasSize(25 * (TOP + 1));
+        assertThat(stage.sectioned).allMatch(change -> change.z() == 12);
+        assertThat(stage.bulk).isEmpty();
+    }
+
+    @Test
+    void theWholeMapFloodsFromTheBottomToTwoBlocksAboveItsHighestBlockReplacingOnlyAirAndPlants() {
         RecordingStage stage = stage();
         Timeline timeline = script(stage);
 
         run(timeline, 0, timeline.length());
 
         Set<String> placed = new HashSet<>();
-        for (BlockChange change : stage.bulk) {
+        for (BlockChange change : stage.sectioned) {
             assertThat(change.material()).isEqualTo(Material.STATIONARY_WATER);
-            assertThat(change.y()).isBetween(27, 63);
+            assertThat(change.y()).isBetween(0, TOP);
             assertThat(stage.solid(change.x(), change.y(), change.z())).isFalse();
             assertThat(placed.add(change.x() + "," + change.y() + "," + change.z())).isTrue();
         }
-        int columns = 25 * 25;
-        assertThat(placed).hasSize(columns * 37 - 3);
+        assertThat(placed).contains("-2,27,-2").doesNotContain("-3,27,-3");
+        int island = 13 * 13 * 7;
+        int pillar = 40 - 7;
+        assertThat(placed).hasSize(25 * 25 * (TOP + 1) - island - pillar - 1);
     }
 
     @Test
@@ -149,9 +193,9 @@ class TsunamiVictoryTest {
         RecordingStage stage = stage();
         Timeline timeline = script(stage);
 
-        run(timeline, 0, 2);
+        timeline.run(0);
         assertThat(stage.actors).isEmpty();
-        run(timeline, 3, timeline.length());
+        run(timeline, 1, timeline.length());
 
         int creatures = SeaLife.count(AREA);
         assertThat(stage.actors).hasSize(creatures);
@@ -159,15 +203,16 @@ class TsunamiVictoryTest {
         assertThat(stage.actors.stream().filter(actor -> actor.type.equals("Squid"))).isNotEmpty();
         for (FakeActor creature : stage.actors) {
             Vec at = creature.position;
-            assertThat(at.y()).isBetween(27.0, 64.0);
+            assertThat(at.y()).isBetween(0.0, TOP + 1.0);
             assertThat(stage.solid((int) Math.floor(at.x()), (int) Math.floor(at.y()), (int) Math.floor(at.z()))).isFalse();
         }
     }
 
     @Test
-    void thereIsOneCreatureEveryHundredAndFourSquareBlocksUpToTwoHundredAndForty() {
-        assertThat(SeaLife.count(Area.around(Vec.ZERO, 16))).isEqualTo(10);
-        assertThat(SeaLife.count(new Area(-71, -71, 87, 95))).isEqualTo(240);
+    void thereIsOneCreatureEveryHundredAndTwentyFiveSquareBlocksUpToTwoHundredAndForty() {
+        assertThat(SeaLife.count(Area.around(Vec.ZERO, 16))).isEqualTo(8);
+        assertThat(SeaLife.count(new Area(-65, -65, 81, 81))).isEqualTo(171);
+        assertThat(SeaLife.count(new Area(-200, -200, 200, 200))).isEqualTo(240);
         assertThat(SeaLife.count(new Area(0, 0, 1, 1))).isEqualTo(1);
     }
 
@@ -198,7 +243,7 @@ class TsunamiVictoryTest {
         for (int index = 0; index < before.size(); index++) {
             FakeActor creature = stage.actors.get(index);
             Vec at = creature.position;
-            assertThat(at.y()).isGreaterThanOrEqualTo(27).isLessThan(64);
+            assertThat(at.y()).isGreaterThanOrEqualTo(0).isLessThan(TOP + 1);
             assertThat(stage.solid((int) Math.floor(at.x()), (int) Math.floor(at.y()), (int) Math.floor(at.z()))).isFalse();
             assertThat(AREA.minX() - 1 <= at.x() && at.x() <= AREA.maxX() + 1).isTrue();
             if (!at.equals(before.get(index))) {

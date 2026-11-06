@@ -11,9 +11,9 @@ import org.bukkit.Material;
 
 final class SeaLife {
 
-    static final double SQUARE_BLOCKS_PER_CREATURE = 104;
+    static final double SQUARE_BLOCKS_PER_CREATURE = 125;
     static final int MAX_CREATURES = 240;
-    static final double GUARDIAN_SHARE = 0.34;
+    static final double GUARDIAN_SHARE = 0.4;
     static final int SPAWN_ATTEMPTS = 8;
     static final String SQUID = "Squid";
     static final String GUARDIAN = "Guardian";
