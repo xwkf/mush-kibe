@@ -11,7 +11,7 @@ Read these before changing code, in this order:
 1. [Architecture overview](docs/architecture/overview/README.md): layers, CQRS, package organization.
 2. [Conventions](docs/development/conventions/README.md): Java, naming, packages, configuration and message style.
 3. [Development](docs/development/README.md): modules, dependency rules and commands.
-4. The architecture document of the area you touch ([messaging](docs/architecture/messaging/README.md), [persistence](docs/architecture/persistence/README.md), [observability](docs/architecture/observability/README.md), [security](docs/architecture/security/README.md), [game engine](docs/architecture/game-engine/README.md)).
+4. The architecture document of the area you touch ([messaging](docs/architecture/messaging/README.md), [persistence](docs/architecture/persistence/README.md), [observability](docs/architecture/observability/README.md), [security](docs/architecture/security/README.md), [game engine](docs/architecture/game-engine/README.md), [minigame API](docs/architecture/minigame-api/README.md)).
 5. The feature documentation under [docs/features/](docs/features/).
 
 ## Legal

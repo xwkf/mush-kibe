@@ -10,7 +10,7 @@ BedWars for the Muxe network. Lives in `minigames:bedwars` (`Muxe-BedWars`) and 
 
 ## How it works
 
-The plugin loads its nine modes, gives staff the [arena setup](../../architecture/game-engine/README.md#arena-setup) and runs the matches of the server, many at once, each in its own [cell](../../decisions/0009-own-map-format-and-match-cells.md) of the match world.
+The plugin loads its nine modes, gives staff the [arena setup](../../architecture/game-engine/README.md#arena-setup) and runs the matches of the server, many at once, each in its own [cell](../../decisions/0009-own-map-format-and-match-cells.md) of the match world. The match lifecycle, joining and leaving, deaths, respawns, spectators, the scoreboard, titles, chat and matchmaking come from the [minigame API](../../architecture/minigame-api/README.md); BedWars adds the beds, forges, shop, upgrades, traps and its other rules on top (`BedWarsGame`, `BedWarsMatch`, `BedWarsHandlers`).
 
 ### Modes
 
@@ -366,7 +366,7 @@ Effects of each trail:
 | `Padrão` (`padrao`) | `PAPER` | everyone |
 | `Estatístico` (`estatistico`) | `BOOK` | tournament prize (`availability: EVENT`, `&6Premiação de torneio`, shown as `Indisponível.` to anyone who does not own it) |
 
-The selected set replaces the chat messages of the match (`KillAnnouncer`, called by `RoomRuntime`):
+The selected set replaces the chat messages of the match (`KillAnnouncer`, called by `BedWarsMatch`):
 
 | Event | Whose set | Message kinds |
 |---|---|---|
@@ -592,13 +592,14 @@ Commands and queries in `br.com.muxe.minigame.bedwars.stats`: `RecordMatchComman
 - [Lobby](../lobby/README.md): `/jogar bedwars`.
 - [Credits and cosmetics](../credits/README.md): prices, purchases and ownership.
 - [Game engine](../../architecture/game-engine/README.md).
+- [Minigame API](../../architecture/minigame-api/README.md).
 
 ## Acceptance criteria
 
 - [x] Modes are loaded from configuration (engine tests).
 - [x] The nine modes have the limits and teams of the spec (`BedWarsSchemaTest`).
 - [x] An arena can be set up in game, with a checklist of what is missing (engine tests).
-- [x] Scoreboards, team indicators and the forge, timeline, kill credit, level, XP and ranking rules follow the spec (`RoomTest`, `GameRulesTest`, `GeneratorTimerTest`).
+- [x] Scoreboards, team indicators and the forge, timeline, kill credit, level, XP and ranking rules follow the spec (`RoomTest`, `GameRulesTest`, `GeneratorTimerTest`, and the minigame API tests `MatchTest`, `MatchRuntimeTest`, `KillCreditTest`, `TimelineTest`, `RankingTest`).
 - [x] Shop and upgrade names and lore follow the exports (`ShopCatalogTest`, `UpgradeCatalogTest`).
 - [x] The hotbar editor menus, the one-slot-per-entry layout, the storage and the placement of bought items follow the rules above (`HotbarLayoutTest`, `HotbarPlacementTest`, `HotbarEditorTest`, `HotbarHandlersTest`, `PostgresHotbarRepositoryIntegrationTest`).
 - [x] The favourite colour menu, its storage and the team assignment by favourite colour follow the rules above (`FavouriteColorMenuTest`, `FavouriteColorHandlersTest`, `PostgresFavouriteColorRepositoryIntegrationTest`, `TeamAssignerTest`, `RoomTest`).

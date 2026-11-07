@@ -16,7 +16,7 @@ Código: `minigames/engine/src/main/java/br/com/muxe/minigame/engine`.
 
 ## Ciclo de vida da partida
 
-Cada jogo cuida do ciclo de vida das suas partidas, porque os jogos são diferentes demais para dividir um só. O motor dá as peças que todo jogo precisa (modos, a contagem para iniciar, o setup e o armazenamento das arenas, as células das partidas, a divisão dos times, os códigos de sala) e fica fora do resto. O BedWars roda as partidas como salas (`WAITING → STARTING → PLAYING → ENDING`); veja [BedWars](../../features/bedwars/README.pt-BR.md#partidas).
+O motor dá as peças de baixo nível que todo jogo precisa (modos, a contagem para iniciar, o setup e o armazenamento das arenas, as células das partidas, a divisão dos times, os códigos de sala). A [API de minigames](../minigame-api/README.pt-BR.md) roda as partidas com elas (`WAITING → STARTING → PLAYING → ENDING`): entrada e saída, times, mortes, renascimento, espectadores, o placar, títulos, matchmaking e a fiação do servidor. Os jogos são feitos sobre a API de minigames, não direto sobre o motor.
 
 ## Contagem para iniciar
 
@@ -88,7 +88,7 @@ O mundo de setup é um mundo `muxe_setup_<nome>`, editado no criativo e voando. 
 
 ## Salas
 
-Peças que um jogo usa para rodar as suas salas:
+Peças que a [API de minigames](../minigame-api/README.pt-BR.md) usa para rodar as salas:
 
 | Classe | O que faz |
 |---|---|
@@ -125,7 +125,7 @@ As partidas nunca usam pastas de mundo. Veja a [ADR 0009](../../decisions/0009-o
 
 - Todo evento envolvendo um jogador, entidade, bloco ou mundo precisa ser roteado para a partida dona dele; interações entre partidas são canceladas.
 - Chat, tab list e visibilidade ficam restritos à partida.
-- O jogo cancela o trabalho agendado de uma partida quando ela fecha; as salas do BedWars rodam pelas tarefas compartilhadas do serviço de salas, então nada sobrevive a uma sala.
+- As partidas rodam pelas tarefas compartilhadas do `MatchService` da API de minigames (a cada segundo e a cada 5 ticks), então nada sobrevive a uma partida.
 - Eventos assíncronos, como o chat, leem retratos imutáveis montados na thread principal, nunca o estado vivo da partida.
 - Um erro na lógica de uma partida cancela só aquela partida.
 
@@ -141,4 +141,4 @@ Um jogo salva o fim de uma partida em **uma única transação do PostgreSQL** q
 
 ## Estado atual
 
-Implementado e testado: modos, ciclos de vida de partida e de arena, a regra de uma partida por jogador, o pool de arenas, os escopos de tarefas e as métricas. Também implementado: o formato de mapa `.mxw`, a importação de pastas de mundo, o carregador de chunks em memória e as células das partidas (testes unitários e uma execução no PandaSpigot 226). Ainda não implementado: roteamento de eventos por partida, gameplay, resultados e recompensas.
+Implementado e testado: modos, ciclos de vida de partida e de arena, a regra de uma partida por jogador, o pool de arenas, os escopos de tarefas e as métricas. Também implementado: o formato de mapa `.mxw`, a importação de pastas de mundo, o carregador de chunks em memória e as células das partidas (testes unitários e uma execução no PandaSpigot 226). O ciclo de vida da partida, o roteamento de eventos por partida e as regras de jogo compartilhadas ficam na [API de minigames](../minigame-api/README.pt-BR.md); resultados e recompensas ainda são de cada jogo.

@@ -10,7 +10,7 @@ SkyWars for the Muxe network. Lives in `minigames:skywars` (`Muxe-SkyWars`) and 
 
 ## How it works
 
-Today the plugin loads its game modes from configuration, creates the [game engine](../../architecture/game-engine/README.md) for SkyWars and registers its metrics. Gameplay (islands, chests, kits, kills, victory) is not implemented yet.
+Today the plugin loads its game modes from configuration and starts through the [minigame API](../../architecture/minigame-api/README.md) bootstrap, which creates the [game engine](../../architecture/game-engine/README.md) for SkyWars and registers its metrics. Gameplay (islands, chests, kits, kills, victory) is not implemented yet.
 
 ## Commands
 
@@ -47,6 +47,7 @@ None yet.
 
 - [Lobby](../lobby/README.md): `/jogar skywars`.
 - [Game engine](../../architecture/game-engine/README.md).
+- [Minigame API](../../architecture/minigame-api/README.md): how the gameplay will be built.
 
 ## Acceptance criteria
 

@@ -16,7 +16,7 @@ Code: `minigames/engine/src/main/java/br/com/muxe/minigame/engine`.
 
 ## Match lifecycle
 
-Each game owns the lifecycle of its matches, because games differ too much to share one. The engine gives the pieces every game needs (modes, the start countdown, arena setup and storage, match cells, team assignment, room codes) and stays out of the rest. BedWars runs its matches as rooms (`WAITING → STARTING → PLAYING → ENDING`); see [BedWars](../../features/bedwars/README.md#matches).
+The engine gives the low-level pieces every game needs (modes, the start countdown, arena setup and storage, match cells, team assignment, room codes). The [minigame API](../minigame-api/README.md) runs the matches with them (`WAITING → STARTING → PLAYING → ENDING`): joining and leaving, teams, deaths, respawns, spectators, the scoreboard, titles, matchmaking and the server wiring. Games are built on the minigame API, not on the engine directly.
 
 ## Start countdown
 
@@ -88,7 +88,7 @@ The setup world is a `muxe_setup_<name>` world, edited in creative and flying. S
 
 ## Rooms
 
-Pieces a game uses to run its rooms:
+Pieces the [minigame API](../minigame-api/README.md) uses to run the rooms:
 
 | Class | What it does |
 |---|---|
@@ -125,7 +125,7 @@ Matches never use world folders. See [ADR 0009](../../decisions/0009-own-map-for
 
 - Every event involving a player, entity, block or world must be routed to the match that owns it; interactions between matches are cancelled.
 - Chat, tab list and visibility are scoped to the match.
-- The game cancels a match's scheduled work when it closes; BedWars rooms run from the room service's shared tasks, so nothing outlives a room.
+- Matches run from the shared tasks of the minigame API's `MatchService` (every second and every 5 ticks), so nothing outlives a match.
 - Async events such as chat read immutable snapshots built on the main thread, never the live match state.
 - An error in one match's logic cancels that match only.
 
@@ -141,4 +141,4 @@ A game saves the end of a match in **one PostgreSQL transaction** that first cla
 
 ## Status
 
-Implemented and tested: modes, match and arena lifecycles, the one-match-per-player rule, the arena pool, task scopes and metrics. Also implemented: the `.mxw` map format, importing world folders, the in-memory chunk loader and match cells (unit tests, plus a run on PandaSpigot 226). Not implemented yet: event routing per match, gameplay, results and rewards.
+Implemented and tested: modes, match and arena lifecycles, the one-match-per-player rule, the arena pool, task scopes and metrics. Also implemented: the `.mxw` map format, importing world folders, the in-memory chunk loader and match cells (unit tests, plus a run on PandaSpigot 226). The match lifecycle, event routing per match and the shared gameplay rules live in the [minigame API](../minigame-api/README.md); results and rewards are still each game's.

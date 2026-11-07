@@ -21,7 +21,8 @@ Tudo sobre a Muxe está documentado aqui, em inglês e português. As regras de 
 - [Persistência](architecture/persistence/README.pt-BR.md): PostgreSQL, transações, migrações e o cache no Redis.
 - [Observabilidade](architecture/observability/README.pt-BR.md): todas as métricas que a rede exporta.
 - [Segurança](architecture/security/README.pt-BR.md): o que fica exposto e como servidores, serviços e segredos são protegidos.
-- [Motor de jogo](architecture/game-engine/README.pt-BR.md): partidas, arenas e seus ciclos de vida.
+- [Motor de jogo](architecture/game-engine/README.pt-BR.md): mundos, mapas, células, setup de arenas e modos.
+- [API de minigames](architecture/minigame-api/README.pt-BR.md): o runtime de partidas sobre o qual todo jogo é feito, e como criar um jogo novo.
 
 ## Decisões
 

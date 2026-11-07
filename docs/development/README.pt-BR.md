@@ -53,7 +53,8 @@ muxe/
 │   ├── lobby/            Muxe-Lobby, o lobby principal
 │   └── afk/              Muxe-AFK, o servidor AFK
 └── minigames/
-    ├── engine/           partidas, arenas e modos, compartilhados por todos os jogos
+    ├── engine/           mundos, mapas, setup de arenas e modos, compartilhados por todos os jogos
+    ├── api/              a API de minigames: o runtime de partidas sobre o qual todo jogo é feito
     ├── skywars/          Muxe-SkyWars
     └── bedwars/          Muxe-BedWars
 ```
@@ -67,9 +68,10 @@ muxe/
 | `servers:lobby` | Plugin Spigot | O lobby principal. | `muxe-lobby.jar` |
 | `servers:afk` | Plugin Spigot | O [servidor AFK](../features/afk/README.pt-BR.md). | `muxe-afk.jar` |
 | `minigames:engine` | Biblioteca que usa a API do Spigot | O [motor de jogo](../architecture/game-engine/README.pt-BR.md). | Dentro do jar de cada jogo |
+| `minigames:api` | Biblioteca que usa a API do Spigot | A [API de minigames](../architecture/minigame-api/README.pt-BR.md). | Dentro do jar de cada jogo |
 | `minigames:skywars`, `minigames:bedwars` | Plugin Spigot | Um jogo cada. | `muxe-skywars.jar`, `muxe-bedwars.jar` |
 
-Os pacotes seguem o módulo: `br.com.muxe.core.common`, `br.com.muxe.core.bukkit`, `br.com.muxe.core.proxy`, `br.com.muxe.auth`, `br.com.muxe.lobby`, `br.com.muxe.afk`, `br.com.muxe.minigame.engine`, `br.com.muxe.minigame.skywars`...
+Os pacotes seguem o módulo: `br.com.muxe.core.common`, `br.com.muxe.core.bukkit`, `br.com.muxe.core.proxy`, `br.com.muxe.auth`, `br.com.muxe.lobby`, `br.com.muxe.afk`, `br.com.muxe.minigame.engine`, `br.com.muxe.minigame.api`, `br.com.muxe.minigame.skywars`...
 
 ## Servidores
 
@@ -95,7 +97,8 @@ Cada módulo só pode depender dos grupos abaixo. O build garante essas regras: 
 | `core:bukkit`, `core:proxy` | `core:common` |
 | `servers:*` | `core:common`, `core:bukkit` |
 | `minigames:engine` | `core:common`, `core:bukkit` |
-| `minigames:*` | `core:common`, `core:bukkit`, `minigames:engine` |
+| `minigames:api` | `core:common`, `core:bukkit`, `minigames:engine` |
+| `minigames:*` | `core:common`, `core:bukkit`, `minigames:engine`, `minigames:api` |
 
 O que essas regras garantem:
 
@@ -103,7 +106,7 @@ O que essas regras garantem:
 - **Jogos e plugins de servidor nunca dependem uns dos outros.** Remover ou alterar um nunca quebra outro.
 - **O `core:common` não sabe nada sobre Bukkit ou Velocity.** Ele é testado sem servidor algum.
 - **O core nunca é embutido duas vezes.** Plugins de servidor e de jogo usam o `core:bukkit` com `compileOnly`, já que o Muxe-Core já está no servidor.
-- **O motor de jogo é embutido em cada jogo.** Dois jogos nunca rodam no mesmo servidor, então as cópias nunca se encontram.
+- **O motor de jogo e a API de minigames são embutidos em cada jogo.** Dois jogos nunca rodam no mesmo servidor, então as cópias nunca se encontram. Um jogo declara `implementation(projects.minigames.api)`, que traz o motor junto.
 
 As regras ficam em [`build-logic/src/main/kotlin/ModuleRules.kt`](../../build-logic/src/main/kotlin/ModuleRules.kt).
 

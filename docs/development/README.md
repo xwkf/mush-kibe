@@ -53,7 +53,8 @@ muxe/
 │   ├── lobby/            Muxe-Lobby, the main lobby
 │   └── afk/              Muxe-AFK, the AFK server
 └── minigames/
-    ├── engine/           matches, arenas and modes, shared by every game
+    ├── engine/           worlds, maps, arena setup and modes, shared by every game
+    ├── api/              the minigame API: the match runtime every game is built on
     ├── skywars/          Muxe-SkyWars
     └── bedwars/          Muxe-BedWars
 ```
@@ -67,9 +68,10 @@ muxe/
 | `servers:lobby` | Spigot plugin | The main lobby. | `muxe-lobby.jar` |
 | `servers:afk` | Spigot plugin | The [AFK server](../features/afk/README.md). | `muxe-afk.jar` |
 | `minigames:engine` | Library that uses the Spigot API | The [game engine](../architecture/game-engine/README.md). | Inside each game's jar |
+| `minigames:api` | Library that uses the Spigot API | The [minigame API](../architecture/minigame-api/README.md). | Inside each game's jar |
 | `minigames:skywars`, `minigames:bedwars` | Spigot plugin | One game each. | `muxe-skywars.jar`, `muxe-bedwars.jar` |
 
-Packages follow the module: `br.com.muxe.core.common`, `br.com.muxe.core.bukkit`, `br.com.muxe.core.proxy`, `br.com.muxe.auth`, `br.com.muxe.lobby`, `br.com.muxe.afk`, `br.com.muxe.minigame.engine`, `br.com.muxe.minigame.skywars`...
+Packages follow the module: `br.com.muxe.core.common`, `br.com.muxe.core.bukkit`, `br.com.muxe.core.proxy`, `br.com.muxe.auth`, `br.com.muxe.lobby`, `br.com.muxe.afk`, `br.com.muxe.minigame.engine`, `br.com.muxe.minigame.api`, `br.com.muxe.minigame.skywars`...
 
 ## Servers
 
@@ -95,7 +97,8 @@ Each module may only depend on the groups below. The build enforces these rules:
 | `core:bukkit`, `core:proxy` | `core:common` |
 | `servers:*` | `core:common`, `core:bukkit` |
 | `minigames:engine` | `core:common`, `core:bukkit` |
-| `minigames:*` | `core:common`, `core:bukkit`, `minigames:engine` |
+| `minigames:api` | `core:common`, `core:bukkit`, `minigames:engine` |
+| `minigames:*` | `core:common`, `core:bukkit`, `minigames:engine`, `minigames:api` |
 
 What these rules guarantee:
 
@@ -103,7 +106,7 @@ What these rules guarantee:
 - **Games and server plugins never depend on each other.** Removing or changing one never breaks another.
 - **`core:common` knows nothing about Bukkit or Velocity.** It is tested without any server.
 - **The core is never bundled twice.** Server and game plugins use `core:bukkit` with `compileOnly`, since Muxe-Core is already on the server.
-- **The game engine is bundled inside each game.** Two games never run on the same server, so their copies never meet.
+- **The game engine and the minigame API are bundled inside each game.** Two games never run on the same server, so their copies never meet. A game declares `implementation(projects.minigames.api)`, which brings the engine with it.
 
 The rules live in [`build-logic/src/main/kotlin/ModuleRules.kt`](../../build-logic/src/main/kotlin/ModuleRules.kt).
 

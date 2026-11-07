@@ -13,7 +13,7 @@ Leia antes de alterar código, nesta ordem:
 1. [Visão geral da arquitetura](docs/architecture/overview/README.pt-BR.md): camadas, CQRS, organização de pacotes.
 2. [Convenções](docs/development/conventions/README.pt-BR.md): estilo de Java, nomes, pacotes, configuração e mensagens.
 3. [Desenvolvimento](docs/development/README.pt-BR.md): módulos, regras de dependência e comandos.
-4. O documento de arquitetura da área que você vai mexer ([mensageria](docs/architecture/messaging/README.pt-BR.md), [persistência](docs/architecture/persistence/README.pt-BR.md), [observabilidade](docs/architecture/observability/README.pt-BR.md), [segurança](docs/architecture/security/README.pt-BR.md), [motor de jogo](docs/architecture/game-engine/README.pt-BR.md)).
+4. O documento de arquitetura da área que você vai mexer ([mensageria](docs/architecture/messaging/README.pt-BR.md), [persistência](docs/architecture/persistence/README.pt-BR.md), [observabilidade](docs/architecture/observability/README.pt-BR.md), [segurança](docs/architecture/security/README.pt-BR.md), [motor de jogo](docs/architecture/game-engine/README.pt-BR.md), [API de minigames](docs/architecture/minigame-api/README.pt-BR.md)).
 5. A documentação das features em [docs/features/](docs/features/).
 
 ## Legal

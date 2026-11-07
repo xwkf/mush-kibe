@@ -10,7 +10,7 @@ SkyWars para a rede Muxe. Fica no `minigames:skywars` (`Muxe-SkyWars`) e roda no
 
 ## Como funciona
 
-Hoje o plugin carrega os seus modos de jogo da configuração, cria o [motor de jogo](../../architecture/game-engine/README.pt-BR.md) para o SkyWars e registra as suas métricas. A jogabilidade (ilhas, baús, kits, abates, vitória) ainda não foi implementada.
+Hoje o plugin carrega os seus modos de jogo da configuração e sobe pelo bootstrap da [API de minigames](../../architecture/minigame-api/README.pt-BR.md), que cria o [motor de jogo](../../architecture/game-engine/README.pt-BR.md) para o SkyWars e registra as suas métricas. A jogabilidade (ilhas, baús, kits, abates, vitória) ainda não foi implementada.
 
 ## Comandos
 
@@ -47,6 +47,7 @@ Nenhum ainda.
 
 - [Lobby](../lobby/README.pt-BR.md): `/jogar skywars`.
 - [Motor de jogo](../../architecture/game-engine/README.pt-BR.md).
+- [API de minigames](../../architecture/minigame-api/README.pt-BR.md): como a jogabilidade será feita.
 
 ## Critérios de aceitação
 

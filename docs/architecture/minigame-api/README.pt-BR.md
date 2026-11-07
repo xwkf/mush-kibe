@@ -1,0 +1,200 @@
+[English](README.md) | **Português**
+
+# API de minigames
+
+A camada sobre a qual todo jogo é feito. O [motor de jogo](../game-engine/README.pt-BR.md) dá as peças de baixo nível (mundos, mapas, células, setup de arena, modos, a contagem). A API de minigames roda as partidas com elas: o ciclo de vida, entrada e saída, times, mortes, renascimento, espectadores, o placar, títulos, chat, matchmaking e a fiação do servidor. Um jogo declara a arena, as regras e os ganchos do que só ele faz.
+
+Código: `minigames/api/src/main/java/br/com/muxe/minigame/api`. Módulo `minigames:api`, embutido no jar de cada jogo junto com o motor.
+
+## Criando um jogo
+
+Um jogo é feito destas peças:
+
+| Peça | O que o jogo escreve |
+|---|---|
+| Schema da arena | Os passos do `/arena`, com `ArenaSchema.builder(modes)`. |
+| Arena | A arena tipada (um `MatchArena`) lida do rascunho salvo com `ArenaView`, ou `StandardArena` quando os passos padrão bastam. |
+| `Minigame<A, S>` | O id, as `MatchRules`, como ler uma arena e como abrir o estado de uma partida nova. |
+| `MatchState` | O que acontece numa partida que só esse jogo faz, por ganchos. Todo gancho tem um padrão. |
+| `GameHandlers<S>` | Opcional. Os eventos de uma partida em jogo: blocos, interações, explosões, dano, coleta de itens. |
+
+```java
+public final class SkyWarsGame implements Minigame<StandardArena, SkyWarsMatch> {
+
+    public String id() {
+        return "skywars";
+    }
+
+    public MatchRules rules() {
+        return MatchRules.defaults("mxsw").breakingAnything();
+    }
+
+    public StandardArena arena(LoadedArena loaded) {
+        return StandardArena.from(loaded);
+    }
+
+    public SkyWarsMatch open(MatchRuntime<SkyWarsMatch> runtime, StandardArena arena) {
+        return new SkyWarsMatch(runtime, arena);
+    }
+}
+```
+
+```java
+ArenaSchema schema = ArenaSchema.builder(modes)
+    .waiting()
+    .spectator()
+    .voidHeight()
+    .teamSpawn()
+    .step(CHESTS)
+    .fixedTeams(modesSection)
+    .build();
+```
+
+O bootstrap liga o resto:
+
+```java
+MinigameBootstrap minigame = new MinigameBootstrap(plugin, core, "skywars", modes, messages, commands, config);
+if (minigame.isLobby()) {
+    minigame.setup(schema);
+    return;
+}
+MatchServer<StandardArena, SkyWarsMatch> server = minigame.matches(new SkyWarsGame(), MatchSettings.from(config), MatchEvents.NONE);
+server.listen(new SkyWarsHandlers());
+```
+
+## Schema da arena
+
+`ArenaSchema` é o `SetupSchema` do motor, montado de forma declarativa:
+
+| Builder | Adiciona |
+|---|---|
+| `waiting()` | `espera` (spawn da área de espera) e `area-espera` (a região apagada quando a partida começa). |
+| `spectator()` | `espectador`, onde mortos e espectadores aparecem. |
+| `voidHeight()` | `void`, a altura abaixo da qual o jogador morre. |
+| `teamSpawn()` | `spawn` de cada time, também a âncora que posiciona os outros passos de time. |
+| `step(...)` | Os passos do próprio jogo, na ordem da checklist. |
+| `stepsFor(modos, ...)` | Passos que só alguns modos têm. |
+| `linked(...)` | Blocos achados sozinhos em volta da âncora, como uma cama. |
+| `fixedTeams(...)` | Os times fixos de um modo, à mão ou de `modes.<id>.fixed-teams`. A quantidade precisa bater com o modo. |
+
+`ArenaView` lê o rascunho salvo com tipos: `point(passo)`, `point(passo, time)` (falha quando falta), `points(...)`, `height(passo)`, `optionalHeight(passo)` e `perTeam(leitor)`. `StandardArena` lê os passos padrão para um jogo que não precisa de mais nada.
+
+## Ciclo de vida da partida
+
+`WAITING → STARTING → PLAYING → ENDING`, depois a partida fecha e libera a célula. A API roda cada passo; o jogo só preenche os ganchos.
+
+| Quando | O que a API faz | Ganchos |
+|---|---|---|
+| Um jogador entra | Volta ele ao sobrevivência, avisa `room-joined` na sala, teleporta para o spawn da espera, dá a hotbar da espera e o placar. | `arrived` |
+| O mínimo é atingido | Roda a [contagem de início](../game-engine/README.pt-BR.md#contagem-para-iniciar), com os títulos de `countdown.titles` e o som `countdown`. | |
+| A contagem acaba | Sorteia os times (cores favoritas de `Minigame.teamPreferences`), protege todos, coloca cada jogador no spawn do time, apaga a área de espera, avisa `match-started`. Times sem ninguém param de renascer e estão fora. | `starting`, `spawned`, `started` |
+| A cada segundo | Conta o tempo, renasce quem já pode, elimina quem não voltou a tempo, atualiza o placar. | `everySecond`, `playing` |
+| A cada 5 ticks | Mostra a vida abaixo do nome. | `fastTick` |
+| Um jogador morre | Acha quem matou (último inimigo que bateu em até 15 segundos; numa morte final, quem tirou o renascimento do time), credita kills e assistências, manda a mensagem de morte, deixa o jogador espectador e agenda o renascimento ou elimina. | `died`, `deathMessage` |
+| Um time sai | Avisa `team-eliminated`. Quando sobra um time (ou nenhum, numa partida forçada com um time só) a partida acaba. | `standingsChanged` |
+| A partida acaba | Toca os sons de fim, dá a hotbar dos vencedores e dos espectadores, mostra o título de vitória ou derrota, sorteia quem faz o cosmético de vitória, manda o resultado centralizado com os rankings. | `ending`, `ended`, `score`, `area` |
+| `timings.restart-seconds` depois | Manda todos para o `lobby-group` e fecha a partida 3 segundos depois. | `closed` |
+
+### Renascimento e kills finais
+
+Um time renasce ou não (`MatchTeam.respawns`). `MatchRules.respawning()` faz os times começarem renascendo; o jogo desliga isso para um time com `stopRespawning(quem)`, e quem tirou o renascimento ganha as kills finais que ninguém mais ganhou. Uma morte enquanto o time renasce é uma morte; senão é morte final e elimina o jogador. No BedWars, quebrar a cama para o renascimento do time.
+
+### Sair e voltar
+
+- Sair antes do início deixa a sala (`room-left`) e pode cancelar a contagem.
+- Sair enquanto o time renasce guarda a vaga por `timings.rejoin-seconds` e grava `match:return:<jogador>` para o `/retornar` funcionar. Ao chegar de novo, o jogador volta como espectador e renasce depois de `timings.respawn-seconds` (`reconnected`).
+- Sair quando o time não renasce é morte final, creditada a quem bateu por último.
+- Não voltar a tempo elimina o jogador.
+
+### Regras
+
+`MatchRules` guarda o que muda de jogo para jogo, com padrões:
+
+| Regra | Padrão | Significado |
+|---|---|---|
+| `respawn` | desligado | Os times começam renascendo. |
+| `breakOnlyPlaced` | ligado | Só blocos colocados na partida podem ser quebrados ou explodidos. |
+| `hunger` | desligado | A fome muda. |
+| `crafting` | desligado | Pode craftar. |
+| `enterBeds` | desligado | Camas podem ser usadas no mundo das partidas. |
+| `moveArmor` | desligado | Os slots de armadura podem ser clicados. |
+| `undroppable` | nada | Itens que não podem ser dropados. |
+| `nameTagPrefix` | | Prefixo dos times de placar das name tags (BedWars: `mxbw`). |
+
+Sempre ligado: fogo amigo desligado, quem não está vivo não bate, o void mata, a proteção de spawn acaba quando o jogador bate em alguém, espectadores não mexem no inventário.
+
+## Peças
+
+| Pacote | Classes | Servidor? |
+|---|---|---|
+| `match` | `Match`, `Participant`, `MatchTeam`, `MatchPhase`, `TeamStatus`, `ChatView`, `Ranking`, `MatchArena` | Não |
+| `combat` | `KillCredit` | Não |
+| `timeline` | `Timeline<E>`: eventos em segundos fixos e o próximo para o placar | Não |
+| `arena` | `ArenaSchema`, `ArenaView`, `StandardArena` | Não |
+| `runtime` | `Minigame`, `MatchState`, `MatchRules`, `MatchRuntime`, `MatchService`, `Matches`, `Stage`, `Cells`, `Death`, `MatchEvents`, `TeamPreferences` | Sem chamadas estáticas ao servidor |
+| `settings` | `MatchSettings` e suas partes, lidas do `config.yml` do jogo | Só configuração |
+| `view` | `MatchBoard` (placar), `NameTagStyle`, `EndTitles`, `TitleSweep` | |
+| `spectator` | `Ghosts`, `Spectating`, `TeleporterMenu`, `SpectatorTargets` | |
+| `listener` | `MatchListener`, `GameHandlers` | Sim |
+| `network`, `matchmaking` | Pacotes de salas, `RoomPublisher`, `MatchConnector`, `Matchmaker`, `RoomChoice`, `RoomDirectory`, `Reservations` | Sim |
+| `bukkit` | `BukkitStage`, `MatchWorldCells`, `MatchTicker` | Sim |
+| `bootstrap` | `MinigameBootstrap`, `MatchServer` | Sim |
+| `command` | `GlobalChatCommand` (`/g`) | Sim |
+
+- **`MatchRuntime`** roda uma partida. Nunca chama o servidor direto: tudo o que faz com os jogadores passa pela porta `Stage` (`BukkitStage` no servidor, uma falsa nos testes), então o ciclo inteiro é testado sem servidor.
+- **`MatchService`** guarda as partidas do servidor: cria numa arena pronta sorteada, escolhe a sala aberta mais cheia, segura reservas por 30 segundos, devolve quem chega à partida para a qual pode voltar, mantém as visões de chat e as name tags, fecha partidas vazias depois de `timings.empty-room-seconds` e fecha uma partida cuja lógica lança exceção. Os jogos leem ele por `Matches<S>` (`of(jogador)`, `at(local)`, `all()`, `playing(jogador)`).
+- **`MatchListener`** trata os eventos que todo jogo compartilha e chama `GameHandlers` só para um jogador vivo numa partida em jogo, então o jogo nunca repete as checagens de fase e de vivo. Também cuida da hotbar da espera (`menu`, `leave`), da hotbar de espectador (teleportador, jogador aleatório, jogador em combate, jogar novamente, sair), do aviso dos comandos de lobby (`left-match`), do void, fome, drops, crafting, camas, slots de armadura e do chat da partida com `/g`.
+- **`MatchEvents`** avisa os cosméticos sobre vitórias e kills finais.
+
+## Configuração
+
+Lida por `MatchSettings.from(config)` do `config.yml` do jogo:
+
+| Chave | Padrão | Descrição |
+|---|---|---|
+| `lobby-group` | `lobby` | Para onde os jogadores vão depois da partida e com os itens de sair. |
+| `default-mode` | `solo` | Modo de quem chega sem reserva. |
+| `timings.respawn-seconds` | `5` | Tempo para renascer. |
+| `timings.rejoin-seconds` | `180` | Quanto tempo quem saiu pode voltar. |
+| `timings.restart-seconds` | `30` | Segundos entre o fim e mandar todos para o lobby. |
+| `timings.respawn-protection-seconds` | `3` | Proteção de spawn no início e depois de renascer. |
+| `timings.empty-room-seconds` | `60` | Uma partida vazia na espera fecha depois disso. |
+| `countdown.titles` | | Título de cada segundo da contagem. |
+| `scoreboard.*` | | Título e linhas de cada fase (`waiting`, `starting`, `playing`, `playing-eight-teams`) e a linha de time. Placeholders: `{code}`, `{map}`, `{players}`, `{max}`, `{seconds}`, `{mode}`, `{winstreak}`, `{kills}`, `{final-kills}`, `{teams}`, `{event}` e os do próprio jogo (`MatchState.placeholders`). |
+| `hotbar.waiting.menu`, `hotbar.waiting.leave` | | Itens da hotbar da espera. |
+| `hotbar.spectator.*` | | Itens de espectador: `teleporter`, `random-player`, `player-in-combat`, `play-again`, `leave`. |
+| `hotbar.teleporter.title`, `hotbar.teleporter.entry-lore` | | Menu do teleportador. |
+| `sounds.countdown`, `sounds.eliminated`, `sounds.team-eliminated`, `sounds.match-end`, `sounds.match-end-firework` | | Sons da partida. |
+| `end-titles.victory`, `end-titles.defeat` | `VITÓRIA`, `DERROTA` | Palavra, cores e som dos títulos de fim. |
+
+Mensagens, em `messages`: `room-joined`, `room-left`, `died-title`, `respawn-subtitle`, `spectator-subtitle`, `reconnected`, `team-eliminated`, `match-started`, `result` (com linhas `{top-<ranking>}`), `result-draw`, `result-nobody`, `result-rank-1` a `result-rank-3`, `kill` e `death` (quando o jogo não tem mensagens de morte próprias), `no-arena`, `left-match`, `spectator-no-target`, `spectator-no-combat`, `global-prefix`, `health-below-name`, `room-requesting`, `room-sending`, `room-created`, `room-unavailable`.
+
+## Pacotes
+
+Cada jogo tem seus três pacotes, com o nome do id do jogo (`MatchPackets`):
+
+| Pacote | Entrega | O que leva |
+|---|---|---|
+| `<jogo>.rooms` | volátil, 10 s | A cada 2 s, de cada servidor do jogo para o `lobby-group` e o grupo do jogo: as salas (código, modo, arena, aberta, jogadores, máximo) e as arenas prontas. |
+| `<jogo>.join_request` | 5 s | De um lobby para um servidor do jogo: reservar uma vaga num modo, arena ou sala. |
+| `<jogo>.join_reply` | 5 s | Se a vaga foi reservada, o código da sala e se a sala foi criada. |
+
+O BedWars mantém `bedwars.rooms`, `bedwars.join_request` e `bedwars.join_reply`.
+
+## Como o BedWars usa
+
+| Classe do BedWars | Na API |
+|---|---|
+| `BedWarsGame` | O `Minigame`: regras com renascimento, as ferramentas que não podem ser dropadas, name tags `mxbw`, cores favoritas. |
+| `BedWarsSchema` | O `ArenaSchema` com geradores, camas, lojas, melhorias e as ilhas extras do `4s`. |
+| `BedWarsArena` | O `MatchArena`, lido com `ArenaView`. |
+| `Room` | Envolve o `Match` com as camas (cama quebrada para o renascimento do time), melhorias de time, tiers de ferramenta e contadores de missão, resultados e a área do mapa. |
+| `BedWarsMatch` | O `MatchState`: forjas, NPCs, baús das ilhas, baús do fim, armadilhas e cura, os eventos da timeline, missões, níveis, estatísticas e as mensagens de kill. |
+| `BedWarsHandlers` | Os `GameHandlers`: camas, folhagem, TNT, bolas de fogo, estilingue, traças, depósito nos baús e coleta das forjas. |
+
+## Testes
+
+- `MatchTest`, `ChatViewTest`, `TeamStatusTest`, `KillCreditTest`, `TimelineTest`, `RankingTest`: as regras da partida.
+- `MatchRuntimeTest`: o ciclo inteiro com uma `Stage` falsa (entrada, contagem, início, mortes, renascimento, kills finais, saída, volta, tempo esgotado, o fim e o fechamento).
+- `MatchServiceTest`: chegada, reservas, volta, chat, comandos da staff, partidas vazias e troca de modo.
+- `ArenaSchemaTest`, `MatchmakerTest`, `ReservationsTest`, `JoinNoticesTest`, `TitleSweepTest`, `TitleRunsTest`, `SpectatorTargetsTest`, `BukkitStageTest`.

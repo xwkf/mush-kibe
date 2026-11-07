@@ -10,7 +10,7 @@ BedWars para a rede Muxe. Fica no `minigames:bedwars` (`Muxe-BedWars`) e roda no
 
 ## Como funciona
 
-O plugin carrega os nove modos, dá à staff o [setup de arenas](../../architecture/game-engine/README.pt-BR.md#setup-de-arenas) e roda as partidas do servidor, várias ao mesmo tempo, cada uma na própria [célula](../../decisions/0009-own-map-format-and-match-cells.pt-BR.md) do mundo das partidas.
+O plugin carrega os nove modos, dá à staff o [setup de arenas](../../architecture/game-engine/README.pt-BR.md#setup-de-arenas) e roda as partidas do servidor, várias ao mesmo tempo, cada uma na própria [célula](../../decisions/0009-own-map-format-and-match-cells.pt-BR.md) do mundo das partidas. O ciclo de vida da partida, entrada e saída, mortes, renascimento, espectadores, o placar, títulos, chat e matchmaking vêm da [API de minigames](../../architecture/minigame-api/README.pt-BR.md); o BedWars acrescenta as camas, forjas, loja, melhorias, armadilhas e as outras regras dele por cima (`BedWarsGame`, `BedWarsMatch`, `BedWarsHandlers`).
 
 ### Modos
 
@@ -366,7 +366,7 @@ Efeitos de cada rastro:
 | `Padrão` (`padrao`) | `PAPER` | todos |
 | `Estatístico` (`estatistico`) | `BOOK` | premiação de torneio (`availability: EVENT`, `&6Premiação de torneio`, mostrado como `Indisponível.` para quem não possui) |
 
-O conjunto selecionado substitui as mensagens de chat da partida (`KillAnnouncer`, chamado pelo `RoomRuntime`):
+O conjunto selecionado substitui as mensagens de chat da partida (`KillAnnouncer`, chamado pelo `BedWarsMatch`):
 
 | Evento | De quem é o conjunto | Tipos de mensagem |
 |---|---|---|
@@ -592,13 +592,14 @@ Comandos e consultas em `br.com.muxe.minigame.bedwars.stats`: `RecordMatchComman
 - [Lobby](../lobby/README.pt-BR.md): `/jogar bedwars`.
 - [Créditos e cosméticos](../credits/README.pt-BR.md): preços, compras e posse.
 - [Motor de jogo](../../architecture/game-engine/README.pt-BR.md).
+- [API de minigames](../../architecture/minigame-api/README.pt-BR.md).
 
 ## Critérios de aceitação
 
 - [x] Os modos são carregados da configuração (testes do motor).
 - [x] Os nove modos têm os limites e os times da especificação (`BedWarsSchemaTest`).
 - [x] Uma arena pode ser configurada no jogo, com uma checklist do que falta (testes do motor).
-- [x] Placares, indicadores dos times e as regras de forja, linha do tempo, kills, níveis, XP e ranking seguem a especificação (`RoomTest`, `GameRulesTest`, `GeneratorTimerTest`).
+- [x] Placares, indicadores dos times e as regras de forja, linha do tempo, kills, níveis, XP e ranking seguem a especificação (`RoomTest`, `GameRulesTest`, `GeneratorTimerTest`, e os testes da API de minigames `MatchTest`, `MatchRuntimeTest`, `KillCreditTest`, `TimelineTest`, `RankingTest`).
 - [x] Nomes e lores da loja e das melhorias seguem os exports (`ShopCatalogTest`, `UpgradeCatalogTest`).
 - [x] Os menus do editor de hotbar, o layout com uma entrada por slot, o armazenamento e a colocação dos itens comprados seguem as regras acima (`HotbarLayoutTest`, `HotbarPlacementTest`, `HotbarEditorTest`, `HotbarHandlersTest`, `PostgresHotbarRepositoryIntegrationTest`).
 - [x] O menu de cor preferida, o armazenamento e a divisão dos times pela cor preferida seguem as regras acima (`FavouriteColorMenuTest`, `FavouriteColorHandlersTest`, `PostgresFavouriteColorRepositoryIntegrationTest`, `TeamAssignerTest`, `RoomTest`).
