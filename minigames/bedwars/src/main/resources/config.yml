@@ -1977,6 +1977,17 @@ cosmetics:
       description:
         - "&7Comemore a sua destruição"
         - "&7de cama com balões!"
+    kraken:
+      name: "Kraken"
+      icon:
+        material: SKULL_ITEM
+        data: 3
+        skull-texture: 64d62a402cb6b0794371b024082b7e48c169e24e64356c4e0f06db71415ac72d
+      stars: 5
+      availability: SALE
+      description:
+        - "&7Um Kraken surge do mar e"
+        - "&7esmaga a cama do oponente!"
   final-kill:
     category: bedwars-kill-final
     prices:

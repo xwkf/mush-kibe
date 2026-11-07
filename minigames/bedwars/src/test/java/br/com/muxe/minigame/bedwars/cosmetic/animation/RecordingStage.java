@@ -248,6 +248,7 @@ final class RecordingStage implements Stage {
         final Map<Integer, Object> watched = new HashMap<>();
         final Map<Slot, String> skulls = new HashMap<>();
         final Map<Slot, Material> equipment = new HashMap<>();
+        final Map<Slot, Integer> equipmentData = new HashMap<>();
 
         FakeActor(String type, Vec position) {
             this.type = type;
@@ -267,6 +268,7 @@ final class RecordingStage implements Stage {
         @Override
         public void equip(Slot slot, Material material, int data) {
             equipment.put(slot, material);
+            equipmentData.put(slot, data);
         }
 
         @Override

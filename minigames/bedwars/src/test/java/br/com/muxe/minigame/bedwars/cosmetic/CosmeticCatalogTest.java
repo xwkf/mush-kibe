@@ -31,13 +31,18 @@ class CosmeticCatalogTest {
     private final CosmeticIcons icons = new CosmeticIcons(CosmeticMenuSettings.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus")).category(CosmeticMenuSettings.BED_DESTRUCTION), catalog);
 
     @Test
-    void theCatalogListsThirtyCosmeticsAndEveryAnimationHasAnEntry() {
+    void theCatalogListsThirtyOneCosmeticsAndEveryAnimationHasAnEntry() {
         CosmeticCatalog real = CosmeticCatalog.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics"), id -> ANIMATIONS.find(id).isPresent());
-        assertThat(real.all()).hasSize(30).allMatch(BedCosmetic::animated);
-        assertThat(catalog.all().stream().filter(BedCosmetic::animated)).hasSize(28);
+        assertThat(real.all()).hasSize(31).allMatch(BedCosmetic::animated);
+        assertThat(catalog.all().stream().filter(BedCosmetic::animated)).hasSize(29);
         ANIMATIONS.all().forEach(animation -> assertThat(catalog.find(animation.id())).as(animation.id()).isPresent());
         assertThat(catalog.price(catalog.find("tinta").orElseThrow())).isEqualTo(1_750);
         assertThat(catalog.price(catalog.find("sal-na-ferida").orElseThrow())).isEqualTo(750);
+        BedCosmetic kraken = catalog.find("kraken").orElseThrow();
+        assertThat(kraken.name()).isEqualTo("Kraken");
+        assertThat(kraken.availability()).isEqualTo(Availability.SALE);
+        assertThat(kraken.forSale()).isTrue();
+        assertThat(catalog.price(kraken)).isEqualTo(2_000);
     }
 
     @Test
@@ -64,7 +69,7 @@ class CosmeticCatalogTest {
         CosmeticWallet wallet = CosmeticWallet.loaded(Set.of(), CosmeticWallet.RANDOM, 0, access, catalog);
 
         assertThat(access).isEqualTo(CosmeticAccess.ALL);
-        assertThat(wallet.ownedCount(catalog)).isEqualTo(30);
+        assertThat(wallet.ownedCount(catalog)).isEqualTo(31);
         assertThat(wallet.state(catalog.find("apavorante").orElseThrow())).isEqualTo(CosmeticState.OWNED);
         assertThat(wallet.state(catalog.find("tubarao").orElseThrow())).isEqualTo(CosmeticState.UNAVAILABLE);
     }
@@ -130,7 +135,7 @@ class CosmeticCatalogTest {
         assertThat(avalanche.lore()).endsWith("§aJá selecionado.", "§eBotão direito: §fVisualizar");
         assertThat(tubarao.lore()).endsWith("§aAniversário 2026", " ", "§cIndisponível.", "§eBotão direito: §fVisualizar");
         assertThat(icons.selectedName(wallet)).isEqualTo("Avalanche");
-        assertThat(icons.category(wallet).lore().getFirst()).isEqualTo("§81/30 (3%)");
+        assertThat(icons.category(wallet).lore().getFirst()).isEqualTo("§81/31 (3%)");
     }
 
     @Test

@@ -38,7 +38,8 @@ public final class BedAnimations {
         new BalloonsAnimation(),
         new CakeRainAnimation(),
         new EnchantedAnimation(),
-        new VictoryBlastAnimation()
+        new VictoryBlastAnimation(),
+        new KrakenAnimation()
     );
 
     private final Map<String, BedAnimation> byId = new LinkedHashMap<>();
