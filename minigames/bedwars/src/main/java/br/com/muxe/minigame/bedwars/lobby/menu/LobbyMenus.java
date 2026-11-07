@@ -5,10 +5,10 @@ import br.com.muxe.core.bukkit.item.ItemBuilder;
 import br.com.muxe.core.bukkit.menu.Menu;
 import br.com.muxe.core.bukkit.prompt.ChatPrompts;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
+import br.com.muxe.minigame.api.arena.ArenaSchema;
 import br.com.muxe.minigame.api.matchmaking.MatchConnector;
 import br.com.muxe.minigame.api.matchmaking.RoomDirectory;
 import br.com.muxe.minigame.api.network.ArenaInfo;
-import br.com.muxe.minigame.bedwars.arena.BedWarsSchema;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.MenuSlot;
 import br.com.muxe.minigame.bedwars.game.Levels;
 import br.com.muxe.minigame.bedwars.lobby.LobbyLines;
@@ -40,7 +40,7 @@ public final class LobbyMenus {
 
     private final MuxeCore core;
     private final LobbyMenuSettings settings;
-    private final BedWarsSchema schema;
+    private final ArenaSchema schema;
     private final MatchConnector connector;
     private final TopData tops;
     private final TagColors colors;
@@ -48,7 +48,7 @@ public final class LobbyMenus {
     private final MessageCatalog messages;
     private final ChatPrompts prompts;
 
-    public LobbyMenus(Plugin plugin, MuxeCore core, LobbyMenuSettings settings, BedWarsSchema schema, MatchConnector connector, TopData tops, TagColors colors,
+    public LobbyMenus(Plugin plugin, MuxeCore core, LobbyMenuSettings settings, ArenaSchema schema, MatchConnector connector, TopData tops, TagColors colors,
                       LevelBadges badges, MessageCatalog messages) {
         this.core = core;
         this.settings = settings;

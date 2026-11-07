@@ -2,8 +2,8 @@ package br.com.muxe.minigame.bedwars.bootstrap;
 
 import br.com.muxe.core.bukkit.api.MuxeCore;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
+import br.com.muxe.minigame.api.arena.ArenaSchema;
 import br.com.muxe.minigame.api.matchmaking.MatchConnector;
-import br.com.muxe.minigame.bedwars.arena.BedWarsSchema;
 import br.com.muxe.minigame.bedwars.lobby.format.LevelBadges;
 import br.com.muxe.minigame.bedwars.lobby.menu.LobbyMenuSettings;
 import br.com.muxe.minigame.bedwars.lobby.menu.LobbyMenus;
@@ -21,7 +21,7 @@ final class PlayAgain {
     private PlayAgain() {
     }
 
-    static LobbyMenus menus(JavaPlugin plugin, MuxeCore core, FileConfiguration config, MessageCatalog messages, BedWarsSchema schema, MatchConnector connector) {
+    static LobbyMenus menus(JavaPlugin plugin, MuxeCore core, FileConfiguration config, MessageCatalog messages, ArenaSchema schema, MatchConnector connector) {
         ConfigurationSection lobby = Objects.requireNonNull(config.getConfigurationSection("lobby"), "Missing configuration section lobby");
         TopTexts texts = TopTexts.from(Objects.requireNonNull(lobby.getConfigurationSection("tops"), "Missing configuration section lobby.tops"));
         TopData tops = new TopData(plugin, core, Duration.ofSeconds(texts.refreshSeconds()));

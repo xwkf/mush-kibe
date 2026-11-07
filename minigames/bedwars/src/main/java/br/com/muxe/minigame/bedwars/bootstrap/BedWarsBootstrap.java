@@ -16,6 +16,7 @@ import br.com.muxe.core.bukkit.prompt.AnvilPrompts;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.core.common.mission.MissionModule;
 import br.com.muxe.core.common.mission.domain.Mission;
+import br.com.muxe.minigame.api.arena.ArenaSchema;
 import br.com.muxe.minigame.api.bootstrap.MatchServer;
 import br.com.muxe.minigame.api.bootstrap.MinigameBootstrap;
 import br.com.muxe.minigame.api.match.MatchPhase;
@@ -109,7 +110,7 @@ public final class BedWarsBootstrap {
         MessageCatalog messages = SetupMessages.withOverrides(core.messages().merge(MessageCatalog.from(config.getConfigurationSection("messages"))));
         ConfigurationSection modeSection = Objects.requireNonNull(config.getConfigurationSection("modes"), "Missing configuration section modes");
         List<GameMode> modes = GameModeLoader.load(modeSection);
-        BedWarsSchema schema = BedWarsSchema.from(modes, modeSection);
+        ArenaSchema schema = BedWarsSchema.from(modes, modeSection);
         BedWarsSettings settings = BedWarsSettings.from(config);
         Commands commands = Commands.of(plugin, messages);
         minigame = new MinigameBootstrap(plugin, core, GAME, modes, messages, commands, config);
@@ -156,7 +157,7 @@ public final class BedWarsBootstrap {
         plugin.getServer().getOnlinePlayers().forEach(player -> teamColors.load(player.getUniqueId()));
         cosmetics.onTeamColor(new FavouriteColorMenu(FavouriteColorMenuSettings.from(
             Objects.requireNonNull(config.getConfigurationSection("favourite-color"), "Missing configuration section favourite-color")), teamColors, messages));
-        Function<String, String> modeNames = mode -> schema.modes().contains(mode) ? schema.mode(mode).displayName() : mode;
+        Function<String, String> modeNames = schema::modeName;
         if (lobby) {
             lobbyFeatures = LobbyFeatures.start(plugin, core, config, messages, schema, missionMenus, preferences, minigame.connector(modeNames));
             minigame.setup(schema);

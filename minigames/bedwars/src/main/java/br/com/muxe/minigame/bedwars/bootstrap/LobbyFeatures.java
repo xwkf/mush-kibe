@@ -4,8 +4,8 @@ import br.com.muxe.core.bukkit.api.MuxeCore;
 import br.com.muxe.core.bukkit.mission.menu.MissionMenus;
 import br.com.muxe.core.bukkit.npc.NpcLabelLayout;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
+import br.com.muxe.minigame.api.arena.ArenaSchema;
 import br.com.muxe.minigame.api.matchmaking.MatchConnector;
-import br.com.muxe.minigame.bedwars.arena.BedWarsSchema;
 import br.com.muxe.minigame.bedwars.lobby.LevelChat;
 import br.com.muxe.minigame.bedwars.lobby.LobbyNpcs;
 import br.com.muxe.minigame.bedwars.lobby.LobbySidebar;
@@ -48,7 +48,7 @@ public final class LobbyFeatures {
         this.boards = boards;
     }
 
-    public static LobbyFeatures start(JavaPlugin plugin, MuxeCore core, FileConfiguration config, MessageCatalog messages, BedWarsSchema schema, MissionMenus missions,
+    public static LobbyFeatures start(JavaPlugin plugin, MuxeCore core, FileConfiguration config, MessageCatalog messages, ArenaSchema schema, MissionMenus missions,
                                       PlayerPreferences preferences, MatchConnector connector) {
         ConfigurationSection lobby = section(config, "lobby");
         LevelBadges badges = LevelBadges.from(section(config, "levels"));
@@ -78,7 +78,7 @@ public final class LobbyFeatures {
         boards.stop();
     }
 
-    private static void act(Player player, String action, LobbyMenus menus, BedWarsSchema schema, MissionMenus missions) {
+    private static void act(Player player, String action, LobbyMenus menus, ArenaSchema schema, MissionMenus missions) {
         if (MISSIONS_ACTION.equals(action)) {
             missions.open(player, Optional.empty());
         } else if (DUELS_ACTION.equals(action)) {

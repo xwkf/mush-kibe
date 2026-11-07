@@ -2,6 +2,7 @@ package br.com.muxe.minigame.bedwars.arena;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import br.com.muxe.minigame.api.arena.ArenaSchema;
 import br.com.muxe.minigame.engine.mode.GameMode;
 import br.com.muxe.minigame.engine.mode.GameModeLoader;
 import br.com.muxe.minigame.engine.setup.SetupStep;
@@ -17,7 +18,7 @@ class BedWarsSchemaTest {
 
     private final ConfigurationSection modes = YamlConfiguration.loadConfiguration(new File("src/main/resources/config.yml")).getConfigurationSection("modes");
     private final List<GameMode> loaded = GameModeLoader.load(modes);
-    private final BedWarsSchema schema = BedWarsSchema.from(loaded, modes);
+    private final ArenaSchema schema = BedWarsSchema.from(loaded, modes);
 
     @Test
     void theNineModesHaveTheLimitsOfTheSpec() {
