@@ -2,7 +2,7 @@
 
 # API de minigames
 
-A camada sobre a qual todo jogo é feito. O [motor de jogo](../game-engine/README.pt-BR.md) dá as peças de baixo nível (mundos, mapas, células, setup de arena, modos, a contagem). A API de minigames roda as partidas com elas: o ciclo de vida, entrada e saída, times, mortes, renascimento, espectadores, o placar, títulos, chat, matchmaking e a fiação do servidor. Um jogo declara a arena, as regras e os ganchos do que só ele faz.
+A camada sobre a qual todo jogo é feito. O [motor de jogo](../game-engine/README.pt-BR.md) dá as peças de baixo nível (mundos, mapas, células, setup de arena, modos, a contagem). A API de minigames roda as partidas com elas: o ciclo de vida, entrada e saída, times, mortes, renascimento, espectadores, o placar, títulos, chat, matchmaking, a fiação do servidor e os [cosméticos](#cosméticos) compartilhados por todos os jogos. Um jogo declara a arena, as regras e os ganchos do que só ele faz.
 
 Código: `minigames/api/src/main/java/br/com/muxe/minigame/api`. Módulo `minigames:api`, embutido no jar de cada jogo junto com o motor.
 
@@ -140,11 +140,32 @@ Sempre ligado: fogo amigo desligado, quem não está vivo não bate, o void mata
 | `bukkit` | `BukkitStage`, `MatchWorldCells`, `MatchTicker` | Sim |
 | `bootstrap` | `MinigameBootstrap`, `MatchServer` | Sim |
 | `command` | `GlobalChatCommand` (`/g`) | Sim |
+| `cosmetic` | `GameCosmetics`, `CosmeticKind`, `CosmeticDefaults`, `CosmeticCatalog`, perfis, menus, prévias, auras, rastros, mensagens de kill e as animações de cena | Sim |
 
 - **`MatchRuntime`** roda uma partida. Nunca chama o servidor direto: tudo o que faz com os jogadores passa pela porta `Stage` (`BukkitStage` no servidor, uma falsa nos testes), então o ciclo inteiro é testado sem servidor.
 - **`MatchService`** guarda as partidas do servidor: cria numa arena pronta sorteada, escolhe a sala aberta mais cheia, segura reservas por 30 segundos, devolve quem chega à partida para a qual pode voltar, mantém as visões de chat e as name tags, fecha partidas vazias depois de `timings.empty-room-seconds` e fecha uma partida cuja lógica lança exceção. Os jogos leem ele por `Matches<S>` (`of(jogador)`, `at(local)`, `all()`, `playing(jogador)`).
 - **`MatchListener`** trata os eventos que todo jogo compartilha e chama `GameHandlers` só para um jogador vivo numa partida em jogo, então o jogo nunca repete as checagens de fase e de vivo. Também cuida da hotbar da espera (`menu`, `leave`), da hotbar de espectador (teleportador, jogador aleatório, jogador em combate, jogar novamente, sair), do aviso dos comandos de lobby (`left-match`), do void, fome, drops, crafting, camas, slots de armadura e do chat da partida com `/g`.
 - **`MatchEvents`** avisa os cosméticos sobre vitórias e kills finais.
+
+## Cosméticos
+
+Efeitos de vitória, efeitos de kill final, auras, rastros de projétil e mensagens de kill são compartilhados por todos os jogos (`CosmeticKind`), junto com o catálogo, os perfis de posse, os menus de cosméticos e as prévias do lobby. Um jogo acrescenta os próprios por cima (BedWars: destruição de cama e tipos de madeira).
+
+| Tipo | Chave | Categoria de posse | Seção da prévia no lobby |
+|---|---|---|---|
+| `VICTORY_EFFECT` | `victory-effect` | `<jogo>-vitoria` | `victory-preview` |
+| `FINAL_KILL` | `final-kill` | `<jogo>-kill-final` | `final-kill-preview` |
+| `AURA` | `aura` | `<jogo>-aura` | `aura-preview` |
+| `PROJECTILE_TRAIL` | `projectile-trail` | `<jogo>-rastro` | `projectile-trail-preview` |
+| `KILL_MESSAGE` | `kill-message` | `<jogo>-mensagem-kill` | nenhuma |
+
+- **Um catálogo só.** O `cosmetics.yml`, dentro do jar do api, declara cada cosmético compartilhado uma vez: nome, ícone, estrelas, tag, disponibilidade, descrição, os preços por estrelas e os conjuntos de mensagens de kill (`kill-messages`).
+- **Posse por jogo.** Um cosmético comprado num jogo não vale em outro: cada jogo guarda os cosméticos em `<jogo>-<tipo>`, gerado a partir do id do jogo. O BedWars mantém `bedwars-vitoria` e as outras que já tinha; um jogo novo ganha as próprias categorias sem nenhuma configuração.
+- **Sobrescrever.** Um jogo pode sobrescrever o catálogo no próprio `config.yml`, em `cosmetics.<chave>`: `prices`, qualquer campo de um cosmético, `hidden: true` para tirar um, ou um cosmético que só esse jogo tem. `kill-messages` sobrescreve os conjuntos de mensagens. O `CosmeticDefaults` junta os dois.
+- **Uma chamada.** `GameCosmetics.start(setup)` recebe o id do jogo e os tipos que ele usa, e monta os catálogos, os perfis, os efeitos tocados na partida, as auras, os rastros, as mensagens de kill e, no lobby do jogo, as prévias (lidas das seções de prévia acima). Ele entrega ao jogo a categoria de menu de cada tipo (`category(tipo, menus)`) e é o `MatchEvents` do jogo.
+- **Menus.** `CosmeticMenuSettings.from(menus, listaBase, chaves)` lê o menu de categorias do jogo, e o `CosmeticMenus` mostra ele e as listas: compra, seleção, prévias e um caminho de volta para o menu do próprio jogo.
+- **Mensagens.** `cosmetic-selected`, `cosmetic-bought`, `cosmetic-not-enough`, `cosmetic-already-owned`, `cosmetic-unavailable`, `cosmetic-no-preview`, `cosmetic-failed`, `preview-only-lobby`, `preview-busy`.
+- **Cosméticos do próprio jogo.** As animações deles podem usar os auxiliares do api (`Kit`, `Body`, `Flight`, `HeadLantern`...). Os auxiliares de teste de palco (`RecordingStage`, `TracedStage`, `FakeTrail`) são test fixtures do api: `testImplementation(testFixtures(projects.minigames.api))`.
 
 ## Configuração
 
@@ -191,10 +212,12 @@ O BedWars mantém `bedwars.rooms`, `bedwars.join_request` e `bedwars.join_reply`
 | `Room` | Envolve o `Match` com as camas (cama quebrada para o renascimento do time), melhorias de time, tiers de ferramenta e contadores de missão, resultados e a área do mapa. |
 | `BedWarsMatch` | O `MatchState`: forjas, NPCs, baús das ilhas, baús do fim, armadilhas e cura, os eventos da timeline, missões, níveis, estatísticas e as mensagens de kill. |
 | `BedWarsHandlers` | Os `GameHandlers`: camas, folhagem, TNT, bolas de fogo, estilingue, traças, depósito nos baús e coleta das forjas. |
+| `CosmeticFeatures` | O `GameCosmetics` com os cinco tipos compartilhados, mais a destruição de cama (`BedBreakCosmetics`, as animações e a prévia dela), os tipos de madeira e o menu do BedWars (`BedWarsMenu`: missões, compra rápida, hotbar, preferências, cosméticos). |
 
 ## Testes
 
 - `MatchTest`, `ChatViewTest`, `TeamStatusTest`, `KillCreditTest`, `TimelineTest`, `RankingTest`: as regras da partida.
 - `MatchRuntimeTest`: o ciclo inteiro com uma `Stage` falsa (entrada, contagem, início, mortes, renascimento, kills finais, saída, volta, tempo esgotado, o fim e o fechamento).
 - `MatchServiceTest`: chegada, reservas, volta, chat, comandos da staff, partidas vazias e troca de modo.
+- `CosmeticDefaultsTest`, `CosmeticMenuSettingsTest`, `LifetimeTallyTest` e os testes de cada animação de cena, aura e rastro: os cosméticos.
 - `ArenaSchemaTest`, `MatchmakerTest`, `ReservationsTest`, `JoinNoticesTest`, `TitleSweepTest`, `TitleRunsTest`, `SpectatorTargetsTest`, `BukkitStageTest`.

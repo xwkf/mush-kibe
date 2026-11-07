@@ -2,7 +2,7 @@
 
 # Minigame API
 
-The layer every game is built on. The [game engine](../game-engine/README.md) gives the low-level pieces (worlds, maps, cells, arena setup, modes, the countdown). The minigame API runs the matches with them: the lifecycle, joining and leaving, teams, deaths, respawns, spectators, the scoreboard, titles, chat, matchmaking and the server wiring. A game declares its arena, its rules and the hooks for what only it does.
+The layer every game is built on. The [game engine](../game-engine/README.md) gives the low-level pieces (worlds, maps, cells, arena setup, modes, the countdown). The minigame API runs the matches with them: the lifecycle, joining and leaving, teams, deaths, respawns, spectators, the scoreboard, titles, chat, matchmaking, the server wiring and the [cosmetics](#cosmetics) shared by every game. A game declares its arena, its rules and the hooks for what only it does.
 
 Code: `minigames/api/src/main/java/br/com/muxe/minigame/api`. Module `minigames:api`, bundled inside each game's jar together with the engine.
 
@@ -140,11 +140,32 @@ Always on: friendly fire is off, players not alive cannot hit, the void kills, s
 | `bukkit` | `BukkitStage`, `MatchWorldCells`, `MatchTicker` | Yes |
 | `bootstrap` | `MinigameBootstrap`, `MatchServer` | Yes |
 | `command` | `GlobalChatCommand` (`/g`) | Yes |
+| `cosmetic` | `GameCosmetics`, `CosmeticKind`, `CosmeticDefaults`, `CosmeticCatalog`, profiles, menus, previews, auras, trails, kill messages and the scene animations | Yes |
 
 - **`MatchRuntime`** runs one match. It never calls the server directly: everything it does to players goes through the `Stage` port (`BukkitStage` on a server, a fake in the tests), so the whole lifecycle is tested without a server.
 - **`MatchService`** keeps the matches of the server: creates them on a random ready arena, picks the fullest open room, holds reservations for 30 seconds, sends arriving players back to the match they can return to, keeps the chat views and the name tags, closes idle matches after `timings.empty-room-seconds` and closes a match whose logic throws. Games read it through `Matches<S>` (`of(player)`, `at(location)`, `all()`, `playing(player)`).
 - **`MatchListener`** handles the events every game shares and calls `GameHandlers` only for a player alive in a match being played, so a game never repeats the phase and alive checks. It also handles the waiting hotbar (`menu`, `leave`), the spectator hotbar (teleporter, random player, player in combat, play again, leave), the lobby commands warning (`left-match`), the void, hunger, drops, crafting, beds, armour slots and the match chat with `/g`.
 - **`MatchEvents`** tells cosmetics about victories and final kills.
+
+## Cosmetics
+
+Victory effects, final kill effects, auras, projectile trails and kill messages are shared by every game (`CosmeticKind`), together with the catalog, the ownership profiles, the cosmetic menus and the lobby previews. A game adds its own on top (BedWars: bed destruction and wood types).
+
+| Kind | Key | Ownership category | Lobby preview section |
+|---|---|---|---|
+| `VICTORY_EFFECT` | `victory-effect` | `<game>-vitoria` | `victory-preview` |
+| `FINAL_KILL` | `final-kill` | `<game>-kill-final` | `final-kill-preview` |
+| `AURA` | `aura` | `<game>-aura` | `aura-preview` |
+| `PROJECTILE_TRAIL` | `projectile-trail` | `<game>-rastro` | `projectile-trail-preview` |
+| `KILL_MESSAGE` | `kill-message` | `<game>-mensagem-kill` | none |
+
+- **One catalog.** `cosmetics.yml`, inside the api jar, declares every shared cosmetic once: name, icon, stars, tag, availability, description, the prices by stars and the kill message sets (`kill-messages`).
+- **Ownership by game.** A cosmetic bought in one game is not owned in another: each game keeps its cosmetics in `<game>-<kind>`, generated from the game id. BedWars keeps `bedwars-vitoria` and the others it had; a new game gets its own categories without any setup.
+- **Overrides.** A game may override the catalog in its own `config.yml`, under `cosmetics.<key>`: `prices`, any field of a cosmetic, `hidden: true` to leave one out, or a cosmetic only that game has. `kill-messages` overrides the message sets. `CosmeticDefaults` merges both.
+- **One call.** `GameCosmetics.start(setup)` takes the game id and the kinds it uses, and builds the catalogs, the profiles, the effects played in the match, the auras, the trails, the kill messages and, on the game's lobby, the previews (read from the preview sections above). It gives the game the menu category of each kind (`category(kind, menus)`) and is the game's `MatchEvents`.
+- **Menus.** `CosmeticMenuSettings.from(menus, baseList, keys)` reads the categories menu of the game, and `CosmeticMenus` shows it and the lists: buying, selecting, previews and a way back to the game's own menu.
+- **Messages.** `cosmetic-selected`, `cosmetic-bought`, `cosmetic-not-enough`, `cosmetic-already-owned`, `cosmetic-unavailable`, `cosmetic-no-preview`, `cosmetic-failed`, `preview-only-lobby`, `preview-busy`.
+- **A game's own cosmetics.** Their animations can use the api helpers (`Kit`, `Body`, `Flight`, `HeadLantern`...). The stage test helpers (`RecordingStage`, `TracedStage`, `FakeTrail`) are test fixtures of the api: `testImplementation(testFixtures(projects.minigames.api))`.
 
 ## Configuration
 
@@ -191,10 +212,12 @@ BedWars keeps `bedwars.rooms`, `bedwars.join_request` and `bedwars.join_reply`.
 | `Room` | Wraps the `Match` with the beds (a broken bed stops the team respawning), team upgrades, tool tiers and mission counters, outcomes and the map area. |
 | `BedWarsMatch` | The `MatchState`: forges, NPCs, island chests, ender chests, traps and heal pool, the timeline events, missions, levels, stats and the kill messages. |
 | `BedWarsHandlers` | The `GameHandlers`: beds, foliage, TNT, fireballs, the slingshot, bedbugs, chest deposits and forge pickups. |
+| `CosmeticFeatures` | `GameCosmetics` with the five shared kinds, plus the bed destruction (`BedBreakCosmetics`, its animations and preview), the wood types and the BedWars menu (`BedWarsMenu`: missions, quick buy, hotbar, preferences, cosmetics). |
 
 ## Tests
 
 - `MatchTest`, `ChatViewTest`, `TeamStatusTest`, `KillCreditTest`, `TimelineTest`, `RankingTest`: the match rules.
 - `MatchRuntimeTest`: the whole lifecycle with a fake `Stage` (joining, countdown, start, deaths, respawns, final kills, leaving, returning, timeouts, the end and closing).
 - `MatchServiceTest`: arriving, reservations, returning, chat, staff commands, idle matches and switching modes.
+- `CosmeticDefaultsTest`, `CosmeticMenuSettingsTest`, `LifetimeTallyTest` and the tests of every scene animation, aura and trail: the cosmetics.
 - `ArenaSchemaTest`, `MatchmakerTest`, `ReservationsTest`, `JoinNoticesTest`, `TitleSweepTest`, `TitleRunsTest`, `SpectatorTargetsTest`, `BukkitStageTest`.

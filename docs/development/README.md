@@ -54,7 +54,7 @@ muxe/
 │   └── afk/              Muxe-AFK, the AFK server
 └── minigames/
     ├── engine/           worlds, maps, arena setup and modes, shared by every game
-    ├── api/              the minigame API: the match runtime every game is built on
+    ├── api/              the minigame API: the match runtime and the cosmetics every game is built on
     ├── skywars/          Muxe-SkyWars
     └── bedwars/          Muxe-BedWars
 ```
