@@ -1,12 +1,12 @@
 package br.com.muxe.core.common.parkour.infrastructure.postgres;
 
 import br.com.muxe.core.common.parkour.domain.ParkourRecordRepository;
-import br.com.muxe.core.common.persistence.PersistenceException;
-import br.com.muxe.core.common.persistence.transaction.TransactionContext;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import br.com.muxe.core.common.persistence.sql.Column;
+import br.com.muxe.core.common.persistence.sql.Select;
+import br.com.muxe.core.common.persistence.sql.Sql;
+import br.com.muxe.core.common.persistence.sql.Table;
+import br.com.muxe.core.common.persistence.sql.Write;
+import br.com.muxe.core.common.persistence.sql.type.SqlType;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
@@ -14,52 +14,45 @@ import java.util.UUID;
 
 public final class PostgresParkourRecordRepository implements ParkourRecordRepository {
 
-    private static final String FIND = "SELECT best_millis FROM core.parkour_records WHERE server_group = ? AND player_id = ?";
+    private static final Table RECORDS = Table.of("core", "parkour_records");
+    private static final Column<String> GROUP = RECORDS.column("server_group", SqlType.TEXT);
+    private static final Column<UUID> PLAYER_ID = RECORDS.column("player_id", SqlType.UUID);
+    private static final Column<Duration> BEST = RECORDS.column("best_millis", SqlType.BIGINT.map(Duration::ofMillis, Duration::toMillis));
+    private static final Column<Instant> ACHIEVED_AT = RECORDS.column("achieved_at", SqlType.TIMESTAMPTZ);
 
-    private static final String LOCK = "SELECT pg_advisory_xact_lock(hashtextextended(?, 0))";
+    private static final Column<String> LOCK_KEY = Sql.parameter("lock_key", SqlType.TEXT);
 
-    private static final String SAVE = """
-        INSERT INTO core.parkour_records (server_group, player_id, best_millis, achieved_at)
-        VALUES (?, ?, ?, ?)
-        ON CONFLICT (server_group, player_id) DO UPDATE
-        SET best_millis = EXCLUDED.best_millis, achieved_at = EXCLUDED.achieved_at
-        WHERE core.parkour_records.best_millis > EXCLUDED.best_millis
-        """;
+    private static final Select<Duration> FIND = Sql.select(BEST).from(RECORDS)
+        .where(GROUP.eq().and(PLAYER_ID.eq()))
+        .map(row -> row.get(BEST))
+        .named("parkour.find_record");
+
+    private static final Write<Void> LOCK = Sql.<Void>statement("SELECT pg_advisory_xact_lock(hashtextextended(?, 0))")
+        .parameter(LOCK_KEY)
+        .named("parkour.lock_record");
+
+    private static final Write<Void> SAVE = Sql.<Void>insertInto(RECORDS)
+        .value(GROUP)
+        .value(PLAYER_ID)
+        .value(BEST)
+        .value(ACHIEVED_AT)
+        .onConflict(GROUP, PLAYER_ID).doUpdate(BEST, ACHIEVED_AT)
+        .where("core.parkour_records.best_millis > EXCLUDED.best_millis")
+        .named("parkour.save_record");
 
     @Override
     public Optional<Duration> best(String group, UUID playerId) {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(FIND)) {
-            statement.setString(1, group);
-            statement.setObject(2, playerId);
-            try (ResultSet rows = statement.executeQuery()) {
-                return rows.next() ? Optional.of(Duration.ofMillis(rows.getLong("best_millis"))) : Optional.empty();
-            }
-        } catch (SQLException exception) {
-            throw new PersistenceException("parkour.find_record", exception);
-        }
+        return FIND.first(GROUP.is(group), PLAYER_ID.is(playerId));
     }
 
     @Override
     public Optional<Duration> bestForUpdate(String group, UUID playerId) {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(LOCK)) {
-            statement.setString(1, "core.parkour_records/" + group + "/" + playerId);
-            statement.executeQuery().close();
-        } catch (SQLException exception) {
-            throw new PersistenceException("parkour.lock_record", exception);
-        }
+        LOCK.execute(LOCK_KEY.is("core.parkour_records/" + group + "/" + playerId));
         return best(group, playerId);
     }
 
     @Override
     public void save(String group, UUID playerId, Duration best, Instant achievedAt) {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(SAVE)) {
-            statement.setString(1, group);
-            statement.setObject(2, playerId);
-            statement.setLong(3, best.toMillis());
-            statement.setTimestamp(4, Timestamp.from(achievedAt));
-            statement.executeUpdate();
-        } catch (SQLException exception) {
-            throw new PersistenceException("parkour.save_record", exception);
-        }
+        SAVE.execute(GROUP.is(group), PLAYER_ID.is(playerId), BEST.is(best), ACHIEVED_AT.is(achievedAt));
     }
 }

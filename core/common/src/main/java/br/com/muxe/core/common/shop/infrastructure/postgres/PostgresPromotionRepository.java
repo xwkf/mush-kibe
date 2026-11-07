@@ -1,51 +1,47 @@
 package br.com.muxe.core.common.shop.infrastructure.postgres;
 
-import br.com.muxe.core.common.persistence.PersistenceException;
-import br.com.muxe.core.common.persistence.transaction.TransactionContext;
+import br.com.muxe.core.common.persistence.sql.Column;
+import br.com.muxe.core.common.persistence.sql.Select;
+import br.com.muxe.core.common.persistence.sql.Sql;
+import br.com.muxe.core.common.persistence.sql.Table;
+import br.com.muxe.core.common.persistence.sql.Write;
+import br.com.muxe.core.common.persistence.sql.type.SqlType;
 import br.com.muxe.core.common.shop.domain.Promotion;
 import br.com.muxe.core.common.shop.domain.PromotionRepository;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 public final class PostgresPromotionRepository implements PromotionRepository {
 
-    private static final String FIND = "SELECT product_id, lines FROM core.shop_promotion WHERE id = 1";
+    private static final int THE_PROMOTION = 1;
 
-    private static final String SAVE = """
-        INSERT INTO core.shop_promotion (id, product_id, lines, changed_at)
-        VALUES (1, ?, ?, ?)
-        ON CONFLICT (id) DO UPDATE
-        SET product_id = EXCLUDED.product_id, lines = EXCLUDED.lines, changed_at = EXCLUDED.changed_at
-        """;
+    private static final Table PROMOTION = Table.of("core", "shop_promotion");
+    private static final Column<Integer> ID = PROMOTION.column("id", SqlType.SMALLINT);
+    private static final Column<String> PRODUCT_ID = PROMOTION.column("product_id", SqlType.TEXT);
+    private static final Column<List<String>> LINES = PROMOTION.column("lines", SqlType.TEXT_ARRAY);
+    private static final Column<Instant> CHANGED_AT = PROMOTION.column("changed_at", SqlType.TIMESTAMPTZ);
+
+    private static final Select<Promotion> FIND = Sql.select(PRODUCT_ID, LINES).from(PROMOTION)
+        .where(ID.eq())
+        .map(row -> new Promotion(row.get(PRODUCT_ID), row.get(LINES)))
+        .named("shop.find_promotion");
+
+    private static final Write<Void> SAVE = Sql.<Void>insertInto(PROMOTION)
+        .value(ID)
+        .value(PRODUCT_ID)
+        .value(LINES)
+        .value(CHANGED_AT)
+        .onConflict(ID).doUpdate(PRODUCT_ID, LINES, CHANGED_AT)
+        .named("shop.save_promotion");
 
     @Override
     public Optional<Promotion> find() {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(FIND); ResultSet rows = statement.executeQuery()) {
-            if (!rows.next()) {
-                return Optional.empty();
-            }
-            return Optional.of(new Promotion(rows.getString("product_id"), Arrays.asList((String[]) rows.getArray("lines").getArray())));
-        } catch (SQLException exception) {
-            throw new PersistenceException("shop.find_promotion", exception);
-        }
+        return FIND.first(ID.is(THE_PROMOTION));
     }
 
     @Override
     public void save(Promotion promotion, Instant changedAt) {
-        Connection connection = TransactionContext.connection();
-        try (PreparedStatement statement = connection.prepareStatement(SAVE)) {
-            statement.setString(1, promotion.productId());
-            statement.setArray(2, connection.createArrayOf("text", promotion.lines().toArray()));
-            statement.setTimestamp(3, Timestamp.from(changedAt));
-            statement.executeUpdate();
-        } catch (SQLException exception) {
-            throw new PersistenceException("shop.save_promotion", exception);
-        }
+        SAVE.execute(ID.is(THE_PROMOTION), PRODUCT_ID.is(promotion.productId()), LINES.is(promotion.lines()), CHANGED_AT.is(changedAt));
     }
 }

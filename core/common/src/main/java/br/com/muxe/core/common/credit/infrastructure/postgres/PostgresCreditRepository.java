@@ -1,90 +1,87 @@
 package br.com.muxe.core.common.credit.infrastructure.postgres;
 
 import br.com.muxe.core.common.credit.domain.CreditRepository;
-import br.com.muxe.core.common.persistence.PersistenceException;
-import br.com.muxe.core.common.persistence.transaction.TransactionContext;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import br.com.muxe.core.common.persistence.sql.Column;
+import br.com.muxe.core.common.persistence.sql.Select;
+import br.com.muxe.core.common.persistence.sql.Sql;
+import br.com.muxe.core.common.persistence.sql.Table;
+import br.com.muxe.core.common.persistence.sql.Write;
+import br.com.muxe.core.common.persistence.sql.type.SqlType;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.UUID;
 
 public final class PostgresCreditRepository implements CreditRepository {
 
-    private static final String BALANCE = "SELECT balance FROM core.credits WHERE player_id = ?";
+    private static final Table CREDITS = Table.of("core", "credits");
+    private static final Column<UUID> PLAYER_ID = CREDITS.column("player_id", SqlType.UUID);
+    private static final Column<Long> BALANCE = CREDITS.column("balance", SqlType.BIGINT);
+    private static final Column<Instant> UPDATED_AT = CREDITS.column("updated_at", SqlType.TIMESTAMPTZ);
 
-    private static final String ADD = """
-        INSERT INTO core.credits (player_id, balance, updated_at) VALUES (?, ?, ?)
-        ON CONFLICT (player_id) DO UPDATE SET balance = core.credits.balance + EXCLUDED.balance, updated_at = EXCLUDED.updated_at
-        RETURNING balance
-        """;
+    private static final Table CHANGES = Table.of("core", "credit_changes");
+    private static final Column<UUID> CHANGED_PLAYER = CHANGES.column("player_id", SqlType.UUID);
+    private static final Column<Long> AMOUNT = CHANGES.column("amount", SqlType.BIGINT);
+    private static final Column<String> REASON = CHANGES.column("reason", SqlType.TEXT);
+    private static final Column<Instant> CHANGED_AT = CHANGES.column("changed_at", SqlType.TIMESTAMPTZ);
 
-    private static final String SPEND = """
-        UPDATE core.credits SET balance = balance - ?, updated_at = ?
-        WHERE player_id = ? AND balance >= ?
-        RETURNING balance
-        """;
+    private static final Column<Long> SPENT = Sql.parameter("spent", SqlType.BIGINT);
 
-    private static final String LOG = "INSERT INTO core.credit_changes (player_id, amount, reason, changed_at) VALUES (?, ?, ?, ?)";
+    private static final Select<Long> FIND_BALANCE = Sql.select(BALANCE).from(CREDITS)
+        .where(PLAYER_ID.eq())
+        .map(row -> row.get(BALANCE))
+        .named("credits.balance");
+
+    private static final Select<Long> ADD = Sql.query("""
+            INSERT INTO core.credits (player_id, balance, updated_at) VALUES (?, ?, ?)
+            ON CONFLICT (player_id) DO UPDATE SET balance = core.credits.balance + EXCLUDED.balance, updated_at = EXCLUDED.updated_at
+            RETURNING balance
+            """)
+        .parameters(PLAYER_ID, BALANCE, UPDATED_AT)
+        .columns(BALANCE)
+        .map(row -> row.get(BALANCE))
+        .named("credits.add");
+
+    private static final Select<Long> SPEND = Sql.query("""
+            UPDATE core.credits SET balance = balance - ?, updated_at = ?
+            WHERE player_id = ? AND balance >= ?
+            RETURNING balance
+            """)
+        .parameters(SPENT, UPDATED_AT, PLAYER_ID, SPENT)
+        .columns(BALANCE)
+        .map(row -> row.get(BALANCE))
+        .named("credits.spend");
+
+    private static final Write<Void> LOG = Sql.<Void>insertInto(CHANGES)
+        .value(CHANGED_PLAYER)
+        .value(AMOUNT)
+        .value(REASON)
+        .value(CHANGED_AT)
+        .named("credits.log");
 
     @Override
     public long balance(UUID playerId) {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(BALANCE)) {
-            statement.setObject(1, playerId);
-            try (ResultSet rows = statement.executeQuery()) {
-                return rows.next() ? rows.getLong("balance") : 0;
-            }
-        } catch (SQLException exception) {
-            throw new PersistenceException("credits.balance", exception);
-        }
+        return FIND_BALANCE.first(PLAYER_ID.is(playerId)).orElse(0L);
     }
 
     @Override
     public long add(UUID playerId, long amount, String reason, Instant at) {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(ADD)) {
-            statement.setObject(1, playerId);
-            statement.setLong(2, amount);
-            statement.setTimestamp(3, Timestamp.from(at));
-            try (ResultSet rows = statement.executeQuery()) {
-                rows.next();
-                long balance = rows.getLong("balance");
-                log(playerId, amount, reason, at);
-                return balance;
-            }
-        } catch (SQLException exception) {
-            throw new PersistenceException("credits.add", exception);
-        }
+        long balance = ADD.first(PLAYER_ID.is(playerId), BALANCE.is(amount), UPDATED_AT.is(at)).orElseThrow();
+        log(playerId, amount, reason, at);
+        return balance;
     }
 
     @Override
     public OptionalLong spend(UUID playerId, long amount, String reason, Instant at) {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(SPEND)) {
-            statement.setLong(1, amount);
-            statement.setTimestamp(2, Timestamp.from(at));
-            statement.setObject(3, playerId);
-            statement.setLong(4, amount);
-            try (ResultSet rows = statement.executeQuery()) {
-                if (!rows.next()) {
-                    return OptionalLong.empty();
-                }
-                long balance = rows.getLong("balance");
-                log(playerId, -amount, reason, at);
-                return OptionalLong.of(balance);
-            }
-        } catch (SQLException exception) {
-            throw new PersistenceException("credits.spend", exception);
+        Optional<Long> balance = SPEND.first(SPENT.is(amount), UPDATED_AT.is(at), PLAYER_ID.is(playerId));
+        if (balance.isEmpty()) {
+            return OptionalLong.empty();
         }
+        log(playerId, -amount, reason, at);
+        return OptionalLong.of(balance.get());
     }
 
-    private static void log(UUID playerId, long amount, String reason, Instant at) throws SQLException {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(LOG)) {
-            statement.setObject(1, playerId);
-            statement.setLong(2, amount);
-            statement.setString(3, reason);
-            statement.setTimestamp(4, Timestamp.from(at));
-            statement.executeUpdate();
-        }
+    private static void log(UUID playerId, long amount, String reason, Instant at) {
+        LOG.execute(CHANGED_PLAYER.is(playerId), AMOUNT.is(amount), REASON.is(reason), CHANGED_AT.is(at));
     }
 }

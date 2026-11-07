@@ -1,12 +1,12 @@
 package br.com.muxe.core.common.cosmetic.infrastructure.postgres;
 
 import br.com.muxe.core.common.cosmetic.domain.CosmeticRepository;
-import br.com.muxe.core.common.persistence.PersistenceException;
-import br.com.muxe.core.common.persistence.transaction.TransactionContext;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import br.com.muxe.core.common.persistence.sql.Column;
+import br.com.muxe.core.common.persistence.sql.Select;
+import br.com.muxe.core.common.persistence.sql.Sql;
+import br.com.muxe.core.common.persistence.sql.Table;
+import br.com.muxe.core.common.persistence.sql.Write;
+import br.com.muxe.core.common.persistence.sql.type.SqlType;
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Optional;
@@ -15,74 +15,64 @@ import java.util.UUID;
 
 public final class PostgresCosmeticRepository implements CosmeticRepository {
 
-    private static final String OWNED = "SELECT cosmetic_id FROM core.owned_cosmetics WHERE player_id = ? AND category = ? ORDER BY acquired_at";
+    private static final Table OWNED = Table.of("core", "owned_cosmetics");
+    private static final Column<UUID> OWNER = OWNED.column("player_id", SqlType.UUID);
+    private static final Column<String> OWNED_CATEGORY = OWNED.column("category", SqlType.TEXT);
+    private static final Column<String> OWNED_COSMETIC = OWNED.column("cosmetic_id", SqlType.TEXT);
+    private static final Column<String> SOURCE = OWNED.column("source", SqlType.TEXT);
+    private static final Column<Instant> ACQUIRED_AT = OWNED.column("acquired_at", SqlType.TIMESTAMPTZ);
 
-    private static final String OWN = """
-        INSERT INTO core.owned_cosmetics (player_id, category, cosmetic_id, source, acquired_at) VALUES (?, ?, ?, ?, ?)
-        ON CONFLICT DO NOTHING
-        """;
+    private static final Table SELECTED = Table.of("core", "selected_cosmetics");
+    private static final Column<UUID> SELECTOR = SELECTED.column("player_id", SqlType.UUID);
+    private static final Column<String> SELECTED_CATEGORY = SELECTED.column("category", SqlType.TEXT);
+    private static final Column<String> SELECTED_COSMETIC = SELECTED.column("cosmetic_id", SqlType.TEXT);
+    private static final Column<Instant> UPDATED_AT = SELECTED.column("updated_at", SqlType.TIMESTAMPTZ);
 
-    private static final String SELECTED = "SELECT cosmetic_id FROM core.selected_cosmetics WHERE player_id = ? AND category = ?";
+    private static final Select<String> FIND_OWNED = Sql.select(OWNED_COSMETIC).from(OWNED)
+        .where(OWNER.eq().and(OWNED_CATEGORY.eq()))
+        .orderBy(ACQUIRED_AT.asc())
+        .map(row -> row.get(OWNED_COSMETIC))
+        .named("cosmetics.owned");
 
-    private static final String SELECT = """
-        INSERT INTO core.selected_cosmetics (player_id, category, cosmetic_id, updated_at) VALUES (?, ?, ?, ?)
-        ON CONFLICT (player_id, category) DO UPDATE SET cosmetic_id = EXCLUDED.cosmetic_id, updated_at = EXCLUDED.updated_at
-        """;
+    private static final Write<Void> OWN = Sql.<Void>insertInto(OWNED)
+        .value(OWNER)
+        .value(OWNED_CATEGORY)
+        .value(OWNED_COSMETIC)
+        .value(SOURCE)
+        .value(ACQUIRED_AT)
+        .onConflict().doNothing()
+        .named("cosmetics.own");
+
+    private static final Select<String> FIND_SELECTED = Sql.select(SELECTED_COSMETIC).from(SELECTED)
+        .where(SELECTOR.eq().and(SELECTED_CATEGORY.eq()))
+        .map(row -> row.get(SELECTED_COSMETIC))
+        .named("cosmetics.selected");
+
+    private static final Write<Void> SELECT = Sql.<Void>insertInto(SELECTED)
+        .value(SELECTOR)
+        .value(SELECTED_CATEGORY)
+        .value(SELECTED_COSMETIC)
+        .value(UPDATED_AT)
+        .onConflict(SELECTOR, SELECTED_CATEGORY).doUpdate(SELECTED_COSMETIC, UPDATED_AT)
+        .named("cosmetics.select");
 
     @Override
     public Set<String> owned(UUID playerId, String category) {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(OWNED)) {
-            statement.setObject(1, playerId);
-            statement.setString(2, category);
-            Set<String> owned = new LinkedHashSet<>();
-            try (ResultSet rows = statement.executeQuery()) {
-                while (rows.next()) {
-                    owned.add(rows.getString("cosmetic_id"));
-                }
-            }
-            return owned;
-        } catch (SQLException exception) {
-            throw new PersistenceException("cosmetics.owned", exception);
-        }
+        return new LinkedHashSet<>(FIND_OWNED.list(OWNER.is(playerId), OWNED_CATEGORY.is(category)));
     }
 
     @Override
     public boolean own(UUID playerId, String category, String cosmeticId, String source, Instant at) {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(OWN)) {
-            statement.setObject(1, playerId);
-            statement.setString(2, category);
-            statement.setString(3, cosmeticId);
-            statement.setString(4, source);
-            statement.setTimestamp(5, Timestamp.from(at));
-            return statement.executeUpdate() > 0;
-        } catch (SQLException exception) {
-            throw new PersistenceException("cosmetics.own", exception);
-        }
+        return OWN.execute(OWNER.is(playerId), OWNED_CATEGORY.is(category), OWNED_COSMETIC.is(cosmeticId), SOURCE.is(source), ACQUIRED_AT.is(at)) > 0;
     }
 
     @Override
     public Optional<String> selected(UUID playerId, String category) {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(SELECTED)) {
-            statement.setObject(1, playerId);
-            statement.setString(2, category);
-            try (ResultSet rows = statement.executeQuery()) {
-                return rows.next() ? Optional.of(rows.getString("cosmetic_id")) : Optional.empty();
-            }
-        } catch (SQLException exception) {
-            throw new PersistenceException("cosmetics.selected", exception);
-        }
+        return FIND_SELECTED.first(SELECTOR.is(playerId), SELECTED_CATEGORY.is(category));
     }
 
     @Override
     public void select(UUID playerId, String category, String cosmeticId, Instant at) {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(SELECT)) {
-            statement.setObject(1, playerId);
-            statement.setString(2, category);
-            statement.setString(3, cosmeticId);
-            statement.setTimestamp(4, Timestamp.from(at));
-            statement.executeUpdate();
-        } catch (SQLException exception) {
-            throw new PersistenceException("cosmetics.select", exception);
-        }
+        SELECT.execute(SELECTOR.is(playerId), SELECTED_CATEGORY.is(category), SELECTED_COSMETIC.is(cosmeticId), UPDATED_AT.is(at));
     }
 }
