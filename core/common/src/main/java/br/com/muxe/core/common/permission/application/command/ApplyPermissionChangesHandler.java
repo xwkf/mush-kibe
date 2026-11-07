@@ -6,12 +6,18 @@ import br.com.muxe.core.common.permission.domain.PermissionChange;
 import br.com.muxe.core.common.permission.domain.PermissionData;
 import br.com.muxe.core.common.permission.domain.PermissionRepository;
 import br.com.muxe.core.common.permission.domain.PermissionRules;
+import br.com.muxe.core.common.permission.domain.PermissionUser;
 import br.com.muxe.core.common.persistence.transaction.Transactions;
 import br.com.muxe.core.common.result.Problem;
 import br.com.muxe.core.common.result.Result;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 public final class ApplyPermissionChangesHandler implements CommandHandler<ApplyPermissionChangesCommand, Result<Void>> {
 
@@ -41,6 +47,8 @@ public final class ApplyPermissionChangesHandler implements CommandHandler<Apply
                 return Result.<Void>failure(problem.get());
             }
             Instant now = clock.instant();
+            Map<UUID, PermissionUser> users = new LinkedHashMap<>();
+            List<PermissionAction> actions = new ArrayList<>();
             for (PermissionChange change : command.changes()) {
                 switch (change) {
                     case PermissionChange.PutTag put -> permissions.saveTag(put.tag());
@@ -48,13 +56,15 @@ public final class ApplyPermissionChangesHandler implements CommandHandler<Apply
                     case PermissionChange.DeleteMedal delete -> permissions.deleteMedal(delete.id());
                     case PermissionChange.PutGroup put -> permissions.saveGroup(put.group());
                     case PermissionChange.PutTrack put -> permissions.saveTrack(put.track());
-                    case PermissionChange.PutUser put -> permissions.saveUser(put.user());
+                    case PermissionChange.PutUser put -> users.put(put.user().id(), put.user());
                     case PermissionChange.DeleteTrack delete -> permissions.deleteTrack(delete.id());
                     case PermissionChange.DeleteGroup delete -> permissions.deleteGroup(delete.id());
                     case PermissionChange.DeleteTag delete -> permissions.deleteTag(delete.id());
                 }
-                permissions.log(new PermissionAction(now, command.actor(), change.describe()));
+                actions.add(new PermissionAction(now, command.actor(), change.describe()));
             }
+            permissions.saveUsers(users.values());
+            permissions.logAll(actions);
             return Result.success();
         });
     }

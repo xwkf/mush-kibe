@@ -65,4 +65,26 @@ class PostgresMissionRepositoryIntegrationTest {
         assertThat(bedwars.get("fim-da-linha")).isEqualTo(new MissionProgress("fim-da-linha", MONDAY, 35, true));
         assertThat(nextWeek).isEmpty();
     }
+
+    @Test
+    void eachMissionIsMatchedOnlyWithItsOwnPeriod() {
+        UUID player = UUID.randomUUID();
+        LocalDate today = MONDAY.plusDays(2);
+        transactions.inTransaction("test.save", () -> {
+            repository.save("bedwars", player, new MissionProgress("diaria", today, 1, false));
+            repository.save("bedwars", player, new MissionProgress("diaria", MONDAY, 9, true));
+            repository.save("bedwars", player, new MissionProgress("semanal", MONDAY, 4, false));
+            repository.save("bedwars", player, new MissionProgress("semanal", today, 8, false));
+            return null;
+        });
+
+        Map<String, MissionProgress> found = transactions.readOnly("test.find",
+            () -> repository.find("bedwars", player, Map.of("diaria", today, "semanal", MONDAY)));
+
+        assertThat(found).containsExactlyInAnyOrderEntriesOf(Map.of(
+            "diaria", new MissionProgress("diaria", today, 1, false),
+            "semanal", new MissionProgress("semanal", MONDAY, 4, false)
+        ));
+        assertThat(transactions.readOnly("test.find", () -> repository.find("bedwars", player, Map.of()))).isEmpty();
+    }
 }

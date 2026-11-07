@@ -1,6 +1,7 @@
 package br.com.muxe.core.common.permission.infrastructure.postgres;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import br.com.muxe.core.common.account.domain.Account;
 import br.com.muxe.core.common.account.domain.AccountLocation;
@@ -8,23 +9,30 @@ import br.com.muxe.core.common.account.infrastructure.postgres.PostgresAccountDe
 import br.com.muxe.core.common.account.infrastructure.postgres.PostgresAccountRepository;
 import br.com.muxe.core.common.concurrent.MainThreadGuard;
 import br.com.muxe.core.common.metrics.simple.SimpleMetricRegistry;
+import br.com.muxe.core.common.permission.application.command.ApplyPermissionChangesCommand;
+import br.com.muxe.core.common.permission.application.command.ApplyPermissionChangesHandler;
 import br.com.muxe.core.common.permission.domain.Contexts;
 import br.com.muxe.core.common.permission.domain.Group;
 import br.com.muxe.core.common.permission.domain.Medal;
 import br.com.muxe.core.common.permission.domain.PermissionAction;
+import br.com.muxe.core.common.permission.domain.PermissionChange;
 import br.com.muxe.core.common.permission.domain.PermissionData;
 import br.com.muxe.core.common.permission.domain.PermissionNode;
 import br.com.muxe.core.common.permission.domain.PermissionRules;
 import br.com.muxe.core.common.permission.domain.PermissionUser;
 import br.com.muxe.core.common.permission.domain.Tag;
 import br.com.muxe.core.common.permission.domain.Track;
+import br.com.muxe.core.common.persistence.PersistenceException;
 import br.com.muxe.core.common.persistence.database.Database;
 import br.com.muxe.core.common.persistence.database.DatabaseConfig;
 import br.com.muxe.core.common.persistence.migration.MigrationRunner;
 import br.com.muxe.core.common.persistence.transaction.JdbcTransactions;
+import br.com.muxe.core.common.result.Result;
 import br.com.muxe.core.common.testing.PermissionFixtures;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
@@ -193,5 +201,61 @@ class PostgresPermissionRepositoryIntegrationTest {
             assertThat(found.account().id()).isEqualTo(player);
             assertThat(found.location()).contains(location);
         });
+    }
+
+    @Test
+    void manyUsersAreSavedTogetherWithTheirTagsAndMedalsReplaced() {
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        transactions.inTransaction("test.save", () -> {
+            repository.saveUsers(List.of(
+                new PermissionUser(first, List.of(PermissionNode.permanent("muxe.fly", true, NOW)), Optional.of("natal")),
+                new PermissionUser(second, List.of(PermissionNode.permanent("muxe.build", true, NOW)), Optional.of("natal"))
+            ));
+            return null;
+        });
+        PermissionUser firstAgain = new PermissionUser(first, List.of(), Optional.empty());
+        PermissionUser secondAgain = new PermissionUser(second, List.of(PermissionNode.permanent("muxe.chat", true, NOW)), Optional.of("natal"));
+
+        transactions.inTransaction("test.save", () -> {
+            repository.saveUsers(List.of(firstAgain, secondAgain));
+            return null;
+        });
+
+        assertThat(transactions.readOnly("test.find", () -> repository.user(first))).isEqualTo(firstAgain);
+        assertThat(transactions.readOnly("test.find", () -> repository.user(second))).isEqualTo(secondAgain);
+    }
+
+    @Test
+    void aUserCanChooseATagCreatedLaterInTheSameBatch() {
+        UUID player = UUID.randomUUID();
+        Tag tag = new Tag("lote", "Lote", "&6", 3, Optional.empty(), true);
+        ApplyPermissionChangesHandler handler = new ApplyPermissionChangesHandler(repository, transactions, Clock.fixed(NOW, ZoneOffset.UTC));
+
+        Result<Void> result = handler.handle(new ApplyPermissionChangesCommand("teste", List.of(
+            new PermissionChange.PutUser(new PermissionUser(player, List.of(), Optional.of("lote"))),
+            new PermissionChange.PutTag(tag)
+        )));
+
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(transactions.readOnly("test.find", () -> repository.user(player)).selectedTag()).contains("lote");
+        transactions.inTransaction("test.cleanup", () -> {
+            repository.deleteTag("lote");
+            return null;
+        });
+        assertThat(transactions.readOnly("test.find", () -> repository.user(player)).selectedTag()).isEmpty();
+    }
+
+    @Test
+    void aFailedBatchRollsBackEverySavedUser() {
+        UUID player = UUID.randomUUID();
+        PermissionNode node = PermissionNode.permanent("muxe.fly", true, NOW);
+
+        assertThatThrownBy(() -> transactions.inTransaction("test.save", () -> {
+            repository.saveUsers(List.of(new PermissionUser(player, List.of(node, node), Optional.empty())));
+            return null;
+        })).isInstanceOf(PersistenceException.class);
+
+        assertThat(transactions.readOnly("test.find", () -> repository.user(player)).nodes()).isEmpty();
     }
 }

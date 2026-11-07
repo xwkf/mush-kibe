@@ -105,6 +105,29 @@ class PermissionHandlersTest {
         assertThat(repository.user(player).nodes()).isEmpty();
     }
 
+    @Test
+    void aUserChangedTwiceInOneBatchKeepsTheLastVersionAndEveryChangeIsLogged() {
+        PermissionUser first = new PermissionUser(player, List.of(PermissionNode.permanent("muxe.fly", true, NOW)), Optional.empty());
+        PermissionUser last = new PermissionUser(player, List.of(PermissionNode.permanent("muxe.build", true, NOW)), Optional.of("natal"));
+
+        Result<Void> result = apply(new PermissionChange.PutUser(first), new PermissionChange.PutUser(last));
+
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(repository.user(player)).isEqualTo(last);
+        assertThat(new RecentPermissionActionsHandler(repository, transactions).handle(new RecentPermissionActionsQuery(10))).hasSize(2);
+    }
+
+    @Test
+    void aUserCanChooseATagCreatedLaterInTheSameBatch() {
+        Tag tag = new Tag("halloween", "Halloween", "&6", 95, Optional.empty(), true);
+        PermissionUser user = new PermissionUser(player, List.of(), Optional.of("halloween"));
+
+        Result<Void> result = apply(new PermissionChange.PutUser(user), new PermissionChange.PutTag(tag));
+
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(repository.user(player).selectedTag()).contains("halloween");
+    }
+
     private Result<Void> apply(PermissionChange... changes) {
         return new ApplyPermissionChangesHandler(repository, transactions, clock).handle(new ApplyPermissionChangesCommand("tadeu", List.of(changes)));
     }

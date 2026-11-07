@@ -1,77 +1,66 @@
 package br.com.muxe.core.common.account.infrastructure.postgres;
 
+import static br.com.muxe.core.common.account.infrastructure.postgres.AccountTables.ACCOUNTS;
+import static br.com.muxe.core.common.account.infrastructure.postgres.AccountTables.ACCOUNT_COLUMNS;
+import static br.com.muxe.core.common.account.infrastructure.postgres.AccountTables.FIRST_SEEN_AT;
+import static br.com.muxe.core.common.account.infrastructure.postgres.AccountTables.ID;
+import static br.com.muxe.core.common.account.infrastructure.postgres.AccountTables.LAST_SEEN_AT;
+import static br.com.muxe.core.common.account.infrastructure.postgres.AccountTables.PREMIUM;
+import static br.com.muxe.core.common.account.infrastructure.postgres.AccountTables.USERNAME;
+
 import br.com.muxe.core.common.account.domain.Account;
 import br.com.muxe.core.common.account.domain.AccountRepository;
-import br.com.muxe.core.common.persistence.PersistenceException;
-import br.com.muxe.core.common.persistence.transaction.TransactionContext;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import br.com.muxe.core.common.persistence.sql.Select;
+import br.com.muxe.core.common.persistence.sql.Sql;
+import br.com.muxe.core.common.persistence.sql.Write;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public final class PostgresAccountRepository implements AccountRepository {
 
-    private static final String SELECT = "SELECT id, username, premium, first_seen_at, last_seen_at FROM core.accounts ";
+    private static final Select<Account> FIND_BY_ID = Sql.select(ACCOUNT_COLUMNS).from(ACCOUNTS)
+        .where(ID.eq())
+        .map(AccountTables::account)
+        .named("account.find_by_id");
 
-    private static final String FIND_BY_ID = SELECT + "WHERE id = ?";
+    private static final Select<Account> FIND_BY_IDS = Sql.select(ACCOUNT_COLUMNS).from(ACCOUNTS)
+        .where(ID.in())
+        .map(AccountTables::account)
+        .named("account.find_by_ids");
 
-    private static final String FIND_BY_USERNAME = SELECT + "WHERE LOWER(username) = LOWER(?)";
+    private static final Select<Account> FIND_BY_USERNAME = Sql.select(ACCOUNT_COLUMNS).from(ACCOUNTS)
+        .where(USERNAME.eqIgnoreCase())
+        .map(AccountTables::account)
+        .named("account.find_by_username");
 
-    private static final String UPSERT = """
-        INSERT INTO core.accounts (id, username, premium, first_seen_at, last_seen_at)
-        VALUES (?, ?, ?, ?, ?)
-        ON CONFLICT (id) DO UPDATE
-        SET username = EXCLUDED.username, last_seen_at = EXCLUDED.last_seen_at
-        """;
+    private static final Write<Account> SAVE = Sql.<Account>insertInto(ACCOUNTS)
+        .value(ID, Account::id)
+        .value(USERNAME, Account::username)
+        .value(PREMIUM, Account::premium)
+        .value(FIRST_SEEN_AT, Account::firstSeenAt)
+        .value(LAST_SEEN_AT, Account::lastSeenAt)
+        .onConflict(ID).doUpdate(USERNAME, LAST_SEEN_AT)
+        .named("account.save");
 
     @Override
     public Optional<Account> findById(UUID id) {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(FIND_BY_ID)) {
-            statement.setObject(1, id);
-            return single(statement);
-        } catch (SQLException exception) {
-            throw new PersistenceException("account.find_by_id", exception);
-        }
+        return FIND_BY_ID.first(ID.is(id));
+    }
+
+    @Override
+    public List<Account> findByIds(Collection<UUID> ids) {
+        return ids.isEmpty() ? List.of() : FIND_BY_IDS.list(ID.in(ids));
     }
 
     @Override
     public Optional<Account> findByUsername(String username) {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(FIND_BY_USERNAME)) {
-            statement.setString(1, username);
-            return single(statement);
-        } catch (SQLException exception) {
-            throw new PersistenceException("account.find_by_username", exception);
-        }
+        return FIND_BY_USERNAME.first(USERNAME.is(username));
     }
 
     @Override
     public void save(Account account) {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(UPSERT)) {
-            statement.setObject(1, account.id());
-            statement.setString(2, account.username());
-            statement.setBoolean(3, account.premium());
-            statement.setTimestamp(4, Timestamp.from(account.firstSeenAt()));
-            statement.setTimestamp(5, Timestamp.from(account.lastSeenAt()));
-            statement.executeUpdate();
-        } catch (SQLException exception) {
-            throw new PersistenceException("account.save", exception);
-        }
-    }
-
-    private static Optional<Account> single(PreparedStatement statement) throws SQLException {
-        try (ResultSet rows = statement.executeQuery()) {
-            if (!rows.next()) {
-                return Optional.empty();
-            }
-            return Optional.of(new Account(
-                rows.getObject("id", UUID.class),
-                rows.getString("username"),
-                rows.getBoolean("premium"),
-                rows.getTimestamp("first_seen_at").toInstant(),
-                rows.getTimestamp("last_seen_at").toInstant()
-            ));
-        }
+        SAVE.execute(account);
     }
 }

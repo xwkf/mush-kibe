@@ -1,6 +1,5 @@
 package br.com.muxe.core.common.permission.infrastructure.postgres;
 
-import br.com.muxe.core.common.permission.domain.Contexts;
 import br.com.muxe.core.common.permission.domain.Group;
 import br.com.muxe.core.common.permission.domain.Medal;
 import br.com.muxe.core.common.permission.domain.PermissionAction;
@@ -10,18 +9,17 @@ import br.com.muxe.core.common.permission.domain.PermissionRepository;
 import br.com.muxe.core.common.permission.domain.PermissionUser;
 import br.com.muxe.core.common.permission.domain.Tag;
 import br.com.muxe.core.common.permission.domain.Track;
-import br.com.muxe.core.common.persistence.PersistenceException;
-import br.com.muxe.core.common.persistence.transaction.TransactionContext;
-import java.sql.Array;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.sql.Types;
+import br.com.muxe.core.common.persistence.sql.Column;
+import br.com.muxe.core.common.persistence.sql.Select;
+import br.com.muxe.core.common.persistence.sql.Sql;
+import br.com.muxe.core.common.persistence.sql.Table;
+import br.com.muxe.core.common.persistence.sql.Write;
+import br.com.muxe.core.common.persistence.sql.type.SqlType;
+import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,360 +27,311 @@ import java.util.UUID;
 
 public final class PostgresPermissionRepository implements PermissionRepository {
 
-    private static final String NODE_COLUMNS = "permission, value, contexts, expires_at, added_at, updated_at";
+    private static final Table TAGS = Table.of("core", "perm_tags");
+    private static final Column<String> TAG_ID = TAGS.column("id", SqlType.TEXT);
+    private static final Column<String> TAG_NAME = TAGS.column("name", SqlType.TEXT);
+    private static final Column<String> TAG_COLOR = TAGS.column("color", SqlType.TEXT);
+    private static final Column<Integer> TAG_WEIGHT = TAGS.column("weight", SqlType.INTEGER);
+    private static final Column<Optional<String>> TAG_PREFIX = TAGS.column("prefix", SqlType.TEXT.optional());
+    private static final Column<Boolean> TAG_DECORATIVE = TAGS.column("decorative", SqlType.BOOLEAN);
 
-    private static final String FIND_TAGS = "SELECT id, name, color, weight, prefix, decorative FROM core.perm_tags";
-    private static final String FIND_GROUPS = "SELECT id, display_name, weight, tag_id FROM core.perm_groups";
-    private static final String FIND_GROUP_NODES = "SELECT group_id, " + NODE_COLUMNS + " FROM core.perm_group_nodes";
-    private static final String FIND_TRACKS = "SELECT id, groups FROM core.perm_tracks";
-    private static final String FIND_USER_NODES = "SELECT " + NODE_COLUMNS + " FROM core.perm_user_nodes WHERE player_id = ?";
-    private static final String FIND_USER_TAG = "SELECT tag_id FROM core.player_tags WHERE player_id = ?";
-    private static final String FIND_MEDALS = "SELECT id, name, symbol, color, weight FROM core.perm_medals";
-    private static final String FIND_USER_MEDAL = "SELECT medal_id FROM core.player_medals WHERE player_id = ?";
-    private static final String SAVE_MEDAL = """
-        INSERT INTO core.perm_medals (id, name, symbol, color, weight) VALUES (?, ?, ?, ?, ?)
-        ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, symbol = EXCLUDED.symbol, color = EXCLUDED.color, weight = EXCLUDED.weight
-        """;
-    private static final String SELECT_MEDAL = """
-        INSERT INTO core.player_medals (player_id, medal_id, updated_at) VALUES (?, ?, now())
-        ON CONFLICT (player_id) DO UPDATE SET medal_id = EXCLUDED.medal_id, updated_at = EXCLUDED.updated_at
-        """;
-    private static final String FIND_USERS_WITH = "SELECT DISTINCT player_id FROM core.perm_user_nodes WHERE permission = ? ORDER BY player_id";
+    private static final Table GROUPS = Table.of("core", "perm_groups");
+    private static final Column<String> GROUP_ID = GROUPS.column("id", SqlType.TEXT);
+    private static final Column<String> GROUP_DISPLAY_NAME = GROUPS.column("display_name", SqlType.TEXT);
+    private static final Column<Integer> GROUP_WEIGHT = GROUPS.column("weight", SqlType.INTEGER);
+    private static final Column<Optional<String>> GROUP_TAG = GROUPS.column("tag_id", SqlType.TEXT.optional());
 
-    private static final String SAVE_TAG = """
-        INSERT INTO core.perm_tags (id, name, color, weight, prefix, decorative) VALUES (?, ?, ?, ?, ?, ?)
-        ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, color = EXCLUDED.color, weight = EXCLUDED.weight,
-            prefix = EXCLUDED.prefix, decorative = EXCLUDED.decorative
-        """;
-    private static final String SAVE_GROUP = """
-        INSERT INTO core.perm_groups (id, display_name, weight, tag_id) VALUES (?, ?, ?, ?)
-        ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, weight = EXCLUDED.weight, tag_id = EXCLUDED.tag_id
-        """;
-    private static final String SAVE_GROUP_NODE = "INSERT INTO core.perm_group_nodes (group_id, " + NODE_COLUMNS + ") VALUES (?, ?, ?, ?, ?, ?, ?)";
-    private static final String SAVE_USER_NODE = "INSERT INTO core.perm_user_nodes (player_id, " + NODE_COLUMNS + ") VALUES (?, ?, ?, ?, ?, ?, ?)";
-    private static final String SAVE_TRACK = "INSERT INTO core.perm_tracks (id, groups) VALUES (?, ?) ON CONFLICT (id) DO UPDATE SET groups = EXCLUDED.groups";
-    private static final String SELECT_TAG = """
-        INSERT INTO core.player_tags (player_id, tag_id, updated_at) VALUES (?, ?, now())
-        ON CONFLICT (player_id) DO UPDATE SET tag_id = EXCLUDED.tag_id, updated_at = EXCLUDED.updated_at
-        """;
-    private static final String LOG = "INSERT INTO core.perm_actions (at, actor, description) VALUES (?, ?, ?)";
-    private static final String RECENT = "SELECT at, actor, description FROM core.perm_actions ORDER BY id DESC LIMIT ?";
+    private static final Table GROUP_NODES = Table.of("core", "perm_group_nodes");
+    private static final Column<String> NODE_GROUP = GROUP_NODES.column("group_id", SqlType.TEXT);
+    private static final NodeColumns GROUP_NODE = NodeColumns.of(GROUP_NODES);
+
+    private static final Table USER_NODES = Table.of("core", "perm_user_nodes");
+    private static final Column<UUID> NODE_PLAYER = USER_NODES.column("player_id", SqlType.UUID);
+    private static final NodeColumns USER_NODE = NodeColumns.of(USER_NODES);
+
+    private static final Table TRACKS = Table.of("core", "perm_tracks");
+    private static final Column<String> TRACK_ID = TRACKS.column("id", SqlType.TEXT);
+    private static final Column<List<String>> TRACK_GROUPS = TRACKS.column("groups", SqlType.TEXT_ARRAY);
+
+    private static final Table PLAYER_TAGS = Table.of("core", "player_tags");
+    private static final Column<UUID> TAG_PLAYER = PLAYER_TAGS.column("player_id", SqlType.UUID);
+    private static final Column<String> PLAYER_TAG = PLAYER_TAGS.column("tag_id", SqlType.TEXT);
+    private static final Column<Instant> TAG_UPDATED_AT = PLAYER_TAGS.column("updated_at", SqlType.TIMESTAMPTZ);
+
+    private static final Table MEDALS = Table.of("core", "perm_medals");
+    private static final Column<String> MEDAL_ID = MEDALS.column("id", SqlType.TEXT);
+    private static final Column<String> MEDAL_NAME = MEDALS.column("name", SqlType.TEXT);
+    private static final Column<String> MEDAL_SYMBOL = MEDALS.column("symbol", SqlType.TEXT);
+    private static final Column<String> MEDAL_COLOR = MEDALS.column("color", SqlType.TEXT);
+    private static final Column<Integer> MEDAL_WEIGHT = MEDALS.column("weight", SqlType.INTEGER);
+
+    private static final Table PLAYER_MEDALS = Table.of("core", "player_medals");
+    private static final Column<UUID> MEDAL_PLAYER = PLAYER_MEDALS.column("player_id", SqlType.UUID);
+    private static final Column<String> PLAYER_MEDAL = PLAYER_MEDALS.column("medal_id", SqlType.TEXT);
+    private static final Column<Instant> MEDAL_UPDATED_AT = PLAYER_MEDALS.column("updated_at", SqlType.TIMESTAMPTZ);
+
+    private static final Table ACTIONS = Table.of("core", "perm_actions");
+    private static final Column<Long> ACTION_ID = ACTIONS.column("id", SqlType.BIGINT);
+    private static final Column<Instant> ACTION_AT = ACTIONS.column("at", SqlType.TIMESTAMPTZ);
+    private static final Column<String> ACTION_ACTOR = ACTIONS.column("actor", SqlType.TEXT);
+    private static final Column<String> ACTION_DESCRIPTION = ACTIONS.column("description", SqlType.TEXT);
+
+    private static final Column<Integer> LIMIT = Sql.parameter("limit", SqlType.INTEGER);
+
+    private static final Select<Tag> FIND_TAGS = Sql.select(TAG_ID, TAG_NAME, TAG_COLOR, TAG_WEIGHT, TAG_PREFIX, TAG_DECORATIVE).from(TAGS)
+        .map(row -> new Tag(row.get(TAG_ID), row.get(TAG_NAME), row.get(TAG_COLOR), row.get(TAG_WEIGHT), row.get(TAG_PREFIX), row.get(TAG_DECORATIVE)))
+        .named("permission.find_tags");
+
+    private static final Select<GroupRow> FIND_GROUPS = Sql.select(GROUP_ID, GROUP_DISPLAY_NAME, GROUP_WEIGHT, GROUP_TAG).from(GROUPS)
+        .map(row -> new GroupRow(row.get(GROUP_ID), row.get(GROUP_DISPLAY_NAME), row.get(GROUP_WEIGHT), row.get(GROUP_TAG)))
+        .named("permission.find_groups");
+
+    private static final Select<GroupNode> FIND_GROUP_NODES = Sql.select(withNode(NODE_GROUP, GROUP_NODE)).from(GROUP_NODES)
+        .map(row -> new GroupNode(row.get(NODE_GROUP), GROUP_NODE.read(row)))
+        .named("permission.find_group_nodes");
+
+    private static final Select<Track> FIND_TRACKS = Sql.select(TRACK_ID, TRACK_GROUPS).from(TRACKS)
+        .map(row -> new Track(row.get(TRACK_ID), row.get(TRACK_GROUPS)))
+        .named("permission.find_tracks");
+
+    private static final Select<Medal> FIND_MEDALS = Sql.select(MEDAL_ID, MEDAL_NAME, MEDAL_SYMBOL, MEDAL_COLOR, MEDAL_WEIGHT).from(MEDALS)
+        .map(row -> new Medal(row.get(MEDAL_ID), row.get(MEDAL_NAME), row.get(MEDAL_SYMBOL), row.get(MEDAL_COLOR), row.get(MEDAL_WEIGHT)))
+        .named("permission.find_medals");
+
+    private static final Select<PermissionNode> FIND_USER_NODES = Sql.select(USER_NODE.all()).from(USER_NODES)
+        .where(NODE_PLAYER.eq())
+        .map(USER_NODE::read)
+        .named("permission.find_user_nodes");
+
+    private static final Select<String> FIND_USER_TAG = Sql.select(PLAYER_TAG).from(PLAYER_TAGS)
+        .where(TAG_PLAYER.eq())
+        .map(row -> row.get(PLAYER_TAG))
+        .named("permission.find_user_tag");
+
+    private static final Select<String> FIND_USER_MEDAL = Sql.select(PLAYER_MEDAL).from(PLAYER_MEDALS)
+        .where(MEDAL_PLAYER.eq())
+        .map(row -> row.get(PLAYER_MEDAL))
+        .named("permission.find_user_medal");
+
+    private static final Select<UUID> FIND_USERS_WITH = Sql.selectDistinct(NODE_PLAYER).from(USER_NODES)
+        .where(USER_NODE.permission().eq())
+        .orderBy(NODE_PLAYER.asc())
+        .map(row -> row.get(NODE_PLAYER))
+        .named("permission.find_users_with");
+
+    private static final Select<PermissionAction> RECENT = Sql.select(ACTION_AT, ACTION_ACTOR, ACTION_DESCRIPTION).from(ACTIONS)
+        .orderBy(ACTION_ID.desc())
+        .limit(LIMIT)
+        .map(row -> new PermissionAction(row.get(ACTION_AT), row.get(ACTION_ACTOR), row.get(ACTION_DESCRIPTION)))
+        .named("permission.recent_actions");
+
+    private static final Write<Tag> SAVE_TAG = Sql.<Tag>insertInto(TAGS)
+        .value(TAG_ID, Tag::id)
+        .value(TAG_NAME, Tag::name)
+        .value(TAG_COLOR, Tag::color)
+        .value(TAG_WEIGHT, Tag::weight)
+        .value(TAG_PREFIX, Tag::prefix)
+        .value(TAG_DECORATIVE, Tag::decorative)
+        .onConflict(TAG_ID).doUpdate(TAG_NAME, TAG_COLOR, TAG_WEIGHT, TAG_PREFIX, TAG_DECORATIVE)
+        .named("permission.save_tag");
+
+    private static final Write<Group> SAVE_GROUP = Sql.<Group>insertInto(GROUPS)
+        .value(GROUP_ID, Group::id)
+        .value(GROUP_DISPLAY_NAME, Group::displayName)
+        .value(GROUP_WEIGHT, Group::weight)
+        .value(GROUP_TAG, Group::tag)
+        .onConflict(GROUP_ID).doUpdate(GROUP_DISPLAY_NAME, GROUP_WEIGHT, GROUP_TAG)
+        .named("permission.save_group");
+
+    private static final Write<GroupNode> SAVE_GROUP_NODE = GROUP_NODE.values(Sql.<GroupNode>insertInto(GROUP_NODES).value(NODE_GROUP, GroupNode::group), GroupNode::node)
+        .named("permission.save_group_nodes");
+
+    private static final Write<UserNode> SAVE_USER_NODE = USER_NODE.values(Sql.<UserNode>insertInto(USER_NODES).value(NODE_PLAYER, UserNode::player), UserNode::node)
+        .named("permission.save_user_nodes");
+
+    private static final Write<Track> SAVE_TRACK = Sql.<Track>insertInto(TRACKS)
+        .value(TRACK_ID, Track::id)
+        .value(TRACK_GROUPS, Track::groups)
+        .onConflict(TRACK_ID).doUpdate(TRACK_GROUPS)
+        .named("permission.save_track");
+
+    private static final Write<Medal> SAVE_MEDAL = Sql.<Medal>insertInto(MEDALS)
+        .value(MEDAL_ID, Medal::id)
+        .value(MEDAL_NAME, Medal::name)
+        .value(MEDAL_SYMBOL, Medal::symbol)
+        .value(MEDAL_COLOR, Medal::color)
+        .value(MEDAL_WEIGHT, Medal::weight)
+        .onConflict(MEDAL_ID).doUpdate(MEDAL_NAME, MEDAL_SYMBOL, MEDAL_COLOR, MEDAL_WEIGHT)
+        .named("permission.save_medal");
+
+    private static final Write<Choice> SELECT_TAG = Sql.<Choice>insertInto(PLAYER_TAGS)
+        .value(TAG_PLAYER, Choice::player)
+        .value(PLAYER_TAG, Choice::id)
+        .valueSql(TAG_UPDATED_AT, "now()")
+        .onConflict(TAG_PLAYER).doUpdate(PLAYER_TAG, TAG_UPDATED_AT)
+        .named("permission.select_tag");
+
+    private static final Write<Choice> SELECT_MEDAL = Sql.<Choice>insertInto(PLAYER_MEDALS)
+        .value(MEDAL_PLAYER, Choice::player)
+        .value(PLAYER_MEDAL, Choice::id)
+        .valueSql(MEDAL_UPDATED_AT, "now()")
+        .onConflict(MEDAL_PLAYER).doUpdate(PLAYER_MEDAL, MEDAL_UPDATED_AT)
+        .named("permission.select_medal");
+
+    private static final Write<PermissionAction> LOG = Sql.<PermissionAction>insertInto(ACTIONS)
+        .value(ACTION_AT, PermissionAction::at)
+        .value(ACTION_ACTOR, PermissionAction::actor)
+        .value(ACTION_DESCRIPTION, PermissionAction::description)
+        .named("permission.log");
+
+    private static final Write<Void> DELETE_GROUP = Sql.deleteFrom(GROUPS).where(GROUP_ID.eq()).named("permission.delete_group");
+    private static final Write<Void> DELETE_GROUP_NODES = Sql.deleteFrom(GROUP_NODES).where(NODE_GROUP.eq()).named("permission.delete_group_nodes");
+    private static final Write<Void> DELETE_TAG = Sql.deleteFrom(TAGS).where(TAG_ID.eq()).named("permission.delete_tag");
+    private static final Write<Void> DELETE_TRACK = Sql.deleteFrom(TRACKS).where(TRACK_ID.eq()).named("permission.delete_track");
+    private static final Write<Void> DELETE_MEDAL = Sql.deleteFrom(MEDALS).where(MEDAL_ID.eq()).named("permission.delete_medal");
+    private static final Write<Void> DELETE_USER_NODES = Sql.deleteFrom(USER_NODES).where(NODE_PLAYER.in()).named("permission.delete_user_nodes");
+    private static final Write<Void> CLEAR_TAGS = Sql.deleteFrom(PLAYER_TAGS).where(TAG_PLAYER.in()).named("permission.clear_tags");
+    private static final Write<Void> CLEAR_MEDALS = Sql.deleteFrom(PLAYER_MEDALS).where(MEDAL_PLAYER.in()).named("permission.clear_medals");
 
     @Override
     public PermissionData load() {
-        try {
-            Connection connection = TransactionContext.connection();
-            List<Tag> tags = new ArrayList<>();
-            try (PreparedStatement statement = connection.prepareStatement(FIND_TAGS); ResultSet rows = statement.executeQuery()) {
-                while (rows.next()) {
-                    tags.add(new Tag(rows.getString("id"), rows.getString("name"), rows.getString("color"), rows.getInt("weight"),
-                        Optional.ofNullable(rows.getString("prefix")), rows.getBoolean("decorative")));
-                }
-            }
-            Map<String, List<PermissionNode>> nodes = new HashMap<>();
-            try (PreparedStatement statement = connection.prepareStatement(FIND_GROUP_NODES); ResultSet rows = statement.executeQuery()) {
-                while (rows.next()) {
-                    nodes.computeIfAbsent(rows.getString("group_id"), ignored -> new ArrayList<>()).add(node(rows));
-                }
-            }
-            List<Group> groups = new ArrayList<>();
-            try (PreparedStatement statement = connection.prepareStatement(FIND_GROUPS); ResultSet rows = statement.executeQuery()) {
-                while (rows.next()) {
-                    String id = rows.getString("id");
-                    groups.add(new Group(id, rows.getString("display_name"), rows.getInt("weight"), Optional.ofNullable(rows.getString("tag_id")),
-                        nodes.getOrDefault(id, List.of())));
-                }
-            }
-            List<Track> tracks = new ArrayList<>();
-            try (PreparedStatement statement = connection.prepareStatement(FIND_TRACKS); ResultSet rows = statement.executeQuery()) {
-                while (rows.next()) {
-                    Array array = rows.getArray("groups");
-                    tracks.add(new Track(rows.getString("id"), Arrays.asList((String[]) array.getArray())));
-                }
-            }
-            List<Medal> medals = new ArrayList<>();
-            try (PreparedStatement statement = connection.prepareStatement(FIND_MEDALS); ResultSet rows = statement.executeQuery()) {
-                while (rows.next()) {
-                    medals.add(new Medal(rows.getString("id"), rows.getString("name"), rows.getString("symbol"), rows.getString("color"), rows.getInt("weight")));
-                }
-            }
-            return PermissionData.of(groups, tags, tracks, medals);
-        } catch (SQLException exception) {
-            throw new PersistenceException("permission.load", exception);
+        List<Tag> tags = FIND_TAGS.list();
+        Map<String, List<PermissionNode>> nodes = new HashMap<>();
+        for (GroupNode node : FIND_GROUP_NODES.list()) {
+            nodes.computeIfAbsent(node.group(), ignored -> new ArrayList<>()).add(node.node());
         }
+        List<Group> groups = new ArrayList<>();
+        for (GroupRow group : FIND_GROUPS.list()) {
+            groups.add(new Group(group.id(), group.displayName(), group.weight(), group.tag(), nodes.getOrDefault(group.id(), List.of())));
+        }
+        return PermissionData.of(groups, tags, FIND_TRACKS.list(), FIND_MEDALS.list());
     }
 
     @Override
     public PermissionUser user(UUID id) {
-        try {
-            Connection connection = TransactionContext.connection();
-            List<PermissionNode> nodes = new ArrayList<>();
-            try (PreparedStatement statement = connection.prepareStatement(FIND_USER_NODES)) {
-                statement.setObject(1, id);
-                try (ResultSet rows = statement.executeQuery()) {
-                    while (rows.next()) {
-                        nodes.add(node(rows));
-                    }
-                }
-            }
-            Optional<String> tag = Optional.empty();
-            try (PreparedStatement statement = connection.prepareStatement(FIND_USER_TAG)) {
-                statement.setObject(1, id);
-                try (ResultSet rows = statement.executeQuery()) {
-                    if (rows.next()) {
-                        tag = Optional.ofNullable(rows.getString("tag_id"));
-                    }
-                }
-            }
-            Optional<String> medal = Optional.empty();
-            try (PreparedStatement statement = connection.prepareStatement(FIND_USER_MEDAL)) {
-                statement.setObject(1, id);
-                try (ResultSet rows = statement.executeQuery()) {
-                    if (rows.next()) {
-                        medal = Optional.ofNullable(rows.getString("medal_id"));
-                    }
-                }
-            }
-            return new PermissionUser(id, nodes, tag, medal);
-        } catch (SQLException exception) {
-            throw new PersistenceException("permission.find_user", exception);
-        }
+        List<PermissionNode> nodes = FIND_USER_NODES.list(NODE_PLAYER.is(id));
+        Optional<String> tag = FIND_USER_TAG.first(TAG_PLAYER.is(id));
+        Optional<String> medal = FIND_USER_MEDAL.first(MEDAL_PLAYER.is(id));
+        return new PermissionUser(id, nodes, tag, medal);
     }
 
     @Override
     public void saveGroup(Group group) {
-        try {
-            Connection connection = TransactionContext.connection();
-            try (PreparedStatement statement = connection.prepareStatement(SAVE_GROUP)) {
-                statement.setString(1, group.id());
-                statement.setString(2, group.displayName());
-                statement.setInt(3, group.weight());
-                statement.setString(4, group.tag().orElse(null));
-                statement.executeUpdate();
-            }
-            delete(connection, "DELETE FROM core.perm_group_nodes WHERE group_id = ?", group.id());
-            try (PreparedStatement statement = connection.prepareStatement(SAVE_GROUP_NODE)) {
-                for (PermissionNode node : group.nodes()) {
-                    statement.setString(1, group.id());
-                    setNode(statement, 2, node);
-                    statement.addBatch();
-                }
-                statement.executeBatch();
-            }
-        } catch (SQLException exception) {
-            throw new PersistenceException("permission.save_group", exception);
-        }
+        SAVE_GROUP.execute(group);
+        DELETE_GROUP_NODES.execute(NODE_GROUP.is(group.id()));
+        SAVE_GROUP_NODE.batch(group.nodes().stream().map(node -> new GroupNode(group.id(), node)).toList());
     }
 
     @Override
     public void deleteGroup(String id) {
-        run("permission.delete_group", "DELETE FROM core.perm_groups WHERE id = ?", id);
+        DELETE_GROUP.execute(GROUP_ID.is(id));
     }
 
     @Override
     public void saveTag(Tag tag) {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(SAVE_TAG)) {
-            statement.setString(1, tag.id());
-            statement.setString(2, tag.name());
-            statement.setString(3, tag.color());
-            statement.setInt(4, tag.weight());
-            statement.setString(5, tag.prefix().orElse(null));
-            statement.setBoolean(6, tag.decorative());
-            statement.executeUpdate();
-        } catch (SQLException exception) {
-            throw new PersistenceException("permission.save_tag", exception);
-        }
+        SAVE_TAG.execute(tag);
     }
 
     @Override
     public void deleteTag(String id) {
-        run("permission.delete_tag", "DELETE FROM core.perm_tags WHERE id = ?", id);
+        DELETE_TAG.execute(TAG_ID.is(id));
     }
 
     @Override
     public void saveTrack(Track track) {
-        try {
-            Connection connection = TransactionContext.connection();
-            try (PreparedStatement statement = connection.prepareStatement(SAVE_TRACK)) {
-                statement.setString(1, track.id());
-                statement.setArray(2, connection.createArrayOf("text", track.groups().toArray()));
-                statement.executeUpdate();
-            }
-        } catch (SQLException exception) {
-            throw new PersistenceException("permission.save_track", exception);
-        }
+        SAVE_TRACK.execute(track);
     }
 
     @Override
     public void deleteTrack(String id) {
-        run("permission.delete_track", "DELETE FROM core.perm_tracks WHERE id = ?", id);
+        DELETE_TRACK.execute(TRACK_ID.is(id));
     }
 
     @Override
     public void saveUser(PermissionUser user) {
-        try {
-            Connection connection = TransactionContext.connection();
-            try (PreparedStatement statement = connection.prepareStatement("DELETE FROM core.perm_user_nodes WHERE player_id = ?")) {
-                statement.setObject(1, user.id());
-                statement.executeUpdate();
-            }
-            try (PreparedStatement statement = connection.prepareStatement(SAVE_USER_NODE)) {
-                for (PermissionNode node : user.nodes()) {
-                    statement.setObject(1, user.id());
-                    setNode(statement, 2, node);
-                    statement.addBatch();
-                }
-                statement.executeBatch();
-            }
-            selectTag(user.id(), user.selectedTag());
-            selectMedal(user.id(), user.selectedMedal());
-        } catch (SQLException exception) {
-            throw new PersistenceException("permission.save_user", exception);
+        saveUsers(List.of(user));
+    }
+
+    @Override
+    public void saveUsers(Collection<PermissionUser> users) {
+        Map<UUID, PermissionUser> latest = new LinkedHashMap<>();
+        users.forEach(user -> latest.put(user.id(), user));
+        if (latest.isEmpty()) {
+            return;
         }
+        DELETE_USER_NODES.execute(NODE_PLAYER.in(latest.keySet()));
+        SAVE_USER_NODE.batch(latest.values().stream().flatMap(user -> user.nodes().stream().map(node -> new UserNode(user.id(), node))).toList());
+        choose(latest.values().stream().map(user -> new Choice(user.id(), user.selectedTag())).toList(), SELECT_TAG, CLEAR_TAGS, TAG_PLAYER);
+        choose(latest.values().stream().map(user -> new Choice(user.id(), user.selectedMedal())).toList(), SELECT_MEDAL, CLEAR_MEDALS, MEDAL_PLAYER);
     }
 
     @Override
     public void selectTag(UUID id, Optional<String> tag) {
-        try {
-            Connection connection = TransactionContext.connection();
-            if (tag.isEmpty()) {
-                try (PreparedStatement statement = connection.prepareStatement("DELETE FROM core.player_tags WHERE player_id = ?")) {
-                    statement.setObject(1, id);
-                    statement.executeUpdate();
-                }
-                return;
-            }
-            try (PreparedStatement statement = connection.prepareStatement(SELECT_TAG)) {
-                statement.setObject(1, id);
-                statement.setString(2, tag.get());
-                statement.executeUpdate();
-            }
-        } catch (SQLException exception) {
-            throw new PersistenceException("permission.select_tag", exception);
-        }
+        choose(List.of(new Choice(id, tag)), SELECT_TAG, CLEAR_TAGS, TAG_PLAYER);
     }
 
     @Override
     public void saveMedal(Medal medal) {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(SAVE_MEDAL)) {
-            statement.setString(1, medal.id());
-            statement.setString(2, medal.name());
-            statement.setString(3, medal.symbol());
-            statement.setString(4, medal.color());
-            statement.setInt(5, medal.weight());
-            statement.executeUpdate();
-        } catch (SQLException exception) {
-            throw new PersistenceException("permission.save_medal", exception);
-        }
+        SAVE_MEDAL.execute(medal);
     }
 
     @Override
     public void deleteMedal(String id) {
-        run("permission.delete_medal", "DELETE FROM core.perm_medals WHERE id = ?", id);
+        DELETE_MEDAL.execute(MEDAL_ID.is(id));
     }
 
     @Override
     public void selectMedal(UUID id, Optional<String> medal) {
-        try {
-            Connection connection = TransactionContext.connection();
-            if (medal.isEmpty()) {
-                try (PreparedStatement statement = connection.prepareStatement("DELETE FROM core.player_medals WHERE player_id = ?")) {
-                    statement.setObject(1, id);
-                    statement.executeUpdate();
-                }
-                return;
-            }
-            try (PreparedStatement statement = connection.prepareStatement(SELECT_MEDAL)) {
-                statement.setObject(1, id);
-                statement.setString(2, medal.get());
-                statement.executeUpdate();
-            }
-        } catch (SQLException exception) {
-            throw new PersistenceException("permission.select_medal", exception);
-        }
+        choose(List.of(new Choice(id, medal)), SELECT_MEDAL, CLEAR_MEDALS, MEDAL_PLAYER);
     }
 
     @Override
     public List<UUID> usersWith(String key) {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(FIND_USERS_WITH)) {
-            statement.setString(1, key);
-            List<UUID> users = new ArrayList<>();
-            try (ResultSet rows = statement.executeQuery()) {
-                while (rows.next()) {
-                    users.add(rows.getObject("player_id", UUID.class));
-                }
-            }
-            return users;
-        } catch (SQLException exception) {
-            throw new PersistenceException("permission.find_users_with", exception);
-        }
+        return FIND_USERS_WITH.list(USER_NODE.permission().is(key));
     }
 
     @Override
     public void log(PermissionAction action) {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(LOG)) {
-            statement.setTimestamp(1, Timestamp.from(action.at()));
-            statement.setString(2, action.actor());
-            statement.setString(3, action.description());
-            statement.executeUpdate();
-        } catch (SQLException exception) {
-            throw new PersistenceException("permission.log", exception);
-        }
+        LOG.execute(action);
+    }
+
+    @Override
+    public void logAll(List<PermissionAction> actions) {
+        LOG.batch(actions);
     }
 
     @Override
     public List<PermissionAction> recentActions(int limit) {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(RECENT)) {
-            statement.setInt(1, limit);
-            List<PermissionAction> actions = new ArrayList<>();
-            try (ResultSet rows = statement.executeQuery()) {
-                while (rows.next()) {
-                    actions.add(new PermissionAction(rows.getTimestamp("at").toInstant(), rows.getString("actor"), rows.getString("description")));
-                }
-            }
-            return actions;
-        } catch (SQLException exception) {
-            throw new PersistenceException("permission.recent_actions", exception);
+        return RECENT.list(LIMIT.is(limit));
+    }
+
+    private static void choose(List<Choice> choices, Write<Choice> select, Write<Void> clear, Column<UUID> player) {
+        List<UUID> cleared = choices.stream().filter(choice -> choice.chosen().isEmpty()).map(Choice::player).toList();
+        if (!cleared.isEmpty()) {
+            clear.execute(player.in(cleared));
         }
+        select.batch(choices.stream().filter(choice -> choice.chosen().isPresent()).toList());
     }
 
-    private static PermissionNode node(ResultSet rows) throws SQLException {
-        Timestamp expires = rows.getTimestamp("expires_at");
-        return new PermissionNode(
-            rows.getString("permission"),
-            rows.getBoolean("value"),
-            Contexts.parse(rows.getString("contexts")),
-            Optional.ofNullable(expires).map(Timestamp::toInstant),
-            rows.getTimestamp("added_at").toInstant(),
-            rows.getTimestamp("updated_at").toInstant()
-        );
+    private static List<Column<?>> withNode(Column<?> owner, NodeColumns node) {
+        List<Column<?>> columns = new ArrayList<>(List.of(owner));
+        columns.addAll(node.all());
+        return columns;
     }
 
-    private static void setNode(PreparedStatement statement, int first, PermissionNode node) throws SQLException {
-        statement.setString(first, node.key());
-        statement.setBoolean(first + 1, node.value());
-        statement.setString(first + 2, node.contexts().encode());
-        if (node.expiresAt().isPresent()) {
-            statement.setTimestamp(first + 3, Timestamp.from(node.expiresAt().get()));
-        } else {
-            statement.setNull(first + 3, Types.TIMESTAMP_WITH_TIMEZONE);
-        }
-        statement.setTimestamp(first + 4, Timestamp.from(node.addedAt()));
-        statement.setTimestamp(first + 5, Timestamp.from(node.updatedAt()));
+    private record GroupRow(String id, String displayName, int weight, Optional<String> tag) {
     }
 
-    private static void delete(Connection connection, String sql, String id) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, id);
-            statement.executeUpdate();
-        }
+    private record GroupNode(String group, PermissionNode node) {
     }
 
-    private static void run(String operation, String sql, String id) {
-        try {
-            delete(TransactionContext.connection(), sql, id);
-        } catch (SQLException exception) {
-            throw new PersistenceException(operation, exception);
+    private record UserNode(UUID player, PermissionNode node) {
+    }
+
+    private record Choice(UUID player, Optional<String> chosen) {
+
+        String id() {
+            return chosen.orElseThrow();
         }
     }
 }

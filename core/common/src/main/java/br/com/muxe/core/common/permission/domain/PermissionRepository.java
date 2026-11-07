@@ -1,5 +1,6 @@
 package br.com.muxe.core.common.permission.domain;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -24,6 +25,8 @@ public interface PermissionRepository {
 
     void saveUser(PermissionUser user);
 
+    void saveUsers(Collection<PermissionUser> users);
+
     void selectTag(UUID id, Optional<String> tag);
 
     void saveMedal(Medal medal);
@@ -35,6 +38,8 @@ public interface PermissionRepository {
     List<UUID> usersWith(String key);
 
     void log(PermissionAction action);
+
+    void logAll(List<PermissionAction> actions);
 
     List<PermissionAction> recentActions(int limit);
 }

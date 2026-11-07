@@ -15,6 +15,7 @@ import br.com.muxe.core.common.persistence.transaction.JdbcTransactions;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -149,5 +150,22 @@ class PostgresAccountRepositoryIntegrationTest {
 
     private static String suffix() {
         return Integer.toString(Math.abs(UUID.randomUUID().hashCode() % 10_000));
+    }
+
+    @Test
+    void findsManyAccountsInOneQueryIgnoringUnknownIds() {
+        Instant at = Instant.parse("2026-11-07T12:00:00Z");
+        Account first = Account.firstLogin(UUID.randomUUID(), "lote_um", false, at);
+        Account second = Account.firstLogin(UUID.randomUUID(), "lote_dois", true, at);
+        transactions.inTransaction("test.save", () -> {
+            repository.save(first);
+            repository.save(second);
+            return null;
+        });
+
+        List<Account> found = transactions.readOnly("test.find", () -> repository.findByIds(List.of(first.id(), second.id(), UUID.randomUUID())));
+
+        assertThat(found).containsExactlyInAnyOrder(first, second);
+        assertThat(transactions.readOnly("test.find", () -> repository.findByIds(List.of()))).isEmpty();
     }
 }

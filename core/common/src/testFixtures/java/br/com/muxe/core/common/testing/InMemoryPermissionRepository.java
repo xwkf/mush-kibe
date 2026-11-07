@@ -9,6 +9,7 @@ import br.com.muxe.core.common.permission.domain.PermissionUser;
 import br.com.muxe.core.common.permission.domain.Tag;
 import br.com.muxe.core.common.permission.domain.Track;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -87,6 +88,11 @@ public final class InMemoryPermissionRepository implements PermissionRepository 
     }
 
     @Override
+    public void saveUsers(Collection<PermissionUser> saved) {
+        saved.forEach(this::saveUser);
+    }
+
+    @Override
     public void selectTag(UUID id, Optional<String> tag) {
         PermissionUser user = user(id);
         users.put(id, new PermissionUser(id, user.nodes(), tag, user.selectedMedal()));
@@ -119,6 +125,11 @@ public final class InMemoryPermissionRepository implements PermissionRepository 
     @Override
     public void log(PermissionAction action) {
         actions.add(action);
+    }
+
+    @Override
+    public void logAll(List<PermissionAction> logged) {
+        actions.addAll(logged);
     }
 
     @Override
