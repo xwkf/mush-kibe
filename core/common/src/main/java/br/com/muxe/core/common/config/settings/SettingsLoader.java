@@ -50,7 +50,8 @@ public final class SettingsLoader {
             secrets.resolve(source.string("database.password")),
             source.integer("database.pool-size", 4),
             source.duration("database.connection-timeout", Duration.ofSeconds(5)),
-            source.bool("database.run-migrations", true)
+            source.bool("database.run-migrations", true),
+            source.duration("database.slow-statement-threshold", DatabaseConfig.DEFAULT_SLOW_STATEMENT_THRESHOLD)
         );
     }
 

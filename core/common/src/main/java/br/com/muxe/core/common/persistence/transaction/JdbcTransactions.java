@@ -4,6 +4,7 @@ import br.com.muxe.core.common.concurrent.MainThreadGuard;
 import br.com.muxe.core.common.metrics.MetricRegistry;
 import br.com.muxe.core.common.metrics.Tags;
 import br.com.muxe.core.common.persistence.PersistenceException;
+import br.com.muxe.core.common.persistence.sql.observe.StatementObserver;
 import java.sql.Connection;
 import java.sql.SQLException;
 import javax.sql.DataSource;
@@ -13,11 +14,17 @@ public final class JdbcTransactions implements Transactions {
     private final DataSource dataSource;
     private final MainThreadGuard mainThreadGuard;
     private final MetricRegistry metrics;
+    private final StatementObserver statements;
 
     public JdbcTransactions(DataSource dataSource, MainThreadGuard mainThreadGuard, MetricRegistry metrics) {
+        this(dataSource, mainThreadGuard, metrics, StatementObserver.NONE);
+    }
+
+    public JdbcTransactions(DataSource dataSource, MainThreadGuard mainThreadGuard, MetricRegistry metrics, StatementObserver statements) {
         this.dataSource = dataSource;
         this.mainThreadGuard = mainThreadGuard;
         this.metrics = metrics;
+        this.statements = statements;
     }
 
     @Override
@@ -41,7 +48,7 @@ public final class JdbcTransactions implements Transactions {
             connection.setAutoCommit(false);
             connection.setReadOnly(readOnly);
             try {
-                T result = TransactionContext.bind(connection, work);
+                T result = TransactionContext.bind(connection, statements, work);
                 connection.commit();
                 outcome = "commit";
                 return result;

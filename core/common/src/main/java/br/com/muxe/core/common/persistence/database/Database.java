@@ -21,6 +21,7 @@ public final class Database implements AutoCloseable {
         postgres.setUser(config.username());
         postgres.setPassword(config.password());
         postgres.setApplicationName(applicationName);
+        postgres.setReWriteBatchedInserts(true);
 
         HikariConfig hikari = new HikariConfig();
         hikari.setDataSource(postgres);

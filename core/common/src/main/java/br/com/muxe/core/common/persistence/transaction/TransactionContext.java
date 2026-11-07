@@ -1,26 +1,34 @@
 package br.com.muxe.core.common.persistence.transaction;
 
+import br.com.muxe.core.common.persistence.sql.observe.StatementObserver;
 import java.sql.Connection;
 
 public final class TransactionContext {
 
-    private static final ScopedValue<Connection> CONNECTION = ScopedValue.newInstance();
+    private static final ScopedValue<Scope> SCOPE = ScopedValue.newInstance();
 
     private TransactionContext() {
     }
 
     public static Connection connection() {
-        if (!CONNECTION.isBound()) {
+        if (!SCOPE.isBound()) {
             throw new IllegalStateException("No active transaction. Run repository calls inside Transactions.inTransaction or readOnly.");
         }
-        return CONNECTION.get();
+        return SCOPE.get().connection();
+    }
+
+    public static StatementObserver observer() {
+        return SCOPE.isBound() ? SCOPE.get().observer() : StatementObserver.NONE;
     }
 
     public static boolean isActive() {
-        return CONNECTION.isBound();
+        return SCOPE.isBound();
     }
 
-    static <T> T bind(Connection connection, TransactionalWork<T> work) throws Exception {
-        return ScopedValue.where(CONNECTION, connection).call(work::execute);
+    static <T> T bind(Connection connection, StatementObserver observer, TransactionalWork<T> work) throws Exception {
+        return ScopedValue.where(SCOPE, new Scope(connection, observer)).call(work::execute);
+    }
+
+    private record Scope(Connection connection, StatementObserver observer) {
     }
 }

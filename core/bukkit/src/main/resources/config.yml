@@ -13,6 +13,7 @@ database:
   pool-size: 4
   connection-timeout: 5s
   run-migrations: true
+  slow-statement-threshold: 250ms
 
 redis:
   host: localhost

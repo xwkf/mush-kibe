@@ -48,6 +48,7 @@ import br.com.muxe.core.common.permission.infrastructure.postgres.PostgresPermis
 import br.com.muxe.core.common.persistence.database.Database;
 import br.com.muxe.core.common.persistence.migration.MigrationReport;
 import br.com.muxe.core.common.persistence.migration.MigrationRunner;
+import br.com.muxe.core.common.persistence.sql.observe.StatementMetrics;
 import br.com.muxe.core.common.persistence.transaction.JdbcTransactions;
 import br.com.muxe.core.common.persistence.transaction.Transactions;
 import br.com.muxe.core.common.placement.PlacementModule;
@@ -222,7 +223,8 @@ public final class CoreRuntime implements AutoCloseable {
                 MigrationReport report = migrations.migrate(CORE_MODULE, CoreRuntime.class.getClassLoader());
                 logger.info("Schema '" + report.module() + "' at version " + report.schemaVersion() + " (" + report.migrationsExecuted() + " applied)");
             }
-            transactions = new JdbcTransactions(database.dataSource(), hooks.mainThreadGuard(), metrics);
+            transactions = new JdbcTransactions(database.dataSource(), hooks.mainThreadGuard(), metrics,
+                new StatementMetrics(metrics, settings.database().slowStatementThreshold(), logger));
 
             RedisConnector redis = closer.register(RedisConnector.connect(settings.redis(), "muxe-" + identity.id()));
             RedisMessageTransport transport = closer.register(new RedisMessageTransport(redis, executors.io(), executors.scheduler(), metrics, logger));

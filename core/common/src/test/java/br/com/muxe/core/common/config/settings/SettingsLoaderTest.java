@@ -32,11 +32,26 @@ class SettingsLoaderTest {
         assertThat(settings.server().kind()).isEqualTo(ServerKind.LOBBY);
         assertThat(settings.database().password()).isEqualTo("db-pass");
         assertThat(settings.database().connectionTimeout()).isEqualTo(Duration.ofSeconds(7));
+        assertThat(settings.database().slowStatementThreshold()).isEqualTo(Duration.ofMillis(120));
         assertThat(settings.redis().port()).isEqualTo(6380);
         assertThat(settings.messaging().secret()).isEqualTo(SECRET);
         assertThat(settings.messaging().requestTimeout()).isEqualTo(Duration.ofMillis(1500));
         assertThat(settings.metrics().enabled()).isFalse();
         assertThat(settings.cqrs()).isEqualTo(new ExecutorLimits(16, 200, Duration.ofSeconds(2)));
+    }
+
+    @Test
+    void slowStatementsDefaultToAQuarterOfASecond() {
+        Map<String, Object> config = config();
+        config.put("database", Map.of(
+            "url", "jdbc:postgresql://localhost:5432/muxe",
+            "username", "muxe",
+            "password", "env:MUXE_DATABASE_PASSWORD"
+        ));
+
+        MuxeSettings settings = loader.load(new MapConfigSource(config));
+
+        assertThat(settings.database().slowStatementThreshold()).isEqualTo(Duration.ofMillis(250));
     }
 
     @Test
@@ -83,7 +98,8 @@ class SettingsLoaderTest {
             "url", "jdbc:postgresql://localhost:5432/muxe",
             "username", "muxe",
             "password", "env:MUXE_DATABASE_PASSWORD",
-            "connection-timeout", "7s"
+            "connection-timeout", "7s",
+            "slow-statement-threshold", "120ms"
         ));
         root.put("redis", Map.of("host", "localhost", "port", 6380));
         root.put("messaging", Map.of("secret", "env:MUXE_MESSAGING_SECRET", "request-timeout", "1500ms", "previous-secrets", List.of()));
