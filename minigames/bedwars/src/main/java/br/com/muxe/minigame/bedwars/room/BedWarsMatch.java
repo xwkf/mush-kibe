@@ -10,6 +10,8 @@ import br.com.muxe.core.bukkit.nms.PacketHologramTransport;
 import br.com.muxe.core.bukkit.npc.Npc;
 import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
+import br.com.muxe.minigame.api.cosmetic.message.KillAnnouncer;
+import br.com.muxe.minigame.api.cosmetic.message.LifetimeTally;
 import br.com.muxe.minigame.api.match.Match;
 import br.com.muxe.minigame.api.match.MatchPhase;
 import br.com.muxe.minigame.api.match.Participant.State;
@@ -21,8 +23,6 @@ import br.com.muxe.minigame.api.runtime.MatchState;
 import br.com.muxe.minigame.api.timeline.Timeline.Upcoming;
 import br.com.muxe.minigame.bedwars.arena.BedWarsArena.TeamBase;
 import br.com.muxe.minigame.bedwars.arena.BedWarsArena;
-import br.com.muxe.minigame.bedwars.cosmetic.message.KillAnnouncer;
-import br.com.muxe.minigame.bedwars.cosmetic.message.LifetimeTally;
 import br.com.muxe.minigame.bedwars.game.BedWarsEvent;
 import br.com.muxe.minigame.bedwars.game.ChestAccess;
 import br.com.muxe.minigame.bedwars.game.ChestDeposits;
@@ -502,7 +502,7 @@ public final class BedWarsMatch implements MatchState {
                 return;
             }
             storedXp.put(id, Math.max(0, stats.general().xp()));
-            tally.load(id, stats.general());
+            tally.load(id, stats.general().lifetime());
             showLevel(id);
         }));
     }

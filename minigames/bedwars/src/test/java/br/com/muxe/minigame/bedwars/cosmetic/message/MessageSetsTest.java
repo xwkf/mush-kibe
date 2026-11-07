@@ -3,8 +3,13 @@ package br.com.muxe.minigame.bedwars.cosmetic.message;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import br.com.muxe.minigame.bedwars.cosmetic.catalog.BedCosmetic;
-import br.com.muxe.minigame.bedwars.cosmetic.catalog.CosmeticCatalog;
+import br.com.muxe.minigame.api.cosmetic.catalog.BedCosmetic;
+import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
+import br.com.muxe.minigame.api.cosmetic.message.MessageKind;
+import br.com.muxe.minigame.api.cosmetic.message.MessagePreview;
+import br.com.muxe.minigame.api.cosmetic.message.MessageSet;
+import br.com.muxe.minigame.api.cosmetic.message.MessageSets;
+import br.com.muxe.minigame.api.cosmetic.message.MessageValues;
 import br.com.muxe.minigame.bedwars.room.RoomFixtures;
 import java.util.EnumMap;
 import java.util.List;

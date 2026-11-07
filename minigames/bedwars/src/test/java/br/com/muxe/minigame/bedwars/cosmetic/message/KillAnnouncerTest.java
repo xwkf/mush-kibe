@@ -2,6 +2,10 @@ package br.com.muxe.minigame.bedwars.cosmetic.message;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import br.com.muxe.minigame.api.cosmetic.message.KillAnnouncer;
+import br.com.muxe.minigame.api.cosmetic.message.LifetimeTally;
+import br.com.muxe.minigame.api.cosmetic.message.MessageSet;
+import br.com.muxe.minigame.api.cosmetic.message.MessageSets;
 import br.com.muxe.minigame.bedwars.room.RoomFixtures;
 import br.com.muxe.minigame.bedwars.stats.domain.StatCounters;
 import java.util.HashMap;
@@ -26,7 +30,7 @@ class KillAnnouncerTest {
     void aKillIsToldWithTheSetOfTheKiller() {
         chosen.put(killer, statistic);
         chosen.put(victim, standard);
-        tally.load(killer, STORED);
+        tally.load(killer, STORED.lifetime());
 
         assertThat(announcer.kill(killer, "§aAlice", victim, "§cBob", false, false)).isEqualTo("§7§cBob §7foi a §b17.089ª§7 kill de §aAlice§7.");
     }
@@ -35,7 +39,7 @@ class KillAnnouncerTest {
     void theSetOfTheVictimDoesNotChangeAKill() {
         chosen.put(killer, standard);
         chosen.put(victim, statistic);
-        tally.load(victim, STORED);
+        tally.load(victim, STORED.lifetime());
 
         assertThat(announcer.kill(killer, "§aAlice", victim, "§cBob", false, false)).isEqualTo("§7§cBob §7morreu para §aAlice§7.");
     }
@@ -43,7 +47,7 @@ class KillAnnouncerTest {
     @Test
     void aFinalKillCountsTheFinalKillsOfTheKiller() {
         chosen.put(killer, statistic);
-        tally.load(killer, STORED);
+        tally.load(killer, STORED.lifetime());
 
         assertThat(announcer.kill(killer, "§aAlice", victim, "§cBob", true, false)).isEqualTo("§7§cBob §7foi a §b19.215ª§7 kill final de §aAlice§7.");
         assertThat(announcer.kill(killer, "§aAlice", victim, "§cBob", true, false)).isEqualTo("§7§cBob §7foi a §b19.216ª§7 kill final de §aAlice§7.");
@@ -59,7 +63,7 @@ class KillAnnouncerTest {
     @Test
     void aDeathWithoutAKillerIsToldWithTheSetOfTheVictim() {
         chosen.put(victim, statistic);
-        tally.load(victim, STORED);
+        tally.load(victim, STORED.lifetime());
 
         assertThat(announcer.death(victim, "§cBob", false, false)).isEqualTo("§7§cBob §7morreu pela §b12.538ª§7 vez§7.");
         assertThat(announcer.death(victim, "§cBob", true, false)).isEqualTo("§7§cBob §7teve sua §b2.537ª§7 morte final§7.");
@@ -76,7 +80,7 @@ class KillAnnouncerTest {
     @Test
     void theVictimOfAKillAlsoCountsADeath() {
         chosen.put(victim, statistic);
-        tally.load(victim, STORED);
+        tally.load(victim, STORED.lifetime());
         announcer.kill(killer, "§aAlice", victim, "§cBob", false, false);
         announcer.kill(killer, "§aAlice", victim, "§cBob", true, false);
 
@@ -87,7 +91,7 @@ class KillAnnouncerTest {
     @Test
     void theBedIsToldWithTheSetOfTheBreakerAndKeepsThePrefix() {
         chosen.put(killer, statistic);
-        tally.load(killer, STORED);
+        tally.load(killer, STORED.lifetime());
 
         assertThat(announcer.bed(killer, "§aAlice", "§c", "Vermelho"))
             .isEqualTo("§f§lCAMA DESTRUÍDA §f» §7A §cCama do Vermelho §7foi a §b11.938ª§7 cama destruída de §aAlice§7.");
@@ -110,7 +114,7 @@ class KillAnnouncerTest {
     void totalsLoadedLaterStillIncludeWhatHappenedBeforeTheyArrived() {
         chosen.put(killer, statistic);
         announcer.kill(killer, "§aAlice", victim, "§cBob", false, false);
-        tally.load(killer, STORED);
+        tally.load(killer, STORED.lifetime());
 
         assertThat(announcer.kill(killer, "§aAlice", victim, "§cBob", false, false)).isEqualTo("§7§cBob §7foi a §b17.090ª§7 kill de §aAlice§7.");
     }

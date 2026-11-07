@@ -1,6 +1,8 @@
 package br.com.muxe.minigame.bedwars.cosmetic.menu;
 
 import br.com.muxe.core.bukkit.buildmode.BuildModeHook;
+import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenus;
+import br.com.muxe.minigame.api.cosmetic.menu.MenuSlot;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;

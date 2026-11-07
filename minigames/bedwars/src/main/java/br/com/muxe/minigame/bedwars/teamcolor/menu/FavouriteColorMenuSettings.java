@@ -1,6 +1,6 @@
 package br.com.muxe.minigame.bedwars.teamcolor.menu;
 
-import br.com.muxe.minigame.bedwars.cosmetic.menu.MenuSlot;
+import br.com.muxe.minigame.api.cosmetic.menu.MenuSlot;
 import br.com.muxe.minigame.engine.team.TeamColor;
 import java.util.Collections;
 import java.util.LinkedHashMap;

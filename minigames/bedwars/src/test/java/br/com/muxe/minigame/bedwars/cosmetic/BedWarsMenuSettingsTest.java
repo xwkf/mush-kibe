@@ -3,7 +3,7 @@ package br.com.muxe.minigame.bedwars.cosmetic;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import br.com.muxe.core.bukkit.item.ItemBuilder;
-import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenuSettings;
+import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenuSettings;
 import br.com.muxe.minigame.bedwars.room.RoomFixtures;
 import org.bukkit.Material;
 import org.bukkit.configuration.InvalidConfigurationException;

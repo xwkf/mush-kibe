@@ -1,6 +1,6 @@
 package br.com.muxe.minigame.bedwars.hotbar.menu;
 
-import br.com.muxe.minigame.bedwars.cosmetic.menu.MenuSlot;
+import br.com.muxe.minigame.api.cosmetic.menu.MenuSlot;
 import java.util.List;
 import java.util.Objects;
 import org.bukkit.configuration.ConfigurationSection;

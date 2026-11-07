@@ -1,7 +1,7 @@
 package br.com.muxe.minigame.bedwars.lobby.menu;
 
 import br.com.muxe.core.bukkit.item.ItemBuilder;
-import br.com.muxe.minigame.bedwars.cosmetic.menu.MenuSlot;
+import br.com.muxe.minigame.api.cosmetic.menu.MenuSlot;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;

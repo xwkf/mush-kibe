@@ -1,6 +1,10 @@
 package br.com.muxe.minigame.bedwars.cosmetic.animation;
 
 import br.com.muxe.core.bukkit.cosmetic.animation.BedAnimation;
+import br.com.muxe.minigame.api.cosmetic.animation.DuskAnimation;
+import br.com.muxe.minigame.api.cosmetic.animation.PaintAnimation;
+import br.com.muxe.minigame.api.cosmetic.animation.PumpkinHarvestAnimation;
+import br.com.muxe.minigame.api.cosmetic.animation.SixSevenAnimation;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;

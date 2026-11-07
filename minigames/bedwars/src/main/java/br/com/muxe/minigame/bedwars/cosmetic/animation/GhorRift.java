@@ -2,6 +2,7 @@ package br.com.muxe.minigame.bedwars.cosmetic.animation;
 
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
+import br.com.muxe.minigame.api.cosmetic.animation.Kit;
 import java.util.random.RandomGenerator;
 
 final class GhorRift {

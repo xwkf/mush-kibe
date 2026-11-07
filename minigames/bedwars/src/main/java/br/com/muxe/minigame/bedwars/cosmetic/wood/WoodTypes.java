@@ -1,8 +1,8 @@
 package br.com.muxe.minigame.bedwars.cosmetic.wood;
 
-import br.com.muxe.minigame.bedwars.cosmetic.catalog.BedCosmetic;
-import br.com.muxe.minigame.bedwars.cosmetic.catalog.CosmeticCatalog;
-import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticWallet;
+import br.com.muxe.minigame.api.cosmetic.catalog.BedCosmetic;
+import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
+import br.com.muxe.minigame.api.cosmetic.profile.CosmeticWallet;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;

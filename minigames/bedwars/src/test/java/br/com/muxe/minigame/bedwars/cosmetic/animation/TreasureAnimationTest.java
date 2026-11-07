@@ -6,6 +6,8 @@ import static org.assertj.core.api.Assertions.offset;
 import br.com.muxe.core.bukkit.cosmetic.animation.BedFrame;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.Slot;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
+import br.com.muxe.minigame.api.cosmetic.animation.RecordingStage;
+import br.com.muxe.minigame.api.cosmetic.animation.TracedStage;
 import java.util.List;
 import org.bukkit.Material;
 import org.junit.jupiter.api.Test;

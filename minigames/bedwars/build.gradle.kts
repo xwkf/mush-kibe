@@ -8,5 +8,6 @@ dependencies {
 
     testImplementation(projects.core.bukkit)
     testImplementation(testFixtures(projects.core.common))
+    testImplementation(testFixtures(projects.minigames.api))
     testImplementation(libs.bundles.testcontainers)
 }

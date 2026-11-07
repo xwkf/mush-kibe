@@ -3,10 +3,10 @@ package br.com.muxe.minigame.bedwars.cosmetic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticListSettings;
-import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticListSettings.Entries;
-import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenuSettings;
-import br.com.muxe.minigame.bedwars.cosmetic.menu.CosmeticMenuSettings.LoreTexts;
+import br.com.muxe.minigame.api.cosmetic.menu.CosmeticListSettings.Entries;
+import br.com.muxe.minigame.api.cosmetic.menu.CosmeticListSettings;
+import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenuSettings.LoreTexts;
+import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenuSettings;
 import br.com.muxe.minigame.bedwars.room.RoomFixtures;
 import org.junit.jupiter.api.Test;
 

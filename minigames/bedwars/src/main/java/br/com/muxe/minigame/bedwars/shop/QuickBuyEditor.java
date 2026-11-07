@@ -5,7 +5,7 @@ import br.com.muxe.core.bukkit.menu.Menu;
 import br.com.muxe.core.bukkit.menu.Page;
 import br.com.muxe.core.bukkit.prompt.AnvilPrompts;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
-import br.com.muxe.minigame.bedwars.cosmetic.menu.MenuSlot;
+import br.com.muxe.minigame.api.cosmetic.menu.MenuSlot;
 import br.com.muxe.minigame.bedwars.quickbuy.domain.QuickBuy;
 import br.com.muxe.minigame.bedwars.shop.ShopCatalog.ShopItem;
 import java.util.ArrayList;

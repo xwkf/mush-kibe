@@ -2,9 +2,9 @@ package br.com.muxe.minigame.bedwars.shop;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import br.com.muxe.minigame.bedwars.cosmetic.catalog.CosmeticCatalog;
-import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticAccess;
-import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticWallet;
+import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
+import br.com.muxe.minigame.api.cosmetic.profile.CosmeticAccess;
+import br.com.muxe.minigame.api.cosmetic.profile.CosmeticWallet;
 import br.com.muxe.minigame.bedwars.cosmetic.wood.WoodTypes;
 import br.com.muxe.minigame.bedwars.room.RoomFixtures;
 import br.com.muxe.minigame.bedwars.shop.ShopCatalog.ShopItem;

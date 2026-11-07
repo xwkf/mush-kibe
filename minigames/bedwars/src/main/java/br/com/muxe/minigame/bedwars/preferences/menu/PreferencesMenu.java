@@ -2,10 +2,10 @@ package br.com.muxe.minigame.bedwars.preferences.menu;
 
 import br.com.muxe.core.bukkit.item.ItemBuilder;
 import br.com.muxe.core.bukkit.menu.Menu;
-import br.com.muxe.minigame.bedwars.cosmetic.menu.MenuSlot;
+import br.com.muxe.minigame.api.cosmetic.menu.MenuSlot;
 import br.com.muxe.minigame.bedwars.preferences.PlayerPreferences;
-import br.com.muxe.minigame.bedwars.preferences.domain.Preferences;
 import br.com.muxe.minigame.bedwars.preferences.domain.Preferences.ChestDeposit;
+import br.com.muxe.minigame.bedwars.preferences.domain.Preferences;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;

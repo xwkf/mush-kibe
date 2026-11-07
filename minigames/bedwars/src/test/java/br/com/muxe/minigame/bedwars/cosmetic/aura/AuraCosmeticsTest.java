@@ -2,8 +2,11 @@ package br.com.muxe.minigame.bedwars.cosmetic.aura;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import br.com.muxe.minigame.bedwars.cosmetic.catalog.CosmeticCatalog;
-import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticWallet;
+import br.com.muxe.minigame.api.cosmetic.aura.Aura;
+import br.com.muxe.minigame.api.cosmetic.aura.AuraCosmetics;
+import br.com.muxe.minigame.api.cosmetic.aura.Auras;
+import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
+import br.com.muxe.minigame.api.cosmetic.profile.CosmeticWallet;
 import br.com.muxe.minigame.bedwars.room.RoomFixtures;
 import java.util.HashMap;
 import java.util.HashSet;

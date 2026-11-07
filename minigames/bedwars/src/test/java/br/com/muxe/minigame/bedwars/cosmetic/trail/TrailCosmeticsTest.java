@@ -2,8 +2,12 @@ package br.com.muxe.minigame.bedwars.cosmetic.trail;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import br.com.muxe.minigame.bedwars.cosmetic.catalog.CosmeticCatalog;
-import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticWallet;
+import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
+import br.com.muxe.minigame.api.cosmetic.profile.CosmeticWallet;
+import br.com.muxe.minigame.api.cosmetic.trail.FakeTrail;
+import br.com.muxe.minigame.api.cosmetic.trail.ProjectileTrail;
+import br.com.muxe.minigame.api.cosmetic.trail.ProjectileTrails;
+import br.com.muxe.minigame.api.cosmetic.trail.TrailCosmetics;
 import br.com.muxe.minigame.bedwars.room.RoomFixtures;
 import java.util.HashMap;
 import java.util.HashSet;

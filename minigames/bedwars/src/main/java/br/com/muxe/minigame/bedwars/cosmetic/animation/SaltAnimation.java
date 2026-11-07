@@ -5,6 +5,7 @@ import br.com.muxe.core.bukkit.cosmetic.animation.BedFrame;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage;
 import br.com.muxe.core.bukkit.cosmetic.animation.Timeline;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
+import br.com.muxe.minigame.api.cosmetic.animation.Kit;
 import java.util.List;
 import java.util.Map;
 import java.util.random.RandomGenerator;

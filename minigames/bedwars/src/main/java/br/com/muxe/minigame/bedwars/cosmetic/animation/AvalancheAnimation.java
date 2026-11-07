@@ -2,10 +2,12 @@ package br.com.muxe.minigame.bedwars.cosmetic.animation;
 
 import br.com.muxe.core.bukkit.cosmetic.animation.BedAnimation;
 import br.com.muxe.core.bukkit.cosmetic.animation.BedFrame;
-import br.com.muxe.core.bukkit.cosmetic.animation.Stage;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.Actor;
+import br.com.muxe.core.bukkit.cosmetic.animation.Stage;
 import br.com.muxe.core.bukkit.cosmetic.animation.Timeline;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
+import br.com.muxe.minigame.api.cosmetic.animation.Flight;
+import br.com.muxe.minigame.api.cosmetic.animation.Kit;
 import java.util.random.RandomGenerator;
 import org.bukkit.Material;
 

@@ -8,6 +8,7 @@ import br.com.muxe.core.bukkit.cosmetic.animation.Stage.Slot;
 import br.com.muxe.core.bukkit.cosmetic.animation.Stage.StandStyle;
 import br.com.muxe.core.bukkit.cosmetic.animation.Timeline;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
+import br.com.muxe.minigame.api.cosmetic.animation.RecordingStage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;

@@ -1,5 +1,7 @@
 package br.com.muxe.minigame.bedwars.stats.domain;
 
+import br.com.muxe.minigame.api.cosmetic.message.LifetimeTally.Totals;
+
 public record StatCounters(
     long games,
     long bedsBroken,
@@ -18,6 +20,10 @@ public record StatCounters(
 ) {
 
     public static final StatCounters ZERO = new StatCounters(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+
+    public Totals lifetime() {
+        return new Totals(kills, finalKills, deaths, finalDeaths, bedsBroken);
+    }
 
     public StatCounters plus(MatchOutcome outcome) {
         long streak = switch (outcome.result()) {

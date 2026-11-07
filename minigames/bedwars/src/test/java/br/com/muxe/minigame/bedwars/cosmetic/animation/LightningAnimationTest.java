@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import br.com.muxe.core.bukkit.cosmetic.animation.BedFrame;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
+import br.com.muxe.minigame.api.cosmetic.animation.TracedStage;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
