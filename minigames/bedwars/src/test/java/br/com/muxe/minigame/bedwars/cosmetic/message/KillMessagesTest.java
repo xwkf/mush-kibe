@@ -3,6 +3,7 @@ package br.com.muxe.minigame.bedwars.cosmetic.message;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
+import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticKind;
 import br.com.muxe.minigame.api.cosmetic.message.KillMessages;
 import br.com.muxe.minigame.api.cosmetic.message.MessageSet;
 import br.com.muxe.minigame.api.cosmetic.message.MessageSets;
@@ -25,8 +26,8 @@ class KillMessagesTest {
         throw new AssertionError("The message set must not be drawn again");
     };
 
-    private final MessageSets sets = MessageSets.from(RoomFixtures.CONFIG.getConfigurationSection("kill-messages"));
-    private final CosmeticCatalog catalog = CosmeticCatalog.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.kill-message"), "cosmetics", "bedwars-mensagem-kill",
+    private final MessageSets sets = MessageSets.from(RoomFixtures.KILL_MESSAGES);
+    private final CosmeticCatalog catalog = RoomFixtures.COSMETICS.catalog("bedwars", CosmeticKind.KILL_MESSAGE, RoomFixtures.CONFIG.getConfigurationSection("cosmetics"),
         id -> sets.find(id).isPresent());
     private final Map<UUID, CosmeticWallet> wallets = new HashMap<>();
     private final KillMessages messages = new KillMessages(sets, catalog, id -> Optional.ofNullable(wallets.get(id)));

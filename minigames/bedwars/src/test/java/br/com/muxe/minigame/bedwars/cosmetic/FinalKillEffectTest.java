@@ -6,8 +6,9 @@ import static org.assertj.core.api.Assertions.offset;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import br.com.muxe.minigame.api.cosmetic.animation.SceneAnimations;
 import br.com.muxe.minigame.api.cosmetic.catalog.Availability;
-import br.com.muxe.minigame.api.cosmetic.catalog.BedCosmetic;
+import br.com.muxe.minigame.api.cosmetic.catalog.Cosmetic;
 import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
+import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticKind;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticIcons;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenuSettings.CategoryMenu;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenuSettings;
@@ -20,7 +21,7 @@ import org.junit.jupiter.api.Test;
 class FinalKillEffectTest {
 
     private static final SceneAnimations ANIMATIONS = SceneAnimations.finalKills();
-    private final CosmeticCatalog catalog = CosmeticCatalog.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.final-kill"), "cosmetics", "bedwars-kill-final",
+    private final CosmeticCatalog catalog = RoomFixtures.COSMETICS.catalog("bedwars", CosmeticKind.FINAL_KILL, RoomFixtures.CONFIG.getConfigurationSection("cosmetics"),
         id -> ANIMATIONS.find(id).isPresent());
     private final CosmeticMenuSettings menus = CosmeticMenuSettings.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus"));
     private final CategoryMenu menu = menus.category(CosmeticMenuSettings.FINAL_KILL);
@@ -30,7 +31,7 @@ class FinalKillEffectTest {
         assertThat(catalog.category()).isEqualTo("bedwars-kill-final");
         assertThat(catalog.all()).hasSize(43);
         assertThat(catalog.all().getFirst().id()).isEqualTo("presenteado");
-        assertThat(catalog.all()).allMatch(BedCosmetic::animated);
+        assertThat(catalog.all()).allMatch(Cosmetic::animated);
         assertThat(catalog.find("fogos-de-artificio").orElseThrow().availability()).isEqualTo(Availability.ULTRA);
         assertThat(catalog.price(catalog.find("colmeia").orElseThrow())).isEqualTo(2_000);
         assertThat(catalog.price(catalog.find("redstone").orElseThrow())).isEqualTo(750);

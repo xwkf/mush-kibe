@@ -12,7 +12,7 @@ import br.com.muxe.core.bukkit.permission.command.Replies;
 import br.com.muxe.core.bukkit.permission.command.TargetLookup;
 import br.com.muxe.core.common.cosmetic.application.command.GrantCosmeticCommand;
 import br.com.muxe.core.common.cqrs.command.CommandBus;
-import br.com.muxe.minigame.api.cosmetic.catalog.BedCosmetic;
+import br.com.muxe.minigame.api.cosmetic.catalog.Cosmetic;
 import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenus;
 import br.com.muxe.minigame.api.cosmetic.profile.CosmeticProfileListener;
@@ -60,7 +60,7 @@ public final class CosmeticCommand {
         @Arg("jogador") @Suggest(provider = PermissionSuggestions.PLAYERS) String name,
         @Arg("cosmetico") @Suggest(provider = COSMETICS) String id
     ) {
-        Optional<BedCosmetic> cosmetic = catalog.find(id.toLowerCase(Locale.ROOT));
+        Optional<Cosmetic> cosmetic = catalog.find(id.toLowerCase(Locale.ROOT));
         if (cosmetic.isEmpty()) {
             replies.send(sender, "cosmetic-unknown", "id", id);
             return;
@@ -81,6 +81,6 @@ public final class CosmeticCommand {
 
     @Suggestions(COSMETICS)
     public List<String> cosmetics() {
-        return catalog.all().stream().map(BedCosmetic::id).toList();
+        return catalog.all().stream().map(Cosmetic::id).toList();
     }
 }

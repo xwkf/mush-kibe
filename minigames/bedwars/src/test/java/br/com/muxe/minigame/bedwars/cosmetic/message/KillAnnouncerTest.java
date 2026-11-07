@@ -17,7 +17,7 @@ class KillAnnouncerTest {
 
     private static final StatCounters STORED = new StatCounters(40, 11_937, 3, 17_088, 12_537, 5, 19_214, 2_536, 1, 20, 20, 0, 4, 900);
 
-    private final MessageSets sets = MessageSets.from(RoomFixtures.CONFIG.getConfigurationSection("kill-messages"));
+    private final MessageSets sets = MessageSets.from(RoomFixtures.KILL_MESSAGES);
     private final MessageSet standard = sets.find("padrao").orElseThrow();
     private final MessageSet statistic = sets.find("estatistico").orElseThrow();
     private final Map<UUID, MessageSet> chosen = new HashMap<>();

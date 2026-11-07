@@ -3,8 +3,9 @@ package br.com.muxe.minigame.bedwars.cosmetic.message;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import br.com.muxe.minigame.api.cosmetic.catalog.BedCosmetic;
+import br.com.muxe.minigame.api.cosmetic.catalog.Cosmetic;
 import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
+import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticKind;
 import br.com.muxe.minigame.api.cosmetic.message.MessageKind;
 import br.com.muxe.minigame.api.cosmetic.message.MessagePreview;
 import br.com.muxe.minigame.api.cosmetic.message.MessageSet;
@@ -23,8 +24,8 @@ class MessageSetsTest {
     private static final String KILLER = "§aAlice";
     private static final String VICTIM = "§cBob";
 
-    private final MessageSets sets = MessageSets.from(RoomFixtures.CONFIG.getConfigurationSection("kill-messages"));
-    private final MessagePreview preview = MessagePreview.from(RoomFixtures.CONFIG.getConfigurationSection("kill-messages.preview"));
+    private final MessageSets sets = MessageSets.from(RoomFixtures.KILL_MESSAGES);
+    private final MessagePreview preview = MessagePreview.from(RoomFixtures.KILL_MESSAGES.getConfigurationSection("preview"));
     private final MessageSet standard = sets.find("padrao").orElseThrow();
     private final MessageSet statistic = sets.find("estatistico").orElseThrow();
 
@@ -37,12 +38,12 @@ class MessageSetsTest {
 
     @Test
     void everyCosmeticOfTheKillMessageCatalogHasASetAndTheOtherWayAround() {
-        CosmeticCatalog catalog = CosmeticCatalog.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.kill-message"), "cosmetics", "bedwars-mensagem-kill",
+        CosmeticCatalog catalog = RoomFixtures.COSMETICS.catalog("bedwars", CosmeticKind.KILL_MESSAGE, RoomFixtures.CONFIG.getConfigurationSection("cosmetics"),
             id -> sets.find(id).isPresent());
 
         assertThat(catalog.category()).isEqualTo("bedwars-mensagem-kill");
-        assertThat(catalog.all().stream().map(BedCosmetic::id)).containsExactlyElementsOf(sets.all().stream().map(MessageSet::id).toList());
-        assertThat(catalog.all()).allMatch(BedCosmetic::animated);
+        assertThat(catalog.all().stream().map(Cosmetic::id)).containsExactlyElementsOf(sets.all().stream().map(MessageSet::id).toList());
+        assertThat(catalog.all()).allMatch(Cosmetic::animated);
         assertThat(catalog.defaultId()).contains(sets.fallback().id());
     }
 

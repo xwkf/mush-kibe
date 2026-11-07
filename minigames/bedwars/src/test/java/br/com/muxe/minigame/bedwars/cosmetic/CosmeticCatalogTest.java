@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import br.com.muxe.core.bukkit.item.ItemBuilder;
 import br.com.muxe.minigame.api.cosmetic.catalog.Availability;
-import br.com.muxe.minigame.api.cosmetic.catalog.BedCosmetic;
+import br.com.muxe.minigame.api.cosmetic.catalog.Cosmetic;
 import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticIcons;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenuSettings;
@@ -26,19 +26,19 @@ class CosmeticCatalogTest {
 
     private static final BedAnimations ANIMATIONS = new BedAnimations();
     private static final Set<String> WITHOUT_ANIMATION = Set.of("tornado", "tubarao");
-    private final CosmeticCatalog catalog = CosmeticCatalog.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics"),
+    private final CosmeticCatalog catalog = BedBreakCosmetics.catalog(RoomFixtures.CONFIG.getConfigurationSection("cosmetics"),
         id -> ANIMATIONS.find(id).isPresent() && !WITHOUT_ANIMATION.contains(id));
     private final CosmeticIcons icons = new CosmeticIcons(CosmeticMenuSettings.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus")).category(CosmeticMenuSettings.BED_DESTRUCTION), catalog);
 
     @Test
     void theCatalogListsThirtyOneCosmeticsAndEveryAnimationHasAnEntry() {
-        CosmeticCatalog real = CosmeticCatalog.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics"), id -> ANIMATIONS.find(id).isPresent());
-        assertThat(real.all()).hasSize(31).allMatch(BedCosmetic::animated);
-        assertThat(catalog.all().stream().filter(BedCosmetic::animated)).hasSize(29);
+        CosmeticCatalog real = BedBreakCosmetics.catalog(RoomFixtures.CONFIG.getConfigurationSection("cosmetics"), id -> ANIMATIONS.find(id).isPresent());
+        assertThat(real.all()).hasSize(31).allMatch(Cosmetic::animated);
+        assertThat(catalog.all().stream().filter(Cosmetic::animated)).hasSize(29);
         ANIMATIONS.all().forEach(animation -> assertThat(catalog.find(animation.id())).as(animation.id()).isPresent());
         assertThat(catalog.price(catalog.find("tinta").orElseThrow())).isEqualTo(1_750);
         assertThat(catalog.price(catalog.find("sal-na-ferida").orElseThrow())).isEqualTo(750);
-        BedCosmetic kraken = catalog.find("kraken").orElseThrow();
+        Cosmetic kraken = catalog.find("kraken").orElseThrow();
         assertThat(kraken.name()).isEqualTo("Kraken");
         assertThat(kraken.availability()).isEqualTo(Availability.SALE);
         assertThat(kraken.forSale()).isTrue();
@@ -47,7 +47,7 @@ class CosmeticCatalogTest {
 
     @Test
     void cosmeticsWithoutAnAnimationCannotBeBoughtOrSelected() {
-        BedCosmetic tornado = catalog.find("tornado").orElseThrow();
+        Cosmetic tornado = catalog.find("tornado").orElseThrow();
         CosmeticWallet rich = new CosmeticWallet(Set.of("tornado"), CosmeticWallet.RANDOM, 10_000, false);
 
         assertThat(tornado.forSale()).isFalse();
@@ -56,7 +56,7 @@ class CosmeticCatalogTest {
 
     @Test
     void ultraPlayersOwnTheUltraCosmetics() {
-        BedCosmetic fireworks = catalog.find("fogos-de-artificio").orElseThrow();
+        Cosmetic fireworks = catalog.find("fogos-de-artificio").orElseThrow();
 
         assertThat(fireworks.availability()).isEqualTo(Availability.ULTRA);
         assertThat(new CosmeticWallet(Set.of(), CosmeticWallet.RANDOM, 0, true).state(fireworks)).isEqualTo(CosmeticState.OWNED);
@@ -99,10 +99,10 @@ class CosmeticCatalogTest {
         Collator alphabetical = Collator.getInstance(Locale.forLanguageTag("pt-BR"));
         alphabetical.setStrength(Collator.PRIMARY);
 
-        List<BedCosmetic> sorted = wallet.sorted(catalog);
+        List<Cosmetic> sorted = wallet.sorted(catalog);
 
-        assertThat(sorted.subList(0, 3)).extracting(BedCosmetic::id).containsExactly("apavorante", "enderman", "tinta");
-        assertThat(sorted.subList(3, sorted.size())).extracting(BedCosmetic::name).isSortedAccordingTo(alphabetical::compare);
+        assertThat(sorted.subList(0, 3)).extracting(Cosmetic::id).containsExactly("apavorante", "enderman", "tinta");
+        assertThat(sorted.subList(3, sorted.size())).extracting(Cosmetic::name).isSortedAccordingTo(alphabetical::compare);
         assertThat(sorted.subList(3, sorted.size())).noneMatch(wallet::owns);
     }
 

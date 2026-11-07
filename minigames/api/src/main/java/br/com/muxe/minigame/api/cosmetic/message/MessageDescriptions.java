@@ -1,6 +1,6 @@
 package br.com.muxe.minigame.api.cosmetic.message;
 
-import br.com.muxe.minigame.api.cosmetic.catalog.BedCosmetic;
+import br.com.muxe.minigame.api.cosmetic.catalog.Cosmetic;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticDescriptions;
 import java.util.List;
 
@@ -15,7 +15,7 @@ public final class MessageDescriptions implements CosmeticDescriptions {
     }
 
     @Override
-    public List<String> of(BedCosmetic cosmetic, String viewerName) {
+    public List<String> of(Cosmetic cosmetic, String viewerName) {
         return sets.find(cosmetic.id()).map(set -> preview.lines(set, viewerName)).orElse(cosmetic.description());
     }
 }

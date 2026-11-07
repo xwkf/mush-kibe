@@ -1,6 +1,6 @@
 package br.com.muxe.minigame.api.cosmetic.message;
 
-import br.com.muxe.minigame.api.cosmetic.catalog.BedCosmetic;
+import br.com.muxe.minigame.api.cosmetic.catalog.Cosmetic;
 import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
 import br.com.muxe.minigame.api.cosmetic.profile.CosmeticWallet;
 import java.util.Optional;
@@ -36,7 +36,7 @@ public final class KillMessages {
         return wallet.chosen(catalog).flatMap(this::set).orElse(sets.fallback());
     }
 
-    private Optional<MessageSet> set(BedCosmetic cosmetic) {
+    private Optional<MessageSet> set(Cosmetic cosmetic) {
         return sets.find(cosmetic.id());
     }
 }

@@ -1,7 +1,7 @@
 package br.com.muxe.minigame.api.cosmetic.profile;
 
 import br.com.muxe.core.common.cosmetic.domain.CosmeticOrder;
-import br.com.muxe.minigame.api.cosmetic.catalog.BedCosmetic;
+import br.com.muxe.minigame.api.cosmetic.catalog.Cosmetic;
 import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
 import java.util.HashSet;
 import java.util.List;
@@ -32,15 +32,15 @@ public record CosmeticWallet(Set<String> owned, String selected, long credits, C
         return new CosmeticWallet(all, selected, credits, access);
     }
 
-    public boolean owns(BedCosmetic cosmetic) {
+    public boolean owns(Cosmetic cosmetic) {
         return owned.contains(cosmetic.id()) || access.covers(cosmetic.availability());
     }
 
-    public boolean usable(BedCosmetic cosmetic) {
+    public boolean usable(Cosmetic cosmetic) {
         return cosmetic.animated() && owns(cosmetic);
     }
 
-    public CosmeticState state(BedCosmetic cosmetic) {
+    public CosmeticState state(Cosmetic cosmetic) {
         if (usable(cosmetic)) {
             return cosmetic.id().equals(selected) ? CosmeticState.SELECTED : CosmeticState.OWNED;
         }
@@ -54,31 +54,31 @@ public record CosmeticWallet(Set<String> owned, String selected, long credits, C
         return catalog.all().stream().filter(this::owns).count();
     }
 
-    public List<BedCosmetic> sorted(CosmeticCatalog catalog) {
-        return catalog.all().stream().sorted(CosmeticOrder.ownedFirst(this::owns, BedCosmetic::name)).toList();
+    public List<Cosmetic> sorted(CosmeticCatalog catalog) {
+        return catalog.all().stream().sorted(CosmeticOrder.ownedFirst(this::owns, Cosmetic::name)).toList();
     }
 
     public Optional<String> animation(CosmeticCatalog catalog, RandomGenerator random) {
         if (NONE.equals(selected)) {
             return Optional.empty();
         }
-        Optional<BedCosmetic> chosen = catalog.find(selected).filter(this::usable);
+        Optional<Cosmetic> chosen = catalog.find(selected).filter(this::usable);
         if (chosen.isPresent()) {
-            return chosen.map(BedCosmetic::id);
+            return chosen.map(Cosmetic::id);
         }
-        List<BedCosmetic> usable = catalog.all().stream().filter(this::usable).toList();
+        List<Cosmetic> usable = catalog.all().stream().filter(this::usable).toList();
         if (usable.isEmpty()) {
             return Optional.empty();
         }
         return Optional.of(usable.get(random.nextInt(usable.size())).id());
     }
 
-    public Optional<BedCosmetic> chosen(CosmeticCatalog catalog) {
+    public Optional<Cosmetic> chosen(CosmeticCatalog catalog) {
         return catalog.find(selected).filter(this::usable).or(() -> catalog.defaultCosmetic().filter(this::usable));
     }
 
-    public Optional<BedCosmetic> drawn(CosmeticCatalog catalog, RandomGenerator random) {
-        List<BedCosmetic> usable = catalog.all().stream().filter(this::usable).toList();
+    public Optional<Cosmetic> drawn(CosmeticCatalog catalog, RandomGenerator random) {
+        List<Cosmetic> usable = catalog.all().stream().filter(this::usable).toList();
         return usable.isEmpty() ? Optional.empty() : Optional.of(usable.get(random.nextInt(usable.size())));
     }
 

@@ -3,6 +3,7 @@ package br.com.muxe.minigame.bedwars.cosmetic.trail;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
+import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticKind;
 import br.com.muxe.minigame.api.cosmetic.profile.CosmeticWallet;
 import br.com.muxe.minigame.api.cosmetic.trail.FakeTrail;
 import br.com.muxe.minigame.api.cosmetic.trail.ProjectileTrail;
@@ -35,7 +36,7 @@ class TrailCosmeticsTest {
     private final UUID player = UUID.randomUUID();
 
     private TrailCosmetics cosmetics(Function<String, Optional<ProjectileTrail>> trails) {
-        CosmeticCatalog catalog = CosmeticCatalog.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.projectile-trail"), "cosmetics", "bedwars-rastro",
+        CosmeticCatalog catalog = RoomFixtures.COSMETICS.catalog("bedwars", CosmeticKind.PROJECTILE_TRAIL, RoomFixtures.CONFIG.getConfigurationSection("cosmetics"),
             id -> trails.apply(id).isPresent());
         return new TrailCosmetics(catalog, id -> Optional.ofNullable(wallets.get(id)), trails);
     }
@@ -116,7 +117,7 @@ class TrailCosmeticsTest {
 
     @Test
     void theRealRegistryOnlyHoldsTrailsOfTheCatalog() {
-        CosmeticCatalog catalog = CosmeticCatalog.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.projectile-trail"), "cosmetics", "bedwars-rastro",
+        CosmeticCatalog catalog = RoomFixtures.COSMETICS.catalog("bedwars", CosmeticKind.PROJECTILE_TRAIL, RoomFixtures.CONFIG.getConfigurationSection("cosmetics"),
             id -> true);
 
         ProjectileTrails.all().forEach(trail -> assertThat(catalog.find(trail.id())).as(trail.id()).isPresent());

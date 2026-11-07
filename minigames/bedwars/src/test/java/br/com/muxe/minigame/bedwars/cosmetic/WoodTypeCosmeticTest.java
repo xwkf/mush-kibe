@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import br.com.muxe.core.bukkit.item.ItemBuilder;
 import br.com.muxe.minigame.api.cosmetic.catalog.Availability;
-import br.com.muxe.minigame.api.cosmetic.catalog.BedCosmetic;
+import br.com.muxe.minigame.api.cosmetic.catalog.Cosmetic;
 import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticIcons;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticListSettings;
@@ -36,7 +36,7 @@ class WoodTypeCosmeticTest {
     void theCatalogHasTheTwelveWoodsInTheRecordedOrder() {
         assertThat(catalog.category()).isEqualTo("bedwars-madeira");
         assertThat(catalog.defaultId()).contains("carvalho");
-        assertThat(catalog.all().stream().map(BedCosmetic::id)).containsExactly(
+        assertThat(catalog.all().stream().map(Cosmetic::id)).containsExactly(
             "carvalho", "pinheiro", "eucalipto", "selva", "acacia", "carvalho-escuro",
             "tronco-carvalho", "tronco-pinheiro", "tronco-eucalipto", "tronco-selva", "tronco-acacia", "tronco-carvalho-escuro");
         assertThat(catalog.all().stream().map(cosmetic -> cosmetic.availability())).containsExactly(
@@ -204,6 +204,6 @@ class WoodTypeCosmeticTest {
 
     private List<String> owned(CosmeticAccess access) {
         CosmeticWallet wallet = CosmeticWallet.loaded(Set.of(), "carvalho", 0, access, catalog);
-        return catalog.all().stream().filter(wallet::owns).map(BedCosmetic::id).toList();
+        return catalog.all().stream().filter(wallet::owns).map(Cosmetic::id).toList();
     }
 }

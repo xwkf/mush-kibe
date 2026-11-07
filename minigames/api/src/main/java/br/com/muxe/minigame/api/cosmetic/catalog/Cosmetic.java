@@ -5,11 +5,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public record BedCosmetic(String id, String name, ItemBuilder icon, int stars, Optional<String> tag, Availability availability, List<String> description, boolean animated) {
+public record Cosmetic(String id, String name, ItemBuilder icon, int stars, Optional<String> tag, Availability availability, List<String> description, boolean animated) {
 
     public static final int MAX_STARS = 5;
 
-    public BedCosmetic {
+    public Cosmetic {
         Objects.requireNonNull(id, "id");
         Objects.requireNonNull(name, "name");
         Objects.requireNonNull(icon, "icon");

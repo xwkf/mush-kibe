@@ -1,14 +1,14 @@
 package br.com.muxe.minigame.api.cosmetic.preview;
 
-import br.com.muxe.minigame.api.cosmetic.catalog.BedCosmetic;
+import br.com.muxe.minigame.api.cosmetic.catalog.Cosmetic;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 
 public interface KitPlay {
 
-    boolean covers(BedCosmetic cosmetic);
+    boolean covers(Cosmetic cosmetic);
 
-    void launched(Player viewer, BedCosmetic cosmetic, Projectile projectile);
+    void launched(Player viewer, Cosmetic cosmetic, Projectile projectile);
 
     void ended(Player viewer);
 }

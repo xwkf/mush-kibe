@@ -6,6 +6,7 @@ import br.com.muxe.minigame.api.cosmetic.aura.Aura;
 import br.com.muxe.minigame.api.cosmetic.aura.AuraCosmetics;
 import br.com.muxe.minigame.api.cosmetic.aura.Auras;
 import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
+import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticKind;
 import br.com.muxe.minigame.api.cosmetic.profile.CosmeticWallet;
 import br.com.muxe.minigame.bedwars.room.RoomFixtures;
 import java.util.HashMap;
@@ -24,7 +25,7 @@ class AuraCosmeticsTest {
         throw new AssertionError("The aura must not be drawn again");
     };
 
-    private final CosmeticCatalog catalog = CosmeticCatalog.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.aura"), "cosmetics", "bedwars-aura",
+    private final CosmeticCatalog catalog = RoomFixtures.COSMETICS.catalog("bedwars", CosmeticKind.AURA, RoomFixtures.CONFIG.getConfigurationSection("cosmetics"),
         id -> Auras.find(id).isPresent());
     private final Map<UUID, CosmeticWallet> wallets = new HashMap<>();
     private final AuraCosmetics cosmetics = new AuraCosmetics(catalog, id -> Optional.ofNullable(wallets.get(id)));

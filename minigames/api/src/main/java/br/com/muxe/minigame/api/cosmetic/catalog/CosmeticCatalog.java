@@ -16,29 +16,23 @@ public final class CosmeticCatalog {
 
     private final String category;
     private final Map<Integer, Long> prices;
-    private final Map<String, BedCosmetic> cosmetics;
+    private final Map<String, Cosmetic> cosmetics;
     private final Optional<String> defaultId;
 
-    public CosmeticCatalog(String category, Map<Integer, Long> prices, List<BedCosmetic> cosmetics) {
+    public CosmeticCatalog(String category, Map<Integer, Long> prices, List<Cosmetic> cosmetics) {
         this(category, prices, cosmetics, Optional.empty());
     }
 
-    public CosmeticCatalog(String category, Map<Integer, Long> prices, List<BedCosmetic> cosmetics, Optional<String> defaultId) {
+    public CosmeticCatalog(String category, Map<Integer, Long> prices, List<Cosmetic> cosmetics, Optional<String> defaultId) {
         this.category = category;
         this.prices = Map.copyOf(prices);
-        Map<String, BedCosmetic> byId = new LinkedHashMap<>();
+        Map<String, Cosmetic> byId = new LinkedHashMap<>();
         cosmetics.forEach(cosmetic -> byId.put(cosmetic.id(), cosmetic));
         this.cosmetics = byId;
         if (defaultId.isPresent() && !byId.containsKey(defaultId.get())) {
             throw new IllegalArgumentException("The default cosmetic " + defaultId.get() + " is not in the category " + category);
         }
         this.defaultId = defaultId;
-    }
-
-    public static final String BED_CATEGORY = "bedwars-cama";
-
-    public static CosmeticCatalog from(ConfigurationSection section, Predicate<String> animated) {
-        return from(section, "bed-destruction", BED_CATEGORY, animated);
     }
 
     public static CosmeticCatalog from(ConfigurationSection section, String listKey, String defaultCategory, Predicate<String> animated) {
@@ -49,11 +43,11 @@ public final class CosmeticCatalog {
                 prices.put(Integer.parseInt(stars), priceSection.getLong(stars));
             }
         }
-        List<BedCosmetic> cosmetics = new ArrayList<>();
+        List<Cosmetic> cosmetics = new ArrayList<>();
         ConfigurationSection list = required(section, listKey);
         for (String id : list.getKeys(false)) {
             ConfigurationSection entry = required(list, id);
-            cosmetics.add(new BedCosmetic(
+            cosmetics.add(new Cosmetic(
                 id,
                 entry.getString("name", id),
                 ItemBuilder.from(required(entry, "icon")),
@@ -71,11 +65,11 @@ public final class CosmeticCatalog {
         return category;
     }
 
-    public List<BedCosmetic> all() {
+    public List<Cosmetic> all() {
         return List.copyOf(cosmetics.values());
     }
 
-    public Optional<BedCosmetic> find(String id) {
+    public Optional<Cosmetic> find(String id) {
         return Optional.ofNullable(cosmetics.get(id));
     }
 
@@ -83,11 +77,11 @@ public final class CosmeticCatalog {
         return defaultId;
     }
 
-    public Optional<BedCosmetic> defaultCosmetic() {
+    public Optional<Cosmetic> defaultCosmetic() {
         return defaultId.flatMap(this::find);
     }
 
-    public long price(BedCosmetic cosmetic) {
+    public long price(Cosmetic cosmetic) {
         Long price = prices.get(cosmetic.stars());
         if (price == null) {
             throw new IllegalStateException("No price for " + cosmetic.stars() + " stars");

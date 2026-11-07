@@ -9,11 +9,16 @@ import br.com.muxe.minigame.bedwars.cosmetic.animation.BedAnimations;
 import br.com.muxe.minigame.bedwars.room.BedWarsServices.BedBreakHandler;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Predicate;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 public final class BedBreakCosmetics implements BedBreakHandler {
+
+    public static final String CATEGORY = "bedwars-cama";
+    public static final String LIST = "bed-destruction";
 
     private final AnimationPlayer animator;
     private final BedAnimations animations;
@@ -25,6 +30,10 @@ public final class BedBreakCosmetics implements BedBreakHandler {
         this.animations = animations;
         this.catalog = catalog;
         this.profiles = profiles;
+    }
+
+    public static CosmeticCatalog catalog(ConfigurationSection cosmetics, Predicate<String> animated) {
+        return CosmeticCatalog.from(cosmetics, LIST, CATEGORY, animated);
     }
 
     @Override

@@ -13,7 +13,7 @@ import br.com.muxe.core.common.cosmetic.application.command.BuyCosmeticHandler;
 import br.com.muxe.core.common.cosmetic.application.command.SelectCosmeticCommand;
 import br.com.muxe.core.common.cqrs.command.CommandBus;
 import br.com.muxe.core.common.result.Result;
-import br.com.muxe.minigame.api.cosmetic.catalog.BedCosmetic;
+import br.com.muxe.minigame.api.cosmetic.catalog.Cosmetic;
 import br.com.muxe.minigame.api.cosmetic.profile.CosmeticAccess;
 import br.com.muxe.minigame.api.cosmetic.profile.CosmeticState;
 import br.com.muxe.minigame.api.cosmetic.profile.CosmeticWallet;
@@ -142,13 +142,13 @@ public final class CosmeticMenus {
         if (rules.none()) {
             entries.add(new Entry(icons.none(wallet), List.of(), context -> choose(context, category, CosmeticWallet.NONE, icons.selectedName(wallet.selecting(CosmeticWallet.NONE)))));
         }
-        List<BedCosmetic> ordered = category.ordered(wallet);
+        List<Cosmetic> ordered = category.ordered(wallet);
         for (int index = 0; index <= ordered.size(); index++) {
             if (rules.random() && index == Math.min(rules.randomAfter(), ordered.size())) {
                 entries.add(new Entry(icons.random(wallet), icons.randomFrames(wallet), context -> choose(context, category, CosmeticWallet.RANDOM, icons.selectedName(wallet.selecting(CosmeticWallet.RANDOM)))));
             }
             if (index < ordered.size()) {
-                BedCosmetic cosmetic = ordered.get(index);
+                Cosmetic cosmetic = ordered.get(index);
                 entries.add(new Entry(icons.cosmetic(cosmetic, wallet, category.descriptions().of(cosmetic, viewerNames.apply(viewer))), List.of(), context -> clicked(context, category, cosmetic)));
             }
         }
@@ -179,7 +179,7 @@ public final class CosmeticMenus {
         return entryIndex / perPage + 1;
     }
 
-    private void clicked(ClickContext context, CosmeticCategory category, BedCosmetic cosmetic) {
+    private void clicked(ClickContext context, CosmeticCategory category, Cosmetic cosmetic) {
         Player player = context.player();
         CosmeticWallet wallet = category.profiles().of(player.getUniqueId()).orElse(CosmeticWallet.EMPTY);
         if (context.isRightClick()) {
@@ -222,7 +222,7 @@ public final class CosmeticMenus {
         }, mainThread);
     }
 
-    private void buy(ClickContext context, CosmeticCategory category, BedCosmetic cosmetic) {
+    private void buy(ClickContext context, CosmeticCategory category, Cosmetic cosmetic) {
         Player player = context.player();
         long price = category.catalog().price(cosmetic);
         int page = currentPage(player, category, cosmetic.id());
@@ -249,7 +249,7 @@ public final class CosmeticMenus {
 
     private int currentPage(Player player, CosmeticCategory category, String id) {
         CosmeticWallet wallet = category.profiles().of(player.getUniqueId()).orElse(CosmeticWallet.EMPTY);
-        List<BedCosmetic> sorted = category.ordered(wallet);
+        List<Cosmetic> sorted = category.ordered(wallet);
         for (int index = 0; index < sorted.size(); index++) {
             if (sorted.get(index).id().equals(id)) {
                 return pageOf(category.list().entries().entryIndex(index, sorted.size()), category.list().slots().size());
@@ -299,7 +299,7 @@ public final class CosmeticMenus {
     @FunctionalInterface
     public interface PreviewGate {
 
-        void preview(Player player, BedCosmetic cosmetic, Consumer<Player> back);
+        void preview(Player player, Cosmetic cosmetic, Consumer<Player> back);
     }
 
     private record Entry(ItemBuilder icon, List<ItemBuilder> frames, Consumer<ClickContext> click) {

@@ -1,6 +1,6 @@
 package br.com.muxe.minigame.api.cosmetic.menu;
 
-import br.com.muxe.minigame.api.cosmetic.catalog.BedCosmetic;
+import br.com.muxe.minigame.api.cosmetic.catalog.Cosmetic;
 import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenuSettings.CategoryMenu;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenus.PreviewGate;
@@ -26,7 +26,7 @@ public record CosmeticCategory(CategoryMenu menu, CosmeticCatalog catalog, Cosme
         return menu.list();
     }
 
-    public List<BedCosmetic> ordered(CosmeticWallet wallet) {
+    public List<Cosmetic> ordered(CosmeticWallet wallet) {
         return list().entries().ownedFirst() ? wallet.sorted(catalog) : catalog.all();
     }
 }

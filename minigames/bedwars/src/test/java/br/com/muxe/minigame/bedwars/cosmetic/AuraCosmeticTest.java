@@ -9,8 +9,9 @@ import br.com.muxe.minigame.api.cosmetic.aura.Aura;
 import br.com.muxe.minigame.api.cosmetic.aura.AuraParticle;
 import br.com.muxe.minigame.api.cosmetic.aura.Auras;
 import br.com.muxe.minigame.api.cosmetic.catalog.Availability;
-import br.com.muxe.minigame.api.cosmetic.catalog.BedCosmetic;
+import br.com.muxe.minigame.api.cosmetic.catalog.Cosmetic;
 import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
+import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticKind;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticIcons;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticListSettings;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenuSettings.CategoryMenu;
@@ -27,7 +28,7 @@ import org.junit.jupiter.api.Test;
 
 class AuraCosmeticTest {
 
-    private final CosmeticCatalog catalog = CosmeticCatalog.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.aura"), "cosmetics", "bedwars-aura",
+    private final CosmeticCatalog catalog = RoomFixtures.COSMETICS.catalog("bedwars", CosmeticKind.AURA, RoomFixtures.CONFIG.getConfigurationSection("cosmetics"),
         id -> Auras.find(id).isPresent());
     private final CosmeticMenuSettings menus = CosmeticMenuSettings.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus"));
     private final CategoryMenu menu = menus.category(CosmeticMenuSettings.AURA);
@@ -41,14 +42,14 @@ class AuraCosmeticTest {
     @Test
     void theCatalogHasTheTwoTournamentAurasAndBothHaveAnEffect() {
         assertThat(catalog.category()).isEqualTo("bedwars-aura");
-        assertThat(catalog.all().stream().map(BedCosmetic::id)).containsExactly("liga-mestre", "liga-diamante");
-        assertThat(catalog.all()).allMatch(BedCosmetic::animated);
-        BedCosmetic master = catalog.find("liga-mestre").orElseThrow();
+        assertThat(catalog.all().stream().map(Cosmetic::id)).containsExactly("liga-mestre", "liga-diamante");
+        assertThat(catalog.all()).allMatch(Cosmetic::animated);
+        Cosmetic master = catalog.find("liga-mestre").orElseThrow();
         assertThat(master.name()).isEqualTo("Liga Mestre");
         assertThat(master.icon().material()).isEqualTo(Material.REDSTONE);
         assertThat(master.tag()).contains("&6Premiação de torneio");
         assertThat(master.availability()).isEqualTo(Availability.EVENT);
-        BedCosmetic diamond = catalog.find("liga-diamante").orElseThrow();
+        Cosmetic diamond = catalog.find("liga-diamante").orElseThrow();
         assertThat(diamond.name()).isEqualTo("Liga Diamante");
         assertThat(diamond.icon().material()).isEqualTo(Material.DIAMOND);
         assertThat(diamond.tag()).contains("&6Premiação de torneio");
@@ -135,7 +136,7 @@ class AuraCosmeticTest {
 
     @Test
     void aLockedTournamentAuraLooksLikeTheRecording() {
-        BedCosmetic master = catalog.find("liga-mestre").orElseThrow();
+        Cosmetic master = catalog.find("liga-mestre").orElseThrow();
 
         ItemBuilder locked = icons.cosmetic(master, CosmeticWallet.EMPTY);
 
@@ -147,7 +148,7 @@ class AuraCosmeticTest {
 
     @Test
     void anOwnedAuraCanBeSelectedAndPreviewed() {
-        BedCosmetic diamond = catalog.find("liga-diamante").orElseThrow();
+        Cosmetic diamond = catalog.find("liga-diamante").orElseThrow();
 
         ItemBuilder owned = icons.cosmetic(diamond, owning(CosmeticWallet.RANDOM, "liga-diamante"));
         ItemBuilder selected = icons.cosmetic(diamond, owning("liga-diamante", "liga-diamante"));
@@ -162,8 +163,8 @@ class AuraCosmeticTest {
     void theOwnedAurasComeFirstAndThenTheRestAlphabetically() {
         CosmeticWallet wallet = owning(CosmeticWallet.RANDOM, "liga-mestre");
 
-        assertThat(wallet.sorted(catalog).stream().map(BedCosmetic::id)).containsExactly("liga-mestre", "liga-diamante");
-        assertThat(CosmeticWallet.EMPTY.sorted(catalog).stream().map(BedCosmetic::id)).containsExactly("liga-diamante", "liga-mestre");
+        assertThat(wallet.sorted(catalog).stream().map(Cosmetic::id)).containsExactly("liga-mestre", "liga-diamante");
+        assertThat(CosmeticWallet.EMPTY.sorted(catalog).stream().map(Cosmetic::id)).containsExactly("liga-diamante", "liga-mestre");
     }
 
     @Test

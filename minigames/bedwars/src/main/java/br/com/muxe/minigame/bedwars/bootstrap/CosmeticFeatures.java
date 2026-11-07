@@ -20,6 +20,8 @@ import br.com.muxe.minigame.api.cosmetic.animation.SceneAnimations;
 import br.com.muxe.minigame.api.cosmetic.aura.AuraCosmetics;
 import br.com.muxe.minigame.api.cosmetic.aura.Auras;
 import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
+import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticDefaults;
+import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticKind;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticCategory;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenuSettings;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenus.PreviewGate;
@@ -49,6 +51,7 @@ import br.com.muxe.minigame.bedwars.cosmetic.preview.config.PreviewKind;
 import br.com.muxe.minigame.bedwars.cosmetic.wood.WoodTypes;
 import br.com.muxe.minigame.bedwars.hotbar.menu.HotbarEditor;
 import br.com.muxe.minigame.bedwars.preferences.menu.PreferencesMenu;
+import br.com.muxe.minigame.bedwars.room.BedWarsMatch;
 import br.com.muxe.minigame.bedwars.settings.MatchSounds;
 import br.com.muxe.minigame.bedwars.shop.QuickBuyEditor;
 import br.com.muxe.minigame.bedwars.teamcolor.menu.FavouriteColorMenu;
@@ -67,12 +70,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 final class CosmeticFeatures implements MatchEvents {
 
-    private static final String VICTORY_CATEGORY = "bedwars-vitoria";
-    private static final String FINAL_KILL_CATEGORY = "bedwars-kill-final";
-    private static final String AURA_CATEGORY = "bedwars-aura";
-    private static final String TRAIL_CATEGORY = "bedwars-rastro";
+    private static final String GAME = BedWarsMatch.GAME;
     private static final String WOOD_CATEGORY = "bedwars-madeira";
-    private static final String KILL_MESSAGE_CATEGORY = "bedwars-mensagem-kill";
 
     private final CosmeticMenus menus;
     private final BedBreakCosmetics bedBreaks;
@@ -111,26 +110,23 @@ final class CosmeticFeatures implements MatchEvents {
         AnimationPlayer animator = new AnimationPlayer(plugin);
 
         BedAnimations animations = new BedAnimations();
-        CosmeticCatalog catalog = CosmeticCatalog.from(section, id -> animations.find(id).isPresent());
+        CosmeticCatalog catalog = BedBreakCosmetics.catalog(section, id -> animations.find(id).isPresent());
         CosmeticProfiles profiles = profiles(plugin, core, catalog);
+        CosmeticDefaults defaults = CosmeticDefaults.load();
         SceneAnimations victoryAnimations = SceneAnimations.victories();
-        CosmeticCatalog victoryCatalog = CosmeticCatalog.from(section(section, CosmeticMenuSettings.VICTORY_EFFECT), "cosmetics", VICTORY_CATEGORY,
-            id -> victoryAnimations.find(id).isPresent());
+        CosmeticCatalog victoryCatalog = defaults.catalog(GAME, CosmeticKind.VICTORY_EFFECT, section, id -> victoryAnimations.find(id).isPresent());
         CosmeticProfiles victoryProfiles = profiles(plugin, core, victoryCatalog);
         SceneAnimations killAnimations = SceneAnimations.finalKills();
-        CosmeticCatalog killCatalog = CosmeticCatalog.from(section(section, CosmeticMenuSettings.FINAL_KILL), "cosmetics", FINAL_KILL_CATEGORY,
-            id -> killAnimations.find(id).isPresent());
+        CosmeticCatalog killCatalog = defaults.catalog(GAME, CosmeticKind.FINAL_KILL, section, id -> killAnimations.find(id).isPresent());
         CosmeticProfiles killProfiles = profiles(plugin, core, killCatalog);
         SceneAnimations auraAnimations = SceneAnimations.auras();
-        CosmeticCatalog auraCatalog = CosmeticCatalog.from(section(section, CosmeticMenuSettings.AURA), "cosmetics", AURA_CATEGORY,
-            id -> Auras.find(id).isPresent());
+        CosmeticCatalog auraCatalog = defaults.catalog(GAME, CosmeticKind.AURA, section, id -> Auras.find(id).isPresent());
         CosmeticProfiles auraProfiles = profiles(plugin, core, auraCatalog);
-        CosmeticCatalog trailCatalog = CosmeticCatalog.from(section(section, CosmeticMenuSettings.PROJECTILE_TRAIL), "cosmetics", TRAIL_CATEGORY,
-            id -> ProjectileTrails.find(id).isPresent());
+        CosmeticCatalog trailCatalog = defaults.catalog(GAME, CosmeticKind.PROJECTILE_TRAIL, section, id -> ProjectileTrails.find(id).isPresent());
         CosmeticProfiles trailProfiles = profiles(plugin, core, trailCatalog);
-        MessageSets messageSets = MessageSets.from(section(config, "kill-messages"));
-        CosmeticCatalog killMessageCatalog = CosmeticCatalog.from(section(section, CosmeticMenuSettings.KILL_MESSAGE), "cosmetics", KILL_MESSAGE_CATEGORY,
-            id -> messageSets.find(id).isPresent());
+        ConfigurationSection killMessageSection = defaults.killMessages(config.getConfigurationSection(CosmeticDefaults.KILL_MESSAGES));
+        MessageSets messageSets = MessageSets.from(killMessageSection);
+        CosmeticCatalog killMessageCatalog = defaults.catalog(GAME, CosmeticKind.KILL_MESSAGE, section, id -> messageSets.find(id).isPresent());
         CosmeticProfiles killMessageProfiles = profiles(plugin, core, killMessageCatalog);
         CosmeticCatalog woodCatalog = CosmeticCatalog.from(section(section, CosmeticMenuSettings.WOOD_TYPE), "cosmetics", WOOD_CATEGORY, id -> true);
         CosmeticProfiles woodProfiles = profiles(plugin, core, woodCatalog);
@@ -187,7 +183,7 @@ final class CosmeticFeatures implements MatchEvents {
             categories.add(CosmeticCategory.of(menuSettings.category(CosmeticMenuSettings.WOOD_TYPE), woodCatalog, woodProfiles, withoutPreview));
         }
         if (menuSettings.categories().containsKey(CosmeticMenuSettings.KILL_MESSAGE)) {
-            MessageDescriptions descriptions = new MessageDescriptions(messageSets, MessagePreview.from(section(section(config, "kill-messages"), "preview")));
+            MessageDescriptions descriptions = new MessageDescriptions(messageSets, MessagePreview.from(section(killMessageSection, "preview")));
             categories.add(CosmeticCategory.of(menuSettings.category(CosmeticMenuSettings.KILL_MESSAGE), killMessageCatalog, killMessageProfiles, withoutPreview, descriptions));
         }
         CosmeticMenus menus = new CosmeticMenus(menuSettings, categories, core.commands(), core.mainThread(), messages, plugin.getLogger(),

@@ -4,8 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import br.com.muxe.core.bukkit.item.ItemBuilder;
 import br.com.muxe.minigame.api.cosmetic.catalog.Availability;
-import br.com.muxe.minigame.api.cosmetic.catalog.BedCosmetic;
+import br.com.muxe.minigame.api.cosmetic.catalog.Cosmetic;
 import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
+import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticKind;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticCategory;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticIcons;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticListSettings;
@@ -28,29 +29,29 @@ class KillMessageCosmeticTest {
 
     private static final String VIEWER = "§8tadeu";
 
-    private final MessageSets sets = MessageSets.from(RoomFixtures.CONFIG.getConfigurationSection("kill-messages"));
-    private final CosmeticCatalog catalog = CosmeticCatalog.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.kill-message"), "cosmetics", "bedwars-mensagem-kill",
+    private final MessageSets sets = MessageSets.from(RoomFixtures.KILL_MESSAGES);
+    private final CosmeticCatalog catalog = RoomFixtures.COSMETICS.catalog("bedwars", CosmeticKind.KILL_MESSAGE, RoomFixtures.CONFIG.getConfigurationSection("cosmetics"),
         id -> sets.find(id).isPresent());
     private final CosmeticMenuSettings menus = CosmeticMenuSettings.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus"));
     private final CategoryMenu menu = menus.category(CosmeticMenuSettings.KILL_MESSAGE);
     private final CosmeticIcons icons = new CosmeticIcons(menu, catalog);
     private final CosmeticListSettings list = menu.list();
     private final MessageDescriptions descriptions = new MessageDescriptions(sets,
-        MessagePreview.from(RoomFixtures.CONFIG.getConfigurationSection("kill-messages.preview")));
-    private final BedCosmetic standard = catalog.find("padrao").orElseThrow();
-    private final BedCosmetic statistic = catalog.find("estatistico").orElseThrow();
+        MessagePreview.from(RoomFixtures.KILL_MESSAGES.getConfigurationSection("preview")));
+    private final Cosmetic standard = catalog.find("padrao").orElseThrow();
+    private final Cosmetic statistic = catalog.find("estatistico").orElseThrow();
 
     private static CosmeticWallet selecting(String selected, String... owned) {
         return new CosmeticWallet(Set.of(owned), selected, 0, false);
     }
 
-    private ItemBuilder icon(BedCosmetic cosmetic, CosmeticWallet wallet) {
+    private ItemBuilder icon(Cosmetic cosmetic, CosmeticWallet wallet) {
         return icons.cosmetic(cosmetic, wallet, descriptions.of(cosmetic, VIEWER));
     }
 
     @Test
     void theCatalogHasTheStandardSetForEveryoneAndTheStatisticSetAsATournamentPrize() {
-        assertThat(catalog.all().stream().map(BedCosmetic::id)).containsExactly("padrao", "estatistico");
+        assertThat(catalog.all().stream().map(Cosmetic::id)).containsExactly("padrao", "estatistico");
         assertThat(catalog.defaultId()).contains("padrao");
         assertThat(standard.name()).isEqualTo("Padrão");
         assertThat(standard.icon().material()).isEqualTo(Material.PAPER);
@@ -113,8 +114,8 @@ class KillMessageCosmeticTest {
     void theEntriesKeepTheOrderOfTheCatalogEvenWhenTheStatisticSetIsOwned() {
         CosmeticCategory category = CosmeticCategory.of(menu, catalog, null, null);
 
-        assertThat(category.ordered(selecting("estatistico", "estatistico")).stream().map(BedCosmetic::id)).containsExactly("padrao", "estatistico");
-        assertThat(category.ordered(CosmeticWallet.EMPTY).stream().map(BedCosmetic::id)).containsExactly("padrao", "estatistico");
+        assertThat(category.ordered(selecting("estatistico", "estatistico")).stream().map(Cosmetic::id)).containsExactly("padrao", "estatistico");
+        assertThat(category.ordered(CosmeticWallet.EMPTY).stream().map(Cosmetic::id)).containsExactly("padrao", "estatistico");
     }
 
     @Test
@@ -213,7 +214,7 @@ class KillMessageCosmeticTest {
 
     @Test
     void thePreviewOfACosmeticWithoutASetIsItsOwnDescription() {
-        BedCosmetic other = new BedCosmetic("outra", "Outra", ItemBuilder.of(Material.PAPER), 0, Optional.empty(), Availability.EVENT, List.of("&7linha"), true);
+        Cosmetic other = new Cosmetic("outra", "Outra", ItemBuilder.of(Material.PAPER), 0, Optional.empty(), Availability.EVENT, List.of("&7linha"), true);
 
         assertThat(descriptions.of(other, VIEWER)).containsExactly("&7linha");
     }

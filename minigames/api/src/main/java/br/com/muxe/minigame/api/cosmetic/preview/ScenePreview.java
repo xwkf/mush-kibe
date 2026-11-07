@@ -20,7 +20,7 @@ import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.core.bukkit.text.Title;
 import br.com.muxe.minigame.api.cosmetic.SceneCosmetics;
 import br.com.muxe.minigame.api.cosmetic.animation.SceneAnimations;
-import br.com.muxe.minigame.api.cosmetic.catalog.BedCosmetic;
+import br.com.muxe.minigame.api.cosmetic.catalog.Cosmetic;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenus.PreviewGate;
 import br.com.muxe.minigame.engine.world.server.VoidGenerator;
 import java.util.ArrayList;
@@ -171,7 +171,7 @@ public final class ScenePreview implements PreviewGate, Listener {
     }
 
     @Override
-    public void preview(Player viewer, BedCosmetic cosmetic, Consumer<Player> back) {
+    public void preview(Player viewer, Cosmetic cosmetic, Consumer<Player> back) {
         Stage active = stage;
         Optional<SceneAnimation> animation = animations.flatMap(found -> found.find(cosmetic.id()));
         boolean covered = kitPlay.map(play -> play.covers(cosmetic)).orElse(animation.isPresent());
@@ -456,7 +456,7 @@ public final class ScenePreview implements PreviewGate, Listener {
 
         private final Player viewer;
         private final Consumer<Player> back;
-        private final BedCosmetic cosmetic;
+        private final Cosmetic cosmetic;
         private final Optional<SceneAnimation> animation;
         private final Stage stage;
         private final Location from;
@@ -474,7 +474,7 @@ public final class ScenePreview implements PreviewGate, Listener {
         private Optional<NpcSkin> targetSkin = Optional.empty();
         private PreviewKit kit;
 
-        Session(Player viewer, Consumer<Player> back, BedCosmetic cosmetic, Optional<SceneAnimation> animation, Stage stage) {
+        Session(Player viewer, Consumer<Player> back, Cosmetic cosmetic, Optional<SceneAnimation> animation, Stage stage) {
             this.viewer = viewer;
             this.back = back;
             this.cosmetic = cosmetic;

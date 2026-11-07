@@ -8,8 +8,9 @@ import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import br.com.muxe.core.bukkit.item.ItemBuilder;
 import br.com.muxe.minigame.api.cosmetic.animation.SceneAnimations;
 import br.com.muxe.minigame.api.cosmetic.catalog.Availability;
-import br.com.muxe.minigame.api.cosmetic.catalog.BedCosmetic;
+import br.com.muxe.minigame.api.cosmetic.catalog.Cosmetic;
 import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
+import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticKind;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticIcons;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenuSettings.CategoryMenu;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenuSettings;
@@ -22,7 +23,7 @@ import org.junit.jupiter.api.Test;
 class VictoryEffectTest {
 
     private static final SceneAnimations ANIMATIONS = SceneAnimations.victories();
-    private final CosmeticCatalog catalog = CosmeticCatalog.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.victory-effect"), "cosmetics", "bedwars-vitoria",
+    private final CosmeticCatalog catalog = RoomFixtures.COSMETICS.catalog("bedwars", CosmeticKind.VICTORY_EFFECT, RoomFixtures.CONFIG.getConfigurationSection("cosmetics"),
         id -> ANIMATIONS.find(id).isPresent());
     private final CosmeticMenuSettings menus = CosmeticMenuSettings.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus"));
     private final CategoryMenu menu = menus.category(CosmeticMenuSettings.VICTORY_EFFECT);
@@ -32,8 +33,8 @@ class VictoryEffectTest {
     void theVictoryEffectsAreTheTwentyTwoOfTheReferenceAndAllOfThemPlay() {
         assertThat(catalog.category()).isEqualTo("bedwars-vitoria");
         assertThat(catalog.all()).hasSize(22);
-        assertThat(catalog.all()).allMatch(BedCosmetic::animated);
-        BedCosmetic christmas = catalog.find("feliz-natal").orElseThrow();
+        assertThat(catalog.all()).allMatch(Cosmetic::animated);
+        Cosmetic christmas = catalog.find("feliz-natal").orElseThrow();
         assertThat(christmas.stars()).isEqualTo(5);
         assertThat(christmas.tag()).contains("&cNatal 2025");
         assertThat(christmas.availability()).isEqualTo(Availability.EVENT);

@@ -2,7 +2,7 @@ package br.com.muxe.minigame.api.cosmetic.menu;
 
 import br.com.muxe.core.bukkit.credit.CreditFormat;
 import br.com.muxe.core.bukkit.item.ItemBuilder;
-import br.com.muxe.minigame.api.cosmetic.catalog.BedCosmetic;
+import br.com.muxe.minigame.api.cosmetic.catalog.Cosmetic;
 import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenuSettings.CategoryMenu;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenuSettings.LoreTexts;
@@ -26,11 +26,11 @@ public final class CosmeticIcons {
         this.catalog = catalog;
     }
 
-    public ItemBuilder cosmetic(BedCosmetic cosmetic, CosmeticWallet wallet) {
+    public ItemBuilder cosmetic(Cosmetic cosmetic, CosmeticWallet wallet) {
         return cosmetic(cosmetic, wallet, cosmetic.description());
     }
 
-    public ItemBuilder cosmetic(BedCosmetic cosmetic, CosmeticWallet wallet, List<String> description) {
+    public ItemBuilder cosmetic(Cosmetic cosmetic, CosmeticWallet wallet, List<String> description) {
         LoreTexts texts = settings.lore();
         CosmeticState state = effective(wallet).state(cosmetic);
         boolean owned = state == CosmeticState.SELECTED || state == CosmeticState.OWNED;
@@ -87,11 +87,11 @@ public final class CosmeticIcons {
 
     public ItemBuilder selected(CosmeticWallet wallet) {
         String id = selection(wallet);
-        Optional<BedCosmetic> cosmetic = catalog.find(id);
+        Optional<Cosmetic> cosmetic = catalog.find(id);
         List<String> lore = switch (id) {
             case CosmeticWallet.RANDOM -> settings.random().lore();
             case CosmeticWallet.NONE -> List.of();
-            default -> cosmetic.map(BedCosmetic::description).filter(description -> !description.isEmpty()).orElse(settings.selected().item().lore());
+            default -> cosmetic.map(Cosmetic::description).filter(description -> !description.isEmpty()).orElse(settings.selected().item().lore());
         };
         ItemBuilder item = settings.selected().item().replacing("name", selectedName(wallet));
         if (settings.entries().selectedIcon() && cosmetic.isPresent()) {
@@ -117,14 +117,14 @@ public final class CosmeticIcons {
         return switch (id) {
             case CosmeticWallet.RANDOM -> plain(settings.random().name());
             case CosmeticWallet.NONE -> plain(settings.none().name());
-            default -> catalog.find(id).map(BedCosmetic::name).orElse(plain(settings.random().name()));
+            default -> catalog.find(id).map(Cosmetic::name).orElse(plain(settings.random().name()));
         };
     }
 
     String stars(int count) {
         LoreTexts texts = settings.lore();
         String lit = texts.starsOn() + texts.star().repeat(count);
-        int unlit = BedCosmetic.MAX_STARS - count;
+        int unlit = Cosmetic.MAX_STARS - count;
         return unlit == 0 ? lit : lit + texts.starsOff() + texts.star().repeat(unlit);
     }
 
@@ -139,7 +139,7 @@ public final class CosmeticIcons {
         return missing ? catalog.defaultId().orElse(wallet.selected()) : wallet.selected();
     }
 
-    static Optional<String> tag(BedCosmetic cosmetic, LoreTexts texts) {
+    static Optional<String> tag(Cosmetic cosmetic, LoreTexts texts) {
         return switch (cosmetic.availability()) {
             case VIP -> cosmetic.tag().or(() -> Optional.of(texts.vipTag()));
             case ULTRA -> cosmetic.tag().or(() -> Optional.of(texts.ultraTag()));

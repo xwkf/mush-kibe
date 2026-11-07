@@ -1,6 +1,6 @@
 package br.com.muxe.minigame.api.cosmetic.trail;
 
-import br.com.muxe.minigame.api.cosmetic.catalog.BedCosmetic;
+import br.com.muxe.minigame.api.cosmetic.catalog.Cosmetic;
 import br.com.muxe.minigame.api.cosmetic.preview.KitPlay;
 import java.util.List;
 import java.util.Optional;
@@ -31,12 +31,12 @@ public final class TrailPreview implements KitPlay {
     }
 
     @Override
-    public boolean covers(BedCosmetic cosmetic) {
+    public boolean covers(Cosmetic cosmetic) {
         return trails.apply(cosmetic.id()).isPresent();
     }
 
     @Override
-    public void launched(Player viewer, BedCosmetic cosmetic, Projectile projectile) {
+    public void launched(Player viewer, Cosmetic cosmetic, Projectile projectile) {
         List<Player> viewers = List.of(viewer);
         trails.apply(cosmetic.id()).ifPresent(trail -> driver.launch(projectile, trail, viewer.getUniqueId(), GROUP, () -> viewers));
     }

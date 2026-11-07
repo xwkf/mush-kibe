@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import br.com.muxe.core.bukkit.item.ItemBuilder;
 import br.com.muxe.minigame.api.cosmetic.catalog.Availability;
-import br.com.muxe.minigame.api.cosmetic.catalog.BedCosmetic;
+import br.com.muxe.minigame.api.cosmetic.catalog.Cosmetic;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenuSettings.LoreTexts;
 import java.util.List;
 import java.util.Optional;
@@ -16,8 +16,8 @@ class CosmeticIconsTagTest {
     private static final LoreTexts TEXTS = new LoreTexts("*", "&6", "&7", "&a{name}", "&c{name}", "vip", "ultra", "ultra-plus", List.of(), List.of(), List.of(),
         List.of(), List.of(), List.of(), List.of(), List.of());
 
-    private static BedCosmetic cosmetic(Availability availability, Optional<String> tag) {
-        return new BedCosmetic("id", "Nome", ItemBuilder.of(Material.STONE), 1, tag, availability, List.of(), true);
+    private static Cosmetic cosmetic(Availability availability, Optional<String> tag) {
+        return new Cosmetic("id", "Nome", ItemBuilder.of(Material.STONE), 1, tag, availability, List.of(), true);
     }
 
     @Test

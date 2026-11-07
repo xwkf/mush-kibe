@@ -1,5 +1,6 @@
 package br.com.muxe.minigame.bedwars.room;
 
+import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticDefaults;
 import br.com.muxe.minigame.api.match.Match;
 import br.com.muxe.minigame.api.settings.MatchSettings;
 import br.com.muxe.minigame.bedwars.arena.BedWarsArena;
@@ -14,6 +15,7 @@ import br.com.muxe.minigame.engine.world.cell.Cell;
 import br.com.muxe.minigame.engine.world.map.MapTemplate;
 import java.io.File;
 import java.util.List;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 public final class RoomFixtures {
@@ -21,6 +23,8 @@ public final class RoomFixtures {
     public static final YamlConfiguration CONFIG = YamlConfiguration.loadConfiguration(new File("src/main/resources/config.yml"));
     public static final BedWarsSettings SETTINGS = BedWarsSettings.from(CONFIG);
     public static final MatchSettings MATCH_SETTINGS = MatchSettings.from(CONFIG);
+    public static final CosmeticDefaults COSMETICS = CosmeticDefaults.load();
+    public static final ConfigurationSection KILL_MESSAGES = COSMETICS.killMessages(CONFIG.getConfigurationSection("kill-messages"));
     public static final GameMode SOLO = new GameMode("solo", "Solo", 6, 8, 1);
     public static final GameMode ONE_V_ONE = new GameMode("1v1", "1v1", 2, 2, 1);
     public static final GameMode DOUBLES = new GameMode("duplas", "Duplas", 2, 4, 2);

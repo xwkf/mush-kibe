@@ -5,8 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
 import br.com.muxe.core.bukkit.item.ItemBuilder;
 import br.com.muxe.minigame.api.cosmetic.catalog.Availability;
-import br.com.muxe.minigame.api.cosmetic.catalog.BedCosmetic;
+import br.com.muxe.minigame.api.cosmetic.catalog.Cosmetic;
 import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
+import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticKind;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticIcons;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticListSettings;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenuSettings.CategoryMenu;
@@ -42,7 +43,7 @@ class ProjectileTrailCosmeticTest {
     private final CosmeticListSettings list = menu.list();
 
     private static CosmeticCatalog catalog(Predicate<String> animated) {
-        return CosmeticCatalog.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.projectile-trail"), "cosmetics", "bedwars-rastro", animated);
+        return RoomFixtures.COSMETICS.catalog("bedwars", CosmeticKind.PROJECTILE_TRAIL, RoomFixtures.CONFIG.getConfigurationSection("cosmetics"), animated);
     }
 
     private static CosmeticWallet owning(String selected, String... owned) {
@@ -52,12 +53,12 @@ class ProjectileTrailCosmeticTest {
     @Test
     void theCatalogHasTheTwentyThreeTrailsInTheOrderOfTheReference() {
         assertThat(catalog.category()).isEqualTo("bedwars-rastro");
-        assertThat(catalog.all().stream().map(BedCosmetic::id)).containsExactlyElementsOf(IDS);
-        assertThat(catalog.all().stream().map(BedCosmetic::name)).containsExactly("Espiral da Fortuna", "Crítico", "Chamas", "Ultra", "Natalino", "Ossos",
+        assertThat(catalog.all().stream().map(Cosmetic::id)).containsExactlyElementsOf(IDS);
+        assertThat(catalog.all().stream().map(Cosmetic::name)).containsExactly("Espiral da Fortuna", "Crítico", "Chamas", "Ultra", "Natalino", "Ossos",
             "Espectro Verde", "Corações", "Magia", "Sorte Azul", "Faísca Cósmica", "Lava", "Chroma", "Fumaça", "Vapor", "Água", "Aldeão Furioso",
             "Fogos de Artifício", "Notas Musicais", "Sangrento", "Crítico Encantado", "Mega-Loucura", "Arco-íris");
-        assertThat(catalog.all().stream().map(BedCosmetic::stars)).containsExactly(5, 1, 5, 5, 5, 5, 5, 5, 5, 4, 1, 1, 5, 3, 3, 4, 4, 3, 5, 5, 2, 4, 4);
-        assertThat(catalog.all().stream().map(BedCosmetic::availability)).containsExactly(Availability.EVENT, Availability.DEFAULT, Availability.ULTRA,
+        assertThat(catalog.all().stream().map(Cosmetic::stars)).containsExactly(5, 1, 5, 5, 5, 5, 5, 5, 5, 4, 1, 1, 5, 3, 3, 4, 4, 3, 5, 5, 2, 4, 4);
+        assertThat(catalog.all().stream().map(Cosmetic::availability)).containsExactly(Availability.EVENT, Availability.DEFAULT, Availability.ULTRA,
             Availability.ULTRA, Availability.EVENT, Availability.EVENT, Availability.ULTRA_PLUS, Availability.ULTRA_PLUS, Availability.ULTRA_PLUS, Availability.SALE,
             Availability.SALE, Availability.SALE, Availability.EVENT, Availability.SALE, Availability.SALE, Availability.SALE, Availability.SALE, Availability.SALE,
             Availability.EVENT, Availability.SALE, Availability.SALE, Availability.SALE, Availability.SALE);
@@ -134,7 +135,7 @@ class ProjectileTrailCosmeticTest {
     @Test
     void onceATrailIsAnimatedItCanBeBoughtLikeInTheReference() {
         CosmeticIcons icons = new CosmeticIcons(menu, animated);
-        BedCosmetic blue = cosmetic("sorte-azul", animated);
+        Cosmetic blue = cosmetic("sorte-azul", animated);
 
         ItemBuilder item = icons.cosmetic(blue, CosmeticWallet.EMPTY.withCredits(30));
 
@@ -149,7 +150,7 @@ class ProjectileTrailCosmeticTest {
     @Test
     void whileATrailHasNoAnimationItIsNeitherSoldNorUsable() {
         CosmeticIcons icons = new CosmeticIcons(menu, still);
-        BedCosmetic blue = cosmetic("sorte-azul", still);
+        Cosmetic blue = cosmetic("sorte-azul", still);
 
         assertThat(blue.forSale()).isFalse();
         assertThat(CosmeticWallet.EMPTY.state(blue)).isEqualTo(CosmeticState.UNAVAILABLE);
@@ -230,11 +231,11 @@ class ProjectileTrailCosmeticTest {
         return cosmetic(id).icon();
     }
 
-    private BedCosmetic cosmetic(String id) {
+    private Cosmetic cosmetic(String id) {
         return cosmetic(id, catalog);
     }
 
-    private static BedCosmetic cosmetic(String id, CosmeticCatalog from) {
+    private static Cosmetic cosmetic(String id, CosmeticCatalog from) {
         return from.find(id).orElseThrow();
     }
 }

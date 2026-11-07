@@ -11,7 +11,7 @@ import br.com.muxe.core.bukkit.scoreboard.Sidebar;
 import br.com.muxe.core.bukkit.text.ActionBar;
 import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
-import br.com.muxe.minigame.api.cosmetic.catalog.BedCosmetic;
+import br.com.muxe.minigame.api.cosmetic.catalog.Cosmetic;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenus.PreviewGate;
 import br.com.muxe.minigame.bedwars.cosmetic.animation.BedAnimations;
 import br.com.muxe.minigame.engine.world.server.VoidGenerator;
@@ -128,7 +128,7 @@ public final class BedPreview implements PreviewGate, Listener {
     }
 
     @Override
-    public void preview(Player viewer, BedCosmetic cosmetic, Consumer<Player> back) {
+    public void preview(Player viewer, Cosmetic cosmetic, Consumer<Player> back) {
         Stage active = stage;
         Optional<BedAnimation> animation = animations.find(cosmetic.id());
         if (active == null || animation.isEmpty()) {
