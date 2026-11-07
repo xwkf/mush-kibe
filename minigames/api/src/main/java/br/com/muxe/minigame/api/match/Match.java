@@ -2,8 +2,8 @@ package br.com.muxe.minigame.api.match;
 
 import br.com.muxe.minigame.api.combat.KillCredit;
 import br.com.muxe.minigame.api.match.Participant.State;
-import br.com.muxe.minigame.engine.match.StartCountdown;
 import br.com.muxe.minigame.engine.match.StartCountdown.Change;
+import br.com.muxe.minigame.engine.match.StartCountdown;
 import br.com.muxe.minigame.engine.mode.GameMode;
 import br.com.muxe.minigame.engine.team.TeamAssigner;
 import br.com.muxe.minigame.engine.team.TeamColor;

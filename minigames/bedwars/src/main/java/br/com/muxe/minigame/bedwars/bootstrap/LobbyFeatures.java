@@ -4,6 +4,7 @@ import br.com.muxe.core.bukkit.api.MuxeCore;
 import br.com.muxe.core.bukkit.mission.menu.MissionMenus;
 import br.com.muxe.core.bukkit.npc.NpcLabelLayout;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
+import br.com.muxe.minigame.api.matchmaking.MatchConnector;
 import br.com.muxe.minigame.bedwars.arena.BedWarsSchema;
 import br.com.muxe.minigame.bedwars.lobby.LevelChat;
 import br.com.muxe.minigame.bedwars.lobby.LobbyNpcs;
@@ -21,7 +22,6 @@ import br.com.muxe.minigame.bedwars.lobby.top.TopBoards;
 import br.com.muxe.minigame.bedwars.lobby.top.TopData;
 import br.com.muxe.minigame.bedwars.lobby.top.TopSelectorSettings;
 import br.com.muxe.minigame.bedwars.lobby.top.TopTexts;
-import br.com.muxe.minigame.bedwars.matchmaking.MatchConnector;
 import br.com.muxe.minigame.bedwars.preferences.PlayerPreferences;
 import br.com.muxe.minigame.engine.level.LevelUps;
 import java.time.Duration;
@@ -49,12 +49,10 @@ public final class LobbyFeatures {
     }
 
     public static LobbyFeatures start(JavaPlugin plugin, MuxeCore core, FileConfiguration config, MessageCatalog messages, BedWarsSchema schema, MissionMenus missions,
-                                      PlayerPreferences preferences) {
+                                      PlayerPreferences preferences, MatchConnector connector) {
         ConfigurationSection lobby = section(config, "lobby");
         LevelBadges badges = LevelBadges.from(section(config, "levels"));
         TopTexts texts = TopTexts.from(section(lobby, "tops"));
-        MatchConnector connector = new MatchConnector(core, messages, mode -> schema.modes().contains(mode) ? schema.mode(mode).displayName() : mode);
-        connector.start();
         StatsCache stats = new StatsCache(plugin, core, new LevelUps(messages.get("level-up"), badges::of));
         stats.start();
         plugin.getServer().getPluginManager().registerEvents(new LevelChat(stats, badges, preferences), plugin);

@@ -65,4 +65,16 @@ class KillCreditTest {
         assertThat(credit.assisters(B, C, T0.plusSeconds(10))).containsExactly(A);
         assertThat(credit.assisters(B, C, T0.plusSeconds(16))).isEmpty();
     }
+
+    @Test
+    void forgettingTheVictimClearsItsAttackers() {
+        KillCredit credit = new KillCredit(Duration.ofSeconds(15));
+        credit.hit(B, A, T0);
+        credit.hit(B, C, T0.plusSeconds(2));
+
+        credit.forget(B);
+
+        assertThat(credit.assisters(B, C, T0.plusSeconds(3))).isEmpty();
+        assertThat(credit.lastHitter(B, T0.plusSeconds(3))).isEmpty();
+    }
 }

@@ -1,10 +1,11 @@
 package br.com.muxe.minigame.bedwars.cosmetic.aura;
 
 import br.com.muxe.core.bukkit.cosmetic.animation.Vec;
-import br.com.muxe.minigame.bedwars.room.Room;
-import br.com.muxe.minigame.bedwars.room.RoomPlayer;
-import br.com.muxe.minigame.bedwars.room.RoomRuntime;
-import br.com.muxe.minigame.bedwars.room.RoomService;
+import br.com.muxe.minigame.api.match.Match;
+import br.com.muxe.minigame.api.match.MatchPhase;
+import br.com.muxe.minigame.api.match.Participant;
+import br.com.muxe.minigame.api.runtime.MatchRuntime;
+import br.com.muxe.minigame.api.runtime.Matches;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -25,17 +26,17 @@ public final class AuraTask {
     private static final int VIEW_RADIUS = 64;
     private static final float SPEED = 1f;
 
-    private final RoomService rooms;
+    private final Matches<?> rooms;
     private final AuraCosmetics auras;
     private final AuraTrails trails = new AuraTrails();
     private BukkitTask task;
 
-    private AuraTask(RoomService rooms, AuraCosmetics auras) {
+    private AuraTask(Matches<?> rooms, AuraCosmetics auras) {
         this.rooms = rooms;
         this.auras = auras;
     }
 
-    public static AuraTask start(Plugin plugin, RoomService rooms, AuraCosmetics auras) {
+    public static AuraTask start(Plugin plugin, Matches<?> rooms, AuraCosmetics auras) {
         AuraTask started = new AuraTask(rooms, auras);
         started.task = plugin.getServer().getScheduler().runTaskTimer(plugin, started::tick, PERIOD_TICKS, PERIOD_TICKS);
         return started;
@@ -50,18 +51,18 @@ public final class AuraTask {
     private void tick() {
         Set<UUID> inMatch = new HashSet<>();
         Set<UUID> showing = new HashSet<>();
-        for (RoomRuntime runtime : rooms.runtimes()) {
-            Room room = runtime.room();
-            if (room.phase() != Room.Phase.PLAYING) {
+        for (MatchRuntime<?> runtime : rooms.all()) {
+            Match room = runtime.match();
+            if (room.phase() != MatchPhase.PLAYING) {
                 continue;
             }
-            List<Player> viewers = runtime.online();
+            List<Player> viewers = runtime.onlinePlayers();
             AuraSink sink = sink(runtime.world(), viewers);
             for (Player player : viewers) {
                 UUID id = player.getUniqueId();
                 inMatch.add(id);
-                Optional<RoomPlayer> member = room.player(id);
-                if (member.isEmpty() || !AuraRules.shows(room.phase(), member.get().state(), runtime.isSpectator(player),
+                Optional<Participant> member = room.player(id);
+                if (member.isEmpty() || !AuraRules.shows(room.phase(), member.get().state(), runtime.isSpectator(id),
                     player.hasPotionEffect(PotionEffectType.INVISIBILITY))) {
                     continue;
                 }

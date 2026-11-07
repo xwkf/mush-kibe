@@ -3,20 +3,20 @@ package br.com.muxe.minigame.bedwars.room;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import br.com.muxe.core.bukkit.cosmetic.animation.Area;
+import br.com.muxe.minigame.api.match.Match;
+import br.com.muxe.minigame.api.match.Participant.State;
+import br.com.muxe.minigame.api.match.Participant;
+import br.com.muxe.minigame.api.match.TeamStatus.Kind;
+import br.com.muxe.minigame.api.view.MatchBoard;
+import br.com.muxe.minigame.api.view.NameTagStyle;
 import br.com.muxe.minigame.bedwars.arena.BedWarsArena;
-import br.com.muxe.minigame.bedwars.game.TeamStatus.Kind;
-import br.com.muxe.minigame.bedwars.room.RoomPlayer.State;
-import br.com.muxe.minigame.engine.match.StartCountdown.Change;
 import br.com.muxe.minigame.engine.setup.Point;
 import br.com.muxe.minigame.engine.team.TeamColor;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import java.util.Set;
 import java.util.UUID;
+import org.bukkit.Material;
 import org.junit.jupiter.api.Test;
 
 class RoomTest {
@@ -26,12 +26,12 @@ class RoomTest {
     private static final List<TeamColor> EIGHT = List.of(TeamColor.VERMELHO, TeamColor.AZUL, TeamColor.VERDE, TeamColor.AMARELO,
         TeamColor.CIANO, TeamColor.LARANJA, TeamColor.ROSA, TeamColor.CINZA);
 
-    private final RoomView view = new RoomView(RoomFixtures.SETTINGS.scoreboard(), RoomFixtures.SETTINGS.timeline());
+    private final MatchBoard board = new MatchBoard(RoomFixtures.MATCH_SETTINGS.board());
 
     @Test
     void theMapAreaCoversEveryIslandWithAMarginButNotTheWaitingLobby() {
         Room room = RoomFixtures.room("2v7are", RoomFixtures.ONE_V_ONE, RoomFixtures.arena("1v1", "Slip", RED_BLUE));
-        double offset = room.cell().offsetBlockX();
+        double offset = room.match().cell().offsetBlockX();
 
         assertThat(room.area()).isEqualTo(new Area(
             offset - 2.5 - Room.MAP_MARGIN, offset + 0.5 - Room.MAP_MARGIN, offset + 43.5 + Room.MAP_MARGIN, offset + 64.5 + Room.MAP_MARGIN));
@@ -41,7 +41,7 @@ class RoomTest {
     void theMiddleOfTheMapIsBetweenTheEmeraldGeneratorsNotTheCentreOfTheBox() {
         BedWarsArena arena = RoomFixtures.arena("1v1", "Slip", RED_BLUE, List.of(Point.block(10, 70, 20), Point.block(16, 70, 30)));
         Room room = RoomFixtures.room("2v7are", RoomFixtures.ONE_V_ONE, arena);
-        double offset = room.cell().offsetBlockX();
+        double offset = room.match().cell().offsetBlockX();
 
         Area area = room.area();
 
@@ -66,24 +66,21 @@ class RoomTest {
         UUID first = join(room, "tadeu");
         join(room, "x572");
 
-        assertThat(view.title()).isEqualTo("&b&lBED WARS");
-        assertThat(view.lines(room, first, 0)).containsExactly(
+        assertThat(board.title()).isEqualTo("&b&lBED WARS");
+        assertThat(lines(room, first)).containsExactly(
             "&82v79c1", "", "&fMapa: &aAthens", "&fJogadores: &a2/8", "", "&fAguardando...", "", "&fModo: &aSolo", "&fWinstreak: &a0", "", "&amuxe.com.br");
     }
 
     @Test
-    void reachingTheMinimumShowsTheCountdownAndLosingAPlayerGoesBackToWaiting() {
+    void reachingTheMinimumShowsTheCountdown() {
         Room room = RoomFixtures.room("2v79c1", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
-        List<UUID> players = new ArrayList<>();
-        for (int index = 0; index < 5; index++) {
-            players.add(join(room, "p" + index));
+        UUID first = null;
+        for (int index = 0; index < 6; index++) {
+            UUID id = join(room, "p" + index);
+            first = first == null ? id : first;
         }
 
-        assertThat(room.join(UUID.randomUUID(), "p5")).isEqualTo(Change.STARTED);
-        assertThat(room.phase()).isEqualTo(Room.Phase.STARTING);
-        assertThat(view.lines(room, players.getFirst(), 0)).contains("&fInicia em: &a30s");
-        assertThat(room.leaveBeforeStart(players.getFirst())).isEqualTo(Change.CANCELLED);
-        assertThat(room.phase()).isEqualTo(Room.Phase.WAITING);
+        assertThat(lines(room, first)).contains("&fInicia em: &a30s");
     }
 
     @Test
@@ -91,12 +88,12 @@ class RoomTest {
         Room room = RoomFixtures.room("2v7bss", RoomFixtures.ONE_V_ONE, RoomFixtures.arena("1v1", "Slip", RED_BLUE));
         UUID tadeu = join(room, "tadeu");
         join(room, "x572");
-        room.start(List.of(), NOW);
+        room.match().start(List.of(), NOW);
         for (int second = 0; second < 109; second++) {
-            room.tick();
+            room.match().tick();
         }
 
-        assertThat(view.lines(room, tadeu, 0)).containsExactly(
+        assertThat(lines(room, tadeu)).containsExactly(
             "&82v7bss", "", "&fDiamante II em &a4:11", "",
             "&cV &fVermelho: &a✔ &7VOCÊ", "&9A &fAzul: &a✔", "",
             "&fKills: &a0", "&fKills Finais: &a0", "&fCamas Quebradas: &a0", "", "&amuxe.com.br");
@@ -105,7 +102,8 @@ class RoomTest {
     @Test
     void theTeamLetterIsBoldInTheNameTagAndTabList() {
         assertThat(TeamColor.VERMELHO.boldLetter()).isEqualTo("&lV&c");
-        assertThat(RoomService.tag(TeamColor.VERMELHO).prefix()).isEqualTo("§c§lV§c ");
+        assertThat(NameTagStyle.of(BedWarsGame.NAME_TAG_PREFIX, TeamColor.VERMELHO).prefix()).isEqualTo("§c§lV§c ");
+        assertThat(NameTagStyle.of(BedWarsGame.NAME_TAG_PREFIX, TeamColor.VERMELHO).team()).isEqualTo("mxbw04vermelho");
     }
 
     @Test
@@ -116,9 +114,9 @@ class RoomTest {
             UUID id = join(room, "p" + index);
             first = first == null ? id : first;
         }
-        room.start(List.of(), NOW);
+        room.match().start(List.of(), NOW);
 
-        List<String> lines = view.lines(room, first, 0);
+        List<String> lines = lines(room, first);
 
         assertThat(lines).hasSize(14).doesNotContain("&fKills: &a0");
         assertThat(lines).contains("&cV &fVermelho: &a✔ &7VOCÊ", "&8C &fCinza: &c✘", "&dR &fRosa: &c✘");
@@ -127,314 +125,89 @@ class RoomTest {
     @Test
     void theIndicatorFollowsBedDisconnectionAndElimination() {
         Room room = RoomFixtures.room("abc123", RoomFixtures.DOUBLES, RoomFixtures.arena("duplas", "Slip", RED_BLUE));
+        Match match = room.match();
         List<UUID> ids = List.of(join(room, "a"), join(room, "b"), join(room, "c"), join(room, "d"));
-        room.start(List.of(), NOW);
-        RoomPlayer red1 = room.player(ids.get(0)).orElseThrow();
-        RoomPlayer red2 = room.player(ids.get(2)).orElseThrow();
-        RoomPlayer blue = room.player(ids.get(1)).orElseThrow();
+        match.start(List.of(), NOW);
+        Participant red1 = match.player(ids.get(0)).orElseThrow();
+        Participant red2 = match.player(ids.get(2)).orElseThrow();
+        Participant blue = match.player(ids.get(1)).orElseThrow();
 
-        room.disconnected(red1, NOW.plusSeconds(180));
-        assertThat(room.status(TeamColor.VERMELHO).kind()).isEqualTo(Kind.BED_ONLINE);
-        room.disconnected(red2, NOW.plusSeconds(180));
-        assertThat(room.status(TeamColor.VERMELHO).kind()).isEqualTo(Kind.BED_OFFLINE);
+        match.disconnected(red1, NOW.plusSeconds(180));
+        assertThat(match.status(TeamColor.VERMELHO).kind()).isEqualTo(Kind.RESPAWNS);
+        match.disconnected(red2, NOW.plusSeconds(180));
+        assertThat(match.status(TeamColor.VERMELHO).kind()).isEqualTo(Kind.RESPAWNS_OFFLINE);
 
-        List<RoomPlayer> lost = room.breakBed(TeamColor.VERMELHO, blue);
+        List<Participant> lost = room.breakBed(TeamColor.VERMELHO, blue);
 
         assertThat(lost).containsExactly(red1, red2);
-        assertThat(room.status(TeamColor.VERMELHO).kind()).isEqualTo(Kind.ELIMINATED);
-        assertThat(blue.beds()).isEqualTo(1);
-        assertThat(room.winner()).contains(TeamColor.AZUL);
+        assertThat(match.status(TeamColor.VERMELHO).kind()).isEqualTo(Kind.ELIMINATED);
+        assertThat(room.player(blue.id()).beds()).isEqualTo(1);
+        assertThat(match.winner()).contains(TeamColor.AZUL);
     }
 
     @Test
-    void dyingWithABedRespawnsAndWithoutOneEliminates() {
+    void dyingWithABedRespawnsWithWeakerToolsAndWithoutOneEliminates() {
         Room room = RoomFixtures.room("abc123", RoomFixtures.ONE_V_ONE, RoomFixtures.arena("1v1", "Slip", RED_BLUE));
-        RoomPlayer red = room.player(join(room, "red")).orElseThrow();
-        RoomPlayer blue = room.player(join(room, "blue")).orElseThrow();
-        room.start(List.of(), NOW);
-        red.pickaxeTier(3);
+        Match match = room.match();
+        Participant red = match.player(join(room, "red")).orElseThrow();
+        Participant blue = match.player(join(room, "blue")).orElseThrow();
+        match.start(List.of(), NOW);
+        room.player(red.id()).pickaxeTier(3);
 
-        room.die(red, 5);
+        room.died(red);
+        match.die(red, 5);
 
         assertThat(red.state()).isEqualTo(State.RESPAWNING);
         assertThat(red.respawnAt()).isEqualTo(5);
-        assertThat(red.pickaxeTier()).isEqualTo(2);
-        assertThat(room.status(TeamColor.VERMELHO).kind()).isEqualTo(Kind.BED_ONLINE);
+        assertThat(room.player(red.id()).pickaxeTier()).isEqualTo(2);
+        assertThat(match.status(TeamColor.VERMELHO).kind()).isEqualTo(Kind.RESPAWNS);
 
         room.breakBed(TeamColor.VERMELHO, blue);
-        room.respawned(red, NOW);
-        room.die(red, 5);
+        match.respawned(red, NOW);
+        match.die(red, 5);
 
         assertThat(red.state()).isEqualTo(State.ELIMINATED);
-        assertThat(room.winner()).contains(TeamColor.AZUL);
-    }
-
-    @Test
-    void spawnProtectionCoversRespawnAndMatchStartAndEndsWhenThePlayerHitsSomeone() {
-        Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
-        UUID tadeu = join(room, "tadeu");
-        UUID other = join(room, "x572");
-        room.forceStart(10);
-        room.start(List.of(), NOW);
-        room.protectAll(NOW.plusSeconds(3));
-        RoomPlayer player = room.player(tadeu).orElseThrow();
-        RoomPlayer enemy = room.player(other).orElseThrow();
-
-        assertThat(player.isProtected(NOW.plusSeconds(2))).isTrue();
-        assertThat(player.isProtected(NOW.plusSeconds(3))).isFalse();
-
-        room.struck(tadeu);
-
-        assertThat(player.isProtected(NOW.plusSeconds(1))).isFalse();
-        assertThat(enemy.isProtected(NOW.plusSeconds(1))).isTrue();
-
-        room.die(player, 5);
-        room.respawned(player, NOW.plusSeconds(3));
-        assertThat(player.isProtected(NOW.plusSeconds(2))).isTrue();
-        room.struck(tadeu);
-        assertThat(player.isProtected(NOW.plusSeconds(2))).isFalse();
-    }
-
-    @Test
-    void spawnProtectionLastsThreeSecondsByDefault() {
-        assertThat(RoomFixtures.SETTINGS.timings().respawnProtectionSeconds()).isEqualTo(3);
-    }
-
-    @Test
-    void aMatchForcedWithASinglePlayerKeepsGoingUntilThatPlayerIsEliminated() {
-        Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
-        UUID tadeu = join(room, "tadeu");
-        room.forceStart(10);
-        room.start(List.of(), NOW);
-        RoomPlayer player = room.player(tadeu).orElseThrow();
-
-        assertThat(room.isOver()).isFalse();
-        room.die(player, 5);
-        assertThat(room.isOver()).isFalse();
-
-        room.team(player.team()).breakBed(null);
-        room.respawned(player, NOW);
-        room.die(player, 5);
-        assertThat(room.isOver()).isTrue();
-        assertThat(room.winner()).isEmpty();
-    }
-
-    @Test
-    void aForcedMatchWithTwoPlayersIsWonByEliminatingTheOther() {
-        Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
-        UUID tadeu = join(room, "tadeu");
-        UUID other = join(room, "x572");
-        room.forceStart(10);
-        room.start(List.of(), NOW);
-        RoomPlayer loser = room.player(other).orElseThrow();
-
-        assertThat(room.isOver()).isFalse();
-        room.team(loser.team()).breakBed(null);
-        room.die(loser, 5);
-
-        assertThat(room.isOver()).isTrue();
-        assertThat(room.winner()).contains(room.player(tadeu).orElseThrow().team());
+        assertThat(match.killer(red, NOW, true)).contains(blue);
+        assertThat(match.winner()).contains(TeamColor.AZUL);
     }
 
     @Test
     void emptyTeamsLoseTheirBedButKeepTheirIslandWithForgesAndNpcs() {
         Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
         UUID tadeu = join(room, "tadeu");
-        room.forceStart(10);
-        room.start(List.of(), NOW);
-        TeamColor own = room.player(tadeu).orElseThrow().team();
+        room.match().forceStart(10);
+        room.match().start(List.of(), NOW);
+        TeamColor own = room.match().player(tadeu).orElseThrow().team();
 
         assertThat(room.islands()).containsExactlyInAnyOrderElementsOf(EIGHT);
-        assertThat(EIGHT).filteredOn(color -> color != own).allSatisfy(color -> assertThat(room.team(color).bedAlive()).isFalse());
-        assertThat(room.team(own).bedAlive()).isTrue();
+        assertThat(EIGHT).filteredOn(color -> color != own).allSatisfy(color -> assertThat(room.bedAlive(color)).isFalse());
+        assertThat(room.bedAlive(own)).isTrue();
     }
 
     @Test
-    void endingAForcedMatchWithASinglePlayerIsThatPlayersVictory() {
-        Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
-        UUID tadeu = join(room, "tadeu");
-        room.forceStart(10);
-        room.start(List.of(), NOW);
-
-        assertThat(room.winner()).contains(room.player(tadeu).orElseThrow().team());
+    void theDefaultsMatchTheReference() {
+        assertThat(RoomFixtures.MATCH_SETTINGS.timings().respawnProtectionSeconds()).isEqualTo(3);
+        assertThat(RoomFixtures.MATCH_SETTINGS.countdownTitles().at(10)).contains("&610 segundos");
+        assertThat(RoomFixtures.MATCH_SETTINGS.lobbyGroup()).isEqualTo("bedwars-lobby");
     }
 
     @Test
-    void endingAMatchWithSeveralTeamsStandingIsADraw() {
-        Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
-        join(room, "tadeu");
-        join(room, "x572");
-        room.forceStart(10);
-        room.start(List.of(), NOW);
-
-        assertThat(room.winner()).isEmpty();
+    void theStartingToolsAndTheShearsCannotBeDropped() {
+        assertThat(BedWarsGame.matchRules().undroppable()).accepts(Material.WOOD_SWORD, Material.WOOD_PICKAXE, Material.DIAMOND_AXE, Material.SHEARS);
+        assertThat(BedWarsGame.matchRules().undroppable()).rejects(Material.IRON_SWORD, Material.WOOL);
+        assertThat(BedWarsGame.matchRules().respawn()).isTrue();
+        assertThat(BedWarsGame.matchRules().breakOnlyPlaced()).isTrue();
     }
 
-    @Test
-    void onlyOneWinnerOfTheTeamIsDrawnToPlayTheVictoryEffect() {
-        Room room = RoomFixtures.room("abc123", RoomFixtures.ONE_V_ONE, RoomFixtures.arena("1v1", "Slip", RED_BLUE));
-        UUID tadeu = join(room, "tadeu");
-        UUID other = join(room, "x572");
-        room.start(List.of(), NOW);
-        TeamColor team = room.player(tadeu).orElseThrow().team();
-
-        assertThat(room.celebrant(team, Set.of(tadeu, other), new Random(1))).contains(tadeu);
-        assertThat(room.celebrant(team, Set.of(other), new Random(1))).isEmpty();
-    }
-
-    @Test
-    void theCelebrantIsDrawnAmongTheOnlineWinners() {
-        Room room = RoomFixtures.room("abc123", RoomFixtures.DOUBLES, RoomFixtures.arena("duplas", "Slip", RED_BLUE));
-        UUID first = join(room, "tadeu");
-        UUID second = join(room, "x572");
-        room.forceStart(10);
-        room.start(List.of(List.of(first, second)), NOW);
-        TeamColor team = room.player(first).orElseThrow().team();
-        Set<UUID> drawn = new HashSet<>();
-        Random random = new Random(7);
-        for (int draw = 0; draw < 40; draw++) {
-            room.celebrant(team, Set.of(first, second), random).ifPresent(drawn::add);
-        }
-
-        assertThat(room.player(second).orElseThrow().team()).isEqualTo(team);
-        assertThat(drawn).containsExactlyInAnyOrder(first, second);
-    }
-
-    @Test
-    void staffCanOnlyEndAMatchThatIsBeingPlayed() {
-        Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
-        join(room, "tadeu");
-        assertThat(room.canForceEnd()).isFalse();
-
-        room.forceStart(10);
-        room.start(List.of(), NOW);
-        assertThat(room.canForceEnd()).isTrue();
-
-        room.end();
-        assertThat(room.canForceEnd()).isFalse();
-    }
-
-    @Test
-    void aForcedStartReportsTheCountdownSoTheTenSecondsAreShownRightAway() {
-        Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
-        join(room, "tadeu");
-
-        assertThat(room.forceStart(10)).contains(Change.STARTED);
-        assertThat(room.countdown().remaining()).hasValue(10);
-        assertThat(RoomFixtures.SETTINGS.countdownTitles().at(10)).contains("&610 segundos");
-        assertThat(room.forceStart(10)).contains(Change.NONE);
-    }
-
-    @Test
-    void forcingARunningCountdownShortensItToTenSeconds() {
-        Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
-        for (int index = 0; index < RoomFixtures.SOLO.minPlayers(); index++) {
-            join(room, "player" + index);
-        }
-        assertThat(room.countdown().remaining()).hasValue(30);
-
-        assertThat(room.forceStart(10)).contains(Change.SHORTENED);
-        assertThat(room.countdown().remaining()).hasValue(10);
-    }
-
-    @Test
-    void aMatchThatWasNotForcedEndsWhenOneTeamIsLeft() {
-        Room room = RoomFixtures.room("abc123", RoomFixtures.ONE_V_ONE, RoomFixtures.arena("1v1", "Slip", RED_BLUE));
-        join(room, "tadeu");
-        UUID other = join(room, "x572");
-        room.start(List.of(), NOW);
-        RoomPlayer loser = room.player(other).orElseThrow();
-        room.team(loser.team()).breakBed(null);
-        room.die(loser, 5);
-
-        assertThat(room.isOver()).isTrue();
-    }
-
-    @Test
-    void staffCanForceAStartThatPlayersJoiningOrLeavingDoNotCancel() {
-        Room room = RoomFixtures.room("abc123", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
-        assertThat(room.forceStart(10)).isEmpty();
-        UUID first = join(room, "tadeu");
-
-        assertThat(room.forceStart(10)).contains(Change.STARTED);
-        UUID second = join(room, "x572");
-        room.leaveBeforeStart(second);
-
-        assertThat(room.phase()).isEqualTo(Room.Phase.STARTING);
-        assertThat(room.countdown().remaining()).hasValue(10);
-        assertThat(room.player(first)).isPresent();
-    }
-
-    @Test
-    void onlyBlocksPlacedByPlayersAreRemembered() {
-        Room room = RoomFixtures.room("abc123", RoomFixtures.ONE_V_ONE, RoomFixtures.arena("1v1", "Slip", RED_BLUE));
-
-        room.placed(-1030, 64, 2049);
-
-        assertThat(room.wasPlaced(-1030, 64, 2049)).isTrue();
-        assertThat(room.wasPlaced(-1030, 65, 2049)).isFalse();
-        room.unplaced(-1030, 64, 2049);
-        assertThat(room.wasPlaced(-1030, 64, 2049)).isFalse();
-    }
-
-    @Test
-    void playersStartOnTheirFavouriteColourWhenTheArenaHasIt() {
-        Room room = RoomFixtures.room("abc124", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
-        UUID first = join(room, "tadeu");
-        UUID second = join(room, "x572");
-        UUID third = join(room, "lia");
-
-        room.start(List.of(), Map.of(first, TeamColor.CINZA, third, TeamColor.ROSA), new Random(1), NOW);
-
-        assertThat(room.player(first).orElseThrow().team()).isEqualTo(TeamColor.CINZA);
-        assertThat(room.player(third).orElseThrow().team()).isEqualTo(TeamColor.ROSA);
-        assertThat(room.player(second).orElseThrow().team()).isEqualTo(TeamColor.VERMELHO);
-        assertThat(room.team(TeamColor.CINZA).members()).containsExactly(first);
-        assertThat(room.team(TeamColor.ROSA).members()).containsExactly(third);
-    }
-
-    @Test
-    void aColourTheArenaDoesNotHaveFallsBackToTheEmptiestTeam() {
-        Room room = RoomFixtures.room("abc125", RoomFixtures.ONE_V_ONE, RoomFixtures.arena("1v1", "Slip", RED_BLUE));
-        UUID first = join(room, "tadeu");
-        UUID second = join(room, "x572");
-
-        room.start(List.of(), Map.of(first, TeamColor.ROSA, second, TeamColor.AZUL), new Random(1), NOW);
-
-        assertThat(room.player(second).orElseThrow().team()).isEqualTo(TeamColor.AZUL);
-        assertThat(room.player(first).orElseThrow().team()).isEqualTo(TeamColor.VERMELHO);
-    }
-
-    @Test
-    void inDoublesPlayersWhoShareAFavouriteColourPlayTogether() {
-        Room room = RoomFixtures.room("abc126", RoomFixtures.DOUBLES, RoomFixtures.arena("duplas", "Slip", EIGHT.subList(0, 4)));
-        UUID first = join(room, "tadeu");
-        UUID second = join(room, "x572");
-        UUID third = join(room, "lia");
-        UUID fourth = join(room, "rui");
-
-        room.start(List.of(), Map.of(second, TeamColor.VERDE, fourth, TeamColor.VERDE), new Random(1), NOW);
-
-        assertThat(room.team(TeamColor.VERDE).members()).containsExactlyInAnyOrder(second, fourth);
-        assertThat(room.player(first).orElseThrow().team()).isNotEqualTo(TeamColor.VERDE);
-        assertThat(room.player(third).orElseThrow().team()).isNotEqualTo(TeamColor.VERDE);
-    }
-
-    @Test
-    void startingWithoutPreferencesKeepsTheJoinOrderTeams() {
-        Room room = RoomFixtures.room("abc127", RoomFixtures.SOLO, RoomFixtures.arena("solo", "Athens", EIGHT));
-        UUID first = join(room, "tadeu");
-        UUID second = join(room, "x572");
-
-        room.start(List.of(), NOW);
-
-        assertThat(room.player(first).orElseThrow().team()).isEqualTo(TeamColor.VERMELHO);
-        assertThat(room.player(second).orElseThrow().team()).isEqualTo(TeamColor.AZUL);
+    private List<String> lines(Room room, UUID viewer) {
+        Match match = room.match();
+        Map<String, String> beds = Map.of("beds", String.valueOf(match.player(viewer).map(player -> room.player(player.id()).beds()).orElse(0)));
+        return board.lines(match, viewer, RoomFixtures.SETTINGS.timeline().next(match.elapsed()), beds);
     }
 
     private static UUID join(Room room, String name) {
         UUID id = UUID.nameUUIDFromBytes(name.getBytes());
-        room.join(id, name);
+        room.match().join(id, name);
         return id;
     }
 }

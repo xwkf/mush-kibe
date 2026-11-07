@@ -2,12 +2,12 @@ package br.com.muxe.minigame.bedwars.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import br.com.muxe.minigame.api.combat.KillCredit;
+import br.com.muxe.minigame.api.match.Match;
+import br.com.muxe.minigame.api.match.Participant;
 import br.com.muxe.minigame.bedwars.game.XpRewards;
 import br.com.muxe.minigame.bedwars.stats.domain.MatchOutcome;
 import br.com.muxe.minigame.bedwars.stats.domain.MatchResult;
 import br.com.muxe.minigame.engine.team.TeamColor;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -23,81 +23,26 @@ class RoomStatsTest {
     @Test
     void dyingWithABedIsADeathAndWithoutItAFinalDeath() {
         Room room = started();
-        RoomPlayer red = player(room, TeamColor.VERMELHO);
-        RoomPlayer blue = player(room, TeamColor.AZUL);
+        Match match = room.match();
+        Participant red = player(room, TeamColor.VERMELHO);
+        Participant blue = player(room, TeamColor.AZUL);
 
-        room.die(red, 5);
+        match.die(red, 5);
         room.breakBed(TeamColor.VERMELHO, blue);
-        room.respawned(red, NOW);
-        room.die(red, 5);
+        match.respawned(red, NOW);
+        match.die(red, 5);
 
         assertThat(red.deaths()).isEqualTo(1);
         assertThat(red.finalDeaths()).isEqualTo(1);
-        assertThat(red.bedsLost()).isEqualTo(1);
-        assertThat(blue.bedsLost()).isZero();
-        assertThat(blue.beds()).isEqualTo(1);
-    }
-
-    @Test
-    void anEliminationIsAFinalDeath() {
-        Room room = started();
-        RoomPlayer red = player(room, TeamColor.VERMELHO);
-
-        room.eliminate(red);
-
-        assertThat(red.finalDeaths()).isEqualTo(1);
-        assertThat(red.deaths()).isZero();
-    }
-
-    @Test
-    void everyOtherRecentAttackerOfTheVictimGetsAnAssist() {
-        Room room = RoomFixtures.room("2v7bss", RoomFixtures.DOUBLES, RoomFixtures.arena("duplas", "Slip", RED_BLUE));
-        UUID a = UUID.randomUUID();
-        UUID b = UUID.randomUUID();
-        UUID c = UUID.randomUUID();
-        UUID d = UUID.randomUUID();
-        room.join(a, "a");
-        room.join(b, "b");
-        room.join(c, "c");
-        room.join(d, "d");
-        room.start(List.of(List.of(a, b), List.of(c, d)), NOW);
-        RoomPlayer victim = room.player(a).orElseThrow();
-        RoomPlayer killer = room.player(c).orElseThrow();
-        RoomPlayer helper = room.player(d).orElseThrow();
-        RoomPlayer teammate = room.player(b).orElseThrow();
-        room.credit().hit(a, d, NOW);
-        room.credit().hit(a, b, NOW);
-        room.credit().hit(a, c, NOW.plusSeconds(2));
-
-        room.assists(victim, killer, false, NOW.plusSeconds(3));
-
-        assertThat(helper.assists()).isEqualTo(1);
-        assertThat(killer.assists()).isZero();
-        assertThat(teammate.assists()).isZero();
-    }
-
-    @Test
-    void assistsExpireWithTheKillWindow() {
-        KillCredit credit = new KillCredit(Duration.ofSeconds(15));
-        UUID victim = UUID.randomUUID();
-        UUID old = UUID.randomUUID();
-        UUID recent = UUID.randomUUID();
-        UUID killer = UUID.randomUUID();
-        credit.hit(victim, old, NOW);
-        credit.hit(victim, recent, NOW.plusSeconds(10));
-        credit.hit(victim, killer, NOW.plusSeconds(12));
-
-        assertThat(credit.assisters(victim, killer, NOW.plusSeconds(20))).containsExactly(recent);
-
-        credit.forget(victim);
-
-        assertThat(credit.assisters(victim, killer, NOW.plusSeconds(20))).isEmpty();
+        assertThat(room.player(red.id()).bedsLost()).isEqualTo(1);
+        assertThat(room.player(blue.id()).bedsLost()).isZero();
+        assertThat(room.player(blue.id()).beds()).isEqualTo(1);
     }
 
     @Test
     void killsAndBedsAddTheirExperience() {
         Room room = started();
-        RoomPlayer blue = player(room, TeamColor.AZUL);
+        Participant blue = player(room, TeamColor.AZUL);
 
         blue.addXp(12);
         blue.addXp(100);
@@ -108,15 +53,16 @@ class RoomStatsTest {
     @Test
     void theEndOfTheMatchTurnsEveryPlayerIntoAnOutcome() {
         Room room = started();
-        RoomPlayer red = player(room, TeamColor.VERMELHO);
-        RoomPlayer blue = player(room, TeamColor.AZUL);
+        Match match = room.match();
+        Participant red = player(room, TeamColor.VERMELHO);
+        Participant blue = player(room, TeamColor.AZUL);
         room.breakBed(TeamColor.VERMELHO, blue);
         blue.addXp(100);
-        room.die(red, 5);
-        room.credit(blue, true);
+        match.die(red, 5);
+        match.credit(blue, true);
         blue.addXp(60);
         for (int second = 0; second < 125; second++) {
-            room.tick();
+            match.tick();
         }
 
         List<MatchOutcome> outcomes = room.outcomes(Optional.of(TeamColor.AZUL), new XpRewards(10, 5, 250, 100, 12, 60));
@@ -130,21 +76,23 @@ class RoomStatsTest {
     @Test
     void missionTotalsFollowTheMatch() {
         Room room = started();
-        RoomPlayer red = player(room, TeamColor.VERMELHO);
-        RoomPlayer blue = player(room, TeamColor.AZUL);
-        room.credit(red, false);
-        room.credit(red, false);
-        room.die(red, 5);
-        room.credit(red, true);
-        red.addEmeralds(3);
-        red.addFireballDamage(2.5);
-        red.addClay(16);
+        Match match = room.match();
+        Participant red = player(room, TeamColor.VERMELHO);
+        Participant blue = player(room, TeamColor.AZUL);
+        match.credit(red, false);
+        match.credit(red, false);
+        room.died(red);
+        match.die(red, 5);
+        match.credit(red, true);
+        room.player(red.id()).addEmeralds(3);
+        room.player(red.id()).addFireballDamage(2.5);
+        room.player(red.id()).addClay(16);
         for (int second = 0; second < 200; second++) {
-            room.tick();
+            match.tick();
         }
 
         Map<String, Long> winning = room.missionTotals(red, Optional.of(TeamColor.VERMELHO), 210, 10);
-        blue.useExplosive();
+        room.player(blue.id()).useExplosive();
         Map<String, Long> losing = room.missionTotals(blue, Optional.of(TeamColor.VERMELHO), 210, 10);
 
         assertThat(winning).containsEntry("KILL_STREAK", 2L).containsEntry("FINAL_KILLS", 1L).containsEntry("EMERALDS_IN_A_LIFE", 3L)
@@ -153,15 +101,29 @@ class RoomStatsTest {
         assertThat(room.missionTotals(red, Optional.empty(), 210, 10)).containsEntry("FAST_WIN", 0L);
     }
 
+    @Test
+    void emeraldsInALifeStartOverAfterADeath() {
+        Room room = started();
+        Participant red = player(room, TeamColor.VERMELHO);
+        room.player(red.id()).addEmeralds(4);
+
+        room.died(red);
+        room.player(red.id()).addEmeralds(2);
+
+        assertThat(room.player(red.id()).bestEmeralds()).isEqualTo(4);
+        room.player(red.id()).addEmeralds(3);
+        assertThat(room.player(red.id()).bestEmeralds()).isEqualTo(5);
+    }
+
     private static Room started() {
         Room room = RoomFixtures.room("2v7bss", RoomFixtures.ONE_V_ONE, RoomFixtures.arena("1v1", "Slip", RED_BLUE));
-        room.join(UUID.randomUUID(), "tadeu");
-        room.join(UUID.randomUUID(), "x572");
-        room.start(List.of(), NOW);
+        room.match().join(UUID.randomUUID(), "tadeu");
+        room.match().join(UUID.randomUUID(), "x572");
+        room.match().start(List.of(), NOW);
         return room;
     }
 
-    private static RoomPlayer player(Room room, TeamColor team) {
-        return room.players().stream().filter(player -> player.team() == team).findFirst().orElseThrow();
+    private static Participant player(Room room, TeamColor team) {
+        return room.match().players().stream().filter(player -> player.team() == team).findFirst().orElseThrow();
     }
 }

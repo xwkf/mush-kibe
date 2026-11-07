@@ -3,6 +3,7 @@ package br.com.muxe.minigame.bedwars.lobby;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import br.com.muxe.core.bukkit.scoreboard.SidebarContent;
+import br.com.muxe.minigame.api.network.ArenaInfo;
 import br.com.muxe.minigame.bedwars.lobby.format.LevelBadges;
 import br.com.muxe.minigame.bedwars.lobby.menu.LobbyMenuSettings;
 import br.com.muxe.minigame.bedwars.lobby.menu.MapList;
@@ -15,7 +16,6 @@ import br.com.muxe.minigame.bedwars.lobby.top.TopSelectorView;
 import br.com.muxe.minigame.bedwars.lobby.top.TopState;
 import br.com.muxe.minigame.bedwars.lobby.top.TopTexts;
 import br.com.muxe.minigame.bedwars.lobby.top.TopView;
-import br.com.muxe.minigame.bedwars.network.ArenaInfo;
 import br.com.muxe.minigame.bedwars.room.RoomFixtures;
 import br.com.muxe.minigame.bedwars.stats.domain.PlayerStats;
 import br.com.muxe.minigame.bedwars.stats.domain.StatCounters;

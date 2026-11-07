@@ -93,6 +93,20 @@ class MatchTest {
     }
 
     @Test
+    void anEliminationIsAFinalDeath() {
+        Match match = match(ONE_V_ONE, RED_BLUE, true);
+        Participant red = match.player(join(match, "red")).orElseThrow();
+        join(match, "blue");
+        match.start(List.of(), NOW);
+
+        match.eliminate(red);
+
+        assertThat(red.finalDeaths()).isEqualTo(1);
+        assertThat(red.deaths()).isZero();
+        assertThat(red.state()).isEqualTo(State.ELIMINATED);
+    }
+
+    @Test
     void theStatusFollowsDisconnectionAndElimination() {
         Match match = match(DOUBLES, RED_BLUE, true);
         List<UUID> ids = List.of(join(match, "a"), join(match, "b"), join(match, "c"), join(match, "d"));

@@ -1,7 +1,7 @@
 package br.com.muxe.minigame.bedwars.lobby.menu;
 
 import br.com.muxe.core.common.cosmetic.domain.CosmeticOrder;
-import br.com.muxe.minigame.bedwars.network.ArenaInfo;
+import br.com.muxe.minigame.api.network.ArenaInfo;
 import java.text.Normalizer;
 import java.util.List;
 import java.util.Locale;

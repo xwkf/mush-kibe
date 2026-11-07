@@ -8,20 +8,28 @@ import br.com.muxe.core.bukkit.config.PluginConfig;
 import br.com.muxe.core.bukkit.config.edit.ConfigEditor;
 import br.com.muxe.core.bukkit.config.edit.ConfigReloads;
 import br.com.muxe.core.bukkit.config.edit.PluginConfigStore;
+import br.com.muxe.core.bukkit.display.DisplayService;
 import br.com.muxe.core.bukkit.mission.config.MissionConfig;
 import br.com.muxe.core.bukkit.mission.menu.MissionMenus;
+import br.com.muxe.core.bukkit.npc.NpcService;
 import br.com.muxe.core.bukkit.prompt.AnvilPrompts;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
-import br.com.muxe.core.common.messaging.channel.PacketTarget;
 import br.com.muxe.core.common.mission.MissionModule;
 import br.com.muxe.core.common.mission.domain.Mission;
-import br.com.muxe.core.common.server.ServerKind;
+import br.com.muxe.minigame.api.bootstrap.MatchServer;
+import br.com.muxe.minigame.api.bootstrap.MinigameBootstrap;
+import br.com.muxe.minigame.api.match.MatchPhase;
+import br.com.muxe.minigame.api.runtime.MatchService;
+import br.com.muxe.minigame.api.settings.MatchSettings;
+import br.com.muxe.minigame.api.view.EndTitles;
+import br.com.muxe.minigame.bedwars.arena.BedWarsArena;
 import br.com.muxe.minigame.bedwars.arena.BedWarsSchema;
 import br.com.muxe.minigame.bedwars.command.BedWarsCommand;
 import br.com.muxe.minigame.bedwars.command.BedWarsConfigCommand;
-import br.com.muxe.minigame.bedwars.command.GlobalChatCommand;
 import br.com.muxe.minigame.bedwars.cosmetic.aura.AuraTask;
 import br.com.muxe.minigame.bedwars.cosmetic.trail.TrailTask;
+import br.com.muxe.minigame.bedwars.game.Activity;
+import br.com.muxe.minigame.bedwars.game.Slingshot;
 import br.com.muxe.minigame.bedwars.hotbar.HotbarChoices;
 import br.com.muxe.minigame.bedwars.hotbar.HotbarDelivery;
 import br.com.muxe.minigame.bedwars.hotbar.HotbarModule;
@@ -30,19 +38,22 @@ import br.com.muxe.minigame.bedwars.hotbar.menu.HotbarEditor;
 import br.com.muxe.minigame.bedwars.hotbar.menu.HotbarIcons;
 import br.com.muxe.minigame.bedwars.hotbar.menu.HotbarMenuSettings;
 import br.com.muxe.minigame.bedwars.invisibility.InvisiblePlayers;
+import br.com.muxe.minigame.bedwars.listener.ActivityListener;
+import br.com.muxe.minigame.bedwars.listener.BedWarsHandlers;
 import br.com.muxe.minigame.bedwars.listener.Bedbugs;
-import br.com.muxe.minigame.bedwars.listener.MatchListener;
+import br.com.muxe.minigame.bedwars.listener.ChestListener;
 import br.com.muxe.minigame.bedwars.lobby.format.LevelBadges;
 import br.com.muxe.minigame.bedwars.lobby.menu.LobbyMenus;
 import br.com.muxe.minigame.bedwars.mission.BedWarsGoal;
 import br.com.muxe.minigame.bedwars.mission.MissionRules;
-import br.com.muxe.minigame.bedwars.network.RoomPublisher;
 import br.com.muxe.minigame.bedwars.preferences.PlayerPreferences;
 import br.com.muxe.minigame.bedwars.preferences.PreferencesModule;
 import br.com.muxe.minigame.bedwars.preferences.menu.PreferencesMenu;
 import br.com.muxe.minigame.bedwars.quickbuy.QuickBuyModule;
 import br.com.muxe.minigame.bedwars.quickbuy.domain.QuickBuy;
-import br.com.muxe.minigame.bedwars.room.RoomService;
+import br.com.muxe.minigame.bedwars.room.BedWarsGame;
+import br.com.muxe.minigame.bedwars.room.BedWarsMatch;
+import br.com.muxe.minigame.bedwars.room.BedWarsServices;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
 import br.com.muxe.minigame.bedwars.shop.QuickBuyEditor;
 import br.com.muxe.minigame.bedwars.shop.QuickBuys;
@@ -56,42 +67,34 @@ import br.com.muxe.minigame.bedwars.teamcolor.FavouriteColors;
 import br.com.muxe.minigame.bedwars.teamcolor.TeamColorModule;
 import br.com.muxe.minigame.bedwars.teamcolor.menu.FavouriteColorMenu;
 import br.com.muxe.minigame.bedwars.teamcolor.menu.FavouriteColorMenuSettings;
-import br.com.muxe.minigame.bedwars.title.EndTitles;
 import br.com.muxe.minigame.bedwars.tnt.TntTimerSettings;
 import br.com.muxe.minigame.bedwars.tnt.TntTimers;
 import br.com.muxe.minigame.engine.MinigameEngine;
-import br.com.muxe.minigame.engine.arena.ArenaCatalog;
-import br.com.muxe.minigame.engine.arena.ArenaSavedPacket;
-import br.com.muxe.minigame.engine.arena.ArenaStore;
-import br.com.muxe.minigame.engine.arena.DatabaseArenaStore;
+import br.com.muxe.minigame.engine.level.LevelUps;
 import br.com.muxe.minigame.engine.mode.GameMode;
 import br.com.muxe.minigame.engine.mode.GameModeLoader;
-import br.com.muxe.minigame.engine.setup.session.SetupCommand;
 import br.com.muxe.minigame.engine.setup.session.SetupMessages;
-import br.com.muxe.minigame.engine.setup.session.SetupService;
-import br.com.muxe.minigame.engine.world.server.MatchWorld;
-import br.com.muxe.minigame.engine.world.server.MuxeWorlds;
-import java.io.IOException;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.logging.Level;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class BedWarsBootstrap {
 
-    public static final String GAME = "bedwars";
+    public static final String GAME = BedWarsMatch.GAME;
     public static final ZoneId STATS_ZONE = ZoneId.of("America/Sao_Paulo");
 
     private final JavaPlugin plugin;
-    private SetupService setup;
-    private RoomService rooms;
+    private MinigameBootstrap minigame;
     private CosmeticFeatures cosmetics;
     private LobbyFeatures lobbyFeatures;
-    private RoomPublisher publisher;
+    private NpcService npcs;
+    private DisplayService displays;
     private Bedbugs bedbugs;
     private AuraTask auras;
     private TrailTask trails;
@@ -108,9 +111,9 @@ public final class BedWarsBootstrap {
         List<GameMode> modes = GameModeLoader.load(modeSection);
         BedWarsSchema schema = BedWarsSchema.from(modes, modeSection);
         BedWarsSettings settings = BedWarsSettings.from(config);
-        MinigameEngine engine = new MinigameEngine(GAME, modes, core.metrics());
         Commands commands = Commands.of(plugin, messages);
-        boolean lobby = core.identity().kind() == ServerKind.LOBBY;
+        minigame = new MinigameBootstrap(plugin, core, GAME, modes, messages, commands, config);
+        boolean lobby = minigame.isLobby();
         plugin.getLogger().info("Schema '" + GAME + "' at version " + core.migrations().migrate(GAME, plugin.getClass().getClassLoader()).schemaVersion());
         StatsModule.register(core.commands(), core.queries(), core.transactions(), core.clock(), STATS_ZONE);
         QuickBuyModule.register(core.commands(), core.queries(), core.transactions(), core.clock());
@@ -122,7 +125,7 @@ public final class BedWarsBootstrap {
         core.missions().register(GAME, missions.catalog(),
             (playerId, completed, at) -> missionXp.addXp(playerId, completed.stream().mapToLong(Mission::xp).sum(), at, STATS_ZONE));
         MissionMenus missionMenus = new MissionMenus(GAME, missions, core.queries(), core.mainThread(), core.clock(), MissionModule.ZONE, plugin.getLogger());
-        EndTitles titles = EndTitles.from(plugin, config.getConfigurationSection("end-titles"));
+        EndTitles titles = minigame.endTitles();
         ConfigReloads reloads = new ConfigReloads();
         ConfigEditor configEditor = new ConfigEditor(new PluginConfigStore(plugin, core.async()), reloads);
         ConfigPathSuggestions.register(commands, configEditor);
@@ -153,52 +156,23 @@ public final class BedWarsBootstrap {
         plugin.getServer().getOnlinePlayers().forEach(player -> teamColors.load(player.getUniqueId()));
         cosmetics.onTeamColor(new FavouriteColorMenu(FavouriteColorMenuSettings.from(
             Objects.requireNonNull(config.getConfigurationSection("favourite-color"), "Missing configuration section favourite-color")), teamColors, messages));
-        ArenaSavedPacket.register(core.packetRegistry());
-        ArenaStore arenas = new DatabaseArenaStore(GAME, core.commands(), core.queries());
-        MuxeWorlds worlds = new MuxeWorlds(plugin);
-        worlds.deleteLeftovers();
+        Function<String, String> modeNames = mode -> schema.modes().contains(mode) ? schema.mode(mode).displayName() : mode;
         if (lobby) {
-            lobbyFeatures = LobbyFeatures.start(plugin, core, config, messages, schema, missionMenus, preferences);
-            setup = new SetupService(plugin, schema, messages, worlds, arenas);
-            setup.onEnter(player -> core.buildMode().enter(player));
-            setup.onLeave(player -> core.buildMode().leave(player));
-            setup.onSaved(name -> core.packets().publish(PacketTarget.group(GAME), new ArenaSavedPacket(GAME, name)).exceptionally(error -> {
-                plugin.getLogger().log(Level.WARNING, "Could not tell the BedWars servers that arena " + name + " was saved", error);
-                return null;
-            }));
-            setup.start();
-            commands.register(new SetupCommand(setup));
+            lobbyFeatures = LobbyFeatures.start(plugin, core, config, messages, schema, missionMenus, preferences, minigame.connector(modeNames));
+            minigame.setup(schema);
             plugin.getLogger().info("BedWars ready in lobby mode");
-            return engine;
+            return minigame.engine();
         }
 
-        MatchWorld matchWorld = new MatchWorld(plugin, worlds, GAME);
-        ArenaCatalog catalog = new ArenaCatalog(arenas, matchWorld::fits, plugin.getLogger());
-        CompletableFuture.runAsync(() -> {
-            try {
-                plugin.getLogger().info("Loaded " + catalog.loadAll() + " ready arenas");
-            } catch (IOException exception) {
-                plugin.getLogger().log(Level.WARNING, "Could not load the arenas", exception);
-            }
-        }, core.async());
-        core.packets().subscribe(ArenaSavedPacket.TYPE, context -> {
-            if (GAME.equals(context.packet().game())) {
-                CompletableFuture.runAsync(() -> catalog.reload(context.packet().name()).ifPresent(loaded ->
-                    plugin.getLogger().info("Arena " + loaded.name() + " updated")), core.async());
-            }
-        });
-
-        rooms = new RoomService(plugin, core, settings, messages, schema, catalog, matchWorld, LevelBadges.from(config.getConfigurationSection("levels")));
-        rooms.missions(missions, MissionRules.from(config.getConfigurationSection("missions")));
-        rooms.preferences(preferences);
-        rooms.teamColors(teamColors);
-        rooms.killMessages(cosmetics.messageSets(), cosmetics.killMessages());
-        rooms.start();
-        engine.track(rooms::activeMatches, () -> catalog.all().size());
-        rooms.onBedBreak(cosmetics.bedBreaks());
-        rooms.onVictory(cosmetics::victory);
-        rooms.onFinalKill(cosmetics::finalKill);
-        rooms.endTitles(titles);
+        Map<String, List<String>> npcLines = new ConcurrentHashMap<>();
+        npcs = NpcService.start(plugin, npc -> npcLines.getOrDefault(npc.id(), List.of()));
+        displays = DisplayService.start(plugin);
+        LevelBadges badges = LevelBadges.from(config.getConfigurationSection("levels"));
+        BedWarsServices services = new BedWarsServices(plugin, core, settings, messages, npcs, npcLines, displays, missions,
+            MissionRules.from(config.getConfigurationSection("missions")), preferences, cosmetics.messageSets(), cosmetics.killMessages(), cosmetics.bedBreaks(),
+            new LevelUps(messages.get("level-up"), badges::of), badges);
+        MatchServer<BedWarsArena, BedWarsMatch> server = minigame.matches(new BedWarsGame(services, teamColors::preferred), MatchSettings.from(config), cosmetics);
+        MatchService<BedWarsArena, BedWarsMatch> rooms = server.service();
         ShopService shop = new ShopService(
             shopCatalog,
             UpgradeCatalog.from(Objects.requireNonNull(config.getConfigurationSection("upgrades"), "Missing configuration section upgrades")),
@@ -210,33 +184,36 @@ public final class BedWarsBootstrap {
             hotbarEditor,
             cosmetics.woods()
         );
-        rooms.onNpcClick((player, click) -> shop.open(player, click.runtime(), click.upgrades()));
-        publisher = new RoomPublisher(plugin, core, rooms, List.of(settings.lobbyGroup(), GAME));
-        LobbyMenus playAgain = PlayAgain.menus(plugin, core, config, messages, schema, rooms, publisher);
-        publisher.start();
+        npcs.onClick((player, npc) -> rooms.of(player.getUniqueId()).ifPresent(runtime -> {
+            if (!runtime.state().hasNpc(npc.id()) || runtime.match().phase() != MatchPhase.PLAYING || runtime.isSpectator(player.getUniqueId())) {
+                return;
+            }
+            shop.open(player, runtime, npc.id().contains("-melhorias"));
+        }));
+        LobbyMenus playAgain = PlayAgain.menus(plugin, core, config, messages, schema, server.playAgainConnector(modeNames));
         bedbugs = new Bedbugs(plugin, rooms, core.clock());
         bedbugs.start();
         TntTimers tntTimers = TntTimers.start(plugin, TntTimerSettings.from(
             Objects.requireNonNull(config.getConfigurationSection("tnt-timer"), "Missing configuration section tnt-timer")), preferences);
-        plugin.getServer().getPluginManager().registerEvents(new MatchListener(plugin, core, rooms, settings, messages, cosmetics::openMenu, bedbugs,
-            preferences, tntTimers, playAgain::openMode), plugin);
-
+        Activity activity = new Activity();
+        Slingshot slingshot = new Slingshot();
+        BedWarsHandlers handlers = new BedWarsHandlers(plugin, core, settings, messages, bedbugs, preferences, tntTimers, activity, slingshot,
+            cosmetics::openMenu, playAgain::openMode);
+        server.listen(handlers);
+        plugin.getServer().getPluginManager().registerEvents(new ChestListener(rooms, handlers), plugin);
+        plugin.getServer().getPluginManager().registerEvents(new ActivityListener(activity, slingshot, core.clock()), plugin);
         InvisiblePlayers.start(plugin, rooms);
         auras = AuraTask.start(plugin, rooms, cosmetics.auras());
         trails = TrailTask.start(plugin, rooms, cosmetics.trails());
         commands.register(new BedWarsCommand(rooms, messages));
-        commands.register(new GlobalChatCommand(rooms));
 
-        plugin.getLogger().info("BedWars ready with modes " + engine.modes().keySet());
-        return engine;
+        plugin.getLogger().info("BedWars ready with modes " + minigame.engine().modes().keySet());
+        return minigame.engine();
     }
 
     public void disable() {
         if (lobbyFeatures != null) {
             lobbyFeatures.stop();
-        }
-        if (publisher != null) {
-            publisher.stop();
         }
         if (auras != null) {
             auras.stop();
@@ -250,11 +227,15 @@ public final class BedWarsBootstrap {
         if (cosmetics != null) {
             cosmetics.stop();
         }
-        if (setup != null) {
-            setup.stop();
+        if (minigame != null) {
+            minigame.stopSetup();
+            minigame.stopMatches();
         }
-        if (rooms != null) {
-            rooms.stop();
+        if (npcs != null) {
+            npcs.stop();
+        }
+        if (displays != null) {
+            displays.stop();
         }
     }
 }

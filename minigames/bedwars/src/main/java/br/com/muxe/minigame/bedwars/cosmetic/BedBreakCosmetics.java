@@ -6,7 +6,7 @@ import br.com.muxe.core.bukkit.cosmetic.stage.AnimationPlayer;
 import br.com.muxe.minigame.bedwars.cosmetic.animation.BedAnimations;
 import br.com.muxe.minigame.bedwars.cosmetic.catalog.CosmeticCatalog;
 import br.com.muxe.minigame.bedwars.cosmetic.profile.CosmeticProfiles;
-import br.com.muxe.minigame.bedwars.room.RoomService.BedBreakHandler;
+import br.com.muxe.minigame.bedwars.room.BedWarsServices.BedBreakHandler;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import org.bukkit.Location;

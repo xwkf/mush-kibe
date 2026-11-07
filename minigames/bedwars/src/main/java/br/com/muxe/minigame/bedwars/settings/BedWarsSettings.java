@@ -7,9 +7,6 @@ import br.com.muxe.minigame.bedwars.game.BedWarsEvent;
 import br.com.muxe.minigame.bedwars.game.GeneratorTimer.Rate;
 import br.com.muxe.minigame.bedwars.game.XpRewards;
 import br.com.muxe.minigame.bedwars.item.ItemNames;
-import br.com.muxe.minigame.bedwars.spectator.SpectatorHotbar;
-import br.com.muxe.minigame.bedwars.spectator.TeleporterMenu.Teleporter;
-import br.com.muxe.minigame.engine.match.CountdownTitles;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -17,18 +14,11 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
 public record BedWarsSettings(
-    String lobbyGroup,
-    String defaultMode,
     Timings timings,
-    CountdownTitles countdownTitles,
     Forges forges,
     Timeline<BedWarsEvent> timeline,
     XpRewards xp,
-    ScoreboardSettings scoreboard,
     Holograms holograms,
-    WaitingHotbar hotbar,
-    SpectatorHotbar spectators,
-    Teleporter teleporter,
     MatchSounds sounds,
     ItemNames items
 ) {
@@ -38,18 +28,11 @@ public record BedWarsSettings(
     public static BedWarsSettings from(FileConfiguration config) {
         Forges forges = Forges.from(section(config, "forges"));
         return new BedWarsSettings(
-            config.getString("lobby-group", "lobby"),
-            config.getString("default-mode", "solo"),
             Timings.from(section(config, "timings")),
-            CountdownTitles.from(config.getConfigurationSection("countdown.titles")),
             forges,
             timeline(forges, section(config, "events")),
             XpRewards.from(section(config, "xp-rewards")),
-            ScoreboardSettings.from(section(config, "scoreboard")),
             Holograms.from(section(config, "holograms")),
-            WaitingHotbar.from(section(config, "hotbar.waiting")),
-            SpectatorHotbar.from(section(config, "hotbar.spectator")),
-            new Teleporter(config.getString("hotbar.teleporter.title", "Teleportador"), config.getStringList("hotbar.teleporter.entry-lore")),
             MatchSounds.from(config.getConfigurationSection("sounds")),
             ItemNames.from(config.getConfigurationSection("item-names"))
         );
@@ -78,20 +61,14 @@ public record BedWarsSettings(
         return new Timeline<>(list);
     }
 
-    public record Timings(int respawnSeconds, int rejoinSeconds, int restartSeconds, int respawnProtectionSeconds,
-                          int islandRadius, int spawnRadius, int npcRadius, int generatorRadius, int emptyRoomSeconds) {
+    public record Timings(int islandRadius, int spawnRadius, int npcRadius, int generatorRadius) {
 
         static Timings from(ConfigurationSection section) {
             return new Timings(
-                section.getInt("respawn-seconds", 5),
-                section.getInt("rejoin-seconds", 180),
-                section.getInt("restart-seconds", 30),
-                section.getInt("respawn-protection-seconds", 3),
                 section.getInt("island-radius", 17),
                 section.getInt("spawn-protection-radius", 5),
                 section.getInt("npc-protection-radius", 1),
-                section.getInt("generator-protection-radius", 1),
-                section.getInt("empty-room-seconds", 60)
+                section.getInt("generator-protection-radius", 1)
             );
         }
     }
@@ -147,28 +124,6 @@ public record BedWarsSettings(
         }
     }
 
-    public record ScoreboardSettings(String title, List<String> waiting, List<String> starting, List<String> playing, List<String> playingEightTeams,
-                                     String event, String noEvent, String team, String you, String online, String offline, String players, String eliminated) {
-
-        static ScoreboardSettings from(ConfigurationSection section) {
-            return new ScoreboardSettings(
-                section.getString("title", "&b&lBED WARS"),
-                section.getStringList("waiting"),
-                section.getStringList("starting"),
-                section.getStringList("playing"),
-                section.getStringList("playing-eight-teams"),
-                section.getString("event", "&f{event} em &a{time}"),
-                section.getString("no-event", "&fFim de jogo"),
-                section.getString("team", "{color}{letter} &f{name}: {status}{you}"),
-                section.getString("team-you", " &7VOCÊ"),
-                section.getString("status-online", "&a✔"),
-                section.getString("status-offline", "&e✔"),
-                section.getString("status-players", "&a{count}"),
-                section.getString("status-eliminated", "&c✘")
-            );
-        }
-    }
-
     public record Holograms(List<String> shop, List<String> shopTeam, List<String> upgrades, List<String> upgradesTeam, List<String> diamond, List<String> emerald) {
 
         static Holograms from(ConfigurationSection section) {
@@ -180,20 +135,6 @@ public record BedWarsSettings(
                 section.getStringList("diamond"),
                 section.getStringList("emerald")
             );
-        }
-    }
-
-    public record HotbarItem(int slot, String material, String name) {
-    }
-
-    public record WaitingHotbar(HotbarItem menu, HotbarItem leave) {
-
-        static WaitingHotbar from(ConfigurationSection section) {
-            return new WaitingHotbar(item(section(section, "menu")), item(section(section, "leave")));
-        }
-
-        private static HotbarItem item(ConfigurationSection section) {
-            return new HotbarItem(section.getInt("slot"), section.getString("material", "STONE"), section.getString("name", ""));
         }
     }
 }

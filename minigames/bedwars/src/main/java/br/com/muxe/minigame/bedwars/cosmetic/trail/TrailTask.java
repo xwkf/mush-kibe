@@ -1,9 +1,10 @@
 package br.com.muxe.minigame.bedwars.cosmetic.trail;
 
-import br.com.muxe.minigame.bedwars.room.Room;
-import br.com.muxe.minigame.bedwars.room.RoomPlayer;
-import br.com.muxe.minigame.bedwars.room.RoomRuntime;
-import br.com.muxe.minigame.bedwars.room.RoomService;
+import br.com.muxe.minigame.api.match.Match;
+import br.com.muxe.minigame.api.match.MatchPhase;
+import br.com.muxe.minigame.api.match.Participant;
+import br.com.muxe.minigame.api.runtime.MatchRuntime;
+import br.com.muxe.minigame.api.runtime.Matches;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -27,20 +28,20 @@ public final class TrailTask implements Listener {
 
     public static final long PERIOD_TICKS = 1L;
 
-    private final RoomService rooms;
+    private final Matches<?> rooms;
     private final TrailCosmetics trails;
     private final TrailDriver driver;
     private final Map<String, List<Player>> viewers = new HashMap<>();
     private final Set<UUID> inMatch = new HashSet<>();
     private BukkitTask task;
 
-    private TrailTask(RoomService rooms, TrailCosmetics trails, TrailDriver driver) {
+    private TrailTask(Matches<?> rooms, TrailCosmetics trails, TrailDriver driver) {
         this.rooms = rooms;
         this.trails = trails;
         this.driver = driver;
     }
 
-    public static TrailTask start(Plugin plugin, RoomService rooms, TrailCosmetics trails) {
+    public static TrailTask start(Plugin plugin, Matches<?> rooms, TrailCosmetics trails) {
         TrailTask started = new TrailTask(rooms, trails, new TrailDriver(plugin));
         plugin.getServer().getPluginManager().registerEvents(started, plugin);
         started.task = plugin.getServer().getScheduler().runTaskTimer(plugin, started::tick, PERIOD_TICKS, PERIOD_TICKS);
@@ -62,14 +63,14 @@ public final class TrailTask implements Listener {
             return;
         }
         UUID id = shooter.getUniqueId();
-        Optional<RoomRuntime> found = rooms.roomOf(id);
+        Optional<? extends MatchRuntime<?>> found = rooms.of(id);
         if (found.isEmpty()) {
             return;
         }
-        RoomRuntime runtime = found.get();
-        Room room = runtime.room();
-        Optional<RoomPlayer> member = room.player(id);
-        if (member.isEmpty() || !TrailRules.launches(room.phase(), member.get().state(), runtime.isSpectator(shooter))) {
+        MatchRuntime<?> runtime = found.get();
+        Match room = runtime.match();
+        Optional<Participant> member = room.player(id);
+        if (member.isEmpty() || !TrailRules.launches(room.phase(), member.get().state(), runtime.isSpectator(id))) {
             return;
         }
         Optional<ProjectileTrail> trail = trails.of(id, room.code(), ThreadLocalRandom.current());
@@ -77,7 +78,7 @@ public final class TrailTask implements Listener {
             return;
         }
         String code = room.code();
-        viewers.computeIfAbsent(code, ignored -> runtime.online());
+        viewers.computeIfAbsent(code, ignored -> runtime.onlinePlayers());
         driver.launch(projectile, trail.get(), id, code, () -> viewers.getOrDefault(code, List.of()));
     }
 
@@ -92,18 +93,18 @@ public final class TrailTask implements Listener {
         viewers.clear();
         inMatch.clear();
         boolean tracking = !driver.idle();
-        for (RoomRuntime runtime : rooms.runtimes()) {
-            Room room = runtime.room();
-            if (room.phase() != Room.Phase.PLAYING) {
+        for (MatchRuntime<?> runtime : rooms.all()) {
+            Match room = runtime.match();
+            if (room.phase() != MatchPhase.PLAYING) {
                 continue;
             }
             room.players().forEach(player -> inMatch.add(player.id()));
             if (tracking) {
-                viewers.put(room.code(), runtime.online());
+                viewers.put(room.code(), runtime.onlinePlayers());
             }
         }
         if (tracking) {
-            driver.tick((owner, room) -> viewers.containsKey(room) && rooms.roomOf(owner).map(runtime -> runtime.room().code().equals(room)).orElse(false));
+            driver.tick((owner, room) -> viewers.containsKey(room) && rooms.of(owner).map(runtime -> runtime.match().code().equals(room)).orElse(false));
         }
         trails.retain(inMatch);
     }

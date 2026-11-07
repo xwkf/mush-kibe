@@ -2,9 +2,10 @@ package br.com.muxe.minigame.bedwars.spectator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import br.com.muxe.minigame.api.settings.SpectatorHotbar.Action;
+import br.com.muxe.minigame.api.settings.SpectatorHotbar.Entry;
+import br.com.muxe.minigame.api.settings.SpectatorHotbar;
 import br.com.muxe.minigame.bedwars.room.RoomFixtures;
-import br.com.muxe.minigame.bedwars.spectator.SpectatorHotbar.Action;
-import br.com.muxe.minigame.bedwars.spectator.SpectatorHotbar.Entry;
 import org.junit.jupiter.api.Test;
 
 class SpectatorHotbarTest {

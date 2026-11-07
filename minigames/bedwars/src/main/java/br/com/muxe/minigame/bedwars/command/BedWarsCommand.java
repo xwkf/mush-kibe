@@ -7,7 +7,7 @@ import br.com.muxe.core.bukkit.command.framework.annotation.Subcommand;
 import br.com.muxe.core.bukkit.command.framework.annotation.Suggest;
 import br.com.muxe.core.bukkit.command.framework.annotation.Suggestions;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
-import br.com.muxe.minigame.bedwars.room.RoomService;
+import br.com.muxe.minigame.api.runtime.MatchService;
 import java.util.List;
 import java.util.Locale;
 import org.bukkit.entity.Player;
@@ -19,10 +19,10 @@ public final class BedWarsCommand {
 
     private static final String MODES = "modes";
 
-    private final RoomService rooms;
+    private final MatchService<?, ?> rooms;
     private final MessageCatalog messages;
 
-    public BedWarsCommand(RoomService rooms, MessageCatalog messages) {
+    public BedWarsCommand(MatchService<?, ?> rooms, MessageCatalog messages) {
         this.rooms = rooms;
         this.messages = messages;
     }
@@ -34,19 +34,19 @@ public final class BedWarsCommand {
             player.sendMessage(messages.get("unknown-mode", "modes", String.join(", ", rooms.modes())));
             return;
         }
-        rooms.switchTo(player, id);
+        rooms.switchTo(player.getUniqueId(), player.getName(), id);
     }
 
     @Subcommand("iniciar")
     @Permission(ADMIN)
     public void start(Player player) {
-        player.sendMessage(messages.get(rooms.forceStart(player) ? "forced-start" : "cannot-force-start"));
+        player.sendMessage(messages.get(rooms.forceStart(player.getUniqueId()) ? "forced-start" : "cannot-force-start"));
     }
 
     @Subcommand("finalizar")
     @Permission(ADMIN)
     public void end(Player player) {
-        player.sendMessage(messages.get(rooms.forceEnd(player) ? "forced-end" : "cannot-force-end"));
+        player.sendMessage(messages.get(rooms.forceEnd(player.getUniqueId()) ? "forced-end" : "cannot-force-end"));
     }
 
     @Suggestions(MODES)

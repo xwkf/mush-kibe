@@ -1,5 +1,7 @@
 package br.com.muxe.minigame.bedwars.room;
 
+import br.com.muxe.minigame.api.match.Match;
+import br.com.muxe.minigame.api.settings.MatchSettings;
 import br.com.muxe.minigame.bedwars.arena.BedWarsArena;
 import br.com.muxe.minigame.bedwars.arena.BedWarsSchema;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
@@ -18,6 +20,7 @@ public final class RoomFixtures {
 
     public static final YamlConfiguration CONFIG = YamlConfiguration.loadConfiguration(new File("src/main/resources/config.yml"));
     public static final BedWarsSettings SETTINGS = BedWarsSettings.from(CONFIG);
+    public static final MatchSettings MATCH_SETTINGS = MatchSettings.from(CONFIG);
     public static final GameMode SOLO = new GameMode("solo", "Solo", 6, 8, 1);
     public static final GameMode ONE_V_ONE = new GameMode("1v1", "1v1", 2, 2, 1);
     public static final GameMode DOUBLES = new GameMode("duplas", "Duplas", 2, 4, 2);
@@ -53,6 +56,6 @@ public final class RoomFixtures {
     }
 
     public static Room room(String code, GameMode mode, BedWarsArena arena) {
-        return new Room(code, mode, arena, new Cell(0, 0, 0, 64));
+        return new Room(new Match(code, mode, arena, new Cell(0, 0, 0, 64), BedWarsGame.matchRules().respawn()), arena);
     }
 }

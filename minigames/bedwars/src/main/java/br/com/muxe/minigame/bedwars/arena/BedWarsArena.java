@@ -1,5 +1,6 @@
 package br.com.muxe.minigame.bedwars.arena;
 
+import br.com.muxe.minigame.api.match.MatchArena;
 import br.com.muxe.minigame.engine.arena.LoadedArena;
 import br.com.muxe.minigame.engine.setup.ArenaDraft;
 import br.com.muxe.minigame.engine.setup.Point;
@@ -28,7 +29,17 @@ public record BedWarsArena(
     List<Point> extraUpgrades,
     List<Point> extraIron,
     List<Point> extraGold
-) {
+) implements MatchArena {
+
+    @Override
+    public List<TeamColor> teamColors() {
+        return List.copyOf(teams.keySet());
+    }
+
+    @Override
+    public Point spawn(TeamColor team) {
+        return teams.get(team).spawn();
+    }
 
     public static BedWarsArena from(LoadedArena loaded) {
         ArenaDraft arena = loaded.arena();

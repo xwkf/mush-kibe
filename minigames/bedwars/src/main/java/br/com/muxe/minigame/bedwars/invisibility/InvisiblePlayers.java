@@ -1,10 +1,10 @@
 package br.com.muxe.minigame.bedwars.invisibility;
 
 import br.com.muxe.core.bukkit.nms.ArmorVisibility;
-import br.com.muxe.minigame.bedwars.room.Room;
-import br.com.muxe.minigame.bedwars.room.RoomPlayer;
-import br.com.muxe.minigame.bedwars.room.RoomRuntime;
-import br.com.muxe.minigame.bedwars.room.RoomService;
+import br.com.muxe.minigame.api.match.MatchPhase;
+import br.com.muxe.minigame.api.match.Participant;
+import br.com.muxe.minigame.api.runtime.MatchRuntime;
+import br.com.muxe.minigame.api.runtime.Matches;
 import br.com.muxe.minigame.engine.team.TeamColor;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,14 +28,14 @@ public final class InvisiblePlayers {
     private static final int FOOTSTEP_RADIUS = 32;
     private static final double GROUND_PROBE = 0.05;
 
-    private final RoomService rooms;
+    private final Matches<?> rooms;
     private final Map<UUID, Hidden> hidden = new HashMap<>();
 
-    private InvisiblePlayers(RoomService rooms) {
+    private InvisiblePlayers(Matches<?> rooms) {
         this.rooms = rooms;
     }
 
-    public static InvisiblePlayers start(Plugin plugin, RoomService rooms) {
+    public static InvisiblePlayers start(Plugin plugin, Matches<?> rooms) {
         InvisiblePlayers started = new InvisiblePlayers(rooms);
         plugin.getServer().getScheduler().runTaskTimer(plugin, started::update, PERIOD_TICKS, PERIOD_TICKS);
         return started;
@@ -43,14 +43,14 @@ public final class InvisiblePlayers {
 
     private void update() {
         Set<UUID> invisible = new HashSet<>();
-        for (RoomRuntime runtime : rooms.runtimes()) {
-            if (runtime.room().phase() != Room.Phase.PLAYING) {
+        for (MatchRuntime<?> runtime : rooms.all()) {
+            if (runtime.match().phase() != MatchPhase.PLAYING) {
                 continue;
             }
-            List<Player> online = runtime.online();
+            List<Player> online = runtime.onlinePlayers();
             for (Player target : online) {
-                Optional<RoomPlayer> player = runtime.room().player(target.getUniqueId()).filter(RoomPlayer::isAlive);
-                if (player.isEmpty() || runtime.isSpectator(target) || !target.hasPotionEffect(PotionEffectType.INVISIBILITY)) {
+                Optional<Participant> player = runtime.match().player(target.getUniqueId()).filter(Participant::isAlive);
+                if (player.isEmpty() || runtime.isSpectator(target.getUniqueId()) || !target.hasPotionEffect(PotionEffectType.INVISIBILITY)) {
                     continue;
                 }
                 invisible.add(target.getUniqueId());
@@ -69,10 +69,10 @@ public final class InvisiblePlayers {
         });
     }
 
-    private void hide(RoomRuntime runtime, List<Player> online, Player target, TeamColor team) {
+    private void hide(MatchRuntime<?> runtime, List<Player> online, Player target, TeamColor team) {
         Hidden state = hidden.computeIfAbsent(target.getUniqueId(), ignored -> new Hidden(target.getLocation()));
         for (Player viewer : online) {
-            Optional<TeamColor> viewerTeam = runtime.room().player(viewer.getUniqueId()).filter(RoomPlayer::isAlive).map(RoomPlayer::team);
+            Optional<TeamColor> viewerTeam = runtime.match().player(viewer.getUniqueId()).filter(Participant::isAlive).map(Participant::team);
             if (Invisibility.hidesArmor(viewer.getUniqueId(), viewerTeam, target.getUniqueId(), team)) {
                 ArmorVisibility.hide(viewer, target);
                 state.viewers.add(viewer.getUniqueId());

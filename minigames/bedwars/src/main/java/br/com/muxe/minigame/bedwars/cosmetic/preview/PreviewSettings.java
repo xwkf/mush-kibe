@@ -2,7 +2,7 @@ package br.com.muxe.minigame.bedwars.cosmetic.preview;
 
 import br.com.muxe.core.bukkit.cosmetic.animation.BedFrame;
 import br.com.muxe.core.common.config.source.DurationParser;
-import br.com.muxe.minigame.bedwars.settings.BedWarsSettings.HotbarItem;
+import br.com.muxe.minigame.api.settings.HotbarItem;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;

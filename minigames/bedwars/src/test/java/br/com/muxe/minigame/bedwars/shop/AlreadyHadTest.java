@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 class AlreadyHadTest {
 
     private final ShopCatalog catalog = ShopCatalog.from(RoomFixtures.CONFIG.getConfigurationSection("shop"));
-    private final RoomPlayer player = new RoomPlayer(UUID.randomUUID(), "tadeu");
+    private final RoomPlayer player = new RoomPlayer(UUID.randomUUID());
 
     @Test
     void armourAlreadyWornAndToolsAtTheirLastLevelCannotBeBoughtAgain() {

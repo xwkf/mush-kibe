@@ -1,9 +1,9 @@
 package br.com.muxe.minigame.bedwars.listener;
 
-import br.com.muxe.minigame.bedwars.room.Room;
-import br.com.muxe.minigame.bedwars.room.RoomPlayer;
-import br.com.muxe.minigame.bedwars.room.RoomRuntime;
-import br.com.muxe.minigame.bedwars.room.RoomService;
+import br.com.muxe.minigame.api.match.MatchPhase;
+import br.com.muxe.minigame.api.match.Participant;
+import br.com.muxe.minigame.api.runtime.MatchRuntime;
+import br.com.muxe.minigame.api.runtime.Matches;
 import br.com.muxe.minigame.engine.team.TeamColor;
 import java.time.Clock;
 import java.time.Duration;
@@ -36,12 +36,12 @@ public final class Bedbugs implements Listener {
     public static final long TICK_PERIOD = 10L;
 
     private final Plugin plugin;
-    private final RoomService rooms;
+    private final Matches<?> rooms;
     private final Clock clock;
     private final Map<UUID, Bug> bugs = new HashMap<>();
     private BukkitTask task;
 
-    public Bedbugs(Plugin plugin, RoomService rooms, Clock clock) {
+    public Bedbugs(Plugin plugin, Matches<?> rooms, Clock clock) {
         this.plugin = plugin;
         this.rooms = rooms;
         this.clock = clock;
@@ -69,11 +69,11 @@ public final class Bedbugs implements Listener {
         if (!(event.getEntity() instanceof Snowball snowball) || !(snowball.getShooter() instanceof Player owner)) {
             return;
         }
-        Optional<RoomRuntime> found = rooms.roomOf(owner.getUniqueId());
-        if (found.isEmpty() || found.get().room().phase() != Room.Phase.PLAYING) {
+        Optional<? extends MatchRuntime<?>> found = rooms.of(owner.getUniqueId());
+        if (found.isEmpty() || found.get().match().phase() != MatchPhase.PLAYING) {
             return;
         }
-        Optional<RoomPlayer> player = found.get().room().player(owner.getUniqueId()).filter(RoomPlayer::isAlive);
+        Optional<Participant> player = found.get().match().player(owner.getUniqueId()).filter(Participant::isAlive);
         if (player.isEmpty()) {
             return;
         }
@@ -133,8 +133,8 @@ public final class Bedbugs implements Listener {
     }
 
     private boolean enemy(Bug bug, Player target) {
-        return rooms.roomOf(target.getUniqueId())
-            .flatMap(runtime -> runtime.room().player(target.getUniqueId()))
+        return rooms.of(target.getUniqueId())
+            .flatMap(runtime -> runtime.match().player(target.getUniqueId()))
             .filter(player -> player.isAlive() && player.team() != bug.team())
             .isPresent();
     }

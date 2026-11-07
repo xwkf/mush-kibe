@@ -15,6 +15,8 @@ import br.com.muxe.core.bukkit.permission.command.TargetLookup;
 import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.core.common.config.live.LiveValue;
+import br.com.muxe.minigame.api.runtime.MatchEvents;
+import br.com.muxe.minigame.api.view.EndTitles;
 import br.com.muxe.minigame.bedwars.cosmetic.BedBreakCosmetics;
 import br.com.muxe.minigame.bedwars.cosmetic.SceneCosmetics;
 import br.com.muxe.minigame.bedwars.cosmetic.animation.BedAnimations;
@@ -47,10 +49,9 @@ import br.com.muxe.minigame.bedwars.cosmetic.trail.TrailPreview;
 import br.com.muxe.minigame.bedwars.cosmetic.wood.WoodTypes;
 import br.com.muxe.minigame.bedwars.hotbar.menu.HotbarEditor;
 import br.com.muxe.minigame.bedwars.preferences.menu.PreferencesMenu;
-import br.com.muxe.minigame.bedwars.teamcolor.menu.FavouriteColorMenu;
 import br.com.muxe.minigame.bedwars.settings.MatchSounds;
 import br.com.muxe.minigame.bedwars.shop.QuickBuyEditor;
-import br.com.muxe.minigame.bedwars.title.EndTitles;
+import br.com.muxe.minigame.bedwars.teamcolor.menu.FavouriteColorMenu;
 import br.com.muxe.minigame.engine.team.TeamColor;
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +65,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-final class CosmeticFeatures {
+final class CosmeticFeatures implements MatchEvents {
 
     private static final String VICTORY_CATEGORY = "bedwars-vitoria";
     private static final String FINAL_KILL_CATEGORY = "bedwars-kill-final";
@@ -272,11 +273,13 @@ JavaPlugin plugin, MuxeCore core, CosmeticCatalog catalog) {
         return trails;
     }
 
-    void victory(Player winner, List<Player> viewers, Area area) {
+    @Override
+    public void victory(Player winner, List<Player> viewers, Area area) {
         victories.play(winner, winner.getLocation(), SceneCosmetics.facing(winner.getLocation()), Optional.empty(), SceneCosmetics.riders(winner, viewers), viewers, Optional.of(area));
     }
 
-    void finalKill(Player killer, Player victim, TeamColor victimColor, List<Player> viewers) {
+    @Override
+    public void finalKill(Player killer, Player victim, TeamColor victimColor, List<Player> viewers) {
         Location at = victim.getLocation();
         Optional<SignedSkin> skin = PlayerSkins.of(victim).map(found -> new SignedSkin(found.value(), found.signature()));
         finalKills.playOnVictim(killer, at, SceneCosmetics.away(killer.getLocation(), at), skin, SceneCosmetics.dye(victimColor), viewers);
