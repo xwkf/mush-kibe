@@ -7,7 +7,6 @@ import br.com.muxe.minigame.api.cosmetic.catalog.Availability;
 import br.com.muxe.minigame.api.cosmetic.catalog.Cosmetic;
 import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticIcons;
-import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenuSettings;
 import br.com.muxe.minigame.api.cosmetic.profile.CosmeticAccess;
 import br.com.muxe.minigame.api.cosmetic.profile.CosmeticState;
 import br.com.muxe.minigame.api.cosmetic.profile.CosmeticWallet;
@@ -28,7 +27,7 @@ class CosmeticCatalogTest {
     private static final Set<String> WITHOUT_ANIMATION = Set.of("tornado", "tubarao");
     private final CosmeticCatalog catalog = BedBreakCosmetics.catalog(RoomFixtures.CONFIG.getConfigurationSection("cosmetics"),
         id -> ANIMATIONS.find(id).isPresent() && !WITHOUT_ANIMATION.contains(id));
-    private final CosmeticIcons icons = new CosmeticIcons(CosmeticMenuSettings.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus")).category(CosmeticMenuSettings.BED_DESTRUCTION), catalog);
+    private final CosmeticIcons icons = new CosmeticIcons(BedWarsCosmetics.menuSettings(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus")).category(BedWarsCosmetics.BED_DESTRUCTION), catalog);
 
     @Test
     void theCatalogListsThirtyOneCosmeticsAndEveryAnimationHasAnEntry() {

@@ -35,8 +35,8 @@ class ProjectileTrailCosmeticTest {
         "sorte-azul", "faisca-cosmica", "lava", "chroma", "fumaca", "vapor", "agua", "aldeao-furioso", "fogos-de-artificio", "notas-musicais", "sangrento",
         "critico-encantado", "mega-loucura", "arco-iris");
 
-    private final CosmeticMenuSettings menus = CosmeticMenuSettings.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus"));
-    private final CategoryMenu menu = menus.category(CosmeticMenuSettings.PROJECTILE_TRAIL);
+    private final CosmeticMenuSettings menus = BedWarsCosmetics.menuSettings(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus"));
+    private final CategoryMenu menu = menus.category(CosmeticKind.PROJECTILE_TRAIL.key());
     private final CosmeticCatalog catalog = catalog(id -> ProjectileTrails.find(id).isPresent());
     private final CosmeticCatalog animated = catalog(id -> true);
     private final CosmeticCatalog still = catalog(id -> false);

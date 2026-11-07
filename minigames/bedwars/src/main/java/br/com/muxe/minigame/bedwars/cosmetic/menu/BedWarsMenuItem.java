@@ -1,7 +1,6 @@
 package br.com.muxe.minigame.bedwars.cosmetic.menu;
 
 import br.com.muxe.core.bukkit.buildmode.BuildModeHook;
-import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenus;
 import br.com.muxe.minigame.api.cosmetic.menu.MenuSlot;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -17,12 +16,12 @@ public final class BedWarsMenuItem implements Listener, BuildModeHook {
 
     private final Plugin plugin;
     private final MenuSlot item;
-    private final CosmeticMenus menus;
+    private final BedWarsMenu menu;
 
-    public BedWarsMenuItem(Plugin plugin, MenuSlot item, CosmeticMenus menus) {
+    public BedWarsMenuItem(Plugin plugin, MenuSlot item, BedWarsMenu menu) {
         this.plugin = plugin;
         this.item = item;
-        this.menus = menus;
+        this.menu = menu;
     }
 
     public int index() {
@@ -57,6 +56,6 @@ public final class BedWarsMenuItem implements Listener, BuildModeHook {
             return;
         }
         event.setCancelled(true);
-        menus.openBedWars(player);
+        menu.open(player);
     }
 }

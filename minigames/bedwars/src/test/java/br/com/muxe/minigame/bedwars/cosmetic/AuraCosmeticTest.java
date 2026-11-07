@@ -30,8 +30,8 @@ class AuraCosmeticTest {
 
     private final CosmeticCatalog catalog = RoomFixtures.COSMETICS.catalog("bedwars", CosmeticKind.AURA, RoomFixtures.CONFIG.getConfigurationSection("cosmetics"),
         id -> Auras.find(id).isPresent());
-    private final CosmeticMenuSettings menus = CosmeticMenuSettings.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus"));
-    private final CategoryMenu menu = menus.category(CosmeticMenuSettings.AURA);
+    private final CosmeticMenuSettings menus = BedWarsCosmetics.menuSettings(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus"));
+    private final CategoryMenu menu = menus.category(CosmeticKind.AURA.key());
     private final CosmeticIcons icons = new CosmeticIcons(menu, catalog);
     private final CosmeticListSettings list = menu.list();
 
@@ -90,7 +90,7 @@ class AuraCosmeticTest {
 
     @Test
     void theListIsTitledAuraAndLaidOutLikeTheOtherCategories() {
-        List<Integer> bedSlots = menus.category(CosmeticMenuSettings.BED_DESTRUCTION).list().slots();
+        List<Integer> bedSlots = menus.category(BedWarsCosmetics.BED_DESTRUCTION).list().slots();
 
         assertThat(list.title()).isEqualTo("Aura ({page}/{pages})");
         assertThat(list.rows()).isEqualTo(6);

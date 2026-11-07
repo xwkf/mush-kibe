@@ -3,6 +3,7 @@ package br.com.muxe.minigame.bedwars.cosmetic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticKind;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticListSettings.Entries;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticListSettings;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenuSettings.LoreTexts;
@@ -12,16 +13,16 @@ import org.junit.jupiter.api.Test;
 
 class CosmeticListSettingsTest {
 
-    private final CosmeticMenuSettings menus = CosmeticMenuSettings.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus"));
+    private final CosmeticMenuSettings menus = BedWarsCosmetics.menuSettings(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus"));
 
     @Test
     void theClassicListsStartWithNoneAndRandomAndKeepOwnedFirst() {
-        Entries entries = menus.category(CosmeticMenuSettings.BED_DESTRUCTION).list().entries();
+        Entries entries = menus.category(BedWarsCosmetics.BED_DESTRUCTION).list().entries();
 
         assertThat(entries).isEqualTo(Entries.DEFAULT);
         assertThat(entries.entryIndex(0, 30)).isEqualTo(2);
         assertThat(entries.entryIndex(29, 30)).isEqualTo(31);
-        assertThat(menus.category(CosmeticMenuSettings.AURA).list().entries()).isEqualTo(Entries.DEFAULT);
+        assertThat(menus.category(CosmeticKind.AURA.key()).list().entries()).isEqualTo(Entries.DEFAULT);
     }
 
     @Test
@@ -56,8 +57,8 @@ class CosmeticListSettingsTest {
 
     @Test
     void aCategoryThatOverridesTheLoreKeepsWhatItDoesNotWrite() {
-        LoreTexts bed = menus.category(CosmeticMenuSettings.BED_DESTRUCTION).list().lore();
-        LoreTexts kill = menus.category(CosmeticMenuSettings.KILL_MESSAGE).list().lore();
+        LoreTexts bed = menus.category(BedWarsCosmetics.BED_DESTRUCTION).list().lore();
+        LoreTexts kill = menus.category(CosmeticKind.KILL_MESSAGE.key()).list().lore();
 
         assertThat(kill.header()).containsExactly(" ");
         assertThat(kill.select()).containsExactly("&eBotão esquerdo: &fSelecionar");
@@ -70,7 +71,7 @@ class CosmeticListSettingsTest {
 
     @Test
     void everyTierHasItsOwnTag() {
-        LoreTexts lore = menus.category(CosmeticMenuSettings.WOOD_TYPE).list().lore();
+        LoreTexts lore = menus.category(BedWarsCosmetics.WOOD_TYPE).list().lore();
 
         assertThat(lore.vipTag()).isEqualTo("&7Incluso no &a&lVIP");
         assertThat(lore.ultraTag()).isEqualTo("&7Incluso no &d&lULTRA");
@@ -79,9 +80,9 @@ class CosmeticListSettingsTest {
 
     @Test
     void theNewCategoriesCoverTheirComingSoonSlots() {
-        CosmeticListSettings wood = menus.category(CosmeticMenuSettings.WOOD_TYPE).list();
+        CosmeticListSettings wood = menus.category(BedWarsCosmetics.WOOD_TYPE).list();
 
-        assertThat(menus.categories()).containsKeys(CosmeticMenuSettings.WOOD_TYPE, CosmeticMenuSettings.KILL_MESSAGE);
+        assertThat(menus.categories()).containsKeys(BedWarsCosmetics.WOOD_TYPE, CosmeticKind.KILL_MESSAGE.key());
         assertThat(menus.soon()).containsOnlyKeys(14);
         assertThat(wood.slots()).hasSizeGreaterThanOrEqualTo(12);
     }

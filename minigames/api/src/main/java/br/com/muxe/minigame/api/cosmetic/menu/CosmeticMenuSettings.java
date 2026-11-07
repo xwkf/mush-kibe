@@ -10,15 +10,6 @@ import java.util.Optional;
 import org.bukkit.configuration.ConfigurationSection;
 
 public record CosmeticMenuSettings(
-    String bedwarsTitle,
-    int bedwarsRows,
-    MenuSlot cosmetics,
-    Optional<MenuSlot> missions,
-    Optional<MenuSlot> quickBuy,
-    Optional<MenuSlot> preferences,
-    Optional<MenuSlot> hotbar,
-    Map<Integer, ItemBuilder> bedwarsItems,
-    Map<Integer, ItemBuilder> bedwarsSoon,
     String categoriesTitle,
     int categoriesRows,
     Map<String, CategoryMenu> categories,
@@ -27,24 +18,7 @@ public record CosmeticMenuSettings(
     MenuSlot categoriesBack
 ) {
 
-    public static final String BED_DESTRUCTION = "bed-destruction";
-    public static final String FINAL_KILL = "final-kill";
-    public static final String VICTORY_EFFECT = "victory-effect";
-    public static final String AURA = "aura";
-    public static final String PROJECTILE_TRAIL = "projectile-trail";
-    public static final String WOOD_TYPE = "wood-type";
-    public static final String KILL_MESSAGE = "kill-message";
-    private static final List<String> CATEGORY_KEYS = List.of(BED_DESTRUCTION, FINAL_KILL, VICTORY_EFFECT, AURA, PROJECTILE_TRAIL, WOOD_TYPE, KILL_MESSAGE);
-
     public CosmeticMenuSettings {
-        bedwarsItems = Map.copyOf(bedwarsItems);
-        Map<Integer, ItemBuilder> stillSoon = new LinkedHashMap<>(bedwarsSoon);
-        stillSoon.remove(cosmetics.slot());
-        missions.ifPresent(button -> stillSoon.remove(button.slot()));
-        quickBuy.ifPresent(button -> stillSoon.remove(button.slot()));
-        preferences.ifPresent(button -> stillSoon.remove(button.slot()));
-        hotbar.ifPresent(button -> stillSoon.remove(button.slot()));
-        bedwarsSoon = Map.copyOf(stillSoon);
         categories = Collections.unmodifiableMap(new LinkedHashMap<>(categories));
         Map<Integer, ItemBuilder> categorySoon = new LinkedHashMap<>(soon);
         categories.values().forEach(category -> categorySoon.remove(category.button().slot()));
@@ -52,29 +26,19 @@ public record CosmeticMenuSettings(
         soon = Map.copyOf(categorySoon);
     }
 
-    public static CosmeticMenuSettings from(ConfigurationSection menus) {
-        ConfigurationSection bedwars = section(menus, "bedwars");
+    public static CosmeticMenuSettings from(ConfigurationSection menus, String baseList, List<String> keys) {
         ConfigurationSection categories = section(menus, "categories");
-        CosmeticListSettings bedList = CosmeticListSettings.from(section(menus, BED_DESTRUCTION));
+        CosmeticListSettings base = CosmeticListSettings.from(section(menus, baseList));
         Map<String, CategoryMenu> byKey = new LinkedHashMap<>();
-        for (String key : CATEGORY_KEYS) {
+        for (String key : keys) {
             ConfigurationSection button = categories.getConfigurationSection(key);
             if (button != null) {
-                CosmeticListSettings list = key.equals(BED_DESTRUCTION) ? bedList : bedList.over(Optional.ofNullable(menus.getConfigurationSection(key)));
+                CosmeticListSettings list = key.equals(baseList) ? base : base.over(Optional.ofNullable(menus.getConfigurationSection(key)));
                 byKey.put(key, new CategoryMenu(key, MenuSlot.from(button), list));
             }
         }
         return new CosmeticMenuSettings(
-            bedwars.getString("title", "Menu do Bed Wars"),
-            bedwars.getInt("rows", 3),
-            MenuSlot.from(section(bedwars, "cosmetics")),
-            Optional.ofNullable(bedwars.getConfigurationSection("missions")).map(MenuSlot::from),
-            Optional.ofNullable(bedwars.getConfigurationSection("quick-buy")).map(MenuSlot::from),
-            Optional.ofNullable(bedwars.getConfigurationSection("preferences")).map(MenuSlot::from),
-            Optional.ofNullable(bedwars.getConfigurationSection("hotbar")).map(MenuSlot::from),
-            itemsBySlot(section(bedwars, "items")),
-            Optional.ofNullable(bedwars.getConfigurationSection("soon")).map(CosmeticMenuSettings::itemsBySlot).orElseGet(Map::of),
-            categories.getString("title", "Cosméticos do Bed Wars"),
+            categories.getString("title", "Cosméticos"),
             categories.getInt("rows", 6),
             byKey,
             Optional.ofNullable(categories.getConfigurationSection("team-color")).map(MenuSlot::from),
@@ -87,7 +51,7 @@ public record CosmeticMenuSettings(
         return Objects.requireNonNull(categories.get(key), "No cosmetic category " + key);
     }
 
-    private static Map<Integer, ItemBuilder> itemsBySlot(ConfigurationSection section) {
+    public static Map<Integer, ItemBuilder> itemsBySlot(ConfigurationSection section) {
         Map<Integer, ItemBuilder> items = new LinkedHashMap<>();
         for (String slot : section.getKeys(false)) {
             items.put(Integer.parseInt(slot), ItemBuilder.from(section(section, slot)));
@@ -95,7 +59,7 @@ public record CosmeticMenuSettings(
         return items;
     }
 
-    static ConfigurationSection section(ConfigurationSection parent, String path) {
+    public static ConfigurationSection section(ConfigurationSection parent, String path) {
         return Objects.requireNonNull(parent.getConfigurationSection(path), "Missing configuration section " + parent.getCurrentPath() + "." + path);
     }
 

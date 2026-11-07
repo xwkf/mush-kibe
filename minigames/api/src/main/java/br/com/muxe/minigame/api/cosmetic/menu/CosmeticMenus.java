@@ -44,16 +44,8 @@ public final class CosmeticMenus {
     private final MessageCatalog messages;
     private final Logger logger;
     private final Function<Player, String> viewerNames;
-    private final Map<UUID, Boolean> categoriesFromMenu = new ConcurrentHashMap<>();
-    private BiConsumer<Player, Consumer<Player>> quickBuy = (player, back) -> {
-    };
-    private BiConsumer<Player, Consumer<Player>> preferences = (player, back) -> {
-    };
-    private BiConsumer<Player, Consumer<Player>> hotbar = (player, back) -> {
-    };
+    private final Map<UUID, Consumer<Player>> backs = new ConcurrentHashMap<>();
     private BiConsumer<Player, Consumer<Player>> teamColor = (player, back) -> {
-    };
-    private BiConsumer<Player, Optional<Consumer<Player>>> missions = (player, back) -> {
     };
 
     public CosmeticMenus(CosmeticMenuSettings settings, List<CosmeticCategory> categories, CommandBus commands, Executor mainThread, MessageCatalog messages, Logger logger,
@@ -67,49 +59,16 @@ public final class CosmeticMenus {
         this.viewerNames = viewerNames;
     }
 
-    public void onMissions(BiConsumer<Player, Optional<Consumer<Player>>> opener) {
-        this.missions = opener;
-    }
-
-    public void onQuickBuy(BiConsumer<Player, Consumer<Player>> opener) {
-        this.quickBuy = opener;
-    }
-
-    public void onPreferences(BiConsumer<Player, Consumer<Player>> opener) {
-        this.preferences = opener;
-    }
-
-    public void onHotbar(BiConsumer<Player, Consumer<Player>> opener) {
-        this.hotbar = opener;
-    }
-
     public void onTeamColor(BiConsumer<Player, Consumer<Player>> opener) {
         this.teamColor = opener;
     }
 
-    public void openBedWars(Player player) {
-        Menu.Builder menu = Menu.builder(settings.bedwarsTitle()).rows(settings.bedwarsRows());
-        settings.bedwarsItems().forEach(menu::button);
-        settings.missions().ifPresent(button -> menu.button(button.slot(), button.item(),
-            context -> missions.accept(context.player(), Optional.of(this::openBedWars))));
-        settings.quickBuy().ifPresent(button -> menu.button(button.slot(), button.item(),
-            context -> quickBuy.accept(context.player(), this::openBedWars)));
-        settings.preferences().ifPresent(button -> menu.button(button.slot(), button.item(),
-            context -> preferences.accept(context.player(), this::openBedWars)));
-        settings.hotbar().ifPresent(button -> menu.button(button.slot(), button.item(),
-            context -> hotbar.accept(context.player(), this::openBedWars)));
-        settings.bedwarsSoon().forEach((slot, item) -> menu.button(slot, item, context -> context.player().sendMessage(messages.get("coming-soon"))));
-        menu.button(settings.cosmetics().slot(), settings.cosmetics().item(), context -> openCategories(context.player(), true))
-            .build()
-            .open(player);
-    }
-
     public void openCategories(Player player) {
-        openCategories(player, false);
+        openCategories(player, Optional.empty());
     }
 
-    void openCategories(Player player, boolean fromBedWarsMenu) {
-        categoriesFromMenu.put(player.getUniqueId(), fromBedWarsMenu);
+    public void openCategories(Player player, Optional<Consumer<Player>> back) {
+        back.ifPresentOrElse(opener -> backs.put(player.getUniqueId(), opener), () -> backs.remove(player.getUniqueId()));
         withWallets(player, wallets -> {
             Menu.Builder menu = Menu.builder(settings.categoriesTitle()).rows(settings.categoriesRows());
             for (CosmeticCategory category : categories.values()) {
@@ -117,11 +76,9 @@ public final class CosmeticMenus {
                 menu.button(category.menu().button().slot(), category.icons().category(wallet), context -> openList(context.player(), category.key(), 1));
             }
             settings.teamColor().ifPresent(button -> menu.button(button.slot(), button.item(),
-                context -> teamColor.accept(context.player(), viewer -> openCategories(viewer, categoriesFromMenu.getOrDefault(viewer.getUniqueId(), false)))));
+                context -> teamColor.accept(context.player(), viewer -> openCategories(viewer, back))));
             settings.soon().forEach((slot, item) -> menu.button(slot, item, context -> context.player().sendMessage(messages.get("coming-soon"))));
-            if (fromBedWarsMenu) {
-                menu.button(settings.categoriesBack().slot(), settings.categoriesBack().item(), context -> openBedWars(context.player()));
-            }
+            back.ifPresent(opener -> menu.button(settings.categoriesBack().slot(), settings.categoriesBack().item(), context -> opener.accept(context.player())));
             menu.build().open(player);
         });
     }
@@ -165,7 +122,7 @@ public final class CosmeticMenus {
         if (page.hasPrevious()) {
             menu.button(list.previous().slot(), list.previous().item().replacing("page", Integer.toString(number - 1)), context -> openList(context.player(), key, number - 1));
         } else {
-            menu.button(list.back().slot(), list.back().item(), context -> openCategories(context.player(), categoriesFromMenu.getOrDefault(context.player().getUniqueId(), false)));
+            menu.button(list.back().slot(), list.back().item(), context -> openCategories(context.player(), Optional.ofNullable(backs.get(context.player().getUniqueId()))));
         }
         if (page.hasNext()) {
             menu.button(list.next().slot(), list.next().item().replacing("page", Integer.toString(number + 1)), context -> openList(context.player(), key, number + 1));

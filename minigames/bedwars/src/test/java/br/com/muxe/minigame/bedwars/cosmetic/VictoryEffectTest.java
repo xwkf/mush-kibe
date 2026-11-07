@@ -25,8 +25,8 @@ class VictoryEffectTest {
     private static final SceneAnimations ANIMATIONS = SceneAnimations.victories();
     private final CosmeticCatalog catalog = RoomFixtures.COSMETICS.catalog("bedwars", CosmeticKind.VICTORY_EFFECT, RoomFixtures.CONFIG.getConfigurationSection("cosmetics"),
         id -> ANIMATIONS.find(id).isPresent());
-    private final CosmeticMenuSettings menus = CosmeticMenuSettings.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus"));
-    private final CategoryMenu menu = menus.category(CosmeticMenuSettings.VICTORY_EFFECT);
+    private final CosmeticMenuSettings menus = BedWarsCosmetics.menuSettings(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus"));
+    private final CategoryMenu menu = menus.category(CosmeticKind.VICTORY_EFFECT.key());
     private final CosmeticIcons icons = new CosmeticIcons(menu, catalog);
 
     @Test
@@ -47,7 +47,7 @@ class VictoryEffectTest {
         assertThat(menu.button().slot()).isEqualTo(16);
         assertThat(menus.soon()).doesNotContainKey(16);
         assertThat(menu.list().title()).isEqualTo("Efeito de Vitória ({page}/{pages})");
-        assertThat(menu.list().slots()).isEqualTo(menus.category(CosmeticMenuSettings.BED_DESTRUCTION).list().slots());
+        assertThat(menu.list().slots()).isEqualTo(menus.category(BedWarsCosmetics.BED_DESTRUCTION).list().slots());
         assertThat(icons.category(CosmeticWallet.EMPTY).lore().getFirst()).isEqualTo("§80/22 (0%)");
         assertThat(icons.random(CosmeticWallet.EMPTY).name()).isEqualTo("§aAleatório");
     }

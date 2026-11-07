@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import br.com.muxe.core.bukkit.item.ItemBuilder;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenuSettings;
+import br.com.muxe.minigame.bedwars.cosmetic.menu.BedWarsMenuSettings;
 import br.com.muxe.minigame.bedwars.room.RoomFixtures;
 import org.bukkit.Material;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -12,15 +13,16 @@ import org.junit.jupiter.api.Test;
 
 class BedWarsMenuSettingsTest {
 
-    private final CosmeticMenuSettings settings = CosmeticMenuSettings.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus"));
+    private final CosmeticMenuSettings settings = BedWarsCosmetics.menuSettings(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus"));
+    private final BedWarsMenuSettings hub = BedWarsMenuSettings.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus"));
 
     @Test
     void theBedWarsMenuHasFiveRowsWithCosmeticsInTheMiddle() {
-        ItemBuilder cosmetics = settings.cosmetics().item();
+        ItemBuilder cosmetics = hub.cosmetics().item();
 
-        assertThat(settings.bedwarsTitle()).isEqualTo("Menu do Bed Wars");
-        assertThat(settings.bedwarsRows()).isEqualTo(5);
-        assertThat(settings.cosmetics().slot()).isEqualTo(13);
+        assertThat(hub.title()).isEqualTo("Menu do Bed Wars");
+        assertThat(hub.rows()).isEqualTo(5);
+        assertThat(hub.cosmetics().slot()).isEqualTo(13);
         assertThat(cosmetics.material()).isEqualTo(Material.RAW_FISH);
         assertThat(cosmetics.data()).isEqualTo((short) 3);
         assertThat(cosmetics.name()).isEqualTo("§aCosméticos");
@@ -37,24 +39,24 @@ class BedWarsMenuSettingsTest {
         older.set("cosmetics.menus.bedwars.soon.31.material", "BLAZE_POWDER");
         older.set("cosmetics.menus.bedwars.soon.35.material", "BARRIER");
 
-        CosmeticMenuSettings fromOlderFile = CosmeticMenuSettings.from(older.getConfigurationSection("cosmetics.menus"));
+        BedWarsMenuSettings fromOlderFile = BedWarsMenuSettings.from(older.getConfigurationSection("cosmetics.menus"));
 
         assertThat(fromOlderFile.quickBuy().orElseThrow().slot()).isEqualTo(29);
         assertThat(fromOlderFile.hotbar().orElseThrow().slot()).isEqualTo(31);
-        assertThat(fromOlderFile.bedwarsSoon()).containsOnlyKeys(35);
+        assertThat(fromOlderFile.soon()).containsOnlyKeys(35);
     }
 
     @Test
     void theOtherBedWarsMenuItemsFollowTheReference() {
-        assertThat(settings.bedwarsItems()).containsOnlyKeys(15);
-        assertThat(settings.bedwarsSoon()).isEmpty();
-        assertThat(settings.missions().orElseThrow().slot()).isEqualTo(11);
-        assertThat(settings.missions().orElseThrow().item().material()).isEqualTo(Material.STORAGE_MINECART);
-        assertThat(settings.missions().orElseThrow().item().name()).isEqualTo("§aMissões");
-        assertThat(settings.missions().orElseThrow().item().lore()).containsExactly("§7Complete as missões", "§7e ganhe recompensas.", " ", "§eClique para ver mais.");
-        assertThat(settings.bedwarsItems().get(15).material()).isEqualTo(Material.PAPER);
-        assertThat(settings.bedwarsItems().get(15).name()).isEqualTo("§aLista de Níveis");
-        assertThat(settings.bedwarsItems().get(15).lore()).containsExactly(
+        assertThat(hub.items()).containsOnlyKeys(15);
+        assertThat(hub.soon()).isEmpty();
+        assertThat(hub.missions().orElseThrow().slot()).isEqualTo(11);
+        assertThat(hub.missions().orElseThrow().item().material()).isEqualTo(Material.STORAGE_MINECART);
+        assertThat(hub.missions().orElseThrow().item().name()).isEqualTo("§aMissões");
+        assertThat(hub.missions().orElseThrow().item().lore()).containsExactly("§7Complete as missões", "§7e ganhe recompensas.", " ", "§eClique para ver mais.");
+        assertThat(hub.items().get(15).material()).isEqualTo(Material.PAPER);
+        assertThat(hub.items().get(15).name()).isEqualTo("§aLista de Níveis");
+        assertThat(hub.items().get(15).lore()).containsExactly(
             " ",
             "§7[0§l✫§7] §a[10§l✶§a] §b[20§l✽§b]",
             "§d[30§l✿§d] §e[40§l✸§e] §6[50§l✹§6]",
@@ -63,16 +65,16 @@ class BedWarsMenuSettingsTest {
             "§b[§3300❂§b] §d[§5400❁§d] §7[§f500❋§7]",
             "§1[§9600✟§1] §2[§a700§l۞§2] §6[§e800§l✌§6]",
             "§4[§c900§l⚝§4] §c[§61§e0§a0§b0§dΩ§5]");
-        assertThat(settings.quickBuy().orElseThrow().slot()).isEqualTo(29);
-        assertThat(settings.quickBuy().orElseThrow().item().material()).isEqualTo(Material.CHEST);
-        assertThat(settings.quickBuy().orElseThrow().item().name()).isEqualTo("§aCompra rápida");
-        assertThat(settings.hotbar().orElseThrow().slot()).isEqualTo(31);
-        assertThat(settings.hotbar().orElseThrow().item().material()).isEqualTo(Material.BLAZE_POWDER);
-        assertThat(settings.hotbar().orElseThrow().item().name()).isEqualTo("§aEditor de hotbar");
-        assertThat(settings.hotbar().orElseThrow().item().lore()).containsExactly("§7Altere as predefinições", "§7da hotbar.", " ", "§eClique para ver mais.");
-        assertThat(settings.preferences().orElseThrow().item().material()).isEqualTo(Material.DIODE);
-        assertThat(settings.preferences().orElseThrow().item().name()).isEqualTo("§aPreferências");
-        assertThat(settings.preferences().orElseThrow().item().lore()).containsExactly("§7Altere as preferências", "§7do modo.", " ", "§eClique para ver mais.");
+        assertThat(hub.quickBuy().orElseThrow().slot()).isEqualTo(29);
+        assertThat(hub.quickBuy().orElseThrow().item().material()).isEqualTo(Material.CHEST);
+        assertThat(hub.quickBuy().orElseThrow().item().name()).isEqualTo("§aCompra rápida");
+        assertThat(hub.hotbar().orElseThrow().slot()).isEqualTo(31);
+        assertThat(hub.hotbar().orElseThrow().item().material()).isEqualTo(Material.BLAZE_POWDER);
+        assertThat(hub.hotbar().orElseThrow().item().name()).isEqualTo("§aEditor de hotbar");
+        assertThat(hub.hotbar().orElseThrow().item().lore()).containsExactly("§7Altere as predefinições", "§7da hotbar.", " ", "§eClique para ver mais.");
+        assertThat(hub.preferences().orElseThrow().item().material()).isEqualTo(Material.DIODE);
+        assertThat(hub.preferences().orElseThrow().item().name()).isEqualTo("§aPreferências");
+        assertThat(hub.preferences().orElseThrow().item().lore()).containsExactly("§7Altere as preferências", "§7do modo.", " ", "§eClique para ver mais.");
     }
 
     @Test
@@ -92,7 +94,7 @@ class BedWarsMenuSettingsTest {
         older.set("cosmetics.menus.categories.team-color", null);
         older.set("cosmetics.menus.categories.soon.35.material", "WOOL");
 
-        CosmeticMenuSettings fromOlderFile = CosmeticMenuSettings.from(older.getConfigurationSection("cosmetics.menus"));
+        CosmeticMenuSettings fromOlderFile = BedWarsCosmetics.menuSettings(older.getConfigurationSection("cosmetics.menus"));
 
         assertThat(fromOlderFile.teamColor()).isEmpty();
         assertThat(fromOlderFile.soon()).containsKey(35);

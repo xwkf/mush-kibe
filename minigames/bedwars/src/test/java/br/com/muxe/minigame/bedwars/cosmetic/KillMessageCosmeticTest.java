@@ -32,8 +32,8 @@ class KillMessageCosmeticTest {
     private final MessageSets sets = MessageSets.from(RoomFixtures.KILL_MESSAGES);
     private final CosmeticCatalog catalog = RoomFixtures.COSMETICS.catalog("bedwars", CosmeticKind.KILL_MESSAGE, RoomFixtures.CONFIG.getConfigurationSection("cosmetics"),
         id -> sets.find(id).isPresent());
-    private final CosmeticMenuSettings menus = CosmeticMenuSettings.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus"));
-    private final CategoryMenu menu = menus.category(CosmeticMenuSettings.KILL_MESSAGE);
+    private final CosmeticMenuSettings menus = BedWarsCosmetics.menuSettings(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus"));
+    private final CategoryMenu menu = menus.category(CosmeticKind.KILL_MESSAGE.key());
     private final CosmeticIcons icons = new CosmeticIcons(menu, catalog);
     private final CosmeticListSettings list = menu.list();
     private final MessageDescriptions descriptions = new MessageDescriptions(sets,
@@ -88,7 +88,7 @@ class KillMessageCosmeticTest {
     void theListIsTitledLikeTheRecordingAndLaidOutLikeTheOtherCategories() {
         assertThat(list.title()).isEqualTo("Mensagens de kill ({page}/{pages})");
         assertThat(list.rows()).isEqualTo(6);
-        assertThat(list.slots()).isEqualTo(menus.category(CosmeticMenuSettings.BED_DESTRUCTION).list().slots());
+        assertThat(list.slots()).isEqualTo(menus.category(BedWarsCosmetics.BED_DESTRUCTION).list().slots());
         assertThat(list.back().slot()).isEqualTo(48);
         assertThat(list.back().item().material()).isEqualTo(Material.ARROW);
         assertThat(list.back().item().name()).isEqualTo("§aVoltar");

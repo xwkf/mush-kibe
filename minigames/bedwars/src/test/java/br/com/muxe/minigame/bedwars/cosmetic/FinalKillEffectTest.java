@@ -23,8 +23,8 @@ class FinalKillEffectTest {
     private static final SceneAnimations ANIMATIONS = SceneAnimations.finalKills();
     private final CosmeticCatalog catalog = RoomFixtures.COSMETICS.catalog("bedwars", CosmeticKind.FINAL_KILL, RoomFixtures.CONFIG.getConfigurationSection("cosmetics"),
         id -> ANIMATIONS.find(id).isPresent());
-    private final CosmeticMenuSettings menus = CosmeticMenuSettings.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus"));
-    private final CategoryMenu menu = menus.category(CosmeticMenuSettings.FINAL_KILL);
+    private final CosmeticMenuSettings menus = BedWarsCosmetics.menuSettings(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus"));
+    private final CategoryMenu menu = menus.category(CosmeticKind.FINAL_KILL.key());
 
     @Test
     void theFinalKillsAreTheFortyThreeOfTheReferenceAndPresenteadoPlays() {

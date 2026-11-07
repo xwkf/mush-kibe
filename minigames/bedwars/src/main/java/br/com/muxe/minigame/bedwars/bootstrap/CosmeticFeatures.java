@@ -4,23 +4,17 @@ import br.com.muxe.core.bukkit.api.MuxeCore;
 import br.com.muxe.core.bukkit.command.framework.Commands;
 import br.com.muxe.core.bukkit.config.edit.ConfigReloads;
 import br.com.muxe.core.bukkit.cosmetic.animation.Area;
-import br.com.muxe.core.bukkit.cosmetic.animation.SignedSkin;
 import br.com.muxe.core.bukkit.cosmetic.stage.AnimationPlayer;
-import br.com.muxe.core.bukkit.effect.SoundCue;
 import br.com.muxe.core.bukkit.mission.menu.MissionMenus;
 import br.com.muxe.core.bukkit.nms.BlockMask;
-import br.com.muxe.core.bukkit.nms.PlayerSkins;
 import br.com.muxe.core.bukkit.permission.command.Replies;
 import br.com.muxe.core.bukkit.permission.command.TargetLookup;
 import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.core.common.config.live.LiveValue;
-import br.com.muxe.minigame.api.cosmetic.SceneCosmetics;
-import br.com.muxe.minigame.api.cosmetic.animation.SceneAnimations;
+import br.com.muxe.minigame.api.cosmetic.GameCosmetics;
 import br.com.muxe.minigame.api.cosmetic.aura.AuraCosmetics;
-import br.com.muxe.minigame.api.cosmetic.aura.Auras;
 import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticCatalog;
-import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticDefaults;
 import br.com.muxe.minigame.api.cosmetic.catalog.CosmeticKind;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticCategory;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenuSettings;
@@ -28,23 +22,20 @@ import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenus.PreviewGate;
 import br.com.muxe.minigame.api.cosmetic.menu.CosmeticMenus;
 import br.com.muxe.minigame.api.cosmetic.menu.MenuSlot;
 import br.com.muxe.minigame.api.cosmetic.message.KillMessages;
-import br.com.muxe.minigame.api.cosmetic.message.MessageDescriptions;
-import br.com.muxe.minigame.api.cosmetic.message.MessagePreview;
 import br.com.muxe.minigame.api.cosmetic.message.MessageSets;
-import br.com.muxe.minigame.api.cosmetic.preview.KitPlay;
-import br.com.muxe.minigame.api.cosmetic.preview.ScenePreview;
-import br.com.muxe.minigame.api.cosmetic.preview.ScenePreviewSettings;
 import br.com.muxe.minigame.api.cosmetic.profile.CosmeticProfileListener;
 import br.com.muxe.minigame.api.cosmetic.profile.CosmeticProfiles;
-import br.com.muxe.minigame.api.cosmetic.trail.ProjectileTrails;
 import br.com.muxe.minigame.api.cosmetic.trail.TrailCosmetics;
-import br.com.muxe.minigame.api.cosmetic.trail.TrailPreview;
 import br.com.muxe.minigame.api.runtime.MatchEvents;
+import br.com.muxe.minigame.api.settings.MatchSounds;
 import br.com.muxe.minigame.api.view.EndTitles;
 import br.com.muxe.minigame.bedwars.cosmetic.BedBreakCosmetics;
+import br.com.muxe.minigame.bedwars.cosmetic.BedWarsCosmetics;
 import br.com.muxe.minigame.bedwars.cosmetic.animation.BedAnimations;
 import br.com.muxe.minigame.bedwars.cosmetic.command.CosmeticCommand;
+import br.com.muxe.minigame.bedwars.cosmetic.menu.BedWarsMenu;
 import br.com.muxe.minigame.bedwars.cosmetic.menu.BedWarsMenuItem;
+import br.com.muxe.minigame.bedwars.cosmetic.menu.BedWarsMenuSettings;
 import br.com.muxe.minigame.bedwars.cosmetic.preview.BedPreview;
 import br.com.muxe.minigame.bedwars.cosmetic.preview.PreviewSettings;
 import br.com.muxe.minigame.bedwars.cosmetic.preview.config.PreviewKind;
@@ -52,7 +43,6 @@ import br.com.muxe.minigame.bedwars.cosmetic.wood.WoodTypes;
 import br.com.muxe.minigame.bedwars.hotbar.menu.HotbarEditor;
 import br.com.muxe.minigame.bedwars.preferences.menu.PreferencesMenu;
 import br.com.muxe.minigame.bedwars.room.BedWarsMatch;
-import br.com.muxe.minigame.bedwars.settings.MatchSounds;
 import br.com.muxe.minigame.bedwars.shop.QuickBuyEditor;
 import br.com.muxe.minigame.bedwars.teamcolor.menu.FavouriteColorMenu;
 import br.com.muxe.minigame.engine.team.TeamColor;
@@ -60,9 +50,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -70,78 +57,33 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 final class CosmeticFeatures implements MatchEvents {
 
-    private static final String GAME = BedWarsMatch.GAME;
-    private static final String WOOD_CATEGORY = "bedwars-madeira";
-
-    private final CosmeticMenus menus;
+    private final GameCosmetics shared;
+    private final BedWarsMenu menu;
     private final BedBreakCosmetics bedBreaks;
-    private final SceneCosmetics victories;
-    private final SceneCosmetics finalKills;
-    private final AuraCosmetics auras;
-    private final TrailCosmetics trails;
-    private final MessageSets messageSets;
-    private final KillMessages killMessages;
     private final WoodTypes woods;
     private final BedPreview preview;
-    private final List<ScenePreview> scenePreviews;
-    private final List<Runnable> stops;
 
-    private CosmeticFeatures(CosmeticMenus menus, BedBreakCosmetics bedBreaks, SceneCosmetics victories, SceneCosmetics finalKills, AuraCosmetics auras,
-                             TrailCosmetics trails, MessageSets messageSets, KillMessages killMessages, WoodTypes woods, BedPreview preview,
-                             List<ScenePreview> scenePreviews, List<Runnable> stops) {
-        this.menus = menus;
+    private CosmeticFeatures(GameCosmetics shared, BedWarsMenu menu, BedBreakCosmetics bedBreaks, WoodTypes woods, BedPreview preview) {
+        this.shared = shared;
+        this.menu = menu;
         this.bedBreaks = bedBreaks;
-        this.victories = victories;
-        this.finalKills = finalKills;
-        this.auras = auras;
-        this.trails = trails;
-        this.messageSets = messageSets;
-        this.killMessages = killMessages;
         this.woods = woods;
         this.preview = preview;
-        this.scenePreviews = List.copyOf(scenePreviews);
-        this.stops = List.copyOf(stops);
     }
 
     static CosmeticFeatures start(JavaPlugin plugin, MuxeCore core, FileConfiguration config, MessageCatalog messages, Commands commands, boolean lobby, EndTitles titles,
                                   ConfigReloads reloads) {
         ConfigurationSection section = section(config, "cosmetics");
-        CosmeticMenuSettings menuSettings = CosmeticMenuSettings.from(section(section, "menus"));
-        AnimationPlayer animator = new AnimationPlayer(plugin);
-
+        ConfigurationSection menus = section(section, "menus");
+        CosmeticMenuSettings menuSettings = BedWarsCosmetics.menuSettings(menus);
         BedAnimations animations = new BedAnimations();
         CosmeticCatalog catalog = BedBreakCosmetics.catalog(section, id -> animations.find(id).isPresent());
-        CosmeticProfiles profiles = profiles(plugin, core, catalog);
-        CosmeticDefaults defaults = CosmeticDefaults.load();
-        SceneAnimations victoryAnimations = SceneAnimations.victories();
-        CosmeticCatalog victoryCatalog = defaults.catalog(GAME, CosmeticKind.VICTORY_EFFECT, section, id -> victoryAnimations.find(id).isPresent());
-        CosmeticProfiles victoryProfiles = profiles(plugin, core, victoryCatalog);
-        SceneAnimations killAnimations = SceneAnimations.finalKills();
-        CosmeticCatalog killCatalog = defaults.catalog(GAME, CosmeticKind.FINAL_KILL, section, id -> killAnimations.find(id).isPresent());
-        CosmeticProfiles killProfiles = profiles(plugin, core, killCatalog);
-        SceneAnimations auraAnimations = SceneAnimations.auras();
-        CosmeticCatalog auraCatalog = defaults.catalog(GAME, CosmeticKind.AURA, section, id -> Auras.find(id).isPresent());
-        CosmeticProfiles auraProfiles = profiles(plugin, core, auraCatalog);
-        CosmeticCatalog trailCatalog = defaults.catalog(GAME, CosmeticKind.PROJECTILE_TRAIL, section, id -> ProjectileTrails.find(id).isPresent());
-        CosmeticProfiles trailProfiles = profiles(plugin, core, trailCatalog);
-        ConfigurationSection killMessageSection = defaults.killMessages(config.getConfigurationSection(CosmeticDefaults.KILL_MESSAGES));
-        MessageSets messageSets = MessageSets.from(killMessageSection);
-        CosmeticCatalog killMessageCatalog = defaults.catalog(GAME, CosmeticKind.KILL_MESSAGE, section, id -> messageSets.find(id).isPresent());
-        CosmeticProfiles killMessageProfiles = profiles(plugin, core, killMessageCatalog);
-        CosmeticCatalog woodCatalog = CosmeticCatalog.from(section(section, CosmeticMenuSettings.WOOD_TYPE), "cosmetics", WOOD_CATEGORY, id -> true);
-        CosmeticProfiles woodProfiles = profiles(plugin, core, woodCatalog);
+        CosmeticProfiles profiles = GameCosmetics.profiles(plugin, core, catalog);
+        CosmeticCatalog woodCatalog = CosmeticCatalog.from(section(section, BedWarsCosmetics.WOOD_TYPE), "cosmetics", BedWarsCosmetics.WOOD_CATEGORY, id -> true);
+        CosmeticProfiles woodProfiles = GameCosmetics.profiles(plugin, core, woodCatalog);
 
         BedPreview preview = null;
-        List<ScenePreview> scenes = new ArrayList<>();
-        List<Runnable> stops = new ArrayList<>();
-        PreviewGate onlyLobby = (player, cosmetic, back) -> player.sendMessage(messages.get("preview-only-lobby"));
-        PreviewGate bedGate = onlyLobby;
-        PreviewGate victoryGate = onlyLobby;
-        PreviewGate killGate = onlyLobby;
-        PreviewGate auraGate = onlyLobby;
-        PreviewGate trailGate = onlyLobby;
-        PreviewGate withoutPreview = (player, cosmetic, back) -> {
-        };
+        PreviewGate bedGate = (player, cosmetic, back) -> player.sendMessage(messages.get("preview-only-lobby"));
         if (lobby) {
             LiveValue<PreviewSettings> bedSettings = new LiveValue<>(PreviewSettings.from(section(config, "preview")));
             BedPreview started = new BedPreview(plugin, core.buildMode(), BlockMask.start(plugin), bedSettings, animations, messages);
@@ -150,99 +92,40 @@ final class CosmeticFeatures implements MatchEvents {
             bedGate = started;
             reloads.register("preview", PreviewKind.BED.section(), root -> {
                 bedSettings.reload(() -> PreviewSettings.from(section(root, PreviewKind.BED.section())));
-                requireOpen(started.refresh(), bedSettings.get().world());
+                if (!started.refresh()) {
+                    throw new IllegalStateException("there is no world folder named " + bedSettings.get().world());
+                }
             });
-            Predicate<Player> busy = player -> started.previewing(player) || scenes.stream().anyMatch(scene -> scene.previewing(player));
-            victoryGate = scenePreview(plugin, core, config, reloads, PreviewKind.VICTORY, victoryAnimations, titles::victory, titles::stop,
-                MatchSounds.from(config.getConfigurationSection("sounds")).countdown(), busy, messages, scenes);
-            killGate = scenePreview(plugin, core, config, reloads, PreviewKind.FINAL_KILL, killAnimations, player -> {
-            }, player -> {
-            }, Optional.empty(), busy, messages, scenes);
-            auraGate = scenePreview(plugin, core, config, reloads, PreviewKind.AURA, auraAnimations, player -> {
-            }, player -> {
-            }, Optional.empty(), busy, messages, scenes);
-            TrailPreview trailPreview = TrailPreview.start(plugin, ProjectileTrails::find);
-            stops.add(trailPreview::stop);
-            trailGate = kitPreview(plugin, core, config, reloads, PreviewKind.PROJECTILE_TRAIL, trailPreview, busy, messages, scenes);
         }
+        BedPreview bedPreview = preview;
+        GameCosmetics shared = GameCosmetics.start(new GameCosmetics.Setup(plugin, core, BedWarsMatch.GAME, BedWarsCosmetics.SHARED, config, messages, lobby, titles,
+            reloads, MatchSounds.from(config.getConfigurationSection("sounds")).countdown(), player -> bedPreview != null && bedPreview.previewing(player)));
+
         List<CosmeticCategory> categories = new ArrayList<>();
-        categories.add(CosmeticCategory.of(menuSettings.category(CosmeticMenuSettings.BED_DESTRUCTION), catalog, profiles, bedGate));
-        if (menuSettings.categories().containsKey(CosmeticMenuSettings.FINAL_KILL)) {
-            categories.add(CosmeticCategory.of(menuSettings.category(CosmeticMenuSettings.FINAL_KILL), killCatalog, killProfiles, killGate));
+        categories.add(CosmeticCategory.of(menuSettings.category(BedWarsCosmetics.BED_DESTRUCTION), catalog, profiles, bedGate));
+        shared.category(CosmeticKind.FINAL_KILL, menuSettings).ifPresent(categories::add);
+        shared.category(CosmeticKind.VICTORY_EFFECT, menuSettings).ifPresent(categories::add);
+        shared.category(CosmeticKind.AURA, menuSettings).ifPresent(categories::add);
+        shared.category(CosmeticKind.PROJECTILE_TRAIL, menuSettings).ifPresent(categories::add);
+        if (menuSettings.categories().containsKey(BedWarsCosmetics.WOOD_TYPE)) {
+            categories.add(CosmeticCategory.of(menuSettings.category(BedWarsCosmetics.WOOD_TYPE), woodCatalog, woodProfiles, (player, cosmetic, back) -> {
+            }));
         }
-        if (menuSettings.categories().containsKey(CosmeticMenuSettings.VICTORY_EFFECT)) {
-            categories.add(CosmeticCategory.of(menuSettings.category(CosmeticMenuSettings.VICTORY_EFFECT), victoryCatalog, victoryProfiles, victoryGate));
-        }
-        if (menuSettings.categories().containsKey(CosmeticMenuSettings.AURA)) {
-            categories.add(CosmeticCategory.of(menuSettings.category(CosmeticMenuSettings.AURA), auraCatalog, auraProfiles, auraGate));
-        }
-        if (menuSettings.categories().containsKey(CosmeticMenuSettings.PROJECTILE_TRAIL)) {
-            categories.add(CosmeticCategory.of(menuSettings.category(CosmeticMenuSettings.PROJECTILE_TRAIL), trailCatalog, trailProfiles, trailGate));
-        }
-        if (menuSettings.categories().containsKey(CosmeticMenuSettings.WOOD_TYPE)) {
-            categories.add(CosmeticCategory.of(menuSettings.category(CosmeticMenuSettings.WOOD_TYPE), woodCatalog, woodProfiles, withoutPreview));
-        }
-        if (menuSettings.categories().containsKey(CosmeticMenuSettings.KILL_MESSAGE)) {
-            MessageDescriptions descriptions = new MessageDescriptions(messageSets, MessagePreview.from(section(killMessageSection, "preview")));
-            categories.add(CosmeticCategory.of(menuSettings.category(CosmeticMenuSettings.KILL_MESSAGE), killMessageCatalog, killMessageProfiles, withoutPreview, descriptions));
-        }
-        CosmeticMenus menus = new CosmeticMenus(menuSettings, categories, core.commands(), core.mainThread(), messages, plugin.getLogger(),
+        shared.category(CosmeticKind.KILL_MESSAGE, menuSettings).ifPresent(categories::add);
+        CosmeticMenus cosmeticMenus = new CosmeticMenus(menuSettings, categories, core.commands(), core.mainThread(), messages, plugin.getLogger(),
             player -> Colors.translate(core.permissions().display(player.getUniqueId()).color()) + player.getName());
+        BedWarsMenu menu = new BedWarsMenu(BedWarsMenuSettings.from(menus), cosmeticMenus, messages);
         if (lobby) {
-            BedWarsMenuItem item = new BedWarsMenuItem(plugin, MenuSlot.from(section(config, "lobby.menu-item")), menus);
+            BedWarsMenuItem item = new BedWarsMenuItem(plugin, MenuSlot.from(section(config, "lobby.menu-item")), menu);
             plugin.getServer().getPluginManager().registerEvents(item, plugin);
             core.buildMode().addHook(item);
             plugin.getServer().getOnlinePlayers().forEach(item::give);
         }
         TargetLookup targets = new TargetLookup(name -> Optional.ofNullable(plugin.getServer().getPlayerExact(name)), core.queries());
-        commands.register(new CosmeticCommand(catalog, menus, core.commands(), targets, new Replies(core.mainThread(), messages, plugin.getLogger()),
+        commands.register(new CosmeticCommand(catalog, cosmeticMenus, core.commands(), targets, new Replies(core.mainThread(), messages, plugin.getLogger()),
             new CosmeticProfileListener(profiles, plugin.getLogger())));
-        return new CosmeticFeatures(menus, new BedBreakCosmetics(animator, animations, catalog, profiles),
-            new SceneCosmetics(animator, victoryAnimations, victoryCatalog, victoryProfiles), new SceneCosmetics(animator, killAnimations, killCatalog, killProfiles),
-            new AuraCosmetics(auraCatalog, auraProfiles::of), new TrailCosmetics(trailCatalog, trailProfiles::of, ProjectileTrails::find), messageSets,
-            new KillMessages(messageSets, killMessageCatalog, killMessageProfiles::of), new WoodTypes(woodCatalog, woodProfiles::of), preview, scenes, stops);
-    }
-
-    private static ScenePreview scenePreview(JavaPlugin plugin, MuxeCore core, FileConfiguration config, ConfigReloads reloads, PreviewKind kind, SceneAnimations animations,
-                                             Consumer<Player> onScene, Consumer<Player> onLeave, Optional<SoundCue> countdownSound, Predicate<Player> busy,
-                                             MessageCatalog messages, List<ScenePreview> scenes) {
-        LiveValue<ScenePreviewSettings> settings = new LiveValue<>(ScenePreviewSettings.from(section(config, kind.section())));
-        ScenePreview scene = new ScenePreview(plugin, core.buildMode(), settings, animations, onScene, onLeave, countdownSound, busy, messages);
-        scene.start();
-        scenes.add(scene);
-        reloads.register(kind.section(), kind.section(), root -> {
-            settings.reload(() -> ScenePreviewSettings.from(section(root, kind.section())));
-            requireOpen(scene.refresh(), settings.get().world());
-        });
-        return scene;
-    }
-
-    private static ScenePreview kitPreview(JavaPlugin plugin, MuxeCore core, FileConfiguration config, ConfigReloads reloads, PreviewKind kind, KitPlay play,
-                                           Predicate<Player> busy, MessageCatalog messages, List<ScenePreview> scenes) {
-        LiveValue<ScenePreviewSettings> settings = new LiveValue<>(ScenePreviewSettings.from(section(config, kind.section())));
-        ScenePreview scene = new ScenePreview(plugin, core.buildMode(), settings, play, busy, messages);
-        scene.start();
-        scenes.add(scene);
-        reloads.register(kind.section(), kind.section(), root -> {
-            settings.reload(() -> ScenePreviewSettings.from(section(root, kind.section())));
-            requireOpen(scene.refresh(), settings.get().world());
-        });
-        return scene;
-    }
-
-    private static void requireOpen(boolean opened, String world) {
-        if (!opened) {
-            throw new IllegalStateException("there is no world folder named " + world);
-        }
-    }
-
-    private static CosmeticProfiles profiles(
-JavaPlugin plugin, MuxeCore core, CosmeticCatalog catalog) {
-        CosmeticProfiles profiles = new CosmeticProfiles(core.queries(), core.mainThread(), catalog, id -> plugin.getServer().getPlayer(id) != null);
-        CosmeticProfileListener listener = new CosmeticProfileListener(profiles, plugin.getLogger());
-        plugin.getServer().getPluginManager().registerEvents(listener, plugin);
-        plugin.getServer().getOnlinePlayers().forEach(listener::load);
-        return profiles;
+        return new CosmeticFeatures(shared, menu, new BedBreakCosmetics(new AnimationPlayer(plugin), animations, catalog, profiles),
+            new WoodTypes(woodCatalog, woodProfiles::of), preview);
     }
 
     BedBreakCosmetics bedBreaks() {
@@ -250,11 +133,11 @@ JavaPlugin plugin, MuxeCore core, CosmeticCatalog catalog) {
     }
 
     MessageSets messageSets() {
-        return messageSets;
+        return shared.messageSets().orElseThrow();
     }
 
     KillMessages killMessages() {
-        return killMessages;
+        return shared.killMessages().orElseThrow();
     }
 
     WoodTypes woods() {
@@ -262,59 +145,56 @@ JavaPlugin plugin, MuxeCore core, CosmeticCatalog catalog) {
     }
 
     AuraCosmetics auras() {
-        return auras;
+        return shared.auras().orElseThrow();
     }
 
     TrailCosmetics trails() {
-        return trails;
+        return shared.trails().orElseThrow();
     }
 
     @Override
     public void victory(Player winner, List<Player> viewers, Area area) {
-        victories.play(winner, winner.getLocation(), SceneCosmetics.facing(winner.getLocation()), Optional.empty(), SceneCosmetics.riders(winner, viewers), viewers, Optional.of(area));
+        shared.victory(winner, viewers, area);
     }
 
     @Override
     public void finalKill(Player killer, Player victim, TeamColor victimColor, List<Player> viewers) {
-        Location at = victim.getLocation();
-        Optional<SignedSkin> skin = PlayerSkins.of(victim).map(found -> new SignedSkin(found.value(), found.signature()));
-        finalKills.playOnVictim(killer, at, SceneCosmetics.away(killer.getLocation(), at), skin, SceneCosmetics.dye(victimColor), viewers);
+        shared.finalKill(killer, victim, victimColor, viewers);
     }
 
     void openMenu(Player player) {
-        menus.openBedWars(player);
+        menu.open(player);
     }
 
     void onMissions(MissionMenus missions) {
-        menus.onMissions(missions::open);
+        menu.onMissions(missions::open);
     }
 
     void onQuickBuy(QuickBuyEditor editor) {
-        menus.onQuickBuy(editor::open);
+        menu.onQuickBuy(editor::open);
     }
 
     void onHotbar(HotbarEditor editor) {
-        menus.onHotbar(editor::openFromBedWarsMenu);
+        menu.onHotbar(editor::openFromBedWarsMenu);
     }
 
     void onTeamColor(FavouriteColorMenu teamColor) {
-        menus.onTeamColor(teamColor::open);
+        menu.cosmetics().onTeamColor(teamColor::open);
     }
 
     void onPreferences(PreferencesMenu preferences) {
-        menus.onPreferences(preferences::open);
+        menu.onPreferences(preferences::open);
     }
 
     boolean previewing(Player player) {
-        return preview != null && preview.previewing(player) || scenePreviews.stream().anyMatch(scene -> scene.previewing(player));
+        return preview != null && preview.previewing(player) || shared.previewing(player);
     }
 
     void stop() {
         if (preview != null) {
             preview.stop();
         }
-        scenePreviews.forEach(ScenePreview::stop);
-        stops.forEach(Runnable::run);
+        shared.stop();
     }
 
     private static ConfigurationSection section(ConfigurationSection parent, String path) {

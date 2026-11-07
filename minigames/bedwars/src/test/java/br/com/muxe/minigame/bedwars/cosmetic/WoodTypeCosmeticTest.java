@@ -22,8 +22,8 @@ import org.junit.jupiter.api.Test;
 class WoodTypeCosmeticTest {
 
     private final CosmeticCatalog catalog = CosmeticCatalog.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.wood-type"), "cosmetics", "bedwars-madeira", id -> true);
-    private final CosmeticMenuSettings menus = CosmeticMenuSettings.from(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus"));
-    private final CategoryMenu menu = menus.category(CosmeticMenuSettings.WOOD_TYPE);
+    private final CosmeticMenuSettings menus = BedWarsCosmetics.menuSettings(RoomFixtures.CONFIG.getConfigurationSection("cosmetics.menus"));
+    private final CategoryMenu menu = menus.category(BedWarsCosmetics.WOOD_TYPE);
     private final CosmeticIcons icons = new CosmeticIcons(menu, catalog);
     private final CosmeticListSettings list = menu.list();
     private final CosmeticWallet ultra = new CosmeticWallet(Set.of(), "pinheiro", 0, CosmeticAccess.ULTRA);
