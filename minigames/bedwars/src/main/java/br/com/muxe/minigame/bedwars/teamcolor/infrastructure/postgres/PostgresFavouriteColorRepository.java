@@ -1,59 +1,52 @@
 package br.com.muxe.minigame.bedwars.teamcolor.infrastructure.postgres;
 
-import br.com.muxe.core.common.persistence.PersistenceException;
-import br.com.muxe.core.common.persistence.transaction.TransactionContext;
+import br.com.muxe.core.common.persistence.sql.Column;
+import br.com.muxe.core.common.persistence.sql.Select;
+import br.com.muxe.core.common.persistence.sql.Sql;
+import br.com.muxe.core.common.persistence.sql.Table;
+import br.com.muxe.core.common.persistence.sql.Write;
+import br.com.muxe.core.common.persistence.sql.type.SqlType;
 import br.com.muxe.minigame.bedwars.teamcolor.domain.FavouriteColorRepository;
 import br.com.muxe.minigame.engine.team.TeamColor;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
 public final class PostgresFavouriteColorRepository implements FavouriteColorRepository {
 
-    private static final String FIND = "SELECT team_color FROM bedwars.favourite_team_color WHERE player_id = ?";
+    private static final Table FAVOURITE = Table.of("bedwars", "favourite_team_color");
+    private static final Column<UUID> PLAYER_ID = FAVOURITE.column("player_id", SqlType.UUID);
+    private static final Column<String> TEAM_COLOR = FAVOURITE.column("team_color", SqlType.TEXT);
+    private static final Column<Instant> UPDATED_AT = FAVOURITE.column("updated_at", SqlType.TIMESTAMPTZ);
 
-    private static final String SAVE = """
-        INSERT INTO bedwars.favourite_team_color (player_id, team_color, updated_at) VALUES (?, ?, ?)
-        ON CONFLICT (player_id) DO UPDATE SET team_color = EXCLUDED.team_color, updated_at = EXCLUDED.updated_at
-        """;
+    private static final Select<String> FIND = Sql.select(TEAM_COLOR).from(FAVOURITE)
+        .where(PLAYER_ID.eq())
+        .map(row -> row.get(TEAM_COLOR))
+        .named("bedwars.team-color.find");
 
-    private static final String CLEAR = "DELETE FROM bedwars.favourite_team_color WHERE player_id = ?";
+    private static final Write<Void> SAVE = Sql.<Void>insertInto(FAVOURITE)
+        .value(PLAYER_ID)
+        .value(TEAM_COLOR)
+        .value(UPDATED_AT)
+        .onConflict(PLAYER_ID).doUpdate(TEAM_COLOR, UPDATED_AT)
+        .named("bedwars.team-color.save");
+
+    private static final Write<Void> CLEAR = Sql.deleteFrom(FAVOURITE)
+        .where(PLAYER_ID.eq())
+        .named("bedwars.team-color.clear");
 
     @Override
     public Optional<TeamColor> find(UUID playerId) {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(FIND)) {
-            statement.setObject(1, playerId);
-            try (ResultSet rows = statement.executeQuery()) {
-                return rows.next() ? TeamColor.find(rows.getString("team_color")) : Optional.empty();
-            }
-        } catch (SQLException exception) {
-            throw new PersistenceException("bedwars.team-color.find", exception);
-        }
+        return FIND.first(PLAYER_ID.is(playerId)).flatMap(TeamColor::find);
     }
 
     @Override
     public void save(UUID playerId, TeamColor color, Instant at) {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(SAVE)) {
-            statement.setObject(1, playerId);
-            statement.setString(2, color.id());
-            statement.setTimestamp(3, Timestamp.from(at));
-            statement.executeUpdate();
-        } catch (SQLException exception) {
-            throw new PersistenceException("bedwars.team-color.save", exception);
-        }
+        SAVE.execute(PLAYER_ID.is(playerId), TEAM_COLOR.is(color.id()), UPDATED_AT.is(at));
     }
 
     @Override
     public void clear(UUID playerId) {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(CLEAR)) {
-            statement.setObject(1, playerId);
-            statement.executeUpdate();
-        } catch (SQLException exception) {
-            throw new PersistenceException("bedwars.team-color.clear", exception);
-        }
+        CLEAR.execute(PLAYER_ID.is(playerId));
     }
 }

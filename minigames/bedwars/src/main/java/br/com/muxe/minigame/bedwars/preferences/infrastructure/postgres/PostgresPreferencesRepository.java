@@ -1,55 +1,49 @@
 package br.com.muxe.minigame.bedwars.preferences.infrastructure.postgres;
 
-import br.com.muxe.core.common.persistence.PersistenceException;
-import br.com.muxe.core.common.persistence.transaction.TransactionContext;
+import br.com.muxe.core.common.persistence.sql.Column;
+import br.com.muxe.core.common.persistence.sql.Select;
+import br.com.muxe.core.common.persistence.sql.Sql;
+import br.com.muxe.core.common.persistence.sql.Table;
+import br.com.muxe.core.common.persistence.sql.Write;
+import br.com.muxe.core.common.persistence.sql.type.SqlType;
 import br.com.muxe.minigame.bedwars.preferences.domain.Preferences;
 import br.com.muxe.minigame.bedwars.preferences.domain.Preferences.ChestDeposit;
 import br.com.muxe.minigame.bedwars.preferences.domain.PreferencesRepository;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
 public final class PostgresPreferencesRepository implements PreferencesRepository {
 
-    private static final String FIND = "SELECT show_level, tnt_timer, chest_deposit FROM bedwars.preferences WHERE player_id = ?";
+    private static final Table PREFERENCES = Table.of("bedwars", "preferences");
+    private static final Column<UUID> PLAYER_ID = PREFERENCES.column("player_id", SqlType.UUID);
+    private static final Column<Boolean> SHOW_LEVEL = PREFERENCES.column("show_level", SqlType.BOOLEAN);
+    private static final Column<Boolean> TNT_TIMER = PREFERENCES.column("tnt_timer", SqlType.BOOLEAN);
+    private static final Column<ChestDeposit> CHEST_DEPOSIT = PREFERENCES.column("chest_deposit", SqlType.enumByName(ChestDeposit.class));
+    private static final Column<Instant> UPDATED_AT = PREFERENCES.column("updated_at", SqlType.TIMESTAMPTZ);
 
-    private static final String SAVE = """
-        INSERT INTO bedwars.preferences (player_id, show_level, tnt_timer, chest_deposit, updated_at) VALUES (?, ?, ?, ?, ?)
-        ON CONFLICT (player_id) DO UPDATE SET show_level = EXCLUDED.show_level, tnt_timer = EXCLUDED.tnt_timer,
-            chest_deposit = EXCLUDED.chest_deposit, updated_at = EXCLUDED.updated_at
-        """;
+    private static final Select<Preferences> FIND = Sql.select(SHOW_LEVEL, TNT_TIMER, CHEST_DEPOSIT).from(PREFERENCES)
+        .where(PLAYER_ID.eq())
+        .map(row -> new Preferences(row.get(SHOW_LEVEL), row.get(TNT_TIMER), row.get(CHEST_DEPOSIT)))
+        .named("bedwars.preferences.find");
+
+    private static final Write<Void> SAVE = Sql.<Void>insertInto(PREFERENCES)
+        .value(PLAYER_ID)
+        .value(SHOW_LEVEL)
+        .value(TNT_TIMER)
+        .value(CHEST_DEPOSIT)
+        .value(UPDATED_AT)
+        .onConflict(PLAYER_ID).doUpdate(SHOW_LEVEL, TNT_TIMER, CHEST_DEPOSIT, UPDATED_AT)
+        .named("bedwars.preferences.save");
 
     @Override
     public Optional<Preferences> find(UUID playerId) {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(FIND)) {
-            statement.setObject(1, playerId);
-            try (ResultSet rows = statement.executeQuery()) {
-                if (!rows.next()) {
-                    return Optional.empty();
-                }
-                return Optional.of(new Preferences(rows.getBoolean("show_level"), rows.getBoolean("tnt_timer"),
-                    ChestDeposit.valueOf(rows.getString("chest_deposit"))));
-            }
-        } catch (SQLException exception) {
-            throw new PersistenceException("bedwars.preferences.find", exception);
-        }
+        return FIND.first(PLAYER_ID.is(playerId));
     }
 
     @Override
     public void save(UUID playerId, Preferences preferences, Instant at) {
-        try (PreparedStatement statement = TransactionContext.connection().prepareStatement(SAVE)) {
-            statement.setObject(1, playerId);
-            statement.setBoolean(2, preferences.showLevel());
-            statement.setBoolean(3, preferences.tntTimer());
-            statement.setString(4, preferences.chestDeposit().name());
-            statement.setTimestamp(5, Timestamp.from(at));
-            statement.executeUpdate();
-        } catch (SQLException exception) {
-            throw new PersistenceException("bedwars.preferences.save", exception);
-        }
+        SAVE.execute(PLAYER_ID.is(playerId), SHOW_LEVEL.is(preferences.showLevel()), TNT_TIMER.is(preferences.tntTimer()),
+            CHEST_DEPOSIT.is(preferences.chestDeposit()), UPDATED_AT.is(at));
     }
 }
