@@ -1,4 +1,4 @@
-package br.com.muxe.minigame.bedwars.game;
+package br.com.muxe.minigame.api.match;
 
 import java.util.Comparator;
 import java.util.List;

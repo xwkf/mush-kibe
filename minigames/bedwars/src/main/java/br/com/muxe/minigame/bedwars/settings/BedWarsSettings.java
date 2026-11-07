@@ -1,9 +1,10 @@
 package br.com.muxe.minigame.bedwars.settings;
 
+import br.com.muxe.minigame.api.timeline.Timeline.Entry;
+import br.com.muxe.minigame.api.timeline.Timeline;
+import br.com.muxe.minigame.bedwars.game.BedWarsEvent.Kind;
+import br.com.muxe.minigame.bedwars.game.BedWarsEvent;
 import br.com.muxe.minigame.bedwars.game.GeneratorTimer.Rate;
-import br.com.muxe.minigame.bedwars.game.Timeline.Event;
-import br.com.muxe.minigame.bedwars.game.Timeline.Kind;
-import br.com.muxe.minigame.bedwars.game.Timeline;
 import br.com.muxe.minigame.bedwars.game.XpRewards;
 import br.com.muxe.minigame.bedwars.item.ItemNames;
 import br.com.muxe.minigame.bedwars.spectator.SpectatorHotbar;
@@ -21,7 +22,7 @@ public record BedWarsSettings(
     Timings timings,
     CountdownTitles countdownTitles,
     Forges forges,
-    Timeline timeline,
+    Timeline<BedWarsEvent> timeline,
     XpRewards xp,
     ScoreboardSettings scoreboard,
     Holograms holograms,
@@ -62,19 +63,19 @@ public record BedWarsSettings(
         return Objects.requireNonNull(parent.getConfigurationSection(path), "Missing configuration section " + path);
     }
 
-    private static Timeline timeline(Forges forges, ConfigurationSection events) {
+    private static Timeline<BedWarsEvent> timeline(Forges forges, ConfigurationSection events) {
         ConfigurationSection names = section(events, "names");
-        List<Event> list = new ArrayList<>();
+        List<Entry<BedWarsEvent>> list = new ArrayList<>();
         for (int tier = 2; tier <= forges.diamond().size(); tier++) {
-            list.add(new Event(Kind.DIAMOND_TIER, tier, forges.diamond().get(tier - 1).start(), names.getString("diamond", "Diamante {tier}").replace("{tier}", roman(tier))));
+            list.add(new Entry<>(new BedWarsEvent(Kind.DIAMOND_TIER, tier), forges.diamond().get(tier - 1).start(), names.getString("diamond", "Diamante {tier}").replace("{tier}", roman(tier))));
         }
         for (int tier = 2; tier <= forges.emerald().size(); tier++) {
-            list.add(new Event(Kind.EMERALD_TIER, tier, forges.emerald().get(tier - 1).start(), names.getString("emerald", "Esmeralda {tier}").replace("{tier}", roman(tier))));
+            list.add(new Entry<>(new BedWarsEvent(Kind.EMERALD_TIER, tier), forges.emerald().get(tier - 1).start(), names.getString("emerald", "Esmeralda {tier}").replace("{tier}", roman(tier))));
         }
-        list.add(new Event(Kind.BEDS_DESTROYED, 0, events.getInt("beds-destroyed", 1800), names.getString("beds-destroyed", "Camas destruídas")));
-        list.add(new Event(Kind.DRAGONS, 0, events.getInt("dragons", 2400), names.getString("dragons", "Morte súbita")));
-        list.add(new Event(Kind.GAME_END, 0, events.getInt("game-end", 2520), names.getString("game-end", "Fim de jogo")));
-        return new Timeline(list);
+        list.add(new Entry<>(new BedWarsEvent(Kind.BEDS_DESTROYED, 0), events.getInt("beds-destroyed", 1800), names.getString("beds-destroyed", "Camas destruídas")));
+        list.add(new Entry<>(new BedWarsEvent(Kind.DRAGONS, 0), events.getInt("dragons", 2400), names.getString("dragons", "Morte súbita")));
+        list.add(new Entry<>(new BedWarsEvent(Kind.GAME_END, 0), events.getInt("game-end", 2520), names.getString("game-end", "Fim de jogo")));
+        return new Timeline<>(list);
     }
 
     public record Timings(int respawnSeconds, int rejoinSeconds, int restartSeconds, int respawnProtectionSeconds,

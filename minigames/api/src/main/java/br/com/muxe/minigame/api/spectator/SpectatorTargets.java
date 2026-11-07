@@ -1,4 +1,4 @@
-package br.com.muxe.minigame.bedwars.spectator;
+package br.com.muxe.minigame.api.spectator;
 
 import java.util.List;
 import java.util.Optional;

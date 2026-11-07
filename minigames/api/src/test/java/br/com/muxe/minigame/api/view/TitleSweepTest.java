@@ -1,14 +1,13 @@
-package br.com.muxe.minigame.bedwars.game;
+package br.com.muxe.minigame.api.view;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import br.com.muxe.minigame.bedwars.room.RoomFixtures;
 import org.junit.jupiter.api.Test;
 
 class TitleSweepTest {
 
-    private final TitleSweep victory = TitleSweep.from(RoomFixtures.CONFIG.getConfigurationSection("end-titles.victory"), "", "");
-    private final TitleSweep defeat = TitleSweep.from(RoomFixtures.CONFIG.getConfigurationSection("end-titles.defeat"), "", "");
+    private final TitleSweep victory = TitleSweep.from(null, "VITÓRIA", "&6");
+    private final TitleSweep defeat = TitleSweep.from(null, "DERROTA", "&c");
 
     @Test
     void theVictoryTitleSweepsGoldAcrossTheWordLetterByLetter() {

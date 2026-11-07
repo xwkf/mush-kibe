@@ -1,6 +1,7 @@
 package br.com.muxe.minigame.bedwars.spectator;
 
 import br.com.muxe.core.bukkit.item.ItemBuilder;
+import br.com.muxe.minigame.api.spectator.SpectatorTargets;
 import br.com.muxe.minigame.bedwars.spectator.SpectatorHotbar.Entry;
 import java.util.Collection;
 import java.util.List;

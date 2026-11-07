@@ -5,7 +5,8 @@ object ModuleRules {
         ":core:bukkit" to listOf(":core:common"),
         ":core:proxy" to listOf(":core:common"),
         ":minigames:engine" to listOf(":core:common", ":core:bukkit"),
-        ":minigames" to listOf(":core:common", ":core:bukkit", ":minigames:engine"),
+        ":minigames:api" to listOf(":core:common", ":core:bukkit", ":minigames:engine"),
+        ":minigames" to listOf(":core:common", ":core:bukkit", ":minigames:engine", ":minigames:api"),
         ":servers" to listOf(":core:common", ":core:bukkit"),
     )
 

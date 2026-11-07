@@ -1,4 +1,4 @@
-package br.com.muxe.minigame.bedwars.game;
+package br.com.muxe.minigame.api.combat;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -43,12 +43,12 @@ public final class KillCredit {
         return Optional.of(hit.attacker());
     }
 
-    public Optional<UUID> killer(UUID victim, Instant now, boolean finalKill, Optional<UUID> bedDestroyer) {
+    public Optional<UUID> killer(UUID victim, Instant now, boolean finalKill, Optional<UUID> fallback) {
         Optional<UUID> hitter = lastHitter(victim, now);
         if (hitter.isPresent() || !finalKill) {
             return hitter;
         }
-        return bedDestroyer.filter(destroyer -> !destroyer.equals(victim));
+        return fallback.filter(destroyer -> !destroyer.equals(victim));
     }
 
     public List<UUID> assisters(UUID victim, UUID killer, Instant now) {

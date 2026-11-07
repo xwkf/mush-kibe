@@ -1,4 +1,4 @@
-package br.com.muxe.minigame.bedwars.game;
+package br.com.muxe.minigame.api.view;
 
 import java.util.Optional;
 import org.bukkit.configuration.ConfigurationSection;

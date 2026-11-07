@@ -1,4 +1,4 @@
-package br.com.muxe.minigame.bedwars.title;
+package br.com.muxe.minigame.api.view;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

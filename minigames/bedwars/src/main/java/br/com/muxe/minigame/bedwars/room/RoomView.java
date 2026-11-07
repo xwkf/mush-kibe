@@ -1,7 +1,8 @@
 package br.com.muxe.minigame.bedwars.room;
 
+import br.com.muxe.minigame.api.timeline.Timeline;
+import br.com.muxe.minigame.bedwars.game.BedWarsEvent;
 import br.com.muxe.minigame.bedwars.game.TeamStatus;
-import br.com.muxe.minigame.bedwars.game.Timeline;
 import br.com.muxe.minigame.bedwars.settings.BedWarsSettings.ScoreboardSettings;
 import br.com.muxe.minigame.engine.team.TeamColor;
 import java.util.ArrayList;
@@ -14,9 +15,9 @@ public final class RoomView {
     public static final int EIGHT_TEAMS = 8;
 
     private final ScoreboardSettings settings;
-    private final Timeline timeline;
+    private final Timeline<BedWarsEvent> timeline;
 
-    public RoomView(ScoreboardSettings settings, Timeline timeline) {
+    public RoomView(ScoreboardSettings settings, Timeline<BedWarsEvent> timeline) {
         this.settings = settings;
         this.timeline = timeline;
     }
@@ -60,7 +61,7 @@ public final class RoomView {
             }
             if (line.equals("{event}")) {
                 lines.add(timeline.next(room.elapsed())
-                    .map(next -> settings.event().replace("{event}", next.event().name()).replace("{time}", next.clock()))
+                    .map(next -> settings.event().replace("{event}", next.name()).replace("{time}", next.clock()))
                     .orElse(settings.noEvent()));
                 continue;
             }

@@ -1,9 +1,9 @@
 package br.com.muxe.minigame.bedwars.room;
 
 import br.com.muxe.core.bukkit.cosmetic.animation.Area;
-import br.com.muxe.minigame.bedwars.arena.BedWarsArena;
+import br.com.muxe.minigame.api.combat.KillCredit;
 import br.com.muxe.minigame.bedwars.arena.BedWarsArena.TeamBase;
-import br.com.muxe.minigame.bedwars.game.KillCredit;
+import br.com.muxe.minigame.bedwars.arena.BedWarsArena;
 import br.com.muxe.minigame.bedwars.game.TeamStatus;
 import br.com.muxe.minigame.bedwars.game.XpRewards;
 import br.com.muxe.minigame.bedwars.mission.BedWarsGoal;

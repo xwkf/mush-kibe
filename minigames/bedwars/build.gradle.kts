@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
     compileOnly(projects.core.bukkit)
-    implementation(projects.minigames.engine)
+    implementation(projects.minigames.api)
 
     testImplementation(projects.core.bukkit)
     testImplementation(testFixtures(projects.core.common))

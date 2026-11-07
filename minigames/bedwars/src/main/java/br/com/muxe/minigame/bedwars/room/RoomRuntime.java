@@ -13,17 +13,18 @@ import br.com.muxe.core.bukkit.text.ChatLines;
 import br.com.muxe.core.bukkit.text.Colors;
 import br.com.muxe.core.bukkit.text.MessageCatalog;
 import br.com.muxe.core.bukkit.text.Title;
+import br.com.muxe.minigame.api.match.Ranking;
+import br.com.muxe.minigame.api.spectator.SpectatorTargets;
 import br.com.muxe.minigame.bedwars.arena.BedWarsArena.TeamBase;
 import br.com.muxe.minigame.bedwars.bootstrap.BedWarsBootstrap;
 import br.com.muxe.minigame.bedwars.cosmetic.message.KillAnnouncer;
 import br.com.muxe.minigame.bedwars.cosmetic.message.LifetimeTally;
+import br.com.muxe.minigame.bedwars.game.BedWarsEvent;
 import br.com.muxe.minigame.bedwars.game.ChestAccess;
 import br.com.muxe.minigame.bedwars.game.ChestDeposits;
 import br.com.muxe.minigame.bedwars.game.ForgeHeights;
 import br.com.muxe.minigame.bedwars.game.ForgeLayout;
 import br.com.muxe.minigame.bedwars.game.Levels;
-import br.com.muxe.minigame.bedwars.game.Ranking;
-import br.com.muxe.minigame.bedwars.game.Timeline.Event;
 import br.com.muxe.minigame.bedwars.level.LevelBar;
 import br.com.muxe.minigame.bedwars.mission.MissionRules;
 import br.com.muxe.minigame.bedwars.room.RoomPlayer.State;
@@ -31,7 +32,6 @@ import br.com.muxe.minigame.bedwars.settings.BedWarsSettings;
 import br.com.muxe.minigame.bedwars.settings.MatchSounds;
 import br.com.muxe.minigame.bedwars.shop.ResourcePool;
 import br.com.muxe.minigame.bedwars.spectator.Ghosts;
-import br.com.muxe.minigame.bedwars.spectator.SpectatorTargets;
 import br.com.muxe.minigame.bedwars.spectator.TeleporterMenu;
 import br.com.muxe.minigame.bedwars.stats.application.command.RecordMatchCommand;
 import br.com.muxe.minigame.bedwars.stats.application.query.FindPlayerStatsQuery;
@@ -714,7 +714,7 @@ public final class RoomRuntime {
             missions.check(id -> missionTotals(id, Optional.empty()));
         }
         Instant now = core.clock().instant();
-        for (Event event : settings.timeline().dueAt(room.elapsed())) {
+        for (BedWarsEvent event : settings.timeline().dueAt(room.elapsed())) {
             runEvent(event);
             if (room.phase() != Room.Phase.PLAYING) {
                 return;
@@ -743,7 +743,7 @@ public final class RoomRuntime {
         }
     }
 
-    private void runEvent(Event event) {
+    private void runEvent(BedWarsEvent event) {
         switch (event.kind()) {
             case DIAMOND_TIER -> {
                 forges.tier(Material.DIAMOND, event.tier());

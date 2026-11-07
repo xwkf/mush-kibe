@@ -2,7 +2,7 @@ package br.com.muxe.minigame.bedwars.room;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import br.com.muxe.minigame.bedwars.game.KillCredit;
+import br.com.muxe.minigame.api.combat.KillCredit;
 import br.com.muxe.minigame.bedwars.game.XpRewards;
 import br.com.muxe.minigame.bedwars.stats.domain.MatchOutcome;
 import br.com.muxe.minigame.bedwars.stats.domain.MatchResult;

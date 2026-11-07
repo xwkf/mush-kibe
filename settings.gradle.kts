@@ -35,5 +35,6 @@ include(":servers:lobby")
 include(":servers:afk")
 
 include(":minigames:engine")
+include(":minigames:api")
 include(":minigames:skywars")
 include(":minigames:bedwars")
