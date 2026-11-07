@@ -19,7 +19,7 @@ O Muxe-Core carrega todas as classes de `br.com.muxe.core` quando o servidor o c
 | `identity()` | O id, o grupo e o tipo deste servidor. |
 | `packets()`, `packetRegistry()`, `requestTimeout()` | O [barramento de pacotes](../../architecture/messaging/README.pt-BR.md). |
 | `commands()`, `queries()` | Os barramentos de CQRS. Registre os handlers ao habilitar. |
-| `transactions()`, `migrations()` | Transações do PostgreSQL e migrações Flyway do seu módulo. |
+| `transactions()`, `migrations()` | Transações do PostgreSQL e migrações Flyway do seu módulo. Escreva os repositórios com o [schema tipado e os comandos](../../architecture/persistence/README.pt-BR.md#schema-tipado-e-comandos) (`Table`, `Column`, `Sql`). |
 | `store()` | `ExpiringStore`: valores de curta duração no Redis, sempre com expiração. |
 | `metrics()` | O registro de métricas. |
 | `servers()` | O diretório de servidores vivos. |

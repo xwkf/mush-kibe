@@ -101,6 +101,8 @@ O executor compartilhado de virtual threads (`MuxeCore.async()`, handlers de pac
 | Métrica | Tipo | O que mostra |
 |---|---|---|
 | `muxe_db_transaction_seconds{operation,outcome}` | histogram | Toda transação, por operação e por `commit`, `rollback` ou `error`. |
+| `muxe_db_statement_seconds{statement,outcome}` | histogram | Todo comando SQL, por nome do comando e por `success` ou `error`. Veja [Persistência](../persistence/README.pt-BR.md#métricas-de-comandos). |
+| `muxe_db_slow_statements_total{statement}` | counter | Comandos mais lentos que `database.slow-statement-threshold` (padrão `250ms`), também registrados como aviso no log. |
 | `muxe_db_connections_active` | gauge | Conexões em uso. |
 | `muxe_db_connections_idle` | gauge | Conexões ociosas. |
 | `muxe_db_connections_pending` | gauge | Threads esperando uma conexão. Acima de zero por muito tempo significa pool pequeno demais ou consulta lenta demais. |

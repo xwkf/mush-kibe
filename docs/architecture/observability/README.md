@@ -101,6 +101,8 @@ The shared virtual-thread executor (`MuxeCore.async()`, packet handlers, the met
 | Metric | Type | What it shows |
 |---|---|---|
 | `muxe_db_transaction_seconds{operation,outcome}` | histogram | Every transaction, by operation and `commit`, `rollback` or `error`. |
+| `muxe_db_statement_seconds{statement,outcome}` | histogram | Every SQL statement, by statement name and `success` or `error`. See [Persistence](../persistence/README.md#statement-metrics). |
+| `muxe_db_slow_statements_total{statement}` | counter | Statements slower than `database.slow-statement-threshold` (default `250ms`), also logged as warnings. |
 | `muxe_db_connections_active` | gauge | Connections in use. |
 | `muxe_db_connections_idle` | gauge | Idle connections. |
 | `muxe_db_connections_pending` | gauge | Threads waiting for a connection. Above zero for long means the pool is too small or a query is too slow. |

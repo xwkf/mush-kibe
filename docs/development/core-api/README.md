@@ -19,7 +19,7 @@ Muxe-Core loads every `br.com.muxe.core` class when the server loads it (`ClassP
 | `identity()` | This server's id, group and kind. |
 | `packets()`, `packetRegistry()`, `requestTimeout()` | The [packet bus](../../architecture/messaging/README.md). |
 | `commands()`, `queries()` | The CQRS buses. Register handlers on enable. |
-| `transactions()`, `migrations()` | PostgreSQL transactions and Flyway migrations of your module. |
+| `transactions()`, `migrations()` | PostgreSQL transactions and Flyway migrations of your module. Write repositories with the [typed schema and statements](../../architecture/persistence/README.md#typed-schema-and-statements) (`Table`, `Column`, `Sql`). |
 | `store()` | `ExpiringStore`: short-lived values in Redis, always with an expiration. |
 | `metrics()` | The metric registry. |
 | `servers()` | The live server directory. |

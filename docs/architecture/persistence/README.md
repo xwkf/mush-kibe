@@ -10,11 +10,14 @@ Code: `core/common/src/main/java/br/com/muxe/core/common/persistence`.
 
 | Class | Responsibility |
 |---|---|
-| `DatabaseConfig` | URL, credentials, pool size, connection timeout, whether to run migrations. |
-| `Database` | A HikariCP pool over `PGSimpleDataSource`, with pool metrics. |
+| `DatabaseConfig` | URL, credentials, pool size, connection timeout, whether to run migrations, and the slow statement threshold. |
+| `Database` | A HikariCP pool over `PGSimpleDataSource`, with pool metrics. Batched inserts are rewritten by the driver into multi-row inserts (`reWriteBatchedInserts`). |
 | `Transactions` | The port used by handlers: `inTransaction(operation, work)` and `readOnly(operation, work)`. |
 | `JdbcTransactions` | The JDBC implementation. |
-| `TransactionContext` | Gives repositories the connection of the current transaction. |
+| `TransactionContext` | Gives statements the connection and the statement observer of the current transaction. |
+| `Table`, `Column`, `SqlType` | The typed schema: a table, its columns and how each Java value is written and read. Package `persistence.sql`. |
+| `Sql`, `Select`, `Write` | Typed statements built once from the schema: selects, inserts, upserts, updates, deletes and hand-written SQL. |
+| `StatementMetrics` | Times every statement and reports the slow ones. |
 | `MigrationRunner` | Runs the Flyway migrations of one module in its own schema. |
 | `ExpiringStore` | Short-lived values in Redis (`RedisExpiringStore`), every one with a time to live. Keys get the `muxe:` prefix. |
 
@@ -38,9 +41,61 @@ return transactions.inTransaction("account.record_login", () -> {
 ## Repositories
 
 - The interface lives in the feature's `domain` package; the implementation in `infrastructure/postgres`.
-- SQL is written by hand, in text blocks, with `PreparedStatement`. No ORM: the cost of each query is visible.
+- Repositories declare their tables and statements with the typed schema below, as `static final` constants. No ORM and no reflection: each statement generates exactly one SQL string when the class loads, always runs as a `PreparedStatement`, and the cost of each query stays visible (`statement.sql()`).
 - Tables are always schema-qualified (`core.accounts`, `auth.credentials`).
 - Unit tests use in-memory repositories with `DirectTransactions`; integration tests use the real repository against a PostgreSQL container.
+
+## Typed schema and statements
+
+Code: `core/common/src/main/java/br/com/muxe/core/common/persistence/sql`.
+
+```java
+private static final Table ACCOUNTS = Table.of("core", "accounts");
+private static final Column<UUID> ID = ACCOUNTS.column("id", SqlType.UUID);
+private static final Column<String> USERNAME = ACCOUNTS.column("username", SqlType.TEXT);
+private static final Column<Instant> LAST_SEEN_AT = ACCOUNTS.column("last_seen_at", SqlType.TIMESTAMPTZ);
+
+private static final Select<Account> FIND_BY_IDS = Sql.select(ID, USERNAME, LAST_SEEN_AT).from(ACCOUNTS)
+    .where(ID.in())
+    .map(row -> new Account(row.get(ID), row.get(USERNAME), row.get(LAST_SEEN_AT)))
+    .named("account.find_by_ids");
+
+private static final Write<Account> SAVE = Sql.<Account>insertInto(ACCOUNTS)
+    .value(ID, Account::id)
+    .value(USERNAME, Account::username)
+    .value(LAST_SEEN_AT, Account::lastSeenAt)
+    .onConflict(ID).doUpdate(USERNAME, LAST_SEEN_AT)
+    .named("account.save");
+
+FIND_BY_IDS.list(ID.in(ids));   // SELECT id, username, last_seen_at FROM core.accounts WHERE id = ANY(?)
+SAVE.execute(account);          // one upsert
+SAVE.batch(accounts);           // one round trip for every account
+```
+
+| Piece | What it does |
+|---|---|
+| `Table.of(schema, name)` | A table. `table.column(name, type)` declares a `Column<T>`. Identifiers are checked (`[a-z_][a-z0-9_]*`), so no SQL can be injected through them. |
+| `SqlType<T>` | How a Java value is bound and read: `UUID`, `TEXT`, `BOOLEAN`, `SMALLINT`, `INTEGER`, `BIGINT`, `DOUBLE`, `REAL`, `TIMESTAMPTZ` (`Instant`), `DATE` (`LocalDate`), `TEXT_ARRAY` (`List<String>`), `BYTEA`. `type.map(read, write)` adapts a domain value (`SqlType.TEXT.map(Visibility::parse, Visibility::name)`), `enumByName(type)` stores an enum by name, `optional()` turns SQL `NULL` into `Optional.empty()`. A `null` value is written as SQL `NULL` of the right type. |
+| Conditions | `col.eq()`, `col.eqIgnoreCase()`, `col.in()` (`= ANY(?)`, one array parameter for any number of values), `col.isNull()`, `col.eq(other)` for joins, `a.and(b)`, and `Condition.sql("coins >= ?", COINS)` for anything else. |
+| Arguments | Values are bound by column, not by position: `select.first(GROUP.is(group), ID.is(id))`, and `col.in(values)` for `ANY`. A missing or unknown argument fails with the statement name. |
+| `Select<R>` | `first(...)` (the first row), `list(...)`, `exists(...)`. Rows are mapped with `row.get(column)`, read by index. A select with a join qualifies every column. Also `orderBy(col.desc())`, `limit(Sql.parameter("limit", SqlType.INTEGER))` and `selectDistinct`. |
+| `Write<T>` | Built by `insertInto` (with `onConflict(...)` and then `doNothing()`, `doUpdate(columns)`, `doUpdate(column, "expression")`, `where("condition")`, plus `as(alias)`), `update` (`set`, `where(column, getter)`) or `deleteFrom` (a condition is required). A value comes from the entity (`value(col, Entity::getter)`) or from an argument (`value(col)`, then `execute(col.is(x))`). `execute(...)` returns the affected rows; `batch(values)` sends every value in one `executeBatch` and does nothing for an empty list. |
+| `Sql.query(sql)`, `Sql.statement(sql)` | Hand-written SQL for what the builders do not cover (rankings with joins, `RETURNING`, advisory locks), still with typed parameters (`parameters(...)`, in placeholder order) and typed result columns (`columns(...)`). The number of `?` is checked when the statement is declared. |
+
+Every statement has a stable, low-cardinality name (`named("account.save")`), used by the metrics and by `PersistenceException`. Statements run in the current transaction (`TransactionContext`); outside one they fail like any repository call.
+
+### Batches and lookups by many ids
+
+- Load what a screen or a handler needs in **one** query: `col.in(values)` instead of a loop of `first` calls. `AccountRepository.findByIds`, `MissionRepository.find` and `PermissionRepository.saveUsers` work this way.
+- Write many rows with `batch(values)`. The driver rewrites a batched insert into multi-row inserts, so a batch of 1000 rows is one round trip. Because of that, **a batch of upserts must not contain the same key twice** (PostgreSQL refuses to update the same row twice in one statement): keep the last value per key before calling `batch`.
+- `ApplyPermissionChangesHandler` saves every user of a command with `saveUsers` and writes the action log with `logAll`, so applying 20 user changes takes 10 round trips instead of 105.
+
+### Statement metrics
+
+| Metric | Type | What it shows |
+|---|---|---|
+| `muxe_db_statement_seconds{statement,outcome}` | histogram | Every statement, by name and `success` or `error`. Its count is the number of executions. |
+| `muxe_db_slow_statements_total{statement}` | counter | Statements that took at least `database.slow-statement-threshold` (default `250ms`). Each one is also logged as a warning with its name and duration. |
 
 ## Migrations
 
@@ -74,7 +129,7 @@ return transactions.inTransaction("account.record_login", () -> {
 - **Uniqueness is enforced by the database**, not only by code. Example: `accounts_username_lower_key` makes two accounts whose names differ only in case impossible, even under a race.
 - **Durable data never lives only in Redis.** Every Redis key that is not a cache has an expiration.
 - **Redis keys share a prefix:** `muxe:<area>:<id>`, such as `muxe:idempotency:auth.authenticated:…`.
-- **No queries inside loops.** Load what is needed in one query.
+- **No queries inside loops.** Load what is needed in one query (`col.in(values)`) and write many rows with `batch`.
 - **Every frequent query is backed by an index.**
 - **Pools stay small.** Each PostgreSQL connection is a process; 4 connections per server is the default.
 
