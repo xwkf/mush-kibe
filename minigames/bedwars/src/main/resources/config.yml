@@ -100,6 +100,14 @@ sounds:
     sound: CLICK
     volume: 1
     pitch: 1
+  match-start:
+    sound: NOTE_PLING
+    volume: 1
+    pitch: 2
+  died:
+    sound: ZOMBIE_UNFECT
+    volume: 1
+    pitch: 2
   bought:
     sound: NOTE_PLING
     volume: 1
@@ -576,6 +584,8 @@ messages:
     - "&eO jogo iniciou!"
     - ""
     - "&4&lAVISO:"
+  countdown: "&eO jogo inicia em &c{seconds} &esegundos&e!"
+  countdown-one: "&eO jogo inicia em &c1 &esegundo&e!"
     - "&c - A aliança com outros jogadores é proibida e resultará em punição."
   health-below-name: "&c❤"
   level-up: "&b&lPARABÉNS &7Você subiu para o nível {level}&7!"
@@ -593,8 +603,11 @@ messages:
   cannot-place: "&cVocê não pode colocar blocos aqui."
   left-match: "&cVocê desconectou de uma partida de Bed Wars {mode} em andamento. Utilize /retornar para voltar a jogar."
   reconnected: "{player} &7reconectou."
-  died-title: "&cVOCÊ MORREU!"
-  respawn-subtitle: "&eRenascendo em &c{seconds}&e..."
+  died-title: "&c&lVOCÊ MORREU"
+  respawn-subtitle: "&eRenascendo em &c{seconds} &esegundos."
+  respawn-subtitle-one: "&eRenascendo em &c1 &esegundo."
+  respawned: "&aVocê renasceu!"
+  cannot-break: "&cVocê não pode quebrar este bloco."
   spectator-subtitle: "&7Você agora é um espectador."
   spectator-no-target: "&cNenhum jogador para teleportar."
   spectator-no-combat: "&cNenhum jogador em combate agora."

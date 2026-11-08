@@ -35,6 +35,9 @@ public final class FakeStage implements Stage {
     public final Set<UUID> spectators = new HashSet<>();
     public final List<UUID> teleportedOut = new ArrayList<>();
     public final List<Point> erased = new ArrayList<>();
+    public final Map<UUID, Double> knockedUp = new HashMap<>();
+    public final Map<UUID, Point> raised = new HashMap<>();
+    public final Map<UUID, List<SoundCue>> sounds = new HashMap<>();
 
     @Override
     public World world() {
@@ -78,6 +81,7 @@ public final class FakeStage implements Stage {
 
     @Override
     public void sound(UUID id, Optional<SoundCue> cue) {
+        cue.ifPresent(sound -> sounds.computeIfAbsent(id, key -> new ArrayList<>()).add(sound));
     }
 
     @Override
@@ -94,6 +98,16 @@ public final class FakeStage implements Stage {
     @Override
     public void teleportOut(UUID id) {
         teleportedOut.add(id);
+    }
+
+    @Override
+    public void knockUp(UUID id, double speed) {
+        knockedUp.put(id, speed);
+    }
+
+    @Override
+    public void raiseTo(UUID id, Point floor) {
+        raised.put(id, floor);
     }
 
     @Override

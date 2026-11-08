@@ -40,6 +40,10 @@ public interface Stage {
 
     void teleportOut(UUID id);
 
+    void knockUp(UUID id, double speed);
+
+    void raiseTo(UUID id, Point floor);
+
     void waitingItems(UUID id, List<HotbarItem> items);
 
     void spectatorItems(UUID id, List<HotbarItem> items);

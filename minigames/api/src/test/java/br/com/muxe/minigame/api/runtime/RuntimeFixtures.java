@@ -24,6 +24,16 @@ public final class RuntimeFixtures {
           titles:
             '10': "&610 segundos"
             '5': "&c5"
+            '1': "&c1"
+        sounds:
+          match-start:
+            sound: NOTE_PLING
+            volume: 1
+            pitch: 2
+          died:
+            sound: ZOMBIE_UNFECT
+            volume: 1
+            pitch: 2
         hotbar:
           waiting:
             menu:
@@ -73,7 +83,12 @@ public final class RuntimeFixtures {
         Map.entry("room-joined", "{player} entrou ({players}/{max})"),
         Map.entry("room-left", "{player} saiu"),
         Map.entry("died-title", "MORREU"),
-        Map.entry("respawn-subtitle", "renasce em {seconds}"),
+        Map.entry("respawn-subtitle", "renasce em {seconds} segundos"),
+        Map.entry("respawn-subtitle-one", "renasce em 1 segundo"),
+        Map.entry("respawned", "renasceu"),
+        Map.entry("countdown", "inicia em {seconds} segundos"),
+        Map.entry("countdown-one", "inicia em 1 segundo"),
+        Map.entry("cannot-break", "não pode quebrar"),
         Map.entry("spectator-subtitle", "espectador"),
         Map.entry("reconnected", "{player} voltou"),
         Map.entry("team-eliminated", "{team} eliminado"),

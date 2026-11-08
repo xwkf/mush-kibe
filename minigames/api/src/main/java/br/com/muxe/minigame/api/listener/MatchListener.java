@@ -19,6 +19,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -187,12 +188,11 @@ public final class MatchListener<S extends MatchState> implements Listener {
             return;
         }
         Block block = event.getBlock();
-        Match match = found.get().match();
-        if (rules.breakOnlyPlaced() && !match.wasPlaced(block.getX(), block.getY(), block.getZ())) {
+        if (!found.get().mayBreak(player.getUniqueId(), block.getX(), block.getY(), block.getZ())) {
             event.setCancelled(true);
             return;
         }
-        match.unplaced(block.getX(), block.getY(), block.getZ());
+        found.get().match().unplaced(block.getX(), block.getY(), block.getZ());
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -266,8 +266,10 @@ public final class MatchListener<S extends MatchState> implements Listener {
             event.setDeathMessage(null);
             event.getDrops().clear();
             event.setKeepInventory(true);
+            Location diedAt = player.getLocation();
             plugin.getServer().getScheduler().runTask(plugin, () -> {
                 player.spigot().respawn();
+                player.teleport(diedAt);
                 runtime.die(player.getUniqueId(), false);
             });
         });

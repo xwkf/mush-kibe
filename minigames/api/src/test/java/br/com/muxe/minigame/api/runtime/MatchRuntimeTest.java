@@ -2,6 +2,8 @@ package br.com.muxe.minigame.api.runtime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import br.com.muxe.core.bukkit.effect.SoundCue;
+import br.com.muxe.core.bukkit.text.Title;
 import br.com.muxe.core.common.testing.MutableClock;
 import br.com.muxe.minigame.api.match.Match;
 import br.com.muxe.minigame.api.match.MatchPhase;
@@ -11,12 +13,14 @@ import br.com.muxe.minigame.api.match.TestArena;
 import br.com.muxe.minigame.api.runtime.Death.Cause;
 import br.com.muxe.minigame.api.runtime.Stage.Look;
 import br.com.muxe.minigame.engine.mode.GameMode;
+import br.com.muxe.minigame.engine.setup.Point;
 import br.com.muxe.minigame.engine.team.TeamColor;
 import br.com.muxe.minigame.engine.world.cell.Cell;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.bukkit.Sound;
 import org.junit.jupiter.api.Test;
 
 class MatchRuntimeTest {
@@ -73,8 +77,7 @@ class MatchRuntimeTest {
         Participant player = runtime.match().player(red).orElseThrow();
         assertThat(player.state()).isEqualTo(State.RESPAWNING);
         assertThat(stage.looks).containsEntry(red, Look.SPECTATOR);
-        assertThat(stage.positions.get(red)).isEqualTo(runtime.match().arena().spectator());
-        assertThat(stage.lastTitle(red).orElseThrow().subtitle()).isEqualTo("renasce em 5");
+        assertThat(stage.lastTitle(red).orElseThrow().subtitle()).isEqualTo("renasce em 5 segundos");
         assertThat(stage.messagesOf(blue)).contains("§cred morreu");
 
         seconds(runtime, 4);
@@ -84,6 +87,77 @@ class MatchRuntimeTest {
         assertThat(player.state()).isEqualTo(State.ALIVE);
         assertThat(stage.looks).containsEntry(red, Look.PLAYER);
         assertThat(player.isProtected(clock.instant())).isTrue();
+    }
+
+    @Test
+    void aDeadPlayerIsThrownUpWhereTheyDiedInsteadOfTeleported() {
+        MatchRuntime<RecordingState> runtime = started(RESPAWNING);
+        Point spawn = stage.positions.get(red);
+        stage.sounds.clear();
+
+        runtime.die(red, false);
+
+        assertThat(stage.knockedUp).containsEntry(red, MatchRuntime.DEATH_LIFT);
+        assertThat(stage.positions.get(red)).isEqualTo(spawn);
+        assertThat(stage.raised).doesNotContainKey(red);
+        assertThat(stage.sounds.get(red)).extracting(SoundCue::sound).containsExactly(Sound.ZOMBIE_UNFECT);
+    }
+
+    @Test
+    void aPlayerWhoDiesInTheVoidIsRaisedToTheHeightOfTheirSpawn() {
+        MatchRuntime<RecordingState> runtime = started(RESPAWNING);
+        Point spawn = stage.positions.get(red);
+
+        runtime.fellIntoVoid(red);
+
+        assertThat(stage.raised).containsEntry(red, runtime.match().arena().spawn(runtime.match().player(red).orElseThrow().team()));
+        assertThat(stage.knockedUp).doesNotContainKey(red);
+        assertThat(stage.positions.get(red)).isEqualTo(spawn);
+    }
+
+    @Test
+    void theRespawnCountdownUpdatesTheSameTitleEverySecondAndSaysItInTheChat() {
+        MatchRuntime<RecordingState> runtime = started(RESPAWNING);
+        stage.titles.clear();
+        stage.messages.clear();
+
+        runtime.die(red, false);
+        seconds(runtime, 5);
+
+        assertThat(stage.messagesOf(red)).containsSubsequence("renasce em 5 segundos", "renasce em 4 segundos", "renasce em 3 segundos",
+            "renasce em 2 segundos", "renasce em 1 segundo", "renasceu");
+        List<Title> titles = stage.titles.get(red);
+        assertThat(titles.subList(0, 5)).allSatisfy(title -> {
+            assertThat(title.title()).isEqualTo("MORREU");
+            assertThat(title.fadeInTicks()).isZero();
+            assertThat(title.fadeOutTicks()).isZero();
+        });
+        assertThat(titles.getLast().title()).isEmpty();
+        assertThat(titles.getLast().subtitle()).isEqualTo("renasceu");
+    }
+
+    @Test
+    void theStartCountdownIsAlsoSentInTheChatAndTheStartPlaysASound() {
+        MatchRuntime<RecordingState> runtime = runtime(RESPAWNING);
+        join(runtime, red, "red");
+        join(runtime, blue, "blue");
+
+        seconds(runtime, 10);
+
+        assertThat(stage.messagesOf(red)).containsSubsequence("inicia em 10 segundos", "inicia em 5 segundos", "inicia em 1 segundo", "Começou!");
+        assertThat(stage.lastTitle(red).orElseThrow().fadeInTicks()).isZero();
+        assertThat(stage.sounds.get(red)).extracting(SoundCue::sound).containsExactly(Sound.NOTE_PLING);
+    }
+
+    @Test
+    void onlyBlocksPlacedByPlayersCanBeBrokenAndTheOthersSayWhy() {
+        MatchRuntime<RecordingState> runtime = started(RESPAWNING);
+        runtime.match().placed(3, 64, 3);
+
+        assertThat(runtime.mayBreak(red, 3, 64, 3)).isTrue();
+        assertThat(stage.messagesOf(red)).doesNotContain("não pode quebrar");
+        assertThat(runtime.mayBreak(red, 4, 64, 3)).isFalse();
+        assertThat(stage.messagesOf(red)).endsWith("não pode quebrar");
     }
 
     @Test

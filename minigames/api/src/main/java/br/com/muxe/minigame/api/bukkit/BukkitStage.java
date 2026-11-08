@@ -39,6 +39,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.Vector;
 
 public final class BukkitStage implements Stage {
 
@@ -135,6 +136,22 @@ public final class BukkitStage implements Stage {
     public void teleportOut(UUID id) {
         Location fallback = Bukkit.getWorlds().getFirst().getSpawnLocation();
         online(id).ifPresent(player -> player.teleport(fallback));
+    }
+
+    @Override
+    public void knockUp(UUID id, double speed) {
+        online(id).ifPresent(player -> player.setVelocity(new Vector(0, speed, 0)));
+    }
+
+    @Override
+    public void raiseTo(UUID id, Point floor) {
+        online(id).ifPresent(player -> {
+            Location to = player.getLocation();
+            to.setY(location(floor).getY());
+            player.setFallDistance(0);
+            player.teleport(to);
+            player.setVelocity(new Vector());
+        });
     }
 
     @Override

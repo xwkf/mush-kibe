@@ -38,6 +38,7 @@ public final class MatchRuntime<S extends MatchState> {
 
     public static final double AREA_MARGIN = 12;
     public static final int CLOSE_AFTER_RESTART = 3;
+    public static final double DEATH_LIFT = 1.5;
 
     private final Match match;
     private final Stage stage;
@@ -208,7 +209,7 @@ public final class MatchRuntime<S extends MatchState> {
                 if (second.finished()) {
                     start();
                 } else {
-                    settings.countdownTitles().at(second.remaining()).ifPresent(this::countdownTitle);
+                    settings.countdownTitles().at(second.remaining()).ifPresent(text -> countdownTitle(text, second.remaining()));
                     refreshBoards();
                 }
             }
@@ -269,9 +270,14 @@ public final class MatchRuntime<S extends MatchState> {
         state.died(death);
         match.die(dead, settings.timings().respawnSeconds());
         ghost(id, dead.state() != State.RESPAWNING);
-        stage.teleport(id, match.arena().spectator());
+        if (voidDeath) {
+            stage.raiseTo(id, floor(dead));
+        } else {
+            stage.knockUp(id, DEATH_LIFT);
+        }
         if (dead.state() == State.RESPAWNING) {
-            stage.title(id, Title.of(messages.get("died-title"), messages.get("respawn-subtitle", "seconds", String.valueOf(settings.timings().respawnSeconds()))));
+            stage.sound(id, settings.sounds().died());
+            respawnCountdown(dead, settings.timings().respawnSeconds());
         } else {
             stage.title(id, Title.of(messages.get("died-title"), messages.get("spectator-subtitle")));
             stage.sound(id, settings.sounds().eliminated());
@@ -305,6 +311,14 @@ public final class MatchRuntime<S extends MatchState> {
         if (match.phase() == MatchPhase.PLAYING && match.isOver()) {
             end(match.winner());
         }
+    }
+
+    public boolean mayBreak(UUID id, int x, int y, int z) {
+        if (!environment.rules().breakOnlyPlaced() || match.wasPlaced(x, y, z)) {
+            return true;
+        }
+        stage.message(id, messages.get("cannot-break"));
+        return false;
     }
 
     public boolean forceStart(int seconds) {
@@ -417,6 +431,7 @@ public final class MatchRuntime<S extends MatchState> {
         state.started();
         refreshBoards();
         messages.lines("match-started").forEach(this::broadcast);
+        online().forEach(id -> stage.sound(id, settings.sounds().matchStart()));
     }
 
     private void playingSecond() {
@@ -433,8 +448,11 @@ public final class MatchRuntime<S extends MatchState> {
                 if (left <= 0) {
                     match.respawned(player, now.plusSeconds(settings.timings().respawnProtectionSeconds()));
                     spawn(player);
+                    String respawned = messages.get("respawned");
+                    stage.message(player.id(), respawned);
+                    stage.title(player.id(), Title.builder().subtitle(respawned).timings(0, 20, 10).build());
                 } else {
-                    stage.title(player.id(), Title.of(messages.get("died-title"), messages.get("respawn-subtitle", "seconds", String.valueOf(left))));
+                    respawnCountdown(player, left);
                 }
             } else if (player.state() == State.DISCONNECTED && player.disconnectedUntil().isBefore(now)) {
                 match.eliminate(player);
@@ -526,16 +544,28 @@ public final class MatchRuntime<S extends MatchState> {
 
     private void countdownChanged(Change change) {
         if (change == Change.STARTED || change == Change.SHORTENED) {
-            match.countdown().remaining().ifPresent(remaining -> settings.countdownTitles().at(remaining).ifPresent(this::countdownTitle));
+            match.countdown().remaining().ifPresent(remaining -> settings.countdownTitles().at(remaining).ifPresent(text -> countdownTitle(text, remaining)));
         }
     }
 
-    private void countdownTitle(String text) {
-        Title title = Title.builder().title(Colors.translate(text)).subtitle("").timings(0, 25, 5).build();
+    private void countdownTitle(String text, int remaining) {
+        Title title = Title.builder().title(Colors.translate(text)).subtitle("").timings(0, 20, 20).build();
+        String message = remaining == 1 ? messages.get("countdown-one") : messages.get("countdown", "seconds", String.valueOf(remaining));
         online().forEach(id -> {
+            stage.message(id, message);
             stage.title(id, title);
             stage.sound(id, settings.sounds().countdown());
         });
+    }
+
+    private void respawnCountdown(Participant player, int left) {
+        String text = left == 1 ? messages.get("respawn-subtitle-one") : messages.get("respawn-subtitle", "seconds", String.valueOf(left));
+        stage.message(player.id(), text);
+        stage.title(player.id(), Title.builder().title(messages.get("died-title")).subtitle(text).timings(0, 25, 0).build());
+    }
+
+    private Point floor(Participant player) {
+        return player.team() == null ? match.arena().spectator() : match.arena().spawn(player.team());
     }
 
     private void rememberReturn(UUID id) {

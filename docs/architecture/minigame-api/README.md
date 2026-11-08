@@ -86,11 +86,11 @@ server.listen(new SkyWarsHandlers());
 | When | What the API does | Hooks |
 |---|---|---|
 | A player joins | Resets them to survival, says `room-joined` to the room, teleports them to the waiting spawn, gives the waiting hotbar and the scoreboard. | `arrived` |
-| The minimum is reached | Runs the [start countdown](../game-engine/README.md#start-countdown), with the titles of `countdown.titles` and the `countdown` sound. | |
-| The countdown ends | Draws the teams (favourite colours from `Minigame.teamPreferences`), protects everyone, spawns each player on their team spawn, removes the waiting area, says `match-started`. Teams nobody joined stop respawning and are out. | `starting`, `spawned`, `started` |
-| Every second | Counts the time, respawns players whose time is up, eliminates players who did not return in time, refreshes the scoreboard. | `everySecond`, `playing` |
+| The minimum is reached | Runs the [start countdown](../game-engine/README.md#start-countdown), with the titles of `countdown.titles` (no fade in, 20 ticks on screen, 20 ticks fade out), the `countdown` sound and, on the same seconds, `countdown` in the chat (`countdown-one` on the last second). | |
+| The countdown ends | Draws the teams (favourite colours from `Minigame.teamPreferences`), protects everyone, spawns each player on their team spawn, removes the waiting area, says `match-started` and plays `match-start`. Teams nobody joined stop respawning and are out. | `starting`, `spawned`, `started` |
+| Every second | Counts the time, updates the respawn countdown (`died-title` over `respawn-subtitle`, `respawn-subtitle-one` on the last second, without fading so only the number changes, and the same line in the chat), respawns players whose time is up (`respawned` in the chat and as the subtitle), eliminates players who did not return in time, refreshes the scoreboard. | `everySecond`, `playing` |
 | Every 5 ticks | Shows the health below the name. | `fastTick` |
-| A player dies | Finds the killer (last enemy hit within 15 seconds; for a final death, whoever took the team's respawn away), credits kills and assists, says the death message, turns the player into a spectator and either schedules the respawn or eliminates them. | `died`, `deathMessage` |
+| A player dies | Finds the killer (last enemy hit within 15 seconds; for a final death, whoever took the team's respawn away), credits kills and assists, says the death message, turns the player into a spectator where they died and either schedules the respawn (with the `died` sound) or eliminates them. The player is not teleported: they are thrown up at 1.5 blocks per tick and float there (`Stage.knockUp`); a player who fell into the void is put back at the height of their team spawn, keeping x and z (`Stage.raiseTo`). | `died`, `deathMessage` |
 | A team is out | Says `team-eliminated`. When one team is left (or none, in a match forced with one team) the match ends. | `standingsChanged` |
 | The match ends | Plays the end sounds, gives the winners and spectators their hotbar, shows the victory or defeat title, draws a celebrant for the victory cosmetic, sends the centred result with the rankings. | `ending`, `ended`, `score`, `area` |
 | `timings.restart-seconds` later | Sends everyone to `lobby-group`, and closes the match 3 seconds after. | `closed` |
@@ -113,7 +113,7 @@ A team either respawns or not (`MatchTeam.respawns`). `MatchRules.respawning()` 
 | Rule | Default | Meaning |
 |---|---|---|
 | `respawn` | off | Teams start respawning. |
-| `breakOnlyPlaced` | on | Only blocks placed during the match can be broken or exploded. |
+| `breakOnlyPlaced` | on | Only blocks placed during the match can be broken or exploded. Trying to break another one says `cannot-break`. |
 | `hunger` | off | Hunger changes. |
 | `crafting` | off | Crafting is allowed. |
 | `enterBeds` | off | Beds can be used in the match world. |
@@ -185,10 +185,10 @@ Read by `MatchSettings.from(config)` from the game's `config.yml`:
 | `hotbar.waiting.menu`, `hotbar.waiting.leave` | | Waiting hotbar items. |
 | `hotbar.spectator.*` | | Spectator items: `teleporter`, `random-player`, `player-in-combat`, `play-again`, `leave`. |
 | `hotbar.teleporter.title`, `hotbar.teleporter.entry-lore` | | Teleporter menu. |
-| `sounds.countdown`, `sounds.eliminated`, `sounds.team-eliminated`, `sounds.match-end`, `sounds.match-end-firework` | | Match sounds. |
+| `sounds.countdown`, `sounds.match-start`, `sounds.died`, `sounds.eliminated`, `sounds.team-eliminated`, `sounds.match-end`, `sounds.match-end-firework` | | Match sounds. |
 | `end-titles.victory`, `end-titles.defeat` | `VITÓRIA`, `DERROTA` | Word, colours and sound of the end titles. |
 
-Messages, under `messages`: `room-joined`, `room-left`, `died-title`, `respawn-subtitle`, `spectator-subtitle`, `reconnected`, `team-eliminated`, `match-started`, `result` (with `{top-<ranking>}` lines), `result-draw`, `result-nobody`, `result-rank-1` to `result-rank-3`, `kill` and `death` (when the game has no death messages of its own), `no-arena`, `left-match`, `spectator-no-target`, `spectator-no-combat`, `global-prefix`, `health-below-name`, `room-requesting`, `room-sending`, `room-created`, `room-unavailable`.
+Messages, under `messages`: `room-joined`, `room-left`, `countdown`, `countdown-one`, `died-title`, `respawn-subtitle`, `respawn-subtitle-one`, `respawned`, `spectator-subtitle`, `cannot-break`, `reconnected`, `team-eliminated`, `match-started`, `result` (with `{top-<ranking>}` lines), `result-draw`, `result-nobody`, `result-rank-1` to `result-rank-3`, `kill` and `death` (when the game has no death messages of its own), `no-arena`, `left-match`, `spectator-no-target`, `spectator-no-combat`, `global-prefix`, `health-below-name`, `room-requesting`, `room-sending`, `room-created`, `room-unavailable`.
 
 ## Packets
 
@@ -217,7 +217,7 @@ BedWars keeps `bedwars.rooms`, `bedwars.join_request` and `bedwars.join_reply`.
 ## Tests
 
 - `MatchTest`, `ChatViewTest`, `TeamStatusTest`, `KillCreditTest`, `TimelineTest`, `RankingTest`: the match rules.
-- `MatchRuntimeTest`: the whole lifecycle with a fake `Stage` (joining, countdown, start, deaths, respawns, final kills, leaving, returning, timeouts, the end and closing).
+- `MatchRuntimeTest`: the whole lifecycle with a fake `Stage` (joining, countdown, start, deaths in place and in the void, respawns, final kills, breaking blocks, leaving, returning, timeouts, the end and closing).
 - `MatchServiceTest`: arriving, reservations, returning, chat, staff commands, idle matches and switching modes.
 - `CosmeticDefaultsTest`, `CosmeticMenuSettingsTest`, `LifetimeTallyTest` and the tests of every scene animation, aura and trail: the cosmetics.
 - `ArenaSchemaTest`, `MatchmakerTest`, `ReservationsTest`, `JoinNoticesTest`, `TitleSweepTest`, `TitleRunsTest`, `SpectatorTargetsTest`, `BukkitStageTest`.

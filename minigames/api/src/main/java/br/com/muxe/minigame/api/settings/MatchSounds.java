@@ -6,6 +6,8 @@ import org.bukkit.configuration.ConfigurationSection;
 
 public record MatchSounds(
     Optional<SoundCue> countdown,
+    Optional<SoundCue> matchStart,
+    Optional<SoundCue> died,
     Optional<SoundCue> eliminated,
     Optional<SoundCue> teamEliminated,
     Optional<SoundCue> matchEnd,
@@ -14,10 +16,12 @@ public record MatchSounds(
 
     public static MatchSounds from(ConfigurationSection section) {
         if (section == null) {
-            return new MatchSounds(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
+            return new MatchSounds(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
         }
         return new MatchSounds(
             SoundCue.from(section.getConfigurationSection("countdown")),
+            SoundCue.from(section.getConfigurationSection("match-start")),
+            SoundCue.from(section.getConfigurationSection("died")),
             SoundCue.from(section.getConfigurationSection("eliminated")),
             SoundCue.from(section.getConfigurationSection("team-eliminated")),
             SoundCue.from(section.getConfigurationSection("match-end")),

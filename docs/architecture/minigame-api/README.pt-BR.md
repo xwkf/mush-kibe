@@ -86,11 +86,11 @@ server.listen(new SkyWarsHandlers());
 | Quando | O que a API faz | Ganchos |
 |---|---|---|
 | Um jogador entra | Volta ele ao sobrevivência, avisa `room-joined` na sala, teleporta para o spawn da espera, dá a hotbar da espera e o placar. | `arrived` |
-| O mínimo é atingido | Roda a [contagem de início](../game-engine/README.pt-BR.md#contagem-para-iniciar), com os títulos de `countdown.titles` e o som `countdown`. | |
-| A contagem acaba | Sorteia os times (cores favoritas de `Minigame.teamPreferences`), protege todos, coloca cada jogador no spawn do time, apaga a área de espera, avisa `match-started`. Times sem ninguém param de renascer e estão fora. | `starting`, `spawned`, `started` |
-| A cada segundo | Conta o tempo, renasce quem já pode, elimina quem não voltou a tempo, atualiza o placar. | `everySecond`, `playing` |
+| O mínimo é atingido | Roda a [contagem de início](../game-engine/README.pt-BR.md#contagem-para-iniciar), com os títulos de `countdown.titles` (sem fade de entrada, 20 ticks na tela, 20 ticks de fade de saída), o som `countdown` e, nos mesmos segundos, `countdown` no chat (`countdown-one` no último segundo). | |
+| A contagem acaba | Sorteia os times (cores favoritas de `Minigame.teamPreferences`), protege todos, coloca cada jogador no spawn do time, apaga a área de espera, avisa `match-started` e toca `match-start`. Times sem ninguém param de renascer e estão fora. | `starting`, `spawned`, `started` |
+| A cada segundo | Conta o tempo, atualiza a contagem para renascer (`died-title` sobre `respawn-subtitle`, `respawn-subtitle-one` no último segundo, sem fade, então só o número muda, e a mesma linha no chat), renasce quem já pode (`respawned` no chat e como subtítulo), elimina quem não voltou a tempo, atualiza o placar. | `everySecond`, `playing` |
 | A cada 5 ticks | Mostra a vida abaixo do nome. | `fastTick` |
-| Um jogador morre | Acha quem matou (último inimigo que bateu em até 15 segundos; numa morte final, quem tirou o renascimento do time), credita kills e assistências, manda a mensagem de morte, deixa o jogador espectador e agenda o renascimento ou elimina. | `died`, `deathMessage` |
+| Um jogador morre | Acha quem matou (último inimigo que bateu em até 15 segundos; numa morte final, quem tirou o renascimento do time), credita kills e assistências, manda a mensagem de morte, deixa o jogador espectador onde morreu e agenda o renascimento (com o som `died`) ou elimina. O jogador não é teleportado: é jogado para cima a 1,5 bloco por tick e fica flutuando ali (`Stage.knockUp`); quem caiu no void volta para a altura do spawn do time, no mesmo x e z (`Stage.raiseTo`). | `died`, `deathMessage` |
 | Um time sai | Avisa `team-eliminated`. Quando sobra um time (ou nenhum, numa partida forçada com um time só) a partida acaba. | `standingsChanged` |
 | A partida acaba | Toca os sons de fim, dá a hotbar dos vencedores e dos espectadores, mostra o título de vitória ou derrota, sorteia quem faz o cosmético de vitória, manda o resultado centralizado com os rankings. | `ending`, `ended`, `score`, `area` |
 | `timings.restart-seconds` depois | Manda todos para o `lobby-group` e fecha a partida 3 segundos depois. | `closed` |
@@ -113,7 +113,7 @@ Um time renasce ou não (`MatchTeam.respawns`). `MatchRules.respawning()` faz os
 | Regra | Padrão | Significado |
 |---|---|---|
 | `respawn` | desligado | Os times começam renascendo. |
-| `breakOnlyPlaced` | ligado | Só blocos colocados na partida podem ser quebrados ou explodidos. |
+| `breakOnlyPlaced` | ligado | Só blocos colocados na partida podem ser quebrados ou explodidos. Tentar quebrar outro avisa `cannot-break`. |
 | `hunger` | desligado | A fome muda. |
 | `crafting` | desligado | Pode craftar. |
 | `enterBeds` | desligado | Camas podem ser usadas no mundo das partidas. |
@@ -185,10 +185,10 @@ Lida por `MatchSettings.from(config)` do `config.yml` do jogo:
 | `hotbar.waiting.menu`, `hotbar.waiting.leave` | | Itens da hotbar da espera. |
 | `hotbar.spectator.*` | | Itens de espectador: `teleporter`, `random-player`, `player-in-combat`, `play-again`, `leave`. |
 | `hotbar.teleporter.title`, `hotbar.teleporter.entry-lore` | | Menu do teleportador. |
-| `sounds.countdown`, `sounds.eliminated`, `sounds.team-eliminated`, `sounds.match-end`, `sounds.match-end-firework` | | Sons da partida. |
+| `sounds.countdown`, `sounds.match-start`, `sounds.died`, `sounds.eliminated`, `sounds.team-eliminated`, `sounds.match-end`, `sounds.match-end-firework` | | Sons da partida. |
 | `end-titles.victory`, `end-titles.defeat` | `VITÓRIA`, `DERROTA` | Palavra, cores e som dos títulos de fim. |
 
-Mensagens, em `messages`: `room-joined`, `room-left`, `died-title`, `respawn-subtitle`, `spectator-subtitle`, `reconnected`, `team-eliminated`, `match-started`, `result` (com linhas `{top-<ranking>}`), `result-draw`, `result-nobody`, `result-rank-1` a `result-rank-3`, `kill` e `death` (quando o jogo não tem mensagens de morte próprias), `no-arena`, `left-match`, `spectator-no-target`, `spectator-no-combat`, `global-prefix`, `health-below-name`, `room-requesting`, `room-sending`, `room-created`, `room-unavailable`.
+Mensagens, em `messages`: `room-joined`, `room-left`, `countdown`, `countdown-one`, `died-title`, `respawn-subtitle`, `respawn-subtitle-one`, `respawned`, `spectator-subtitle`, `cannot-break`, `reconnected`, `team-eliminated`, `match-started`, `result` (com linhas `{top-<ranking>}`), `result-draw`, `result-nobody`, `result-rank-1` a `result-rank-3`, `kill` e `death` (quando o jogo não tem mensagens de morte próprias), `no-arena`, `left-match`, `spectator-no-target`, `spectator-no-combat`, `global-prefix`, `health-below-name`, `room-requesting`, `room-sending`, `room-created`, `room-unavailable`.
 
 ## Pacotes
 
@@ -217,7 +217,7 @@ O BedWars mantém `bedwars.rooms`, `bedwars.join_request` e `bedwars.join_reply`
 ## Testes
 
 - `MatchTest`, `ChatViewTest`, `TeamStatusTest`, `KillCreditTest`, `TimelineTest`, `RankingTest`: as regras da partida.
-- `MatchRuntimeTest`: o ciclo inteiro com uma `Stage` falsa (entrada, contagem, início, mortes, renascimento, kills finais, saída, volta, tempo esgotado, o fim e o fechamento).
+- `MatchRuntimeTest`: o ciclo inteiro com uma `Stage` falsa (entrada, contagem, início, mortes no lugar e no void, renascimento, kills finais, quebra de blocos, saída, volta, tempo esgotado, o fim e o fechamento).
 - `MatchServiceTest`: chegada, reservas, volta, chat, comandos da staff, partidas vazias e troca de modo.
 - `CosmeticDefaultsTest`, `CosmeticMenuSettingsTest`, `LifetimeTallyTest` e os testes de cada animação de cena, aura e rastro: os cosméticos.
 - `ArenaSchemaTest`, `MatchmakerTest`, `ReservationsTest`, `JoinNoticesTest`, `TitleSweepTest`, `TitleRunsTest`, `SpectatorTargetsTest`, `BukkitStageTest`.
