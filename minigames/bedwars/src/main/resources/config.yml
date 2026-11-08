@@ -575,7 +575,7 @@ messages:
   match-started:
     - "&eO jogo iniciou!"
     - ""
-    - "&c&lAVISO:"
+    - "&4&lAVISO:"
     - "&c - A aliança com outros jogadores é proibida e resultará em punição."
   health-below-name: "&c❤"
   level-up: "&b&lPARABÉNS &7Você subiu para o nível {level}&7!"
