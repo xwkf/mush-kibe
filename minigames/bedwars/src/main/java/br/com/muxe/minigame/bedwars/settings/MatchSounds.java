@@ -14,6 +14,7 @@ public record MatchSounds(
     Optional<SoundCue> deposited,
     Optional<SoundCue> bedDestroyed,
     Optional<SoundCue> bedLost,
+    Optional<SoundCue> kill,
     Optional<SoundCue> finalKill,
     Optional<SoundCue> eliminated,
     Optional<SoundCue> teamEliminated,
@@ -24,7 +25,7 @@ public record MatchSounds(
     public static MatchSounds from(ConfigurationSection section) {
         if (section == null) {
             return new MatchSounds(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
-                Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
+                Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
         }
         return new MatchSounds(
             SoundCue.from(section.getConfigurationSection("countdown")),
@@ -35,6 +36,7 @@ public record MatchSounds(
             SoundCue.from(section.getConfigurationSection("deposited")),
             SoundCue.from(section.getConfigurationSection("bed-destroyed")),
             SoundCue.from(section.getConfigurationSection("bed-lost")),
+            SoundCue.from(section.getConfigurationSection("kill")),
             SoundCue.from(section.getConfigurationSection("final-kill")),
             SoundCue.from(section.getConfigurationSection("eliminated")),
             SoundCue.from(section.getConfigurationSection("team-eliminated")),

@@ -237,9 +237,7 @@ public final class BedWarsMatch implements MatchState {
             runtime.player(credited.id()).ifPresent(killer -> {
                 giveLoot(killer, loot);
                 killer.sendMessage(messages.get("xp", "xp", String.valueOf(xp)));
-                if (death.finalKill()) {
-                    MatchSounds.play(settings.sounds().finalKill(), killer);
-                }
+                MatchSounds.play(death.finalKill() ? settings.sounds().finalKill() : settings.sounds().kill(), killer);
             });
         });
         room.died(victim);
